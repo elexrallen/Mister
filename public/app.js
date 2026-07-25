@@ -37,8 +37,8 @@
       return new Intl.DateTimeFormat("es-ES", {
         dateStyle: "medium",
         timeStyle: "short",
-        timeZone: "UTC",
-      }).format(new Date(iso)) + " UTC";
+        timeZone: "Europe/Madrid",
+      }).format(new Date(iso));
     } catch {
       return iso || "—";
     }
