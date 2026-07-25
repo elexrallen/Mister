@@ -102,7 +102,11 @@
     if (ext.is_recommendation_ext) chips.push(`<span class="badge badge-titular">Reco</span>`);
     if (ext.points_streak === "up") chips.push(`<span class="badge badge-mint">Racha ↑</span>`);
     if (ext.points_streak === "down") chips.push(`<span class="badge badge-baja-ext">Racha ↓</span>`);
-    if (p.fills_need) chips.push(`<span class="badge badge-duda">Carencia</span>`);
+    if (p.fills_structural && p.structural_label) {
+      chips.push(`<span class="badge badge-mint">${escapeHtml(p.structural_label)}</span>`);
+    } else if (p.fills_need) {
+      chips.push(`<span class="badge badge-duda">Carencia</span>`);
+    }
     if (p.affordable === false) chips.push(`<span class="badge badge-baja">Sin saldo</span>`);
     return chips.length ? chips.join(" ") : `<span class="text-slate-600 text-xs">—</span>`;
   };
@@ -444,7 +448,126 @@
     }
   }
 
+  function renderSquadHealth() {
+    const diag = DATA.diagnostico_plantilla;
+    const scoreEl = document.getElementById("health-score");
+    const barsEl = document.getElementById("budget-bars");
+    const linesEl = document.getElementById("line-status");
+    const tipsEl = document.getElementById("health-tips");
+    if (!scoreEl || !barsEl || !linesEl || !tipsEl) return;
+
+    if (!diag) {
+      scoreEl.textContent = "—";
+      barsEl.innerHTML = "";
+      linesEl.innerHTML = "";
+      tipsEl.innerHTML = `<p class="text-slate-500 text-sm">Sin diagnóstico estructural todavía. Regenera los datos.</p>`;
+      return;
+    }
+
+    const score = Number(diag.salud_score ?? 0);
+    scoreEl.textContent = String(score);
+    scoreEl.className = `health-score ${
+      score >= 75 ? "health-good" : score >= 50 ? "health-mid" : "health-bad"
+    }`;
+
+    const fin = diag.financiero || {};
+    const dist = fin.budget_distribution || {};
+    const segments = [
+      ["estrellas_top", "var(--mint)", dist.estrellas_top],
+      ["titulares_medios", "#38bdf8", dist.titulares_medios],
+      ["banquillo_parches", "#fb923c", dist.banquillo_parches],
+    ];
+    barsEl.innerHTML = `
+      <div class="budget-meta">
+        <span>Plantilla ${formatMoney(fin.valor_plantilla)} · Saldo ${formatMoney(fin.saldo)}</span>
+        <span class="text-mint-400">Total equipo ${formatMoney(fin.valor_total_equipo)}</span>
+      </div>
+      <div class="budget-track" role="img" aria-label="Distribución del valor de plantilla">
+        ${segments
+          .map(([, color, seg]) => {
+            const pct = Math.max(0, Number(seg?.pct) || 0);
+            if (pct <= 0) return "";
+            return `<div class="budget-seg" style="width:${pct}%;background:${color}" title="${escapeHtml(
+              seg?.label || ""
+            )}: ${pct}%"></div>`;
+          })
+          .join("")}
+      </div>
+      <ul class="budget-legend">
+        ${segments
+          .map(
+            ([, color, seg]) => `<li>
+            <span class="legend-dot" style="background:${color}"></span>
+            <span>${escapeHtml(seg?.label || "—")}</span>
+            <strong>${Number(seg?.pct) || 0}%</strong>
+            <span class="text-slate-500">${formatMoney(seg?.value)}</span>
+          </li>`
+          )
+          .join("")}
+      </ul>
+      ${
+        fin.top_check
+          ? `<p class="budget-note">${escapeHtml(fin.top_check.message || "")}</p>`
+          : ""
+      }
+    `;
+
+    const lineas = diag.lineas || {};
+    const labels = { GK: "Portería", DF: "Defensa", MF: "Medio", FW: "Delantera" };
+    linesEl.innerHTML = ["GK", "DF", "MF", "FW"]
+      .map((pos) => {
+        const L = lineas[pos] || {};
+        const st = L.status || "ok";
+        return `<div class="line-chip status-${st}">
+          <div class="line-chip-top">
+            <span>${labels[pos]}</span>
+            <span class="badge ${st === "critical" ? "badge-alta" : st === "warning" ? "badge-media" : "badge-mint"}">${st}</span>
+          </div>
+          <p>${escapeHtml(L.message || "—")}</p>
+        </div>`;
+      })
+      .join("");
+
+    const parches = diag.parches || {};
+    const tips = diag.consejos || [];
+    const levelClass = { ok: "tip-ok", suggestion: "tip-suggestion", alert: "tip-alert" };
+    const levelIcon = { ok: "Acierto", suggestion: "Sugerencia", alert: "Alerta" };
+    const patchTone =
+      parches.status === "ok" ? "ok" : parches.status === "critical" ? "alert" : "suggestion";
+    tipsEl.innerHTML =
+      (parches.message
+        ? `<div class="tip-card tip-${patchTone}">
+            <div class="tip-label">Parches · ${parches.count ?? 0}/${parches.ideal ?? 3}</div>
+            <p>${escapeHtml(parches.message)}</p>
+          </div>`
+        : "") +
+      (tips.length
+        ? tips
+            .map((t) => {
+              const lv = t.level || "suggestion";
+              return `<article class="tip-card ${levelClass[lv] || "tip-suggestion"}" ${
+                (t.related_player_ids || [])[0]
+                  ? `data-focus-id="${escapeHtml((t.related_player_ids || [])[0])}" role="button" tabindex="0"`
+                  : ""
+              }>
+            <div class="tip-label">${levelIcon[lv] || "Nota"} · ${escapeHtml(t.title || "")}</div>
+            <p>${escapeHtml(t.message || "")}</p>
+          </article>`;
+            })
+            .join("")
+        : `<p class="text-slate-500 text-sm">Sin consejos adicionales.</p>`);
+
+    tipsEl.querySelectorAll("[data-focus-id]").forEach((el) => {
+      const go = () => focusPlayer(el.getAttribute("data-focus-id"), "squad");
+      el.addEventListener("click", go);
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") go();
+      });
+    });
+  }
+
   function renderSquad() {
+    renderSquadHealth();
     const diagnosis = DATA.squad_diagnosis || {};
     const alertsBox = document.getElementById("squad-alerts");
     const alerts = diagnosis.alerts || [];

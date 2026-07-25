@@ -205,6 +205,8 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     score = 0
     if item.get("fills_need"):
         score += 35
+    if item.get("fills_structural"):
+        score += 20
     risk = item.get("wait_risk") or item.get("risk") or "low"
     score += {"high": 25, "medium": 15, "low": 5}.get(str(risk), 5)
     bf = item.get("budget_fit") or "blocked"

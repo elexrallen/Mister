@@ -36,6 +36,11 @@ from competitive_actions import (
     rival_demand_for_position,
     wait_risk,
 )
+from squad_analyzer import (
+    analyze_squad,
+    merge_structural_into_diagnosis,
+    structural_market_boost,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -321,11 +326,12 @@ def classify_market_opportunities(
     diagnosis: dict[str, Any],
     *,
     allow_synthetic: bool = True,
+    structural_needs: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Clasifica oportunidades usando señales disponibles.
     En modo live: prioriza carencias, precio relativo, forma Mister y flecha de valor
-    (sin inventar % ni PPG histórico).
+    (sin inventar % ni PPG histórico). Boost extra si cubre necesidades estructurales.
     """
     pos_prices: dict[str, list[float]] = {}
     for p in market:
@@ -336,6 +342,7 @@ def classify_market_opportunities(
         pos for pos, info in diagnosis.get("by_position", {}).items()
         if info.get("status") in ("critical", "warning")
     }
+    needs = structural_needs or []
 
     opportunities: list[dict[str, Any]] = []
     for raw in market:
@@ -425,9 +432,14 @@ def classify_market_opportunities(
             except (TypeError, ValueError):
                 pass
 
+        struct_bonus, fills_structural, struct_label = structural_market_boost(p, needs)
+        score += struct_bonus
+        if fills_structural and struct_label:
+            categories.insert(0, "ajuste_estructural")
+
         if avail in ("injured", "suspended"):
             priority = "Baja"
-        elif score >= 35:
+        elif fills_structural or score >= 35:
             priority = "Alta"
         elif score >= 18:
             priority = "Media"
@@ -447,6 +459,7 @@ def classify_market_opportunities(
                 "titular_garantizado": "Encaje / forma",
                 "especulacion_trading": "Especulación (flecha/Δ)",
                 "alerta_baja": "Alerta lesión/sanción",
+                "ajuste_estructural": struct_label or "Ajuste estructural",
             }.get(primary, primary),
             "puja_minima": min_bid,
             "puja_recomendada": recommended,
@@ -454,7 +467,9 @@ def classify_market_opportunities(
             "priority": priority,
             "score": round(score, 1),
             "affordable": recommended <= my_balance,
-            "fills_need": p["position"] in needy,
+            "fills_need": p["position"] in needy or fills_structural,
+            "fills_structural": fills_structural,
+            "structural_label": struct_label,
             "signal_basis": "mister_live" if not allow_synthetic else "mixed",
         })
 
@@ -929,6 +944,23 @@ def build_payload() -> dict[str, Any]:
     )
 
     diagnosis = diagnose_squad(squad)
+
+    # Fase de puntos (squad + mercado basta para el diagnóstico estructural)
+    points_phase = detect_points_phase(list(squad) + list(market_ext))
+    diagnostico_plantilla = analyze_squad(
+        squad,
+        balance=float(me.get("balance") or 0),
+        squad_value=float(me.get("squad_value") or 0) or None,
+        points_phase=points_phase,
+    )
+    diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
+    log.info(
+        "Diagnóstico estructural salud=%s needs=%s consejos=%s",
+        diagnostico_plantilla.get("salud_score"),
+        len(diagnostico_plantilla.get("structural_needs") or []),
+        len(diagnostico_plantilla.get("consejos") or []),
+    )
+
     opportunities = classify_market_opportunities(
         market_ext,
         perf_idx,
@@ -936,6 +968,7 @@ def build_payload() -> dict[str, Any]:
         float(me.get("balance") or 0),
         diagnosis,
         allow_synthetic=not honest_live,
+        structural_needs=diagnostico_plantilla.get("structural_needs") or [],
     )
     rivals = [estimate_rival_liquidity(r) for r in league.get("rivals", [])]
 
@@ -977,7 +1010,9 @@ def build_payload() -> dict[str, Any]:
     phase_universe: list[dict[str, Any]] = list(squad) + list(market_ext)
     for r in rivals:
         phase_universe.extend(r.get("squad") or [])
+    # Refinar fase con rivales (puede matizar active vs preseason)
     points_phase = detect_points_phase(phase_universe)
+    diagnostico_plantilla["points_phase"] = points_phase
 
     opportunities = annotate_market_budget_risk(
         opportunities,
@@ -1149,6 +1184,7 @@ def build_payload() -> dict[str, Any]:
         "rival_upgrades": rival_upgrades,
         "market_opportunities": opportunities,
         "squad_diagnosis": diagnosis,
+        "diagnostico_plantilla": diagnostico_plantilla,
         "rivals": rivals,
         "free_agents_top": free_agents,
         "recommendations": recommendations,
@@ -1157,6 +1193,7 @@ def build_payload() -> dict[str, Any]:
                 "positions": ["GK", "DF", "MF", "FW"],
                 "priorities": ["Alta", "Media", "Baja"],
                 "categories": [
+                    "ajuste_estructural",
                     "chollo_economico",
                     "titular_garantizado",
                     "especulacion_trading",

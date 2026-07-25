@@ -192,6 +192,18 @@
       </div>
 
       <div id="tab-squad" class="tab-panel p-3 md:p-6" role="tabpanel" hidden>
+        <section class="health-panel mb-6" aria-labelledby="health-title">
+          <div class="health-head">
+            <div>
+              <h3 id="health-title" class="font-display text-base md:text-lg text-white">Salud y estructura del equipo</h3>
+              <p class="section-hint">Diagnóstico táctico y financiero según buenas prácticas Fantasy</p>
+            </div>
+            <div class="health-score" id="health-score" title="Salud de plantilla">—</div>
+          </div>
+          <div id="budget-bars" class="budget-bars mt-4" aria-label="Distribución del presupuesto"></div>
+          <div id="line-status" class="line-status mt-4" aria-label="Estado por líneas"></div>
+          <div id="health-tips" class="health-tips mt-4" aria-live="polite"></div>
+        </section>
         <div id="squad-alerts" class="space-y-2 mb-4"></div>
         <div id="squad-positions" class="grid md:grid-cols-2 gap-3 mb-4"></div>
         <div id="squad-cards" class="card-list"></div>
