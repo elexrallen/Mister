@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T11:43:58.845938+00:00",
+  "generated_at": "2026-07-25T11:57:51.800219+00:00",
   "sources": {
     "mister": "api",
     "performance": "disabled_for_live",
@@ -2779,14 +2779,14 @@
         "lineup_prob_ext": 20,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
-        "sofascore_avg_5": 6.42,
+        "sofascore_avg_5": 6.43,
         "points_streak": "unknown",
         "profile_url": "https://www.futbolfantasy.com/jugadores/arsen-zakharyan",
         "matched_name": "Arsen Zakharyan",
         "match_score": 100
       },
       "fotmob_stats": {
-        "rating_promedio": 6.42,
+        "rating_promedio": 6.43,
         "minutos_ultimos_5": 166,
         "goles_ultimos_5": 0,
         "xg_promedio": 0.0,
