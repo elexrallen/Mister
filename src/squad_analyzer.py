@@ -875,12 +875,19 @@ def analyze_squad(
             ),
         )
     elif tc["status"] != "ok":
+        top_n = int(tc.get("count") or 0)
+        if top_n <= 0:
+            title = "Faltan estrellas TOP"
+        elif top_n < TOP_COUNT_MIN or float(tc.get("share_pct") or 0) < TOP_SHARE_MIN * 100:
+            title = "Faltan estrellas TOP"
+        else:
+            title = "Reequilibra las estrellas"
         tips.insert(
             0,
             _advice(
                 "suggestion" if tc["status"] == "warning" else "alert",
                 "top_imbalance",
-                "Reequilibra las estrellas",
+                title,
                 tc["message"] + " Ideal: 3–4 TOP FF con el 50–60% del valor de plantilla.",
                 related=[str(p.get("id")) for p in finance.get("top_players") or []],
             ),
@@ -1009,10 +1016,12 @@ def structural_market_boost(
             max_p = need.get("max_price") or PATCH_MAX_PRICE
             if price <= 0 or price > max_p:
                 continue
-            # Parche: barato; aún mejor si parece titular/regular
-            lp = _f(player.get("lineup_prob"))
+            # Parche: barato; aún mejor si parece titular/regular real
+            lp = _lineup_frac(player)
+            if lp is None:
+                lp = _f(player.get("lineup_prob"))
             bonus = 22.0
-            if lp >= LINEUP_REGULAR:
+            if lp is not None and lp >= LINEUP_REGULAR:
                 bonus += 10.0
             this_label = "Parche estructural"
         elif ntype == "gk_tandem":
@@ -1030,20 +1039,34 @@ def structural_market_boost(
             bonus = 28.0
             this_label = "Cubre portería"
         elif ntype == "df_starter" and pos == "DF":
+            lp = _lineup_frac(player)
+            if lp is not None and lp < LINEUP_REGULAR:
+                continue  # no cubre carencia de titular real
             bonus = 25.0
+            if lp is not None and lp >= LINEUP_STARTER:
+                bonus += 8.0
             this_label = "Refuerzo defensa"
         elif ntype == "mf_starter" and pos == "MF":
+            lp = _lineup_frac(player)
+            if lp is not None and lp < LINEUP_REGULAR:
+                continue
             bonus = 25.0
+            if lp is not None and lp >= LINEUP_STARTER:
+                bonus += 8.0
             this_label = "Motor mediocampo"
         elif ntype == "fw_top" and pos == "FW":
+            lp = _lineup_frac(player)
+            if lp is not None and lp < LINEUP_REGULAR:
+                continue  # la carencia es de titularidad real, no de cupo FW
             min_p = need.get("min_price") or 0
             if price and price < min_p * 0.6:
-                # Demasiado barato para ser "referencia"
                 bonus = 12.0
                 this_label = "Opción delantera"
             else:
                 bonus = 30.0
                 this_label = "Delantero referencia"
+            if lp is not None and lp >= LINEUP_STARTER:
+                bonus += 10.0
         else:
             continue
 

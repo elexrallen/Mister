@@ -865,6 +865,12 @@ def build_action_plan(
     critical_pos = {
         a["position"] for a in diagnosis.get("alerts", []) if a.get("level") == "critical"
     }
+    # Necesidades estructurales Alta (p. ej. FW sin titulares reales) impulsan compra
+    need_pos_alta = {
+        n.get("position")
+        for n in (diagnostico_plantilla or {}).get("structural_needs") or []
+        if n.get("priority") == "Alta" and n.get("position")
+    }
 
     for o in opportunities:
         ext = o.get("external") or {}
@@ -872,7 +878,7 @@ def build_action_plan(
         lineup = ext.get("lineup_prob_ext")
         if lineup is None and o.get("lineup_prob") is not None:
             lineup = float(o["lineup_prob"]) * 100
-        fills = bool(o.get("fills_need"))
+        fills = bool(o.get("fills_need") or o.get("fills_structural"))
         demand = _rival_demand_for_position(rivals, o.get("position") or "")
         risk = o.get("wait_risk") or _wait_risk(o, rivals, fills_need=fills)
         delta = o.get("delta_5d")
@@ -899,13 +905,29 @@ def build_action_plan(
 
         buy_now = False
         why_parts: list[str] = []
-        if fills and (o.get("position") in critical_pos) and (lineup is None or float(lineup) >= 70):
+        pos = o.get("position")
+        structural_gap = pos in need_pos_alta
+        real_starter_cand = lineup is not None and float(lineup) >= 70
+
+        if fills and (pos in critical_pos) and (lineup is None or float(lineup) >= 70):
             buy_now = True
             why_parts.append("cubre carencia crítica")
+        if fills and structural_gap and real_starter_cand:
+            buy_now = True
+            why_parts.append("cubre necesidad estructural (titularidad real)")
         if fills and risk == "high" and (lineup is None or float(lineup) >= 80):
             buy_now = True
-            why_parts.append(f"demanda rival alta ({len(demand)} con gap {o.get('position')})")
+            why_parts.append(f"demanda rival alta ({len(demand)} con gap {pos})")
         if (
+            o.get("priority") == "Alta"
+            and bf in ("comfortable", "tight")
+            and real_starter_cand
+            and (fills or structural_gap)
+            and risk in ("medium", "high")
+        ):
+            buy_now = True
+            why_parts.append("titular real probable y prioridad alta")
+        elif (
             o.get("priority") == "Alta"
             and bf in ("comfortable", "tight")
             and (lineup is not None and float(lineup) >= 80)
@@ -928,11 +950,13 @@ def build_action_plan(
                 "bid": o.get("puja_recomendada"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
-                "urgency": "high" if o.get("position") in critical_pos or risk == "high" else "medium",
-                "why": "; ".join(why_parts) or "Encaje inmediato recomendado",
+                "urgency": "high" if pos in critical_pos or structural_gap or risk == "high" else "medium",
+                "why": "; ".join(dict.fromkeys(why_parts)) or "Encaje inmediato recomendado",
                 "rival_demand": len(demand),
                 "affordable": True,
                 "fills_need": fills,
+                "fills_structural": bool(o.get("fills_structural")),
+                "structural_label": o.get("structural_label"),
                 "budget_fit": bf,
                 "priority_score": o.get("priority_score"),
                 "trend": o.get("trend"),
@@ -948,7 +972,9 @@ def build_action_plan(
                 wait_bits.append(f"titularidad {int(float(lineup))}%")
             if delta is not None and float(delta) < 0:
                 wait_bits.append(f"Δprecio {float(delta)*100:.1f}%")
-            if not fills:
+            if fills or structural_gap:
+                wait_bits.append("cubre carencia de titularidad real" if structural_gap else "cubre carencia")
+            elif not fills:
                 wait_bits.append("no cubre carencia urgente")
             if sofa is not None and float(sofa) < 6.2:
                 wait_bits.append(f"nota baja ({sofa})")
@@ -967,11 +993,13 @@ def build_action_plan(
                 "bid": o.get("puja_recomendada"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
-                "urgency": "low" if risk == "low" else "medium",
-                "why": ("; ".join(wait_bits) or "Sin urgencia") + f" · riesgo de perderlo: {risk}",
+                "urgency": "medium" if fills or structural_gap or risk != "low" else "low",
+                "why": ("; ".join(dict.fromkeys(wait_bits)) or "Sin urgencia") + f" · riesgo de perderlo: {risk}",
                 "rival_demand": len(demand),
                 "affordable": bf in ("comfortable", "tight"),
                 "fills_need": fills,
+                "fills_structural": bool(o.get("fills_structural")),
+                "structural_label": o.get("structural_label"),
                 "budget_fit": bf,
                 "priority_score": o.get("priority_score"),
                 "trend": o.get("trend"),

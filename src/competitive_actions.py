@@ -1246,6 +1246,7 @@ def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Una sola cola 'a tiro hecho': lo más accionable y urgente primero.
     Orden: score unificado (tipo de acción + priority_score + urgencia), luego caps.
+    Reserva diversidad: al menos un buy_now por posición con carencia.
     """
     action_base = {
         "buy_now": 1000,
@@ -1266,11 +1267,17 @@ def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
             else:
                 item["priority_score"] = priority_score_buy(item)
         base = action_base.get(item.get("action"), 0)
+        need_boost = 0
+        if item.get("fills_structural"):
+            need_boost = 90
+        elif item.get("fills_need"):
+            need_boost = 45
         item["_queue_rank"] = (
             base
             + int(item.get("priority_score") or 0)
             + urg_bonus.get(item.get("urgency"), 0)
             + min(20, int(item.get("rival_demand") or 0) * 4)
+            + need_boost
         )
     plan.sort(
         key=lambda x: (
@@ -1278,23 +1285,54 @@ def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
             -int(x.get("priority_score") or 0),
         )
     )
+
+    # Reserva: mejor buy_now por posición que cubra carencia (titularidad real / estructural)
+    reserved: list[dict[str, Any]] = []
+    seen_pos: set[str] = set()
+    for item in plan:
+        if item.get("action") != "buy_now":
+            continue
+        pos = item.get("position") or ""
+        if not pos or pos in seen_pos:
+            continue
+        if item.get("fills_need") or item.get("fills_structural"):
+            reserved.append(item)
+            seen_pos.add(pos)
+
     capped: list[dict[str, Any]] = []
     per_action: dict[str, int] = {}
     limits = {
-        "buy_now": 5,
+        "buy_now": 6,
         "clause_bid": 4,
         "wait": 5,
         "avoid": 3,
         "sell": 5,
         "scout": 3,
     }
-    for item in plan:
+    used_ids: set[str] = set()
+
+    def _append(item: dict[str, Any]) -> bool:
         a = item.get("action") or ""
+        pid = str(item.get("player_id") or "")
+        if pid and pid in used_ids:
+            return False
         if per_action.get(a, 0) >= limits.get(a, 3):
-            continue
+            return False
         per_action[a] = per_action.get(a, 0) + 1
+        if pid:
+            used_ids.add(pid)
         clean = {k: v for k, v in item.items() if k != "_queue_rank"}
         capped.append(clean)
+        return True
+
+    for item in reserved:
+        _append(item)
         if len(capped) >= 12:
             break
+
+    for item in plan:
+        if len(capped) >= 12:
+            break
+        _append(item)
+
     return capped

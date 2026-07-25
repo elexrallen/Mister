@@ -596,6 +596,11 @@
           .join("");
         const secondaryChips = [
           sellReasonBadge(a.sell_reason),
+          a.fills_structural && a.structural_label
+            ? `<span class="badge badge-mint">${escapeHtml(a.structural_label)}</span>`
+            : a.fills_need
+              ? `<span class="badge badge-duda">Carencia</span>`
+              : "",
           a.in_lineup ? `<span class="badge badge-once">Once</span>` : "",
           a.plays_little || (a.lineup_pct != null && Number(a.lineup_pct) < 40)
             ? `<span class="badge badge-baja-ext">Pocos min</span>`
