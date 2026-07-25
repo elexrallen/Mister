@@ -536,6 +536,20 @@
     return `<span class="badge ${cls}">${label}</span>`;
   };
 
+  const fundingChip = (a) => {
+    if (!a) return "";
+    if (a.action === "sell" && (a.sell_reason === "fund_buy" || a.budget_fit === "funding")) {
+      return `<span class="badge badge-mint">Libera caja</span>`;
+    }
+    if (a.leaves_gap_budget) {
+      return `<span class="badge badge-mint">Deja caja</span>`;
+    }
+    if (a.crowds_out_gaps) {
+      return `<span class="badge badge-duda">Aprieta carencias</span>`;
+    }
+    return "";
+  };
+
   const sellReasonBadge = (reason) => {
     if (!reason) return "";
     const map = {
@@ -543,12 +557,15 @@
       low_minutes: "Pocos minutos",
       low_production: "Baja prod.",
       surplus_to_demand: "Excedente",
-      fund_buy: "Financiar once",
+      fund_buy: "Financiar carencias",
       injured_covered: "Lesión",
       form_drop: "Forma",
     };
     return `<span class="badge badge-duda">${map[reason] || reason}</span>`;
   };
+
+  let queueExpanded = false;
+  const QUEUE_PREVIEW = 6;
 
   function renderActionQueue(data) {
     const box = document.getElementById("action-queue");
@@ -568,10 +585,26 @@
       return;
     }
 
-    box.className = "action-queue-list";
-    box.setAttribute("role", "list");
-    box.innerHTML = plan
-      .slice(0, 10)
+    const fp = data.funding_plan || {};
+    const fundingHint =
+      fp.target != null && Number(fp.target) > 0
+        ? `<p class="queue-funding-hint">Caja vs carencias Alta: objetivo ~${formatMoney(
+            fp.target
+          )}${
+            fp.shortfall != null && Number(fp.shortfall) > 0
+              ? ` · faltan ~${formatMoney(fp.shortfall)}`
+              : " · cubierto"
+          }${
+            (fp.positions || []).length
+              ? ` · ${escapeHtml((fp.positions || []).join(", "))}`
+              : ""
+          }</p>`
+        : "";
+
+    const hasMore = plan.length > QUEUE_PREVIEW;
+    const expanded = queueExpanded || !hasMore;
+
+    const itemsHtml = plan
       .map((a, idx) => {
         const meta = labels[a.action] || { title: a.action || "Acción", cls: "act-wait" };
         const tab =
@@ -590,6 +623,7 @@
         const primaryChips = [
           riskBadge(a.wait_risk || a.sell_risk),
           budgetBadge(a.budget_fit),
+          fundingChip(a),
           a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
         ]
           .filter(Boolean)
@@ -615,11 +649,13 @@
         ]
           .filter(Boolean)
           .join("");
-        return `<button type="button" class="queue-item ${meta.cls}" role="listitem" data-focus-id="${escapeHtml(
-          a.player_id
-        )}" data-focus-tab="${tab}" aria-label="${escapeHtml(meta.title)} ${escapeHtml(
-          a.name || ""
-        )}, prioridad ${idx + 1}">
+        const hidden = !expanded && idx >= QUEUE_PREVIEW;
+        const topCls = idx < 3 ? " is-top" : "";
+        return `<button type="button" class="queue-item ${meta.cls}${topCls}${
+          hidden ? " is-collapsed-extra" : ""
+        }" role="listitem" data-focus-id="${escapeHtml(a.player_id)}" data-focus-tab="${tab}" ${
+          hidden ? "hidden" : ""
+        } aria-label="${escapeHtml(meta.title)} ${escapeHtml(a.name || "")}, prioridad ${idx + 1}">
           <span class="queue-rank" aria-hidden="true">${idx + 1}</span>
           <div class="queue-body">
             <div class="queue-primary">
@@ -653,11 +689,38 @@
       })
       .join("");
 
+    const rest = plan.length - QUEUE_PREVIEW;
+    const toggleHtml = hasMore
+      ? `<button type="button" class="queue-expand-btn" id="queue-expand-btn" aria-expanded="${
+          expanded ? "true" : "false"
+        }">${
+          expanded
+            ? `Mostrar menos`
+            : `Ver las ${rest} restantes · ${plan.length} en total`
+        }</button>`
+      : "";
+
+    box.className = "action-queue-list" + (expanded ? " is-expanded" : "");
+    box.setAttribute("role", "list");
+    box.innerHTML = fundingHint + itemsHtml + toggleHtml;
+
     box.querySelectorAll("[data-focus-id]").forEach((btn) => {
       btn.addEventListener("click", () => {
         focusPlayer(btn.getAttribute("data-focus-id"), btn.getAttribute("data-focus-tab") || "market");
       });
     });
+
+    const expandBtn = document.getElementById("queue-expand-btn");
+    if (expandBtn) {
+      expandBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        queueExpanded = !queueExpanded;
+        renderActionQueue(data);
+        const again = document.getElementById("queue-expand-btn");
+        if (again) again.focus();
+      });
+    }
   }
 
   function renderMarket() {

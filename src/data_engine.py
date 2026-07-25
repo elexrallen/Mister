@@ -32,7 +32,9 @@ from competitive_actions import (
     build_rival_upgrade_targets,
     build_sell_opportunities,
     detect_points_phase,
+    estimate_gap_funding,
     finalize_action_plan,
+    other_gaps_min_cost,
     rival_demand_for_position,
     wait_risk,
 )
@@ -866,11 +868,14 @@ def build_action_plan(
         a["position"] for a in diagnosis.get("alerts", []) if a.get("level") == "critical"
     }
     # Necesidades estructurales Alta (p. ej. FW sin titulares reales) impulsan compra
+    structural_needs = (diagnostico_plantilla or {}).get("structural_needs") or []
     need_pos_alta = {
         n.get("position")
-        for n in (diagnostico_plantilla or {}).get("structural_needs") or []
+        for n in structural_needs
         if n.get("priority") == "Alta" and n.get("position")
     }
+    funding = estimate_gap_funding(structural_needs, opportunities, balance, top_n=3)
+    gap_pos_labels = ", ".join(str(p) for p in (funding.get("positions") or []) if p) or "otras carencias"
 
     for o in opportunities:
         ext = o.get("external") or {}
@@ -886,6 +891,16 @@ def build_action_plan(
         cost = float(o.get("puja_recomendada") or o.get("price") or 0)
         min_c = float(o.get("puja_minima") or o.get("price") or 0)
         bf = o.get("budget_fit") or budget_fit(cost, balance, min_cost=min_c)
+
+        pos = o.get("position")
+        other_min = other_gaps_min_cost(funding, exclude_position=pos)
+        residual = balance - cost if cost <= balance else -1.0
+        crowds_out = residual >= 0 and other_min > 0 and residual < other_min
+        leaves_budget = residual >= 0 and other_min > 0 and residual >= other_min
+        if crowds_out and bf == "comfortable":
+            bf = "tight"
+        elif crowds_out and bf == "tight":
+            bf = "stretch"
 
         if avail in ("injured", "suspended"):
             plan.append({
@@ -905,7 +920,6 @@ def build_action_plan(
 
         buy_now = False
         why_parts: list[str] = []
-        pos = o.get("position")
         structural_gap = pos in need_pos_alta
         real_starter_cand = lineup is not None and float(lineup) >= 70
 
@@ -936,10 +950,44 @@ def build_action_plan(
             buy_now = True
             why_parts.append("titular probable y prioridad alta")
 
-        # Sin caja → no buy_now
+        # Sin caja → no buy_now (stretch por crowding también queda fuera de buy_now agresivo)
         if buy_now and bf not in ("comfortable", "tight"):
             buy_now = False
-            why_parts.append(f"caja insuficiente ({balance:,.0f} €)")
+            if crowds_out:
+                why_parts.append(
+                    f"tras fichar quedaría poca caja para {gap_pos_labels} "
+                    f"(residual {max(0, residual):,.0f} € vs ~{other_min:,.0f} €)"
+                )
+            else:
+                why_parts.append(f"caja insuficiente ({balance:,.0f} €)")
+
+        if leaves_budget and (buy_now or fills):
+            why_parts.append("deja caja para reforzar el resto de carencias")
+        elif crowds_out and not buy_now:
+            why_parts.append(
+                f"prioriza otras carencias: residual {max(0, residual):,.0f} € < ~{other_min:,.0f} €"
+            )
+
+        prio = o.get("priority_score")
+        try:
+            prio_i = int(prio) if prio is not None else None
+        except (TypeError, ValueError):
+            prio_i = None
+        if prio_i is not None:
+            if crowds_out:
+                prio_i -= 35
+            elif leaves_budget:
+                prio_i += 12
+
+        common = {
+            "crowds_out_gaps": crowds_out,
+            "leaves_gap_budget": leaves_budget,
+            "residual_budget": residual if residual >= 0 else None,
+            "other_gaps_min": other_min,
+            "funding_target": funding.get("funding_target"),
+            "funding_shortfall": funding.get("funding_shortfall"),
+            "cost": cost,
+        }
 
         if buy_now:
             plan.append({
@@ -958,11 +1006,12 @@ def build_action_plan(
                 "fills_structural": bool(o.get("fills_structural")),
                 "structural_label": o.get("structural_label"),
                 "budget_fit": bf,
-                "priority_score": o.get("priority_score"),
+                "priority_score": prio_i if prio_i is not None else o.get("priority_score"),
                 "trend": o.get("trend"),
                 "ff_mister_avg": o.get("ff_mister_avg"),
                 "production_score": o.get("production_score"),
                 "is_top_ff": o.get("is_top_ff"),
+                **common,
             })
         else:
             wait_bits = list(why_parts) if why_parts else []
@@ -984,7 +1033,7 @@ def build_action_plan(
             if bf == "blocked":
                 wait_bits.append(f"sin saldo (hace falta ~{cost:,.0f} €)")
             elif bf == "stretch":
-                wait_bits.append("puja al límite de caja")
+                wait_bits.append("puja al límite de caja / otras carencias")
             plan.append({
                 "player_id": o["id"],
                 "name": o["name"],
@@ -1001,11 +1050,12 @@ def build_action_plan(
                 "fills_structural": bool(o.get("fills_structural")),
                 "structural_label": o.get("structural_label"),
                 "budget_fit": bf,
-                "priority_score": o.get("priority_score"),
+                "priority_score": prio_i if prio_i is not None else o.get("priority_score"),
                 "trend": o.get("trend"),
                 "ff_mister_avg": o.get("ff_mister_avg"),
                 "production_score": o.get("production_score"),
                 "is_top_ff": o.get("is_top_ff"),
+                **common,
             })
 
     # Ventas situacionales (once fiable / producción / banquillo)
@@ -1039,7 +1089,7 @@ def build_action_plan(
             existing["why"] += f" · rivales top con gap: {', '.join(t['team_name'] for t in top[:2])}"
             existing["urgency"] = "medium"
 
-    return finalize_action_plan(plan)
+    return finalize_action_plan(plan, balance=balance, funding_info=funding)
 
 
 # ---------------------------------------------------------------------------
@@ -1247,19 +1297,32 @@ def build_payload() -> dict[str, Any]:
     )
 
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
-    budget_pressure = "low"
     bal = float(me.get("balance") or 0)
-    med_bids = sorted(
-        float(o.get("puja_recomendada") or o.get("price") or 0)
-        for o in opportunities
-        if o.get("fills_need")
+    funding_info = estimate_gap_funding(
+        diagnostico_plantilla.get("structural_needs") or [],
+        opportunities,
+        bal,
+        top_n=3,
     )
-    if med_bids:
-        mid = med_bids[len(med_bids) // 2]
-        if bal < mid * 0.5:
-            budget_pressure = "high"
-        elif bal < mid:
-            budget_pressure = "medium"
+    budget_pressure = "low"
+    shortfall = float(funding_info.get("funding_shortfall") or 0)
+    target = float(funding_info.get("funding_target") or 0)
+    if shortfall > 0 and target > 0 and shortfall >= target * 0.35:
+        budget_pressure = "high"
+    elif shortfall > 0 or (target > 0 and bal < target):
+        budget_pressure = "medium"
+    else:
+        med_bids = sorted(
+            float(o.get("puja_recomendada") or o.get("price") or 0)
+            for o in opportunities
+            if o.get("fills_need")
+        )
+        if med_bids:
+            mid = med_bids[len(med_bids) // 2]
+            if bal < mid * 0.5:
+                budget_pressure = "high"
+            elif bal < mid:
+                budget_pressure = "medium"
 
     external_notes = [
         "Fuentes externas (FF/JP/Comuniate): estado, % titular y chollos; fail-soft con caché/seed.",
@@ -1336,7 +1399,16 @@ def build_payload() -> dict[str, Any]:
             "sell_count": sum(1 for a in action_plan if a["action"] == "sell"),
             "clause_bid_count": sum(1 for a in action_plan if a["action"] == "clause_bid"),
             "budget_pressure": budget_pressure,
+            "funding_target": funding_info.get("funding_target"),
+            "funding_shortfall": funding_info.get("funding_shortfall"),
             "points_phase": points_phase,
+        },
+        "funding_plan": {
+            "target": funding_info.get("funding_target"),
+            "shortfall": funding_info.get("funding_shortfall"),
+            "cash_tight": funding_info.get("cash_tight"),
+            "gaps": funding_info.get("gap_costs") or [],
+            "positions": funding_info.get("positions") or [],
         },
         "action_plan": action_plan,
         "rival_upgrades": rival_upgrades,

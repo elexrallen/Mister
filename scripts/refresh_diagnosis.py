@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import config  # noqa: E402
+from competitive_actions import estimate_gap_funding  # noqa: E402
 from data_engine import (  # noqa: E402
     build_action_plan,
     classify_market_opportunities,
@@ -40,7 +41,6 @@ def main() -> None:
     )
     diagnosis = merge_structural_into_diagnosis(diagnosis, plant)
 
-    # Reclasificar mercado con carencias / titularidad real actual
     market_raw = data.get("market_opportunities") or []
     opportunities = classify_market_opportunities(
         market_raw,
@@ -50,6 +50,13 @@ def main() -> None:
         diagnosis,
         allow_synthetic=False,
         structural_needs=plant.get("structural_needs") or [],
+    )
+
+    funding = estimate_gap_funding(
+        plant.get("structural_needs") or [],
+        opportunities,
+        balance,
+        top_n=3,
     )
 
     action_plan = build_action_plan(
@@ -67,6 +74,13 @@ def main() -> None:
     data["diagnostico_plantilla"] = plant
     data["market_opportunities"] = opportunities
     data["action_plan"] = action_plan
+    data["funding_plan"] = {
+        "target": funding.get("funding_target"),
+        "shortfall": funding.get("funding_shortfall"),
+        "cash_tight": funding.get("cash_tight"),
+        "gaps": funding.get("gap_costs") or [],
+        "positions": funding.get("positions") or [],
+    }
     data["recommendations"] = []
     data["squad_notes"] = []
     data["generated_at"] = datetime.now(timezone.utc).isoformat()
@@ -78,6 +92,16 @@ def main() -> None:
     kpis["wait_count"] = sum(1 for a in action_plan if a["action"] == "wait")
     kpis["sell_count"] = sum(1 for a in action_plan if a["action"] == "sell")
     kpis["clause_bid_count"] = sum(1 for a in action_plan if a["action"] == "clause_bid")
+    kpis["funding_target"] = funding.get("funding_target")
+    kpis["funding_shortfall"] = funding.get("funding_shortfall")
+    shortfall = float(funding.get("funding_shortfall") or 0)
+    target = float(funding.get("funding_target") or 0)
+    if shortfall > 0 and target > 0 and shortfall >= target * 0.35:
+        kpis["budget_pressure"] = "high"
+    elif shortfall > 0 or (target > 0 and balance < target):
+        kpis["budget_pressure"] = "medium"
+    else:
+        kpis["budget_pressure"] = kpis.get("budget_pressure") or "low"
     data["kpis"] = kpis
 
     save_json(path, data)
@@ -86,23 +110,21 @@ def main() -> None:
     save_json(hist, data)
 
     fw = diagnosis["by_position"]["FW"]
-    fw_fills = [
-        o
-        for o in opportunities
-        if o.get("position") == "FW" and (o.get("fills_need") or o.get("fills_structural"))
-    ]
-    buys = [a for a in action_plan if a.get("action") in ("buy_now", "wait") and a.get("fills_need")]
+    buys = [a for a in action_plan if a.get("action") == "buy_now"]
+    sells = [a for a in action_plan if a.get("action") == "sell"]
     print(
-        f"OK FW status={fw['status']} starters={fw['starters']} "
-        f"market_FW_fills={len(fw_fills)} cola_fills={len(buys)}"
+        f"OK funding_target={funding.get('funding_target'):,.0f} "
+        f"shortfall={funding.get('funding_shortfall'):,.0f} "
+        f"buys={len(buys)} sells={len(sells)} FW_starters={fw['starters']}"
     )
-    for o in fw_fills[:5]:
+    for a in buys:
         print(
-            f"  market {o.get('name')} struct={o.get('structural_label')} "
-            f"prio={o.get('priority')} lp={(o.get('external') or {}).get('lineup_prob_ext')}"
+            f"  buy {a.get('name')} [{a.get('position')}] "
+            f"crowds={a.get('crowds_out_gaps')} leaves={a.get('leaves_gap_budget')} "
+            f"cost={a.get('cost') or a.get('bid')} residual={a.get('residual_budget')}"
         )
-    for a in buys[:8]:
-        print(f"  cola {a.get('action')} {a.get('name')} [{a.get('position')}] {a.get('why', '')[:90]}")
+    for s in sells:
+        print(f"  sell {s.get('name')} [{s.get('sell_reason')}] {s.get('why', '')[:100]}")
 
 
 if __name__ == "__main__":

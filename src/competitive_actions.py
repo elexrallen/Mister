@@ -233,6 +233,10 @@ def _is_useful_patch(p: dict[str, Any]) -> bool:
     return lineup is not None and lineup >= 45
 
 
+def _starter_floor(position: str) -> int:
+    return {"GK": 1, "DF": 3, "MF": 3, "FW": 2}.get(position or "MF", 2)
+
+
 def _healthy_count(squad: list[dict[str, Any]], position: str) -> int:
     n = 0
     for p in squad:
@@ -255,6 +259,29 @@ def _starter_count(squad: list[dict[str, Any]], position: str) -> int:
     )
 
 
+def starters_after_sale(squad: list[dict[str, Any]], player: dict[str, Any]) -> int:
+    pos = player.get("position") or "MF"
+    others = [p for p in squad if str(p.get("id")) != str(player.get("id"))]
+    return _starter_count(others, pos)
+
+
+def protect_depth_if_sold(squad: list[dict[str, Any]], player: dict[str, Any]) -> bool:
+    """
+    True si vender deja la línea fina: cupo sano bajo MIN_* o titulares reales
+    por debajo del suelo del once.
+    """
+    pos = player.get("position") or "MF"
+    others = [p for p in squad if str(p.get("id")) != str(player.get("id"))]
+    healthy = _healthy_count(others, pos)
+    starters = _starter_count(others, pos)
+    min_need = _mins().get(pos, 2)
+    if healthy < min_need:
+        return True
+    if starters < _starter_floor(pos):
+        return True
+    return False
+
+
 def _xi_impact_if_sold(squad: list[dict[str, Any]], player: dict[str, Any]) -> str:
     """
     safe  → el once/línea aguanta sin él
@@ -264,18 +291,17 @@ def _xi_impact_if_sold(squad: list[dict[str, Any]], player: dict[str, Any]) -> s
     pos = player.get("position") or "MF"
     mins = _mins()
     min_need = mins.get(pos, 2)
-    # Conteos excluyendo al jugador
     others = [p for p in squad if str(p.get("id")) != str(player.get("id"))]
     healthy = _healthy_count(others, pos)
     starters = _starter_count(others, pos)
     was_starter = _is_reliable_starter(player)
-
-    # Mínimos de titulares por línea (estrategia once fiable)
-    starter_floor = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}.get(pos, 2)
+    starter_floor = _starter_floor(pos)
 
     if healthy < min_need:
         return "risk"
     if was_starter and starters < starter_floor:
+        return "risk"
+    if protect_depth_if_sold(squad, player):
         return "risk"
     if was_starter and starters < starter_floor + 1:
         return "soft"
@@ -289,6 +315,140 @@ def _mins() -> dict[str, int]:
         "MF": config.MIN_MF,
         "FW": config.MIN_FW,
     }
+
+
+_GAP_FALLBACK_COST = {
+    "GK": 1_500_000.0,
+    "DF": 3_000_000.0,
+    "MF": 3_000_000.0,
+    "FW": 4_000_000.0,
+}
+
+
+def estimate_gap_funding(
+    structural_needs: list[dict[str, Any]] | None,
+    market_opportunities: list[dict[str, Any]] | None,
+    balance: float,
+    *,
+    top_n: int = 3,
+) -> dict[str, Any]:
+    """
+    Estima coste mínimo para cubrir needs Alta (multi-carencia).
+    funding_target = suma de hasta top_n gaps; shortfall vs saldo.
+    """
+    needs = [n for n in (structural_needs or []) if n.get("priority") == "Alta"]
+    market = list(market_opportunities or [])
+    bal = max(0.0, float(balance or 0))
+
+    gap_rows: list[dict[str, Any]] = []
+    seen_pos: set[str] = set()
+
+    for need in needs:
+        pos = need.get("position")
+        key = str(pos or need.get("need") or "")
+        if not key or key in seen_pos:
+            continue
+        seen_pos.add(key)
+
+        min_need_price = need.get("min_price")
+        max_need_price = need.get("max_price")
+        try:
+            floor = float(min_need_price) if min_need_price is not None else None
+        except (TypeError, ValueError):
+            floor = None
+        try:
+            ceil = float(max_need_price) if max_need_price is not None else None
+        except (TypeError, ValueError):
+            ceil = None
+
+        candidates: list[float] = []
+        for o in market:
+            opos = o.get("position")
+            if pos and opos != pos:
+                continue
+            if not pos and need.get("need") == "patch_cheap":
+                price = _money(o.get("puja_recomendada") or o.get("price"))
+                if price <= 0 or price > float(ceil or 2_000_000):
+                    continue
+            elif pos:
+                # Preferir quien cubre estructuralmente o tiene titularidad usable
+                lp = None
+                ext = o.get("external") or {}
+                if ext.get("lineup_prob_ext") is not None:
+                    try:
+                        lp = float(ext["lineup_prob_ext"])
+                    except (TypeError, ValueError):
+                        lp = None
+                elif o.get("lineup_prob") is not None:
+                    try:
+                        lp = float(o["lineup_prob"]) * 100.0
+                    except (TypeError, ValueError):
+                        lp = None
+                fills = bool(o.get("fills_structural") or o.get("fills_need"))
+                if not fills and lp is not None and lp < 45:
+                    continue
+                price = _money(o.get("puja_recomendada") or o.get("price"))
+                if price <= 0:
+                    continue
+                if floor is not None and price < floor * 0.5:
+                    continue
+                if ceil is not None and price > ceil:
+                    continue
+            else:
+                continue
+            candidates.append(_money(o.get("puja_recomendada") or o.get("price")))
+
+        if candidates:
+            cost = min(candidates)
+        elif floor is not None:
+            cost = floor
+        elif ceil is not None:
+            cost = min(ceil, _GAP_FALLBACK_COST.get(str(pos or ""), 2_000_000.0))
+        else:
+            cost = _GAP_FALLBACK_COST.get(str(pos or ""), 2_000_000.0)
+
+        gap_rows.append(
+            {
+                "position": pos,
+                "need": need.get("need"),
+                "cost": cost,
+                "label": need.get("reason") or need.get("need") or (pos or "gap"),
+            }
+        )
+
+    # Priorizar carencias más caras / críticas primero en el target (tope top_n)
+    gap_rows.sort(key=lambda g: -float(g.get("cost") or 0))
+    selected = gap_rows[: max(1, top_n)] if gap_rows else []
+    funding_target = sum(float(g["cost"]) for g in selected)
+    funding_shortfall = max(0.0, funding_target - bal)
+    cheapest = min((float(g["cost"]) for g in gap_rows), default=None)
+    cash_tight = funding_shortfall > 0 or (cheapest is not None and bal < cheapest)
+
+    return {
+        "funding_target": funding_target,
+        "funding_shortfall": funding_shortfall,
+        "cash_tight": cash_tight,
+        "gap_costs": selected,
+        "all_gap_costs": gap_rows,
+        "positions": [g.get("position") for g in selected if g.get("position")],
+        "cheapest_need": cheapest,
+    }
+
+
+def other_gaps_min_cost(
+    funding_info: dict[str, Any] | None,
+    *,
+    exclude_position: str | None = None,
+) -> float:
+    """Suma de costes mínimos de hasta 3 gaps Alta distintos a la posición del fichaje."""
+    info = funding_info or {}
+    others = [
+        float(g.get("cost") or 0)
+        for g in (info.get("all_gap_costs") or info.get("gap_costs") or [])
+        if not (exclude_position and g.get("position") == exclude_position)
+    ]
+    others.sort(reverse=True)
+    return sum(others[:3])
 
 
 def rival_demand_for_position(rivals: list[dict[str, Any]], position: str) -> list[dict[str, Any]]:
@@ -337,7 +497,11 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     risk = item.get("wait_risk") or item.get("risk") or "low"
     score += {"high": 25, "medium": 15, "low": 5}.get(str(risk), 5)
     bf = item.get("budget_fit") or "blocked"
-    score += {"comfortable": 20, "tight": 10, "stretch": 0, "blocked": -25}.get(str(bf), 0)
+    score += {"comfortable": 20, "tight": 10, "stretch": 0, "blocked": -25, "funding": 8}.get(str(bf), 0)
+    if item.get("crowds_out_gaps"):
+        score -= 35
+    elif item.get("leaves_gap_budget"):
+        score += 12
     score += min(15, int(item.get("rival_demand") or 0) * 5)
     if item.get("improves_owned"):
         score += 20
@@ -512,12 +676,17 @@ def build_sell_opportunities(
         pos for pos, info in diagnosis.get("by_position", {}).items()
         if info.get("status") in ("critical", "warning")
     }
-    need_costs: list[float] = []
-    for o in market_opportunities or []:
-        if o.get("fills_need") and o.get("position") in (critical_pos | needy):
-            need_costs.append(_money(o.get("puja_recomendada") or o.get("price")))
-    cheapest_need = min(need_costs) if need_costs else None
-    cash_tight = cheapest_need is not None and balance < cheapest_need
+    funding = estimate_gap_funding(
+        diag.get("structural_needs") or [],
+        market_opportunities,
+        balance,
+        top_n=3,
+    )
+    cash_tight = bool(funding.get("cash_tight"))
+    funding_pressure = float(funding.get("funding_shortfall") or 0) > 0
+    gap_labels = ", ".join(
+        str(p) for p in (funding.get("positions") or []) if p
+    ) or "carencias"
 
     sells: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -574,6 +743,8 @@ def build_sell_opportunities(
             "in_lineup": bool(p.get("in_lineup")),
             "plays_little": _plays_little(p),
             "recent_minutes": _recent_minutes(p),
+            "funding_shortfall": funding.get("funding_shortfall"),
+            "funding_target": funding.get("funding_target"),
         }
 
     squad_value = sum(_money(p.get("price") or p.get("market_value")) for p in squad) or 1.0
@@ -612,9 +783,13 @@ def build_sell_opportunities(
         avg = _mister_avg(p)
         ptrend = _points_trend(p)
         recent_mins = _recent_minutes(p)
+        protect_depth = protect_depth_if_sold(squad, p)
+        starters_left = starters_after_sale(squad, p)
 
         # Solo proteger si es titular real y la línea quedaría bajo el suelo
         protect_xi = xi == "risk" and is_starter and avail not in ("injured", "suspended")
+        # Conservar profundidad (titulares reales / cupo) salvo presión de caja multi-gap
+        protect_depth_soft = protect_depth and not funding_pressure
         # Conservar parches útiles (versatilidad) salvo financiar crítico
         protect_patch = useful_patch and not (cash_tight and bool(critical_pos))
 
@@ -635,15 +810,20 @@ def build_sell_opportunities(
             and not keep_top
             and not protect_xi
             and not protect_patch
+            and not protect_depth_soft
             and price > 0
         ):
-            urg = "high" if bench_inflated or price >= 6_000_000 else "medium"
+            urg = "high" if bench_inflated or price >= 6_000_000 or funding_pressure else "medium"
             bits = [
                 f"fuera del once real (titularidad {int(lineup) if lineup is not None else '—'}%)",
                 f"libera {price:,.0f} € para titulares/producción",
             ]
             if p.get("in_lineup"):
                 bits.insert(0, "en tu once Mister pero sin titularidad real")
+            if funding_pressure:
+                bits.append(f"libera caja para {gap_labels}")
+            if protect_depth and funding_pressure:
+                bits.append(f"profundidad justa ({starters_left} titulares) pero falta caja")
             if ff is not None:
                 bits.append(f"FF {ff:.1f}")
             item = base_item(
@@ -651,7 +831,7 @@ def build_sell_opportunities(
                 reason="expensive_bench",
                 why="; ".join(bits),
                 urgency=urg,
-                sell_risk="low" if xi == "safe" else "medium",
+                sell_risk="high" if protect_depth else ("low" if xi == "safe" else "medium"),
             )
             item["_pref"] = 50
             add(item)
@@ -664,6 +844,7 @@ def build_sell_opportunities(
             and not keep_top
             and not protect_xi
             and not protect_patch
+            and not protect_depth_soft
             and not is_star
         ):
             bits = []
@@ -674,12 +855,14 @@ def build_sell_opportunities(
             if p.get("in_lineup"):
                 bits.append("está en tu once fantasy")
             bits.append(f"libera {price:,.0f} €")
+            if funding_pressure:
+                bits.append(f"caja justa vs {gap_labels}")
             item = base_item(
                 p,
                 reason="low_minutes",
                 why="; ".join(bits),
-                urgency="high" if price >= 5_000_000 else "medium",
-                sell_risk="low" if not is_starter else "medium",
+                urgency="high" if price >= 5_000_000 or funding_pressure else "medium",
+                sell_risk="high" if protect_depth else ("low" if not is_starter else "medium"),
             )
             item["_pref"] = 48
             add(item)
@@ -699,6 +882,7 @@ def build_sell_opportunities(
             and not keep_top
             and not protect_xi
             and not protect_patch
+            and not protect_depth_soft
         ):
             bits = [f"producción floja para {price / 1e6:.1f} M€"]
             if ff is not None:
@@ -714,7 +898,7 @@ def build_sell_opportunities(
                 reason="low_production",
                 why="; ".join(bits),
                 urgency="medium" if is_starter else "high",
-                sell_risk="medium" if is_starter else "low",
+                sell_risk="medium" if is_starter or protect_depth else "low",
             )
             item["_pref"] = 45
             add(item)
@@ -732,17 +916,22 @@ def build_sell_opportunities(
             add(item)
 
         # 4) Excedente → vender el de menor impacto (no titulares estrella)
-        if healthy > min_need and demand and not keep_top and not protect_xi and not protect_patch:
-            # Solo si no es de los mejores titulares de la línea
+        if (
+            healthy > min_need
+            and demand
+            and not keep_top
+            and not protect_xi
+            and not protect_patch
+            and not protect_depth_soft
+        ):
             weak_surplus = (
                 not is_starter
                 or (lineup is not None and lineup < 75)
                 or (prod is not None and prod < 50)
                 or not is_star
             )
-            starter_floor = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}.get(pos, 2)
+            starter_floor = _starter_floor(pos)
             starters_after = starters - (1 if is_starter else 0)
-            # Evitar vender si la línea de titulares quedaría bajo el suelo del once
             if weak_surplus and starters_after >= starter_floor:
                 urg = "high" if top_demand and not is_starter else "medium"
                 names = ", ".join(
@@ -761,23 +950,38 @@ def build_sell_opportunities(
                 item["_pref"] = 30
                 add(item)
 
-        # 5) Financiar carencia del once (prioriza no titulares)
+        # 5) Financiar carencias multi-gap (prioriza no titulares)
         if cash_tight and needy and covered_if_sold and not keep_top and not protect_xi:
-            if protect_patch and not critical_pos:
+            # Con presión de caja se puede vender aunque profundidad sea justa
+            if protect_patch and not critical_pos and not funding_pressure:
+                pass
+            elif protect_depth_soft:
                 pass
             else:
                 essential = is_star or is_starter
-                weak = (rating is not None and rating < 6.5) or (lineup is not None and lineup < 75) or not is_starter
+                weak = (
+                    (rating is not None and rating < 6.5)
+                    or (lineup is not None and lineup < 75)
+                    or not is_starter
+                    or plays_little
+                )
                 if not essential or weak:
+                    shortfall = float(funding.get("funding_shortfall") or 0)
                     item = base_item(
                         p,
                         reason="fund_buy",
                         why=(
-                            f"Caja justa ({balance:,.0f} €) vs carencia del once; "
-                            f"vender libera ~{price:,.0f} € con cobertura en {pos}."
+                            f"Caja justa ({balance:,.0f} €) vs ~{funding.get('funding_target', 0):,.0f} € "
+                            f"para {gap_labels}"
+                            + (f" (faltan {shortfall:,.0f} €)" if shortfall else "")
+                            + f"; vender libera ~{price:,.0f} €."
                         ),
-                        urgency="high" if critical_pos else "medium",
-                        sell_risk="medium" if is_starter or healthy <= min_need + 1 else "low",
+                        urgency="high" if critical_pos or funding_pressure else "medium",
+                        sell_risk=(
+                            "high"
+                            if protect_depth
+                            else ("medium" if is_starter or healthy <= min_need + 1 else "low")
+                        ),
                     )
                     item["_pref"] = 35
                     add(item)
@@ -799,6 +1003,7 @@ def build_sell_opportunities(
             and not keep_top
             and not protect_xi
             and not protect_patch
+            and not protect_depth_soft
             and price >= 2_000_000
             and (form_bad or delta_bad)
         ):
@@ -1242,11 +1447,17 @@ def annotate_market_budget_risk(
     return out
 
 
-def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
+def finalize_action_plan(
+    plan: list[dict[str, Any]],
+    *,
+    balance: float | None = None,
+    funding_info: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     """
     Una sola cola 'a tiro hecho': lo más accionable y urgente primero.
     Orden: score unificado (tipo de acción + priority_score + urgencia), luego caps.
     Reserva diversidad: al menos un buy_now por posición con carencia.
+    Resta costes de buy_now del saldo simulado para no recomendar fichajes incompatibles.
     """
     action_base = {
         "buy_now": 1000,
@@ -1272,6 +1483,10 @@ def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
             need_boost = 90
         elif item.get("fills_need"):
             need_boost = 45
+        if item.get("leaves_gap_budget"):
+            need_boost += 25
+        if item.get("crowds_out_gaps"):
+            need_boost -= 50
         item["_queue_rank"] = (
             base
             + int(item.get("priority_score") or 0)
@@ -1309,29 +1524,81 @@ def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
         "sell": 5,
         "scout": 3,
     }
+    # Tope global = suma de límites por acción (sin cortar a 12 artificialmente)
+    max_total = sum(limits.values())
     used_ids: set[str] = set()
+    sim_balance = float(balance) if balance is not None else None
+    covered_pos: set[str] = set()
+
+    def _buy_cost(item: dict[str, Any]) -> float:
+        for key in ("cost", "bid", "puja_recomendada", "price"):
+            if item.get(key) is not None:
+                try:
+                    return float(item[key])
+                except (TypeError, ValueError):
+                    pass
+        return 0.0
+
+    def _can_afford_buy(item: dict[str, Any]) -> bool:
+        nonlocal sim_balance
+        if sim_balance is None:
+            return True
+        cost = _buy_cost(item)
+        if cost > sim_balance:
+            return False
+        pos = item.get("position")
+        # Ya cubrimos esa carencia en la cola: no apilar más buy_now de la misma línea
+        if pos and pos in covered_pos:
+            return False
+        others = [
+            float(g.get("cost") or 0)
+            for g in (funding_info or {}).get("all_gap_costs")
+            or (funding_info or {}).get("gap_costs")
+            or []
+            if g.get("position") not in covered_pos
+            and g.get("position") != pos
+        ]
+        others.sort(reverse=True)
+        other_min = sum(others[:3]) if others else 0.0
+        residual = sim_balance - cost
+        if other_min <= 0:
+            return True
+        if residual >= other_min * 0.85:
+            return True
+        if not covered_pos and (item.get("urgency") == "high" or item.get("fills_structural")):
+            return residual >= 0
+        return False
 
     def _append(item: dict[str, Any]) -> bool:
+        nonlocal sim_balance
         a = item.get("action") or ""
         pid = str(item.get("player_id") or "")
         if pid and pid in used_ids:
             return False
         if per_action.get(a, 0) >= limits.get(a, 3):
             return False
+        if a == "buy_now" and not _can_afford_buy(item):
+            return False
+        if len(capped) >= max_total:
+            return False
         per_action[a] = per_action.get(a, 0) + 1
         if pid:
             used_ids.add(pid)
+        if a == "buy_now" and sim_balance is not None:
+            sim_balance = max(0.0, sim_balance - _buy_cost(item))
+            if item.get("position"):
+                covered_pos.add(item["position"])
         clean = {k: v for k, v in item.items() if k != "_queue_rank"}
         capped.append(clean)
         return True
 
     for item in reserved:
-        _append(item)
-        if len(capped) >= 12:
-            break
+        if not _append(item):
+            if len(capped) >= max_total:
+                break
 
     for item in plan:
-        if len(capped) >= 12:
+        if len(capped) >= max_total:
             break
         _append(item)
 
