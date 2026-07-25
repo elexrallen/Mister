@@ -163,12 +163,12 @@ Luego: **Actions → Daily data update → Run workflow**.
 
 | Pieza | Para qué |
 |-------|----------|
-| Cuenta GitHub + repo (privado recomendado) | Código + Pages + Actions |
+| Cuenta GitHub + repo | Código + Pages + Actions |
 | Secrets de Mister (`MISTER_TOKEN`, `MISTER_X_AUTH`, `MISTER_PHPSESSID`) | Datos live en la Action |
-| GitHub Pages apuntando a `/public` | Dashboard público (o del repo privado vía Pages si tu plan lo permite) |
+| Workflow **Deploy GitHub Pages** | Publica la carpeta `public/` |
 | Renovar el JWT de vez en cuando | Mister caduca el `token`; sin él la Action falla o cae a mock |
 
-> Recomendación: **repo privado**. El JSON incluye tu plantilla, saldo y rivales.
+> El JSON de `public/data/` incluye plantilla, saldo y rivales: quien tenga la URL de Pages puede verlo.
 
 ### Pasos (una sola vez)
 
@@ -179,23 +179,22 @@ git add .
 git commit -m "Initial commit: Mister Fantasy Advisor"
 
 gh auth login          # browser / token
-gh repo create Mister --private --source=. --remote=origin --push
+gh repo create Mister --source=. --remote=origin --push
 ```
 
 Luego en GitHub:
 
 1. **Settings → Pages → Build and deployment**
-   - Source: **Deploy from a branch**
-   - Branch: `main` · folder: **`/public`**
+   - Source: **GitHub Actions** (el workflow `deploy_pages.yml` despliega `public/`)
 2. **Settings → Secrets and variables → Actions** → añade al menos:
    - `MISTER_TOKEN`
    - `MISTER_X_AUTH`
    - `MISTER_PHPSESSID`
    - (opcional) `MISTER_REFRESH_TOKEN`, `MISTER_LEAGUE_ID`, `MISTER_TEAM_ID`
 3. **Actions → Daily data update → Run workflow** (primer snapshot live)
-4. Abre `https://<usuario>.github.io/Mister/` (o la URL que muestre Pages)
+4. URL: `https://<usuario>.github.io/Mister/`
 
-El frontend es estático: **no hay servidor**. Cada mañana la Action regenera el JSON, hace commit y Pages sirve la versión nueva.
+Cada mañana la Action de datos regenera el JSON y hace push; el workflow de Pages vuelve a publicar el sitio.
 
 ## Operación diaria (automatizada)
 
