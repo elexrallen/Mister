@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T14:15:31.114445+00:00",
+  "generated_at": "2026-07-25T14:32:42.024581+00:00",
   "sources": {
     "mister": "api",
     "performance": "disabled_for_live",
@@ -1023,7 +1023,7 @@
     "market_count": 24,
     "rivals_count": 8,
     "buy_now_count": 5,
-    "wait_count": 6,
+    "wait_count": 0,
     "sell_count": 1,
     "clause_bid_count": 4,
     "budget_pressure": "low",
@@ -1299,246 +1299,6 @@
       "rival_demand": 1,
       "budget_fit": "comfortable",
       "priority_score": 40
-    },
-    {
-      "player_id": "65347",
-      "name": "R. Veiga",
-      "position": "DF",
-      "action": "wait",
-      "bid": 4642920,
-      "bid_ceiling": 4857870,
-      "wait_risk": "high",
-      "urgency": "medium",
-      "why": "titularidad 50%; FF media 3.0 · riesgo de perderlo: high",
-      "rival_demand": 3,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 131,
-      "trend": "up",
-      "ff_mister_avg": 2.97,
-      "production_score": 48.5,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "58992",
-      "name": "Á. Djaló",
-      "position": "FW",
-      "action": "wait",
-      "bid": 250560,
-      "bid_ceiling": 262160,
-      "wait_risk": "high",
-      "urgency": "medium",
-      "why": "titularidad 10% · riesgo de perderlo: medium · rivales top con gap: Abel Lindo Cuellar",
-      "rival_demand": 1,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 112,
-      "trend": "up",
-      "ff_mister_avg": null,
-      "production_score": 53.8,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "59642",
-      "name": "J. Musso",
-      "position": "GK",
-      "action": "wait",
-      "bid": 771120,
-      "bid_ceiling": 806820,
-      "wait_risk": "high",
-      "urgency": "medium",
-      "why": "titularidad 10%; FF media 4.0 · riesgo de perderlo: medium · rivales top con gap: Francisco",
-      "rival_demand": 1,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 110,
-      "trend": "up",
-      "ff_mister_avg": 4.0,
-      "production_score": 38.5,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "392",
-      "name": "D. Suárez",
-      "position": "MF",
-      "action": "wait",
-      "bid": 578240,
-      "bid_ceiling": 606040,
-      "wait_risk": "medium",
-      "urgency": "medium",
-      "why": "FF media 3.1 · riesgo de perderlo: medium",
-      "rival_demand": 0,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 104,
-      "trend": "up",
-      "ff_mister_avg": 3.13,
-      "production_score": 43.9,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "71012",
-      "name": "C. López",
-      "position": "GK",
-      "action": "wait",
-      "bid": 320760,
-      "bid_ceiling": 335610,
-      "wait_risk": "high",
-      "urgency": "medium",
-      "why": "FF media 2.6 · riesgo de perderlo: medium · rivales top con gap: Francisco",
-      "rival_demand": 1,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 95,
-      "trend": "up",
-      "ff_mister_avg": 2.64,
-      "production_score": 28.5,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "16868",
-      "name": "A. Guevara",
-      "position": "MF",
-      "action": "wait",
-      "bid": 174720,
-      "bid_ceiling": 183120,
-      "wait_risk": "medium",
-      "urgency": "medium",
-      "why": "FF media 2.4 · riesgo de perderlo: medium",
-      "rival_demand": 0,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 90,
-      "trend": "up",
-      "ff_mister_avg": 2.4,
-      "production_score": 29.8,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "36048",
-      "name": "N. Tenaglia",
-      "position": "DF",
-      "action": "scout",
-      "bid": null,
-      "acquisition_cost": null,
-      "clause": null,
-      "clause_known": false,
-      "market_value": 5621000.0,
-      "owner_team": "Ruben Cisma Sanchez",
-      "owner_rank": 9,
-      "improves_owned": true,
-      "compared_to": "A. Christensen",
-      "upgrade_score": 64.2,
-      "fills_need": true,
-      "budget_fit": null,
-      "wait_risk": "low",
-      "urgency": "low",
-      "trend": null,
-      "mister_avg": 0.0,
-      "points": 0.0,
-      "points_trend": "unknown",
-      "points_phase": "preseason",
-      "prior_avg": null,
-      "rival_demand": 0,
-      "why": "cubre carencia DF; mejora a A. Christensen; en Ruben Cisma Sanchez (#9); carencia, FF 4.1 vs 2.5; señal:preseason; media 0.0 · pts 0; ver cláusula en Mister",
-      "affordable": false,
-      "priority_score": 38
-    },
-    {
-      "player_id": "52189",
-      "name": "A. Pérez",
-      "position": "FW",
-      "action": "scout",
-      "bid": null,
-      "acquisition_cost": null,
-      "clause": null,
-      "clause_known": false,
-      "market_value": 1200000.0,
-      "owner_team": "Adriano de Dios Muñoz",
-      "owner_rank": 7,
-      "improves_owned": true,
-      "compared_to": "P. Aubameyang",
-      "upgrade_score": 55.1,
-      "fills_need": true,
-      "budget_fit": null,
-      "wait_risk": "low",
-      "urgency": "low",
-      "trend": null,
-      "mister_avg": 0.0,
-      "points": 0.0,
-      "points_trend": "unknown",
-      "points_phase": "preseason",
-      "prior_avg": null,
-      "rival_demand": 0,
-      "why": "cubre carencia FW; mejora a P. Aubameyang; en Adriano de Dios Muñoz (#7); carencia, FF media 4.7; señal:preseason; media 0.0 · pts 0; ver cláusula en Mister",
-      "affordable": false,
-      "priority_score": 35
-    },
-    {
-      "player_id": "13005",
-      "name": "A. Lunin",
-      "position": "GK",
-      "action": "scout",
-      "bid": null,
-      "acquisition_cost": null,
-      "clause": null,
-      "clause_known": false,
-      "market_value": 1090000.0,
-      "owner_team": "Ruben Cisma Sanchez",
-      "owner_rank": 9,
-      "improves_owned": true,
-      "compared_to": "L. Júnior",
-      "upgrade_score": 54.8,
-      "fills_need": true,
-      "budget_fit": null,
-      "wait_risk": "low",
-      "urgency": "low",
-      "trend": null,
-      "mister_avg": 0.0,
-      "points": 0.0,
-      "points_trend": "unknown",
-      "points_phase": "preseason",
-      "prior_avg": null,
-      "rival_demand": 0,
-      "why": "cubre carencia GK; mejora a L. Júnior; en Ruben Cisma Sanchez (#9); carencia, FF media 4.8; señal:preseason; media 0.0 · pts 0; ver cláusula en Mister",
-      "affordable": false,
-      "priority_score": 35
-    },
-    {
-      "player_id": "63788",
-      "name": "D. Huijsen",
-      "position": "DF",
-      "action": "scout",
-      "bid": null,
-      "acquisition_cost": null,
-      "clause": null,
-      "clause_known": false,
-      "market_value": 9507000.0,
-      "owner_team": "Adriano de Dios Muñoz",
-      "owner_rank": 7,
-      "improves_owned": true,
-      "compared_to": "A. Christensen",
-      "upgrade_score": 54.0,
-      "fills_need": true,
-      "budget_fit": null,
-      "wait_risk": "low",
-      "urgency": "low",
-      "trend": null,
-      "mister_avg": 0.0,
-      "points": 0.0,
-      "points_trend": "unknown",
-      "points_phase": "preseason",
-      "prior_avg": null,
-      "rival_demand": 0,
-      "why": "cubre carencia DF; mejora a A. Christensen; en Adriano de Dios Muñoz (#7); carencia, FF 3.4 vs 2.5; señal:preseason; media 0.0 · pts 0; ver cláusula en Mister",
-      "affordable": false,
-      "priority_score": 35
     }
   ],
   "rival_upgrades": [
@@ -11428,16 +11188,6 @@
     {
       "type": "clause",
       "priority": "Alta",
-      "title": "Cláusula: F. Jutglà",
-      "reason": "cubre carencia FW; mejora a P. Aubameyang; en Jony (#3); carencia, FF media 4.6; señal:preseason; media 0.0 · pts 0; cláusula 9,102,000 €",
-      "suggested_action": "pagar cláusula",
-      "related_player_ids": [
-        "35059"
-      ]
-    },
-    {
-      "type": "clause",
-      "priority": "Alta",
       "title": "Cláusula: D. Hancko",
       "reason": "cubre carencia DF; mejora a A. Christensen; en Francisco (#1); carencia, FF 4.0 vs 2.5; señal:preseason; media 0.0 · pts 0; cláusula 6,178,500 €",
       "suggested_action": "pagar cláusula",
@@ -11448,51 +11198,21 @@
     {
       "type": "clause",
       "priority": "Alta",
+      "title": "Cláusula: F. Jutglà",
+      "reason": "cubre carencia FW; mejora a P. Aubameyang; en Jony (#3); carencia, FF media 4.6; señal:preseason; media 0.0 · pts 0; cláusula 9,102,000 €",
+      "suggested_action": "pagar cláusula",
+      "related_player_ids": [
+        "35059"
+      ]
+    },
+    {
+      "type": "clause",
+      "priority": "Alta",
       "title": "Cláusula: R. Asencio",
       "reason": "cubre carencia DF; mejora a A. Christensen; en Abel Lindo Cuellar (#2); carencia, FF 4.3 vs 2.5; señal:preseason; media 0.0 · pts 0; cláusula 1,758,000 €",
       "suggested_action": "pagar cláusula",
       "related_player_ids": [
         "60290"
-      ]
-    },
-    {
-      "type": "warn_rival_bid",
-      "priority": "Alta",
-      "title": "Rivales top quieren GK: C. López",
-      "reason": "Gap en Francisco. Si esperas, riesgo alto de perderlo.",
-      "suggested_action": "pujar ya o vigilar",
-      "related_player_ids": [
-        "71012"
-      ]
-    },
-    {
-      "type": "warn_rival_bid",
-      "priority": "Alta",
-      "title": "Rivales top quieren GK: J. Musso",
-      "reason": "Gap en Francisco. Si esperas, riesgo alto de perderlo.",
-      "suggested_action": "pujar ya o vigilar",
-      "related_player_ids": [
-        "59642"
-      ]
-    },
-    {
-      "type": "warn_rival_bid",
-      "priority": "Alta",
-      "title": "Rivales top quieren FW: Á. Djaló",
-      "reason": "Gap en Abel Lindo Cuellar. Si esperas, riesgo alto de perderlo.",
-      "suggested_action": "pujar ya o vigilar",
-      "related_player_ids": [
-        "58992"
-      ]
-    },
-    {
-      "type": "warn_rival_bid",
-      "priority": "Alta",
-      "title": "Rivales top quieren FW: T. Martínez",
-      "reason": "Gap en Abel Lindo Cuellar. Si esperas, riesgo alto de perderlo.",
-      "suggested_action": "pujar ya o vigilar",
-      "related_player_ids": [
-        "59641"
       ]
     },
     {
@@ -11509,21 +11229,21 @@
     {
       "type": "bid",
       "priority": "Alta",
-      "title": "Encaja en tu once: K. Salas",
-      "reason": "Cubre DF. Precio 7,101,000 €. Tendencia valor: up. Media FF Mister Mixto 4.8.",
+      "title": "Encaja en tu once: A. Guevara",
+      "reason": "Cubre MF. Precio 168,000 €. Tendencia valor: up. Media FF Mister Mixto 2.4.",
       "suggested_action": "comprar",
       "related_player_ids": [
-        "49424"
+        "16868"
       ]
     },
     {
       "type": "bid",
       "priority": "Alta",
-      "title": "Encaja en tu once: J. Aramburu",
-      "reason": "Cubre DF. Precio 1,897,000 €. Tendencia valor: up. Media FF Mister Mixto 3.3.",
+      "title": "Encaja en tu once: C. López",
+      "reason": "Cubre GK. Precio 297,000 €. Tendencia valor: up. Media FF Mister Mixto 2.6.",
       "suggested_action": "comprar",
       "related_player_ids": [
-        "56925"
+        "71012"
       ]
     },
     {
@@ -11539,21 +11259,61 @@
     {
       "type": "bid",
       "priority": "Alta",
-      "title": "Encaja en tu once: R. Veiga",
-      "reason": "Cubre DF. Precio 4,299,000 €. Tendencia valor: up. Media FF Mister Mixto 3.0.",
+      "title": "Encaja en tu once: D. Suárez",
+      "reason": "Cubre MF. Precio 556,000 €. Tendencia valor: up. Media FF Mister Mixto 3.1.",
       "suggested_action": "comprar",
       "related_player_ids": [
-        "65347"
+        "392"
       ]
     },
     {
       "type": "bid",
       "priority": "Alta",
-      "title": "Encaja en tu once: S. Boselli",
-      "reason": "Cubre DF. Precio 426,000 €. Tendencia valor: up. Media FF Mister Mixto 2.5.",
+      "title": "Encaja en tu once: J. Aramburu",
+      "reason": "Cubre DF. Precio 1,897,000 €. Tendencia valor: up. Media FF Mister Mixto 3.3.",
       "suggested_action": "comprar",
       "related_player_ids": [
-        "68497"
+        "56925"
+      ]
+    },
+    {
+      "type": "bid",
+      "priority": "Alta",
+      "title": "Encaja en tu once: J. Musso",
+      "reason": "Cubre GK. Precio 714,000 €. Tendencia valor: up. Media FF Mister Mixto 4.0.",
+      "suggested_action": "comprar",
+      "related_player_ids": [
+        "59642"
+      ]
+    },
+    {
+      "type": "bid",
+      "priority": "Alta",
+      "title": "Encaja en tu once: K. Salas",
+      "reason": "Cubre DF. Precio 7,101,000 €. Tendencia valor: up. Media FF Mister Mixto 4.8.",
+      "suggested_action": "comprar",
+      "related_player_ids": [
+        "49424"
+      ]
+    },
+    {
+      "type": "bid",
+      "priority": "Alta",
+      "title": "Encaja en tu once: M. Diarra",
+      "reason": "Cubre DF. Precio 190,000 €. Tendencia valor: up. Media FF Mister Mixto 1.7.",
+      "suggested_action": "comprar",
+      "related_player_ids": [
+        "59109"
+      ]
+    },
+    {
+      "type": "bid",
+      "priority": "Alta",
+      "title": "Encaja en tu once: R. Veiga",
+      "reason": "Cubre DF. Precio 4,299,000 €. Tendencia valor: up. Media FF Mister Mixto 3.0.",
+      "suggested_action": "comprar",
+      "related_player_ids": [
+        "65347"
       ]
     }
   ],

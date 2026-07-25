@@ -915,16 +915,19 @@ def annotate_market_budget_risk(
 
 
 def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Orden y caps por acción."""
-    order = {
-        "buy_now": 0,
-        "clause_bid": 1,
-        "sell": 2,
-        "avoid": 3,
-        "wait": 4,
-        "scout": 5,
+    """
+    Una sola cola 'a tiro hecho': lo más accionable y urgente primero.
+    Orden: score unificado (tipo de acción + priority_score + urgencia), luego caps.
+    """
+    action_base = {
+        "buy_now": 1000,
+        "clause_bid": 920,
+        "sell": 840,
+        "avoid": 760,
+        "wait": 200,
+        "scout": 160,
     }
-    urg = {"high": 0, "medium": 1, "low": 2}
+    urg_bonus = {"high": 40, "medium": 15, "low": 0}
     for item in plan:
         if item.get("priority_score") is None:
             act = item.get("action")
@@ -934,28 +937,36 @@ def finalize_action_plan(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
                 item["priority_score"] = priority_score_clause(item)
             else:
                 item["priority_score"] = priority_score_buy(item)
+        base = action_base.get(item.get("action"), 0)
+        item["_queue_rank"] = (
+            base
+            + int(item.get("priority_score") or 0)
+            + urg_bonus.get(item.get("urgency"), 0)
+            + min(20, int(item.get("rival_demand") or 0) * 4)
+        )
     plan.sort(
         key=lambda x: (
-            order.get(x.get("action"), 9),
+            -int(x.get("_queue_rank") or 0),
             -int(x.get("priority_score") or 0),
-            urg.get(x.get("urgency"), 9),
-            -(x.get("rival_demand") or 0),
         )
     )
     capped: list[dict[str, Any]] = []
-    per_action = {k: 0 for k in order}
+    per_action: dict[str, int] = {}
     limits = {
         "buy_now": 5,
         "clause_bid": 4,
-        "wait": 6,
-        "avoid": 4,
+        "wait": 5,
+        "avoid": 3,
         "sell": 5,
-        "scout": 4,
+        "scout": 3,
     }
     for item in plan:
         a = item.get("action") or ""
         if per_action.get(a, 0) >= limits.get(a, 3):
             continue
         per_action[a] = per_action.get(a, 0) + 1
-        capped.append(item)
+        clean = {k: v for k, v in item.items() if k != "_queue_rank"}
+        capped.append(clean)
+        if len(capped) >= 12:
+            break
     return capped

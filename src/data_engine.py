@@ -1210,6 +1210,9 @@ def build_payload() -> dict[str, Any]:
             continue
         seen_t.add(r["title"])
         rec_unique.append(r)
+    # Orden intuitivo: Alta → Media → Baja (tiro hecho)
+    _prio = {"Alta": 0, "Media": 1, "Baja": 2}
+    rec_unique.sort(key=lambda r: (_prio.get(r.get("priority", ""), 9), r.get("title", "")))
     recommendations = rec_unique[:14]
 
     action_plan = build_action_plan(

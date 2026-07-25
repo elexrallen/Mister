@@ -100,7 +100,7 @@
     const chips = [];
     if (ext.is_chollo_ext) chips.push(`<span class="badge badge-mint">Chollo</span>`);
     if (ext.is_recommendation_ext) chips.push(`<span class="badge badge-titular">Reco</span>`);
-    if (p.is_top_ff || ext.is_top_ff) chips.push(`<span class="badge badge-mint">TOP FF</span>`);
+    if (p.is_top_ff || ext.is_top_ff) chips.push(`<span class="badge badge-mint">TOP Mister</span>`);
     if (ext.points_streak === "up") chips.push(`<span class="badge badge-mint">Racha ↑</span>`);
     if (ext.points_streak === "down") chips.push(`<span class="badge badge-baja-ext">Racha ↓</span>`);
     if (p.fills_structural && p.structural_label) {
@@ -115,7 +115,7 @@
   const ffAvgLine = (p) => {
     const avg = p.ff_mister_avg ?? (p.external && p.external.ff_mister_avg);
     if (avg == null) return "";
-    return `<span class="badge badge-duda">FF ${Number(avg).toFixed(1)}</span>`;
+    return `<span class="badge badge-duda">Mister ${Number(avg).toFixed(1)}</span>`;
   };
 
   const riskBadge = (risk) => {
@@ -265,79 +265,94 @@
     const box = document.getElementById("action-queue");
     if (!box) return;
     const plan = data.action_plan || [];
-    const groups = {
-      buy_now: { title: "Pujar", items: [], cls: "action-buy" },
-      clause_bid: { title: "Cláusula", items: [], cls: "action-buy" },
-      sell: { title: "Vender", items: [], cls: "action-sell" },
-      avoid: { title: "Evitar", items: [], cls: "action-avoid" },
-      wait: { title: "Esperar", items: [], cls: "action-wait" },
-      scout: { title: "Vigilar", items: [], cls: "action-wait" },
+    const labels = {
+      buy_now: { title: "Pujar", cls: "act-buy" },
+      clause_bid: { title: "Cláusula", cls: "act-clause" },
+      sell: { title: "Vender", cls: "act-sell" },
+      avoid: { title: "Evitar", cls: "act-avoid" },
+      wait: { title: "Esperar", cls: "act-wait" },
+      scout: { title: "Vigilar", cls: "act-scout" },
     };
-    plan.forEach((a) => {
-      if (groups[a.action]) groups[a.action].items.push(a);
-    });
-    // Mostrar columnas con contenido primero; siempre Pujar/Vender/Cláusula/Esperar
-    const order = ["buy_now", "clause_bid", "sell", "wait", "scout", "avoid"];
-    box.innerHTML = order
-      .map((key) => {
-        const g = groups[key];
-        const items = g.items.slice(0, 4);
-        if (!items.length && !["buy_now", "sell", "clause_bid", "wait"].includes(key)) {
-          return "";
-        }
-        const body = items.length
-          ? items
-              .map((a) => {
-                const tab =
-                  a.action === "sell" ? "squad" : a.action === "clause_bid" || a.action === "scout" ? "radar" : "market";
-                const rivals =
-                  (a.rival_targets || [])
-                    .map((t) => t.team_name)
-                    .filter(Boolean)
-                    .slice(0, 2)
-                    .join(", ");
-                const clauseLabel =
-                  a.action === "clause_bid" && a.clause != null
-                    ? `<span class="badge badge-mint">Cláusula ${formatMoney(a.clause)}</span>`
-                    : a.action === "scout"
-                      ? `<span class="badge badge-duda">Ver cláusula</span>`
-                      : "";
-                return `<button type="button" class="action-item" data-focus-id="${escapeHtml(
-                  a.player_id
-                )}" data-focus-tab="${tab}">
-              <div class="font-medium text-white text-sm">${escapeHtml(a.name)}</div>
-              <div class="text-[11px] text-slate-400 mt-0.5">${escapeHtml(a.why || "")}</div>
-              ${
-                rivals
-                  ? `<div class="text-[10px] text-slate-500 mt-0.5">Interesados: ${escapeHtml(rivals)}</div>`
-                  : ""
-              }
-              ${
-                a.compared_to
-                  ? `<div class="text-[10px] text-mint-500/80 mt-0.5">Mejora a ${escapeHtml(a.compared_to)}</div>`
-                  : ""
-              }
-              <div class="flex flex-wrap gap-1 mt-1">
-                ${riskBadge(a.wait_risk || a.sell_risk)}
-                ${budgetBadge(a.budget_fit)}
-                ${sellReasonBadge(a.sell_reason)}
-                ${a.mister_avg != null || a.points != null ? scoringLine(a) : ""}
-                ${a.ff_mister_avg != null ? `<span class="badge badge-duda">FF ${Number(a.ff_mister_avg).toFixed(1)}</span>` : ""}
-                ${pointsTrendBadge(a.points_trend)}
-                ${clauseLabel}
-                ${a.bid != null ? `<span class="text-mint-400 text-xs">${formatMoney(a.bid)}</span>` : ""}
+
+    if (!plan.length) {
+      box.innerHTML = `<p class="queue-empty">Sin acciones claras hoy.</p>`;
+      return;
+    }
+
+    box.className = "action-queue-list";
+    box.setAttribute("role", "list");
+    box.innerHTML = plan
+      .slice(0, 10)
+      .map((a, idx) => {
+        const meta = labels[a.action] || { title: a.action || "Acción", cls: "act-wait" };
+        const tab =
+          a.action === "sell" ? "squad" : a.action === "clause_bid" || a.action === "scout" ? "radar" : "market";
+        const rivals = (a.rival_targets || [])
+          .map((t) => t.team_name)
+          .filter(Boolean)
+          .slice(0, 2)
+          .join(", ");
+        const money =
+          a.action === "clause_bid" && a.clause != null
+            ? formatMoney(a.clause)
+            : a.bid != null
+              ? formatMoney(a.bid)
+              : "";
+        const primaryChips = [
+          riskBadge(a.wait_risk || a.sell_risk),
+          budgetBadge(a.budget_fit),
+          a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
+        ]
+          .filter(Boolean)
+          .join("");
+        const secondaryChips = [
+          sellReasonBadge(a.sell_reason),
+          a.mister_avg != null || a.points != null ? scoringLine(a) : "",
+          a.ff_mister_avg != null
+            ? `<span class="badge badge-duda">Mister ${Number(a.ff_mister_avg).toFixed(1)}</span>`
+            : "",
+          pointsTrendBadge(a.points_trend),
+        ]
+          .filter(Boolean)
+          .join("");
+        return `<button type="button" class="queue-item ${meta.cls}" role="listitem" data-focus-id="${escapeHtml(
+          a.player_id
+        )}" data-focus-tab="${tab}" aria-label="${escapeHtml(meta.title)} ${escapeHtml(
+          a.name || ""
+        )}, prioridad ${idx + 1}">
+          <span class="queue-rank" aria-hidden="true">${idx + 1}</span>
+          <div class="queue-body">
+            <div class="queue-primary">
+              <div class="queue-headline">
+                <span class="queue-action">${escapeHtml(meta.title)}</span>
+                <span class="queue-name">${escapeHtml(a.name || "")}</span>
               </div>
-            </button>`;
-              })
-              .join("")
-          : `<p class="text-slate-600 text-xs">Nada hoy</p>`;
-        return `<div class="action-col ${g.cls}">
-          <h3 class="text-xs uppercase tracking-wide text-slate-400 mb-2">${g.title} · ${g.items.length}</h3>
-          <div class="space-y-2">${body}</div>
-        </div>`;
+              ${money ? `<span class="queue-money">${money}</span>` : ""}
+            </div>
+            ${a.why ? `<p class="queue-why">${escapeHtml(a.why)}</p>` : ""}
+            ${
+              rivals || a.compared_to
+                ? `<p class="queue-meta">${[
+                    a.compared_to ? `Mejora a ${escapeHtml(a.compared_to)}` : "",
+                    rivals ? `Interesados: ${escapeHtml(rivals)}` : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}</p>`
+                : ""
+            }
+            ${
+              primaryChips || secondaryChips
+                ? `<div class="queue-chips">
+              <span class="queue-chips-main">${primaryChips}</span>
+              ${secondaryChips ? `<span class="queue-chips-more">${secondaryChips}</span>` : ""}
+            </div>`
+                : ""
+            }
+          </div>
+        </button>`;
       })
-      .filter(Boolean)
       .join("");
+
     box.querySelectorAll("[data-focus-id]").forEach((btn) => {
       btn.addEventListener("click", () => {
         focusPlayer(btn.getAttribute("data-focus-id"), btn.getAttribute("data-focus-tab") || "market");
@@ -347,26 +362,30 @@
 
   function renderRecommendations(data) {
     const box = document.getElementById("recommendations");
-    const recs = data.recommendations || [];
+    const prioRank = { Alta: 0, Media: 1, Baja: 2 };
+    const recs = [...(data.recommendations || [])].sort(
+      (a, b) => (prioRank[a.priority] ?? 9) - (prioRank[b.priority] ?? 9)
+    );
     if (!recs.length) {
       box.innerHTML = `<p class="text-slate-500 text-sm">Sin recomendaciones para hoy.</p>`;
       return;
     }
     box.innerHTML = recs
       .map(
-        (r) => `
+        (r, idx) => `
       <article class="rec-card" ${
         (r.related_player_ids || [])[0]
           ? `data-focus-id="${escapeHtml((r.related_player_ids || [])[0])}" role="button" tabindex="0"`
           : ""
       }>
-        <div class="flex flex-wrap items-center gap-2 mb-1">
+        <div class="rec-top">
+          <span class="rec-rank" aria-hidden="true">#${idx + 1}</span>
           ${priorityBadge(r.priority)}
-          <span class="text-xs text-slate-500 uppercase tracking-wide">${escapeHtml(r.type || "")}</span>
+          <span class="rec-type">${escapeHtml(r.type || "")}</span>
         </div>
-        <h3 class="font-semibold text-white text-sm md:text-base">${escapeHtml(r.title)}</h3>
-        <p class="text-slate-400 text-sm mt-1">${escapeHtml(r.reason)}</p>
-        <p class="text-mint-500 text-xs mt-2 font-medium">Acción: ${escapeHtml(r.suggested_action || "—")}</p>
+        <h3 class="rec-title">${escapeHtml(r.title)}</h3>
+        <p class="rec-reason">${escapeHtml(r.reason)}</p>
+        <p class="rec-action">Acción: ${escapeHtml(r.suggested_action || "—")}</p>
       </article>`
       )
       .join("");
