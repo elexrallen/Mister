@@ -1,0 +1,77 @@
+# Actualización diaria del dataset Mister Fantasy Advisor.
+# Genera public/data/latest_data.json + snapshot en history/ y lo commitea.
+# GitHub Pages (rama main → /public) se regenera solo tras el push.
+
+name: Daily data update
+
+on:
+  schedule:
+    # 06:00 UTC ≈ 08:00 CEST (mañana antes del mercado)
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run data engine
+        env:
+          # Auth Mister (DevTools → POST /ajax/balance → Cookie + x-auth)
+          MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
+          MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
+          MISTER_PHPSESSID: ${{ secrets.MISTER_PHPSESSID }}
+          MISTER_REFRESH_TOKEN: ${{ secrets.MISTER_REFRESH_TOKEN }}
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+          MISTER_LEAGUE_ID: ${{ secrets.MISTER_LEAGUE_ID }}
+          MISTER_TEAM_ID: ${{ secrets.MISTER_TEAM_ID }}
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+        run: python src/data_engine.py
+
+      - name: Verify live data (not mock fallback)
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          from pathlib import Path
+          path = Path("public/data/latest_data.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          meta = (data.get("meta") or {}).get("live_meta") or {}
+          source = str(meta.get("source") or "")
+          has_secrets = bool(os.environ.get("MISTER_TOKEN") or os.environ.get("MISTER_COOKIE"))
+          print(f"source={source!r} balance_ok={meta.get('balance_ok')} market_ok={meta.get('market_ok')}")
+          if has_secrets and (not source or "mock" in source.lower() or meta.get("balance_ok") is False):
+              print("::error::Secrets presentes pero el motor no obtuvo datos live de Mister.")
+              print("Renueva MISTER_TOKEN + MISTER_X_AUTH (+ PHPSESSID) en Settings → Secrets.")
+              sys.exit(1)
+          if not has_secrets:
+              print("::warning::Sin secrets de Mister → snapshot mock/demo. Configura secrets para datos reales.")
+          PY
+        env:
+          MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+
+      - name: Commit updated JSON (if changed)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/latest_data.json public/data/history/
+          if git diff --staged --quiet; then
+            echo "No data changes to commit."
+          else
+            git commit -m "chore: update fantasy data snapshot [skip ci]"
+            git push
+          fi

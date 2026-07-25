@@ -1,0 +1,212 @@
+{
+  "provider": "seed",
+  "league": "LaLiga",
+  "seasons_covered": ["2023/24", "2024/25", "2025/26"],
+  "players": [
+    {"id": "p001", "name": "Unai Simón", "position": "GK", "team": "Athletic", "seasons": [
+      {"year": "2023/24", "apps": 36, "minutes": 3240, "starts": 36, "goals": 0, "assists": 0, "conceded": 38, "ppg_proxy": 5.1},
+      {"year": "2024/25", "apps": 34, "minutes": 3060, "starts": 34, "goals": 0, "assists": 1, "conceded": 35, "ppg_proxy": 5.4},
+      {"year": "2025/26", "apps": 18, "minutes": 1620, "starts": 18, "goals": 0, "assists": 0, "conceded": 16, "ppg_proxy": 5.6}
+    ]},
+    {"id": "p002", "name": "Álex Remiro", "position": "GK", "team": "Real Sociedad", "seasons": [
+      {"year": "2023/24", "apps": 37, "minutes": 3330, "starts": 37, "goals": 0, "assists": 0, "conceded": 42, "ppg_proxy": 4.6},
+      {"year": "2024/25", "apps": 30, "minutes": 2700, "starts": 30, "goals": 0, "assists": 0, "conceded": 40, "ppg_proxy": 4.3},
+      {"year": "2025/26", "apps": 10, "minutes": 900, "starts": 10, "goals": 0, "assists": 0, "conceded": 14, "ppg_proxy": 4.0}
+    ]},
+    {"id": "p003", "name": "Dani Carvajal", "position": "DF", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 28, "minutes": 2300, "starts": 26, "goals": 4, "assists": 5, "conceded": 0, "ppg_proxy": 5.8},
+      {"year": "2024/25", "apps": 22, "minutes": 1700, "starts": 20, "goals": 1, "assists": 3, "conceded": 0, "ppg_proxy": 4.9},
+      {"year": "2025/26", "apps": 8, "minutes": 520, "starts": 6, "goals": 0, "assists": 1, "conceded": 0, "ppg_proxy": 3.8}
+    ]},
+    {"id": "p004", "name": "Aymeric Laporte", "position": "DF", "team": "Athletic", "seasons": [
+      {"year": "2023/24", "apps": 29, "minutes": 2500, "starts": 28, "goals": 2, "assists": 1, "conceded": 0, "ppg_proxy": 5.2},
+      {"year": "2024/25", "apps": 32, "minutes": 2800, "starts": 31, "goals": 3, "assists": 0, "conceded": 0, "ppg_proxy": 5.5},
+      {"year": "2025/26", "apps": 17, "minutes": 1480, "starts": 17, "goals": 1, "assists": 0, "conceded": 0, "ppg_proxy": 5.4}
+    ]},
+    {"id": "p005", "name": "Pau Cubarsí", "position": "DF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 19, "minutes": 1600, "starts": 18, "goals": 0, "assists": 1, "conceded": 0, "ppg_proxy": 5.0},
+      {"year": "2024/25", "apps": 35, "minutes": 3000, "starts": 34, "goals": 1, "assists": 2, "conceded": 0, "ppg_proxy": 6.1},
+      {"year": "2025/26", "apps": 18, "minutes": 1600, "starts": 18, "goals": 1, "assists": 1, "conceded": 0, "ppg_proxy": 6.3}
+    ]},
+    {"id": "p006", "name": "Miguel Gutiérrez", "position": "DF", "team": "Girona", "seasons": [
+      {"year": "2023/24", "apps": 35, "minutes": 3000, "starts": 34, "goals": 2, "assists": 6, "conceded": 0, "ppg_proxy": 5.4},
+      {"year": "2024/25", "apps": 33, "minutes": 2850, "starts": 32, "goals": 1, "assists": 5, "conceded": 0, "ppg_proxy": 5.1},
+      {"year": "2025/26", "apps": 16, "minutes": 1400, "starts": 15, "goals": 1, "assists": 3, "conceded": 0, "ppg_proxy": 5.2}
+    ]},
+    {"id": "p007", "name": "Pedri", "position": "MF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 24, "minutes": 1800, "starts": 20, "goals": 4, "assists": 5, "conceded": 0, "ppg_proxy": 5.6},
+      {"year": "2024/25", "apps": 37, "minutes": 3100, "starts": 35, "goals": 6, "assists": 8, "conceded": 0, "ppg_proxy": 6.8},
+      {"year": "2025/26", "apps": 17, "minutes": 1450, "starts": 16, "goals": 3, "assists": 4, "conceded": 0, "ppg_proxy": 6.9}
+    ]},
+    {"id": "p008", "name": "Fede Valverde", "position": "MF", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 37, "minutes": 3000, "starts": 34, "goals": 2, "assists": 7, "conceded": 0, "ppg_proxy": 5.9},
+      {"year": "2024/25", "apps": 36, "minutes": 3100, "starts": 35, "goals": 5, "assists": 6, "conceded": 0, "ppg_proxy": 6.2},
+      {"year": "2025/26", "apps": 18, "minutes": 1550, "starts": 17, "goals": 2, "assists": 3, "conceded": 0, "ppg_proxy": 6.0}
+    ]},
+    {"id": "p009", "name": "Aleix García", "position": "MF", "team": "Bayer Leverkusen", "seasons": [
+      {"year": "2023/24", "apps": 36, "minutes": 3100, "starts": 35, "goals": 3, "assists": 7, "conceded": 0, "ppg_proxy": 5.7},
+      {"year": "2024/25", "apps": 28, "minutes": 2200, "starts": 25, "goals": 2, "assists": 4, "conceded": 0, "ppg_proxy": 4.8},
+      {"year": "2025/26", "apps": 14, "minutes": 1000, "starts": 12, "goals": 1, "assists": 2, "conceded": 0, "ppg_proxy": 4.5}
+    ]},
+    {"id": "p010", "name": "Álex Baena", "position": "MF", "team": "Villarreal", "seasons": [
+      {"year": "2023/24", "apps": 35, "minutes": 2800, "starts": 32, "goals": 7, "assists": 10, "conceded": 0, "ppg_proxy": 6.0},
+      {"year": "2024/25", "apps": 34, "minutes": 2900, "starts": 33, "goals": 8, "assists": 9, "conceded": 0, "ppg_proxy": 6.3},
+      {"year": "2025/26", "apps": 16, "minutes": 1350, "starts": 15, "goals": 4, "assists": 5, "conceded": 0, "ppg_proxy": 6.4}
+    ]},
+    {"id": "p011", "name": "Robert Lewandowski", "position": "FW", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 35, "minutes": 2900, "starts": 34, "goals": 19, "assists": 8, "conceded": 0, "ppg_proxy": 6.5},
+      {"year": "2024/25", "apps": 36, "minutes": 3000, "starts": 35, "goals": 27, "assists": 5, "conceded": 0, "ppg_proxy": 7.2},
+      {"year": "2025/26", "apps": 17, "minutes": 1400, "starts": 16, "goals": 12, "assists": 3, "conceded": 0, "ppg_proxy": 7.0}
+    ]},
+    {"id": "p012", "name": "Ante Budimir", "position": "FW", "team": "Osasuna", "seasons": [
+      {"year": "2023/24", "apps": 34, "minutes": 2700, "starts": 30, "goals": 17, "assists": 3, "conceded": 0, "ppg_proxy": 6.1},
+      {"year": "2024/25", "apps": 36, "minutes": 3000, "starts": 34, "goals": 21, "assists": 2, "conceded": 0, "ppg_proxy": 6.6},
+      {"year": "2025/26", "apps": 18, "minutes": 1500, "starts": 17, "goals": 10, "assists": 1, "conceded": 0, "ppg_proxy": 6.5}
+    ]},
+    {"id": "p013", "name": "Iago Aspas", "position": "FW", "team": "Celta", "seasons": [
+      {"year": "2023/24", "apps": 32, "minutes": 2600, "starts": 30, "goals": 9, "assists": 8, "conceded": 0, "ppg_proxy": 5.5},
+      {"year": "2024/25", "apps": 30, "minutes": 2400, "starts": 28, "goals": 8, "assists": 6, "conceded": 0, "ppg_proxy": 5.2},
+      {"year": "2025/26", "apps": 14, "minutes": 1100, "starts": 12, "goals": 4, "assists": 3, "conceded": 0, "ppg_proxy": 5.0}
+    ]},
+    {"id": "p014", "name": "Bryan Zaragoza", "position": "MF", "team": "Osasuna", "seasons": [
+      {"year": "2023/24", "apps": 25, "minutes": 1600, "starts": 18, "goals": 3, "assists": 4, "conceded": 0, "ppg_proxy": 4.4},
+      {"year": "2024/25", "apps": 28, "minutes": 1900, "starts": 22, "goals": 4, "assists": 5, "conceded": 0, "ppg_proxy": 4.8},
+      {"year": "2025/26", "apps": 15, "minutes": 1000, "starts": 12, "goals": 2, "assists": 3, "conceded": 0, "ppg_proxy": 4.7}
+    ]},
+    {"id": "p015", "name": "Óscar Mingueza", "position": "DF", "team": "Celta", "seasons": [
+      {"year": "2023/24", "apps": 34, "minutes": 2800, "starts": 32, "goals": 2, "assists": 4, "conceded": 0, "ppg_proxy": 4.9},
+      {"year": "2024/25", "apps": 33, "minutes": 2700, "starts": 31, "goals": 3, "assists": 5, "conceded": 0, "ppg_proxy": 5.1},
+      {"year": "2025/26", "apps": 16, "minutes": 1300, "starts": 15, "goals": 1, "assists": 2, "conceded": 0, "ppg_proxy": 5.0}
+    ]},
+    {"id": "p020", "name": "Vinícius Júnior", "position": "FW", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 26, "minutes": 2100, "starts": 24, "goals": 15, "assists": 7, "conceded": 0, "ppg_proxy": 7.0},
+      {"year": "2024/25", "apps": 34, "minutes": 2800, "starts": 32, "goals": 18, "assists": 10, "conceded": 0, "ppg_proxy": 7.4},
+      {"year": "2025/26", "apps": 17, "minutes": 1450, "starts": 16, "goals": 9, "assists": 5, "conceded": 0, "ppg_proxy": 7.3}
+    ]},
+    {"id": "p021", "name": "Jude Bellingham", "position": "MF", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 28, "minutes": 2400, "starts": 27, "goals": 19, "assists": 6, "conceded": 0, "ppg_proxy": 7.5},
+      {"year": "2024/25", "apps": 35, "minutes": 2900, "starts": 33, "goals": 11, "assists": 9, "conceded": 0, "ppg_proxy": 6.8},
+      {"year": "2025/26", "apps": 16, "minutes": 1350, "starts": 15, "goals": 6, "assists": 4, "conceded": 0, "ppg_proxy": 6.9}
+    ]},
+    {"id": "p022", "name": "Lamine Yamal", "position": "FW", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 37, "minutes": 2600, "starts": 28, "goals": 5, "assists": 10, "conceded": 0, "ppg_proxy": 5.8},
+      {"year": "2024/25", "apps": 35, "minutes": 3000, "starts": 34, "goals": 12, "assists": 15, "conceded": 0, "ppg_proxy": 7.6},
+      {"year": "2025/26", "apps": 18, "minutes": 1550, "starts": 17, "goals": 8, "assists": 7, "conceded": 0, "ppg_proxy": 7.8}
+    ]},
+    {"id": "p023", "name": "Isco", "position": "MF", "team": "Betis", "seasons": [
+      {"year": "2023/24", "apps": 30, "minutes": 2400, "starts": 28, "goals": 8, "assists": 6, "conceded": 0, "ppg_proxy": 5.9},
+      {"year": "2024/25", "apps": 28, "minutes": 2200, "starts": 26, "goals": 6, "assists": 5, "conceded": 0, "ppg_proxy": 5.5},
+      {"year": "2025/26", "apps": 15, "minutes": 1200, "starts": 14, "goals": 3, "assists": 4, "conceded": 0, "ppg_proxy": 5.4}
+    ]},
+    {"id": "p024", "name": "Álvaro Negredo", "position": "FW", "team": "Cádiz", "seasons": [
+      {"year": "2023/24", "apps": 20, "minutes": 900, "starts": 8, "goals": 2, "assists": 1, "conceded": 0, "ppg_proxy": 2.8},
+      {"year": "2024/25", "apps": 15, "minutes": 600, "starts": 5, "goals": 1, "assists": 0, "conceded": 0, "ppg_proxy": 2.4},
+      {"year": "2025/26", "apps": 6, "minutes": 200, "starts": 1, "goals": 0, "assists": 0, "conceded": 0, "ppg_proxy": 1.5}
+    ]},
+    {"id": "p025", "name": "Antonio Rüdiger", "position": "DF", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 33, "minutes": 2900, "starts": 32, "goals": 1, "assists": 1, "conceded": 0, "ppg_proxy": 5.3},
+      {"year": "2024/25", "apps": 34, "minutes": 3000, "starts": 33, "goals": 2, "assists": 0, "conceded": 0, "ppg_proxy": 5.6},
+      {"year": "2025/26", "apps": 17, "minutes": 1500, "starts": 17, "goals": 1, "assists": 0, "conceded": 0, "ppg_proxy": 5.5}
+    ]},
+    {"id": "p026", "name": "Takefusa Kubo", "position": "MF", "team": "Real Sociedad", "seasons": [
+      {"year": "2023/24", "apps": 32, "minutes": 2500, "starts": 28, "goals": 7, "assists": 5, "conceded": 0, "ppg_proxy": 5.6},
+      {"year": "2024/25", "apps": 30, "minutes": 2400, "starts": 27, "goals": 6, "assists": 6, "conceded": 0, "ppg_proxy": 5.7},
+      {"year": "2025/26", "apps": 15, "minutes": 1200, "starts": 14, "goals": 4, "assists": 3, "conceded": 0, "ppg_proxy": 5.8}
+    ]},
+    {"id": "p027", "name": "Jan Oblak", "position": "GK", "team": "Atlético", "seasons": [
+      {"year": "2023/24", "apps": 36, "minutes": 3240, "starts": 36, "goals": 0, "assists": 0, "conceded": 32, "ppg_proxy": 5.8},
+      {"year": "2024/25", "apps": 35, "minutes": 3150, "starts": 35, "goals": 0, "assists": 0, "conceded": 30, "ppg_proxy": 6.0},
+      {"year": "2025/26", "apps": 18, "minutes": 1620, "starts": 18, "goals": 0, "assists": 0, "conceded": 14, "ppg_proxy": 6.1}
+    ]},
+    {"id": "p028", "name": "Iñaki Williams", "position": "FW", "team": "Athletic", "seasons": [
+      {"year": "2023/24", "apps": 34, "minutes": 2800, "starts": 32, "goals": 12, "assists": 5, "conceded": 0, "ppg_proxy": 5.7},
+      {"year": "2024/25", "apps": 36, "minutes": 3000, "starts": 34, "goals": 11, "assists": 6, "conceded": 0, "ppg_proxy": 5.8},
+      {"year": "2025/26", "apps": 17, "minutes": 1400, "starts": 16, "goals": 6, "assists": 3, "conceded": 0, "ppg_proxy": 5.9}
+    ]},
+    {"id": "p029", "name": "Marc Casadó", "position": "MF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 8, "minutes": 400, "starts": 3, "goals": 0, "assists": 1, "conceded": 0, "ppg_proxy": 3.2},
+      {"year": "2024/25", "apps": 28, "minutes": 2100, "starts": 24, "goals": 1, "assists": 3, "conceded": 0, "ppg_proxy": 4.9},
+      {"year": "2025/26", "apps": 12, "minutes": 900, "starts": 10, "goals": 1, "assists": 2, "conceded": 0, "ppg_proxy": 5.1}
+    ]},
+    {"id": "p040", "name": "Thibaut Courtois", "position": "GK", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 4, "minutes": 360, "starts": 4, "goals": 0, "assists": 0, "conceded": 3, "ppg_proxy": 4.0},
+      {"year": "2024/25", "apps": 32, "minutes": 2880, "starts": 32, "goals": 0, "assists": 0, "conceded": 28, "ppg_proxy": 6.2},
+      {"year": "2025/26", "apps": 16, "minutes": 1440, "starts": 16, "goals": 0, "assists": 0, "conceded": 12, "ppg_proxy": 6.4}
+    ]},
+    {"id": "p041", "name": "Joan García", "position": "GK", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 28, "minutes": 2520, "starts": 28, "goals": 0, "assists": 0, "conceded": 30, "ppg_proxy": 5.0},
+      {"year": "2024/25", "apps": 33, "minutes": 2970, "starts": 33, "goals": 0, "assists": 0, "conceded": 28, "ppg_proxy": 5.5},
+      {"year": "2025/26", "apps": 10, "minutes": 900, "starts": 10, "goals": 0, "assists": 0, "conceded": 8, "ppg_proxy": 5.8}
+    ]},
+    {"id": "p042", "name": "Dean Huijsen", "position": "DF", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 18, "minutes": 1400, "starts": 15, "goals": 2, "assists": 0, "conceded": 0, "ppg_proxy": 4.6},
+      {"year": "2024/25", "apps": 30, "minutes": 2600, "starts": 28, "goals": 3, "assists": 1, "conceded": 0, "ppg_proxy": 5.7},
+      {"year": "2025/26", "apps": 16, "minutes": 1400, "starts": 15, "goals": 2, "assists": 1, "conceded": 0, "ppg_proxy": 5.9}
+    ]},
+    {"id": "p043", "name": "Jules Koundé", "position": "DF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 35, "minutes": 3000, "starts": 34, "goals": 1, "assists": 3, "conceded": 0, "ppg_proxy": 5.4},
+      {"year": "2024/25", "apps": 34, "minutes": 2900, "starts": 33, "goals": 2, "assists": 4, "conceded": 0, "ppg_proxy": 5.8},
+      {"year": "2025/26", "apps": 17, "minutes": 1500, "starts": 16, "goals": 1, "assists": 2, "conceded": 0, "ppg_proxy": 5.7}
+    ]},
+    {"id": "p044", "name": "Robin Le Normand", "position": "DF", "team": "Atlético", "seasons": [
+      {"year": "2023/24", "apps": 30, "minutes": 2600, "starts": 29, "goals": 1, "assists": 0, "conceded": 0, "ppg_proxy": 5.0},
+      {"year": "2024/25", "apps": 32, "minutes": 2800, "starts": 31, "goals": 2, "assists": 1, "conceded": 0, "ppg_proxy": 5.3},
+      {"year": "2025/26", "apps": 15, "minutes": 1300, "starts": 15, "goals": 1, "assists": 0, "conceded": 0, "ppg_proxy": 5.2}
+    ]},
+    {"id": "p045", "name": "Álex Balde", "position": "DF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 18, "minutes": 1400, "starts": 16, "goals": 0, "assists": 2, "conceded": 0, "ppg_proxy": 4.5},
+      {"year": "2024/25", "apps": 30, "minutes": 2500, "starts": 28, "goals": 1, "assists": 5, "conceded": 0, "ppg_proxy": 5.6},
+      {"year": "2025/26", "apps": 16, "minutes": 1350, "starts": 15, "goals": 1, "assists": 3, "conceded": 0, "ppg_proxy": 5.8}
+    ]},
+    {"id": "p046", "name": "Rodri", "position": "MF", "team": "Manchester City", "seasons": [
+      {"year": "2023/24", "apps": 34, "minutes": 3000, "starts": 33, "goals": 8, "assists": 8, "conceded": 0, "ppg_proxy": 6.9},
+      {"year": "2024/25", "apps": 10, "minutes": 700, "starts": 8, "goals": 1, "assists": 1, "conceded": 0, "ppg_proxy": 3.5},
+      {"year": "2025/26", "apps": 12, "minutes": 1000, "starts": 11, "goals": 2, "assists": 2, "conceded": 0, "ppg_proxy": 5.0}
+    ]},
+    {"id": "p047", "name": "Frenkie de Jong", "position": "MF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 25, "minutes": 2000, "starts": 22, "goals": 2, "assists": 4, "conceded": 0, "ppg_proxy": 5.1},
+      {"year": "2024/25", "apps": 28, "minutes": 2300, "starts": 26, "goals": 3, "assists": 5, "conceded": 0, "ppg_proxy": 5.5},
+      {"year": "2025/26", "apps": 14, "minutes": 1200, "starts": 13, "goals": 1, "assists": 3, "conceded": 0, "ppg_proxy": 5.4}
+    ]},
+    {"id": "p048", "name": "Gavi", "position": "MF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 12, "minutes": 900, "starts": 10, "goals": 1, "assists": 2, "conceded": 0, "ppg_proxy": 4.0},
+      {"year": "2024/25", "apps": 5, "minutes": 200, "starts": 2, "goals": 0, "assists": 0, "conceded": 0, "ppg_proxy": 2.0},
+      {"year": "2025/26", "apps": 14, "minutes": 1000, "starts": 12, "goals": 2, "assists": 3, "conceded": 0, "ppg_proxy": 5.2}
+    ]},
+    {"id": "p049", "name": "Dani Olmo", "position": "MF", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 25, "minutes": 1800, "starts": 20, "goals": 6, "assists": 5, "conceded": 0, "ppg_proxy": 5.4},
+      {"year": "2024/25", "apps": 22, "minutes": 1500, "starts": 16, "goals": 8, "assists": 4, "conceded": 0, "ppg_proxy": 5.8},
+      {"year": "2025/26", "apps": 12, "minutes": 900, "starts": 10, "goals": 4, "assists": 3, "conceded": 0, "ppg_proxy": 5.9}
+    ]},
+    {"id": "p050", "name": "Kylian Mbappé", "position": "FW", "team": "Real Madrid", "seasons": [
+      {"year": "2023/24", "apps": 30, "minutes": 2600, "starts": 28, "goals": 27, "assists": 7, "conceded": 0, "ppg_proxy": 8.0},
+      {"year": "2024/25", "apps": 36, "minutes": 3100, "starts": 35, "goals": 31, "assists": 6, "conceded": 0, "ppg_proxy": 7.8},
+      {"year": "2025/26", "apps": 17, "minutes": 1480, "starts": 16, "goals": 14, "assists": 4, "conceded": 0, "ppg_proxy": 7.9}
+    ]},
+    {"id": "p051", "name": "Julián Álvarez", "position": "FW", "team": "Atlético", "seasons": [
+      {"year": "2023/24", "apps": 36, "minutes": 2500, "starts": 25, "goals": 19, "assists": 9, "conceded": 0, "ppg_proxy": 6.4},
+      {"year": "2024/25", "apps": 34, "minutes": 2800, "starts": 32, "goals": 17, "assists": 6, "conceded": 0, "ppg_proxy": 6.6},
+      {"year": "2025/26", "apps": 17, "minutes": 1450, "starts": 16, "goals": 9, "assists": 3, "conceded": 0, "ppg_proxy": 6.7}
+    ]},
+    {"id": "p052", "name": "Raphinha", "position": "FW", "team": "Barcelona", "seasons": [
+      {"year": "2023/24", "apps": 28, "minutes": 2000, "starts": 22, "goals": 6, "assists": 8, "conceded": 0, "ppg_proxy": 5.5},
+      {"year": "2024/25", "apps": 36, "minutes": 3000, "starts": 34, "goals": 18, "assists": 12, "conceded": 0, "ppg_proxy": 7.3},
+      {"year": "2025/26", "apps": 17, "minutes": 1450, "starts": 16, "goals": 9, "assists": 6, "conceded": 0, "ppg_proxy": 7.1}
+    ]},
+    {"id": "p053", "name": "Antoine Griezmann", "position": "FW", "team": "Atlético", "seasons": [
+      {"year": "2023/24", "apps": 33, "minutes": 2700, "starts": 30, "goals": 16, "assists": 8, "conceded": 0, "ppg_proxy": 6.5},
+      {"year": "2024/25", "apps": 32, "minutes": 2500, "starts": 28, "goals": 12, "assists": 7, "conceded": 0, "ppg_proxy": 6.0},
+      {"year": "2025/26", "apps": 15, "minutes": 1200, "starts": 13, "goals": 6, "assists": 4, "conceded": 0, "ppg_proxy": 5.9}
+    ]},
+    {"id": "p054", "name": "Alexander Sørloth", "position": "FW", "team": "Atlético", "seasons": [
+      {"year": "2023/24", "apps": 35, "minutes": 2800, "starts": 32, "goals": 23, "assists": 3, "conceded": 0, "ppg_proxy": 6.8},
+      {"year": "2024/25", "apps": 30, "minutes": 2000, "starts": 20, "goals": 12, "assists": 2, "conceded": 0, "ppg_proxy": 5.6},
+      {"year": "2025/26", "apps": 14, "minutes": 900, "starts": 10, "goals": 5, "assists": 1, "conceded": 0, "ppg_proxy": 5.2}
+    ]},
+    {"id": "p055", "name": "Nico Williams", "position": "FW", "team": "Athletic", "seasons": [
+      {"year": "2023/24", "apps": 31, "minutes": 2400, "starts": 28, "goals": 5, "assists": 11, "conceded": 0, "ppg_proxy": 5.8},
+      {"year": "2024/25", "apps": 34, "minutes": 2800, "starts": 32, "goals": 8, "assists": 10, "conceded": 0, "ppg_proxy": 6.4},
+      {"year": "2025/26", "apps": 16, "minutes": 1350, "starts": 15, "goals": 5, "assists": 6, "conceded": 0, "ppg_proxy": 6.5}
+    ]}
+  ]
+}

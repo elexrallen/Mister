@@ -1,0 +1,186 @@
+"""
+Scraper Fútbol Fantasy — lesionados/sancionados + % titularidad por equipo.
+Fail-soft: ante DOM distinto → [] + warning.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from typing import Any
+from urllib.parse import urljoin
+
+from .http_util import get_soup
+from .teams import display_team_from_slug, team_slug
+
+log = logging.getLogger("scrapers.ff")
+
+BASE = "https://www.futbolfantasy.com"
+LESIONADOS = f"{BASE}/laliga/lesionados"
+SANCIONADOS = f"{BASE}/laliga/sancionados"
+MAX_TEAM_PAGES = 12
+
+
+def _abs(url: str | None) -> str | None:
+    if not url:
+        return None
+    return urljoin(BASE, url)
+
+
+def _parse_lesionados() -> list[dict[str, Any]]:
+    soup = get_soup(LESIONADOS)
+    if not soup:
+        return []
+    out: list[dict[str, Any]] = []
+    for a in soup.select("a.jugador"):
+        name = a.get_text(" ", strip=True)
+        if not name:
+            continue
+        href = _abs(a.get("href"))
+        row = a.find_parent(class_="row") or a.parent
+        row_txt = row.get_text(" ", strip=True) if row else ""
+        # Equipo suele ir antes del %: "Athletic 0% Unai Egiluz ..."
+        team = None
+        m = re.match(r"^(.+?)\s+\d{1,3}%\s+", row_txt)
+        if m:
+            team = m.group(1).strip()
+        # % de disponibilidad / titularidad en la ficha de lesión
+        pcts = [int(x) for x in re.findall(r"(\d{1,3})\s*%", row_txt)]
+        lineup_prob = pcts[0] if pcts else 0
+        out.append({
+            "name": name,
+            "team": team,
+            "availability": "injured",
+            "lineup_prob": lineup_prob,
+            "is_chollo": False,
+            "is_recommendation": False,
+            "profile_url": href,
+            "source": "futbolfantasy",
+        })
+    log.info("FF lesionados: %d", len(out))
+    return out
+
+
+def _parse_sancionados() -> list[dict[str, Any]]:
+    soup = get_soup(SANCIONADOS)
+    if not soup:
+        return []
+    out: list[dict[str, Any]] = []
+    for a in soup.select("a.jugador"):
+        name = a.get_text(" ", strip=True)
+        if not name:
+            continue
+        out.append({
+            "name": name,
+            "team": None,
+            "availability": "suspended",
+            "lineup_prob": 0,
+            "is_chollo": False,
+            "is_recommendation": False,
+            "profile_url": _abs(a.get("href")),
+            "source": "futbolfantasy",
+        })
+    log.info("FF sancionados: %d", len(out))
+    return out
+
+
+def _parse_team_page(slug: str) -> list[dict[str, Any]]:
+    url = f"{BASE}/laliga/equipos/{slug}"
+    soup = get_soup(url)
+    if not soup:
+        return []
+    team_name = display_team_from_slug(slug)
+    out: list[dict[str, Any]] = []
+    for el in soup.select(".elemento_jugador.filters_ok, .elemento_jugador.clickable"):
+        img = el.select_one("img[alt]")
+        name = (img.get("alt") or "").strip() if img else ""
+        if not name or name.lower() == "jugador":
+            link = el.select_one("a[href*='/jugadores/']")
+            if link:
+                name = link.get_text(" ", strip=True)
+        if not name or len(name) < 2:
+            continue
+        prob_el = el.select_one(".probabilidad-widget")
+        prob_txt = prob_el.get_text(" ", strip=True) if prob_el else ""
+        m = re.search(r"(\d{1,3})\s*%", prob_txt)
+        if not m:
+            m = re.search(r"(\d{1,3})\s*%", el.get_text(" ", strip=True))
+        lineup_prob = int(m.group(1)) if m else None
+        link = el.select_one("a[href*='/jugadores/']")
+        # Chollo heurístico: % alto pero no estrella de lista (sin señal explícita → False)
+        is_reco = lineup_prob is not None and lineup_prob >= 80
+        out.append({
+            "name": name,
+            "team": team_name,
+            "availability": "available",
+            "lineup_prob": lineup_prob,
+            "is_chollo": False,
+            "is_recommendation": is_reco,
+            "profile_url": _abs(link.get("href")) if link else url,
+            "source": "futbolfantasy",
+        })
+    return out
+
+
+def fetch_futbolfantasy(team_names: list[str] | None = None) -> list[dict[str, Any]]:
+    """
+    Devuelve registros de jugadores FF.
+    team_names: equipos Mister a enriquecer con % (cap MAX_TEAM_PAGES).
+    """
+    try:
+        by_key: dict[str, dict[str, Any]] = {}
+
+        def upsert(rec: dict[str, Any]) -> None:
+            key = (rec.get("name") or "").strip().lower()
+            if not key:
+                return
+            prev = by_key.get(key)
+            if not prev:
+                by_key[key] = rec
+                return
+            # Preferir estado más grave; conservar mejor %
+            prio = {"suspended": 3, "injured": 2, "doubt": 1, "available": 0, "unknown": 0}
+            if prio.get(rec.get("availability"), 0) > prio.get(prev.get("availability"), 0):
+                prev["availability"] = rec["availability"]
+            if rec.get("lineup_prob") is not None:
+                if prev.get("lineup_prob") is None or rec["lineup_prob"] < prev.get("lineup_prob", 999):
+                    # En lesión el % suele ser el de disponibilidad; en plantilla el de titularidad.
+                    # Si el nuevo viene de lesionados (availability injured) y prev available, baja.
+                    if rec.get("availability") in ("injured", "suspended"):
+                        prev["lineup_prob"] = rec["lineup_prob"]
+                    elif prev.get("availability") not in ("injured", "suspended"):
+                        prev["lineup_prob"] = max(prev.get("lineup_prob") or 0, rec["lineup_prob"])
+            if rec.get("profile_url") and not prev.get("profile_url"):
+                prev["profile_url"] = rec["profile_url"]
+            if rec.get("team") and not prev.get("team"):
+                prev["team"] = rec["team"]
+            if rec.get("is_recommendation"):
+                prev["is_recommendation"] = True
+            if rec.get("is_chollo"):
+                prev["is_chollo"] = True
+
+        for rec in _parse_lesionados():
+            upsert(rec)
+        for rec in _parse_sancionados():
+            upsert(rec)
+
+        slugs: list[str] = []
+        seen: set[str] = set()
+        for t in team_names or []:
+            slug = team_slug(t)
+            if slug and slug not in seen:
+                seen.add(slug)
+                slugs.append(slug)
+        for slug in slugs[:MAX_TEAM_PAGES]:
+            try:
+                for rec in _parse_team_page(slug):
+                    upsert(rec)
+            except Exception as exc:  # noqa: BLE001
+                log.warning("FF team %s falló: %s", slug, exc)
+
+        result = list(by_key.values())
+        log.info("FF total registros: %d", len(result))
+        return result
+    except Exception as exc:  # noqa: BLE001
+        log.warning("FF scraper falló: %s", exc)
+        return []

@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1220" />
+  <meta name="description" content="Mister Fantasy Advisor — decisiones diarias para tu liga privada" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mister Advisor" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icons/icon-192.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: { 950: '#070b14', 900: '#0b1220', 800: '#121a2b', 700: '#1a2438' },
+            mint: { 400: '#5eead4', 500: '#2dd4bf', 600: '#14b8a6' },
+            ember: { 400: '#fb923c', 500: '#f97316' },
+            rose: { 400: '#fb7185', 500: '#f43f5e' },
+          },
+          fontFamily: {
+            sans: ['Outfit', 'system-ui', 'sans-serif'],
+            display: ['Fraunces', 'Georgia', 'serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <link rel="stylesheet" href="./styles.css" />
+  <title>Mister Fantasy Advisor</title>
+</head>
+<body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav">
+  <div id="install-banner" class="hidden fixed bottom-20 left-3 right-3 z-50 md:bottom-6 md:left-auto md:right-6 md:max-w-sm">
+    <div class="glass rounded-2xl p-4 flex items-start gap-3 shadow-2xl border border-white/10">
+      <div class="flex-1">
+        <p class="font-semibold text-sm" id="install-title">Instalar app</p>
+        <p class="text-xs text-slate-400 mt-1" id="install-text">Añade Mister Advisor a tu pantalla de inicio.</p>
+      </div>
+      <button id="install-btn" class="btn-primary text-xs px-3 py-2 shrink-0">Instalar</button>
+      <button id="install-dismiss" class="text-slate-500 hover:text-white text-lg leading-none px-1" aria-label="Cerrar">&times;</button>
+    </div>
+  </div>
+
+  <div class="atmosphere" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <div class="max-w-6xl mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-4 md:pb-6">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="brand-eyebrow">Mister · Liga privada</p>
+          <h1 class="font-display brand-title">Mister Fantasy Advisor</h1>
+          <p class="brand-sub">Qué hacer hoy con tu saldo, plantilla y rivales.</p>
+        </div>
+        <div class="update-chip shrink-0" title="Última actualización">
+          <span class="update-dot" aria-hidden="true"></span>
+          <div class="text-right">
+            <p class="text-[10px] uppercase tracking-wider text-slate-500 leading-none">Actualizado</p>
+            <p id="updated-at" class="text-xs text-mint-400 font-medium mt-0.5">—</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative max-w-6xl mx-auto px-4 space-y-5 md:space-y-8 pb-8">
+    <section aria-label="Indicadores clave" class="kpi-strip">
+      <article class="kpi-card">
+        <p class="kpi-label">Saldo</p>
+        <p id="kpi-balance" class="kpi-value">—</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Plantilla</p>
+        <p id="kpi-value" class="kpi-value">—</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Ranking</p>
+        <p id="kpi-rank" class="kpi-value">—</p>
+      </article>
+      <article class="kpi-card">
+        <p class="kpi-label">Libres</p>
+        <p id="kpi-free" class="kpi-value">—</p>
+      </article>
+    </section>
+
+    <section aria-labelledby="actions-title" class="panel panel-flush">
+      <div class="panel-head">
+        <h2 id="actions-title" class="section-title">Cola del día</h2>
+        <p class="section-hint">Toca un jugador para ir a su ficha</p>
+      </div>
+      <div id="action-queue" class="action-rail" aria-live="polite">
+        <p class="text-slate-500 text-sm px-4 py-6">Cargando…</p>
+      </div>
+    </section>
+
+    <section aria-labelledby="recs-title" class="panel">
+      <button type="button" class="collapse-toggle" id="recs-toggle" aria-expanded="true" aria-controls="recommendations">
+        <div>
+          <h2 id="recs-title" class="section-title">Recomendaciones</h2>
+          <p class="section-hint">Contexto competitivo del día</p>
+        </div>
+        <span class="collapse-chevron" aria-hidden="true"></span>
+      </button>
+      <div id="recommendations" class="recs-grid mt-4">
+        <p class="text-slate-500 text-sm">Cargando…</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-label="Filtros">
+      <button type="button" class="collapse-toggle" id="filters-toggle" aria-expanded="false" aria-controls="filters-body">
+        <div>
+          <h2 class="section-title">Filtros</h2>
+          <p id="filters-summary" class="section-hint">Sin filtros activos</p>
+        </div>
+        <span class="collapse-chevron" aria-hidden="true"></span>
+      </button>
+      <div id="filters-body" class="filters-body mt-4" hidden>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          <label class="filter-field">
+            <span>Buscar</span>
+            <input id="filter-q" type="search" placeholder="Jugador o equipo" class="filter-input" enterkeyhint="search" autocomplete="off" />
+          </label>
+          <label class="filter-field">
+            <span>Posición</span>
+            <select id="filter-pos" class="filter-input">
+              <option value="">Todas</option>
+              <option value="GK">GK</option>
+              <option value="DF">DF</option>
+              <option value="MF">MF</option>
+              <option value="FW">FW</option>
+            </select>
+          </label>
+          <label class="filter-field">
+            <span>Precio máx. (M€)</span>
+            <input id="filter-price" type="number" min="0" step="1" placeholder="Sin límite" class="filter-input" inputmode="decimal" />
+          </label>
+          <label class="filter-field">
+            <span>Forma mín.</span>
+            <input id="filter-form" type="number" min="0" max="10" step="0.1" placeholder="0" class="filter-input" inputmode="decimal" />
+          </label>
+          <label class="filter-field">
+            <span>Disponibilidad</span>
+            <select id="filter-avail" class="filter-input">
+              <option value="">Todas</option>
+              <option value="ok">Disponible</option>
+              <option value="injury">Lesionado</option>
+              <option value="titular">Titular probable</option>
+            </select>
+          </label>
+        </div>
+        <div class="mt-3 flex justify-end">
+          <button type="button" id="filters-clear" class="btn-ghost text-xs">Limpiar filtros</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel !p-0 overflow-hidden" id="browse-section">
+      <div class="tab-bar desktop-tabs" role="tablist" aria-label="Secciones">
+        <button class="tab active" role="tab" aria-selected="true" data-tab="market">Mercado</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="squad">Plantilla</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="radar">Rivales</button>
+      </div>
+
+      <div id="tab-market" class="tab-panel active p-3 md:p-6" role="tabpanel">
+        <div id="market-cards" class="card-list" aria-live="polite"></div>
+        <div class="table-wrap desktop-only">
+          <table class="data-table" id="table-market">
+            <thead>
+              <tr>
+                <th>Jugador</th>
+                <th>Pos</th>
+                <th>Estado</th>
+                <th>Señales</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Δ5d</th>
+                <th>FotMob</th>
+                <th>Puja rec.</th>
+                <th>Techo</th>
+                <th>Prioridad</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-squad" class="tab-panel p-3 md:p-6" role="tabpanel" hidden>
+        <div id="squad-alerts" class="space-y-2 mb-4"></div>
+        <div id="squad-positions" class="grid md:grid-cols-2 gap-3 mb-4"></div>
+        <div id="squad-cards" class="card-list"></div>
+        <div class="table-wrap desktop-only">
+          <table class="data-table" id="table-squad">
+            <thead>
+              <tr>
+                <th>Jugador</th>
+                <th>Pos</th>
+                <th>Precio</th>
+                <th>Forma</th>
+                <th>Alineación</th>
+                <th>FotMob</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="tab-radar" class="tab-panel p-3 md:p-6" role="tabpanel" hidden>
+        <h3 class="font-display text-base md:text-lg mb-3 text-white">Objetivos en rivales</h3>
+        <div id="upgrade-cards" class="card-list mb-6"></div>
+        <div class="table-wrap desktop-only mb-8">
+          <table class="data-table" id="table-rival-upgrades">
+            <thead>
+              <tr>
+                <th>Jugador</th>
+                <th>Pos</th>
+                <th>Dueño</th>
+                <th>Valor</th>
+                <th>Media / Pts</th>
+                <th>Tendencia</th>
+                <th>Cláusula</th>
+                <th>Acción</th>
+                <th>Por qué</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3 class="font-display text-base md:text-lg mb-3 text-white">Libres TOP</h3>
+        <div id="free-cards" class="card-list mb-6"></div>
+        <div class="table-wrap desktop-only mb-8">
+          <table class="data-table" id="table-free">
+            <thead>
+              <tr>
+                <th>Jugador</th>
+                <th>Pos</th>
+                <th>Precio ref.</th>
+                <th>PPG hist.</th>
+                <th>Fiabilidad</th>
+                <th>ROI / M€</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <h3 class="font-display text-base md:text-lg mb-3 text-white">Rivales</h3>
+        <div id="rivals-cards" class="card-list mb-4"></div>
+        <div class="table-wrap desktop-only">
+          <table class="data-table" id="table-rivals">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Equipo</th>
+                <th>Manager</th>
+                <th>Puntos</th>
+                <th>Liquidez / Valor</th>
+                <th>Actividad</th>
+                <th>Carencias</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <p id="load-error" class="hidden text-rose-400 text-sm text-center"></p>
+  </main>
+
+  <nav class="mobile-nav" aria-label="Navegación principal">
+    <button type="button" class="mobile-nav-btn active" data-tab="market">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><path d="M3 9h18M5 9l1.5 10h11L19 9M9 9V7a3 3 0 0 1 6 0v2"/></svg>
+      <span>Mercado</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-tab="squad">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="8" r="3"/><path d="M5 19a7 7 0 0 1 14 0"/><path d="M19 8a3 3 0 1 1-1.2 5.8M5 8a3 3 0 1 0 1.2 5.8"/></svg>
+      <span>Plantilla</span>
+    </button>
+    <button type="button" class="mobile-nav-btn" data-tab="radar">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/><path d="M12 4v2M12 18v2M4 12h2M18 12h2"/></svg>
+      <span>Rivales</span>
+    </button>
+  </nav>
+
+  <footer class="relative max-w-6xl mx-auto px-4 py-6 text-center text-xs text-slate-600 md:pb-8">
+    Mister Fantasy Advisor · Decisiones diarias
+  </footer>
+
+  <script src="./app.js" defer></script>
+</body>
+</html>
