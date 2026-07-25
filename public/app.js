@@ -100,6 +100,7 @@
     const chips = [];
     if (ext.is_chollo_ext) chips.push(`<span class="badge badge-mint">Chollo</span>`);
     if (ext.is_recommendation_ext) chips.push(`<span class="badge badge-titular">Reco</span>`);
+    if (p.is_top_ff || ext.is_top_ff) chips.push(`<span class="badge badge-mint">TOP FF</span>`);
     if (ext.points_streak === "up") chips.push(`<span class="badge badge-mint">Racha ↑</span>`);
     if (ext.points_streak === "down") chips.push(`<span class="badge badge-baja-ext">Racha ↓</span>`);
     if (p.fills_structural && p.structural_label) {
@@ -109,6 +110,12 @@
     }
     if (p.affordable === false) chips.push(`<span class="badge badge-baja">Sin saldo</span>`);
     return chips.length ? chips.join(" ") : `<span class="text-slate-600 text-xs">—</span>`;
+  };
+
+  const ffAvgLine = (p) => {
+    const avg = p.ff_mister_avg ?? (p.external && p.external.ff_mister_avg);
+    if (avg == null) return "";
+    return `<span class="badge badge-duda">FF ${Number(avg).toFixed(1)}</span>`;
   };
 
   const riskBadge = (risk) => {
@@ -315,6 +322,7 @@
                 ${budgetBadge(a.budget_fit)}
                 ${sellReasonBadge(a.sell_reason)}
                 ${a.mister_avg != null || a.points != null ? scoringLine(a) : ""}
+                ${a.ff_mister_avg != null ? `<span class="badge badge-duda">FF ${Number(a.ff_mister_avg).toFixed(1)}</span>` : ""}
                 ${pointsTrendBadge(a.points_trend)}
                 ${clauseLabel}
                 ${a.bid != null ? `<span class="text-mint-400 text-xs">${formatMoney(a.bid)}</span>` : ""}
@@ -391,7 +399,7 @@
           </td>
           <td>${posChip(p.position)}</td>
           <td>${externalStatusBadge(p)}</td>
-          <td>${signalChips(p)}</td>
+          <td>${signalChips(p)} ${ffAvgLine(p)}</td>
           <td class="text-slate-300 text-xs">${escapeHtml(p.category_label || p.category || "")}</td>
           <td>${formatMoney(p.price)}</td>
           <td class="${d >= 0 ? "delta-up" : "delta-down"}">${
@@ -427,6 +435,7 @@
             <div class="player-card-meta">
               ${posChip(p.position)}
               ${externalStatusBadge(p)}
+              ${ffAvgLine(p)}
               ${signalChips(p)}
             </div>
             <div class="player-card-stats">
@@ -507,7 +516,21 @@
       </ul>
       ${
         fin.top_check
-          ? `<p class="budget-note">${escapeHtml(fin.top_check.message || "")}</p>`
+          ? `<p class="budget-note">${escapeHtml(fin.top_check.message || "")}${
+              fin.top_check.basis === "ff_mister_mixto" ? " · Base: FF Mister Mixto" : ""
+            }</p>`
+          : ""
+      }
+      ${
+        (fin.top_players || []).length
+          ? `<ul class="top-players-list">${(fin.top_players || [])
+              .slice(0, 6)
+              .map((tp) => {
+                const avg = tp.ff_mister_avg != null ? Number(tp.ff_mister_avg).toFixed(1) : "—";
+                const why = tp.top_reason ? ` · ${escapeHtml(tp.top_reason)}` : "";
+                return `<li><strong>${escapeHtml(tp.name || "")}</strong> · FF ${avg}${why}</li>`;
+              })
+              .join("")}</ul>`
           : ""
       }
     `;
@@ -614,7 +637,7 @@
               <td>${p.form != null ? Number(p.form).toFixed(1) : "—"}</td>
               <td>${p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"}</td>
               <td>${fotmobCell(p)}</td>
-              <td>${externalStatusBadge(p)} ${signalChips(p)}</td>
+              <td>${externalStatusBadge(p)} ${signalChips(p)} ${ffAvgLine(p)}</td>
             </tr>`
           )
           .join("")
@@ -631,7 +654,7 @@
               </div>
               ${posChip(p.position)}
             </div>
-            <div class="player-card-meta">${externalStatusBadge(p)} ${signalChips(p)}</div>
+            <div class="player-card-meta">${externalStatusBadge(p)} ${ffAvgLine(p)} ${signalChips(p)}</div>
             <div class="player-card-stats">
               <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
               <div><div class="stat-label">Forma</div><div class="stat-value">${p.form != null ? Number(p.form).toFixed(1) : "—"}</div></div>

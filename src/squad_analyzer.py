@@ -85,6 +85,44 @@ def _form_score(p: dict[str, Any]) -> float:
     return 0.0
 
 
+def _ff_avg(p: dict[str, Any]) -> float | None:
+    for key in ("ff_mister_avg",):
+        if p.get(key) is not None:
+            try:
+                return float(p[key])
+            except (TypeError, ValueError):
+                pass
+    ext = p.get("external") or {}
+    for key in ("ff_mister_avg", "ff_prior_avg"):
+        if ext.get(key) is not None:
+            try:
+                return float(ext[key])
+            except (TypeError, ValueError):
+                pass
+    if p.get("ff_prior_avg") is not None:
+        try:
+            return float(p["ff_prior_avg"])
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _is_top_player(p: dict[str, Any]) -> bool:
+    if p.get("is_top_ff"):
+        return True
+    return bool((p.get("external") or {}).get("is_top_ff"))
+
+
+def _prod(p: dict[str, Any]) -> float:
+    v = p.get("production_score")
+    if v is None:
+        v = (p.get("external") or {}).get("production_score")
+    try:
+        return float(v) if v is not None else 0.0
+    except (TypeError, ValueError):
+        return 0.0
+
+
 def _slim(p: dict[str, Any]) -> dict[str, Any]:
     return {
         "id": p.get("id"),
@@ -97,7 +135,12 @@ def _slim(p: dict[str, Any]) -> dict[str, Any]:
         "in_lineup": p.get("in_lineup"),
         "form": p.get("form"),
         "mister_avg": p.get("mister_avg") or p.get("form"),
+        "ff_mister_avg": _ff_avg(p),
+        "production_score": _prod(p) or None,
+        "is_top_ff": _is_top_player(p),
+        "top_reason": p.get("top_reason") or (p.get("external") or {}).get("top_reason"),
     }
+
 
 
 def _advice(
@@ -133,35 +176,42 @@ def _analyze_finance(
     squad: list[dict[str, Any]],
     balance: float,
     squad_value: float,
+    *,
+    market_universe: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    priced = sorted(squad, key=_player_value, reverse=True)
-    # TOP = los N más caros con valor > 0 (hasta TOP_COUNT_MAX)
-    with_price = [p for p in priced if _player_value(p) > 0]
-    top_n = min(TOP_COUNT_MAX, max(TOP_COUNT_MIN, len(with_price) // 4 or TOP_COUNT_MIN))
-    top_n = min(top_n, len(with_price)) if with_price else 0
-    # Preferimos evaluar exactamente 3–4 estrellas
-    if len(with_price) >= TOP_COUNT_MAX:
-        top_players = with_price[:TOP_COUNT_MAX]
-    elif len(with_price) >= TOP_COUNT_MIN:
-        top_players = with_price[: len(with_price)]
-    else:
-        top_players = with_price[:]
+    # TOP = élite por producción FF (is_top_ff); fallback percentil precio vs mercado
+    top_players = [p for p in squad if _is_top_player(p)]
+    if not top_players:
+        universe = list(market_universe or []) + list(squad)
+        prices = sorted(float(x.get("price") or 0) for x in universe if float(x.get("price") or 0) > 0)
+        cut = prices[int(len(prices) * 0.85)] if len(prices) >= 10 else None
+        if cut:
+            top_players = [p for p in squad if _player_value(p) >= cut]
+        else:
+            # Último recurso: no inventar TOP por ranking interno salvo vacío total
+            top_players = []
 
+    # Ordenar TOP por producción luego precio
+    top_players = sorted(
+        top_players,
+        key=lambda p: (_prod(p), _ff_avg(p) or 0, _player_value(p)),
+        reverse=True,
+    )
     top_ids = {str(p.get("id")) for p in top_players}
     top_value = sum(_player_value(p) for p in top_players)
     plantilla = max(squad_value, 1.0)
-    top_share = top_value / plantilla
+    top_share = top_value / plantilla if top_players else 0.0
 
     top_ok = (
         TOP_COUNT_MIN <= len(top_players) <= TOP_COUNT_MAX
         and TOP_SHARE_MIN <= top_share <= TOP_SHARE_MAX
     )
-    if len(top_players) < TOP_COUNT_MIN or top_share < TOP_SHARE_MIN:
+    if len(top_players) < TOP_COUNT_MIN or (top_players and top_share < TOP_SHARE_MIN):
         top_status = "critical" if len(top_players) < 2 or top_share < 0.35 else "warning"
     elif top_share > TOP_SHARE_MAX or len(top_players) > TOP_COUNT_MAX:
         top_status = "warning"
     else:
-        top_status = "ok"
+        top_status = "ok" if top_players else "warning"
 
     # Banquillo inflado: no titulares con valor alto
     bench_heavy = [
@@ -169,17 +219,14 @@ def _analyze_finance(
         for p in squad
         if _is_bench(p) and _player_value(p) > 0 and str(p.get("id")) not in top_ids
     ]
-    # Incluir TOPs que no juegan (dinero muerto)
     bench_tops = [p for p in top_players if _is_bench(p)]
     bench_flagged = sorted(
         {str(p.get("id")): p for p in (bench_heavy + bench_tops)}.values(),
         key=_player_value,
         reverse=True,
     )
-    # Solo alertar por jugadores de banquillo cuyo valor individual o conjunto sea relevante
     expensive_bench = [p for p in bench_flagged if _player_value(p) >= plantilla * 0.08]
     bench_value = sum(_player_value(p) for p in expensive_bench)
-    # Si no hay ninguno ≥8%, mirar suma de todo el banquillo con precio
     if not expensive_bench:
         all_bench = [p for p in squad if _is_bench(p) and _player_value(p) > 0]
         bench_value = sum(_player_value(p) for p in all_bench)
@@ -187,9 +234,6 @@ def _analyze_finance(
     bench_share = bench_value / plantilla
     bench_inflated = bench_share > BENCH_SHARE_ALERT and bench_value > 0
 
-    # Distribución visual: TOP / titulares medios / banquillo+parches
-    # Mister a menudo no trae precio del once → residual del squad_value oficial
-    # se reparte hacia titulares sin precio (no inflar artificialmente las estrellas).
     starters_mid = [
         p for p in squad if _is_starter(p) and str(p.get("id")) not in top_ids
     ]
@@ -208,12 +252,17 @@ def _analyze_finance(
         v_mid = v_mid_known + per * unpriced_starters
         v_bench = v_bench_known + per * unpriced_bench
     elif residual > 0:
-        # Sin huecos sin precio: residual a titulares medios (conservador)
         v_mid = v_mid_known + residual
         v_bench = v_bench_known
     else:
         v_mid, v_bench = v_mid_known, v_bench_known
     denom = max(v_top + v_mid + v_bench, 1.0)
+
+    top_msg = (
+        f"{len(top_players)} estrellas FF concentran el {top_share * 100:.0f}% del valor de plantilla."
+        if top_players
+        else "Sin estrellas TOP por producción FF (ni fallback de mercado)."
+    )
 
     return {
         "valor_plantilla": _money(plantilla),
@@ -230,11 +279,8 @@ def _analyze_finance(
             "share_pct": round(top_share * 100, 1),
             "ideal_share_min_pct": int(TOP_SHARE_MIN * 100),
             "ideal_share_max_pct": int(TOP_SHARE_MAX * 100),
-            "message": (
-                f"{len(top_players)} estrellas concentran el {top_share * 100:.0f}% del valor de plantilla."
-                if top_players
-                else "No hay suficientes jugadores con precio para evaluar estrellas TOP."
-            ),
+            "message": top_msg,
+            "basis": "ff_mister_mixto",
         },
         "bench_inflated": {
             "ok": not bench_inflated,
@@ -268,6 +314,7 @@ def _analyze_finance(
             },
         },
     }
+
 
 
 # ---------------------------------------------------------------------------
@@ -421,11 +468,18 @@ def _analyze_mf(
     needs: list[dict] = []
     healthy = [p for p in players if not _is_injured(p)]
     starters = [p for p in healthy if _is_starter(p)]
-    # En temporada activa exigimos promedio; en pretemporada basta titularidad
+    # En temporada activa exigimos promedio; en pretemporada basta titularidad + FF
     if points_phase == "active":
-        quality = [p for p in starters if _form_score(p) >= 4.5]
+        quality = [p for p in starters if _form_score(p) >= 4.5 or (_ff_avg(p) or 0) >= 4.5]
     else:
-        quality = starters
+        quality = [
+            p
+            for p in starters
+            if (_ff_avg(p) or 0) >= 4.0 or _prod(p) >= 45 or _form_score(p) >= 4.5
+        ]
+        if len(quality) < MF_STARTERS_MIN:
+            # Ampliar a titulares aunque sin FF (datos incompletos)
+            quality = starters
 
     if len(quality) >= MF_STARTERS_MIN:
         status = "ok"
@@ -487,12 +541,17 @@ def _analyze_fw(
     healthy = [p for p in players if not _is_injured(p)]
     starters = [p for p in healthy if _is_starter(p)]
     top_ids = {str(p.get("id")) for p in finance.get("top_players") or []}
-    # Referencias TOP: delanteros entre las estrellas o los 2 más caros de la línea
-    fw_sorted = sorted(players, key=_player_value, reverse=True)
-    fw_tops = [p for p in fw_sorted if str(p.get("id")) in top_ids or _player_value(p) >= 4_000_000]
+    # Referencias TOP: delanteros TOP FF o alta producción
+    fw_tops = [
+        p
+        for p in players
+        if _is_top_player(p) or str(p.get("id")) in top_ids or (_ff_avg(p) or 0) >= 5.5
+    ]
     if len(fw_tops) < FW_TOP_MIN:
-        # Fallback: los 2 más caros de la línea si tienen precio
-        fw_tops = [p for p in fw_sorted if _player_value(p) > 0][:FW_TOP_MIN]
+        fw_sorted = sorted(players, key=lambda p: (_prod(p), _ff_avg(p) or 0, _player_value(p)), reverse=True)
+        fw_tops = [p for p in fw_sorted if (_ff_avg(p) or 0) >= 4.8 or _prod(p) >= 55][:FW_TOP_MIN]
+        if len(fw_tops) < FW_TOP_MIN:
+            fw_tops = [p for p in fw_sorted if _player_value(p) > 0][:FW_TOP_MIN]
 
     suggested_formation = None
     if len(fw_tops) >= FW_TOP_MIN and len(starters) >= 2:
@@ -562,7 +621,10 @@ def _analyze_patches(squad: list[dict[str, Any]]) -> tuple[dict[str, Any], list[
     patches = [
         p
         for p in squad
-        if 0 < _player_value(p) <= PATCH_MAX_PRICE and _is_regular(p) and not _is_injured(p)
+        if 0 < _player_value(p) <= PATCH_MAX_PRICE
+        and _is_regular(p)
+        and not _is_injured(p)
+        and (_ff_avg(p) is None or (_ff_avg(p) or 0) >= 3.0 or _prod(p) >= 35)
     ]
     # Si precios incompletos, aceptar regulares baratos o sin precio en banquillo rotatorio
     if len(patches) < PATCH_MIN_COUNT:
@@ -573,6 +635,7 @@ def _analyze_patches(squad: list[dict[str, Any]]) -> tuple[dict[str, Any], list[
             and not _is_injured(p)
             and _player_value(p) <= PATCH_MAX_PRICE
             and p not in patches
+            and (_prod(p) >= 30 or (_ff_avg(p) or 0) >= 3.0 or _ff_avg(p) is None)
         ]
         patches = patches + soft
 
@@ -661,6 +724,7 @@ def analyze_squad(
     balance: float = 0.0,
     squad_value: float | None = None,
     points_phase: str = "preseason",
+    market_universe: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Auditoría táctica + financiera completa.
@@ -669,8 +733,12 @@ def analyze_squad(
         dict listo para `diagnostico_plantilla` en latest_data.json
     """
     plantilla = _squad_value_fallback(squad, squad_value)
-    finance = _analyze_finance(squad, float(balance or 0), plantilla)
-
+    finance = _analyze_finance(
+        squad,
+        float(balance or 0),
+        plantilla,
+        market_universe=market_universe,
+    )
     by_pos: dict[str, list] = {"GK": [], "DF": [], "MF": [], "FW": []}
     for p in squad:
         by_pos.setdefault(p.get("position") or "MF", []).append(p)
@@ -708,7 +776,7 @@ def analyze_squad(
                 "ok",
                 "top_balance",
                 "Estrellas bien dimensionadas",
-                tc["message"] + " (rango sano: 3–4 jugadores ≈ 50–60% del valor).",
+                tc["message"] + " (rango sano: 3–4 TOP por producción FF ≈ 50–60% del valor).",
             ),
         )
     elif tc["status"] != "ok":
@@ -718,7 +786,7 @@ def analyze_squad(
                 "suggestion" if tc["status"] == "warning" else "alert",
                 "top_imbalance",
                 "Reequilibra las estrellas",
-                tc["message"] + " Ideal: 3–4 TOP con el 50–60% del valor de plantilla.",
+                tc["message"] + " Ideal: 3–4 TOP FF con el 50–60% del valor de plantilla.",
                 related=[str(p.get("id")) for p in finance.get("top_players") or []],
             ),
         )

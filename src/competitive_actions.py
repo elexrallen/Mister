@@ -105,6 +105,37 @@ def _prior_avg(p: dict[str, Any] | None) -> float | None:
     return None
 
 
+def _ff_avg(p: dict[str, Any] | None) -> float | None:
+    if not p:
+        return None
+    for key in ("ff_mister_avg", "ff_prior_avg"):
+        if p.get(key) is not None:
+            try:
+                return float(p[key])
+            except (TypeError, ValueError):
+                pass
+    ext = p.get("external") or {}
+    for key in ("ff_mister_avg", "ff_prior_avg"):
+        if ext.get(key) is not None:
+            try:
+                return float(ext[key])
+            except (TypeError, ValueError):
+                pass
+    return None
+
+
+def _production_score(p: dict[str, Any] | None) -> float | None:
+    if not p:
+        return None
+    v = p.get("production_score")
+    if v is None:
+        v = (p.get("external") or {}).get("production_score")
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _points_trend(p: dict[str, Any] | None) -> str:
     if not p:
         return "unknown"
@@ -214,6 +245,19 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     score += min(15, int(item.get("rival_demand") or 0) * 5)
     if item.get("improves_owned"):
         score += 20
+    # Producción FF / Mister
+    prod = _production_score(item)
+    if prod is not None:
+        score += int(min(25, prod / 4))
+        if prod < 35:
+            score -= 10
+    ff = _ff_avg(item)
+    if ff is not None:
+        score += int(min(12, ff * 1.5))
+        if ff < 3.5 and _money(item.get("price") or item.get("market_value")) >= 5_000_000:
+            score -= 12
+    if item.get("is_top_ff") or (item.get("external") or {}).get("is_top_ff"):
+        score += 8
     # Capa puntos adicional cuando discrimina
     avg = item.get("mister_avg")
     try:
@@ -409,15 +453,22 @@ def build_sell_opportunities(
                     "price": price,
                 })
 
-        # 4) form_drop — en active también media/tendencia Mister
+        # 4) form_drop — media/tendencia Mister + producción FF floja a precio alto
         form_bad = (lineup is not None and lineup < 50) or (rating is not None and rating < 6.0)
         avg = _mister_avg(p)
         ptrend = _points_trend(p)
+        ff = _ff_avg(p)
+        prod = _production_score(p)
         if points_phase == "active":
             if avg is not None and avg < 4.0:
                 form_bad = True
             if ptrend == "down":
                 form_bad = True
+        # Caro con baja producción Fantasy histórica
+        if price >= 4_000_000 and (
+            (ff is not None and ff < 3.8) or (prod is not None and prod < 38)
+        ):
+            form_bad = True
         delta_bad = delta is not None and float(delta) <= -0.08
         if covered_if_sold and not keep_top and price >= 2_000_000 and (form_bad or delta_bad):
             bits = []
@@ -427,6 +478,8 @@ def build_sell_opportunities(
                 bits.append(f"nota {rating}")
             if points_phase == "active" and avg is not None and avg < 4.0:
                 bits.append(f"media Mister {avg}")
+            if ff is not None and ff < 3.8 and price >= 4_000_000:
+                bits.append(f"FF Mister Mixto {ff:.1f} baja para {price/1e6:.1f}M€")
             if ptrend == "down":
                 bits.append("tendencia pts ↓")
             if delta_bad:
@@ -447,6 +500,8 @@ def build_sell_opportunities(
                 "budget_fit": "funding" if cash_tight else "comfortable",
                 "keep_if_rank_top": False,
                 "price": price,
+                "ff_mister_avg": ff,
+                "production_score": prod,
             })
 
     for s in sells:
@@ -538,6 +593,23 @@ def compute_upgrade_score(
         else:
             score += min(10, cand_prior)
         why_extra.append("prior season")
+
+    # Producción Fútbol Fantasy Mister Mixto
+    cand_ff = _ff_avg(cand)
+    ref_ff = _ff_avg(ref) if ref else None
+    cand_prod = _production_score(cand)
+    ref_prod = _production_score(ref) if ref else None
+    ff_w = 14.0 if points_phase == "preseason" else 6.0
+    if cand_ff is not None and ref_ff is not None:
+        score += (cand_ff - ref_ff) * ff_w
+        why_extra.append(f"FF {cand_ff:.1f} vs {ref_ff:.1f}")
+    elif cand_ff is not None:
+        score += min(16, cand_ff * 2.2)
+        why_extra.append(f"FF media {cand_ff:.1f}")
+    if cand_prod is not None and ref_prod is not None:
+        score += (cand_prod - ref_prod) / 8.0
+    elif cand_prod is not None and points_phase == "preseason":
+        score += cand_prod / 12.0
 
     # Capa puntos actual — solo si discrimina
     points_signal = False

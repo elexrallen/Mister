@@ -24,7 +24,7 @@ import requests
 
 import config
 from mister_client import fetch_live_league, enrich_players_with_clauses
-from external_data import enrich_players_with_external
+from external_data import enrich_players_with_external, enrich_players_with_ff_production
 from fotmob_service import enrich_players_with_fotmob
 from competitive_actions import (
     annotate_market_budget_risk,
@@ -403,6 +403,33 @@ def classify_market_opportunities(
         if recommended > my_balance:
             score -= 20
 
+        # Producción Fútbol Fantasy (Mister Mixto) — eje de calidad Fantasy
+        prod = p.get("production_score")
+        ff_avg = p.get("ff_mister_avg")
+        if ff_avg is None:
+            ff_avg = (p.get("external") or {}).get("ff_mister_avg")
+        if prod is None:
+            prod = (p.get("external") or {}).get("production_score")
+        try:
+            if prod is not None:
+                score += (float(prod) / 100.0) * 28
+            elif ff_avg is not None:
+                score += (float(ff_avg) / 8.0) * 22
+        except (TypeError, ValueError):
+            pass
+        # ROI: buena producción a precio razonable
+        try:
+            if ff_avg is not None and price > 0:
+                roi = float(ff_avg) / max(price / 1_000_000, 0.4)
+                if roi >= 1.2:
+                    score += 8
+                elif roi < 0.45 and price >= 5_000_000:
+                    score -= 12  # caro con poca producción
+        except (TypeError, ValueError):
+            pass
+        if p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff"):
+            score += 6
+
         # Señales externas (FF/JP/Comuniate)
         ext = p.get("external") or {}
         avail = ext.get("availability") or ("injured" if p.get("injury") else "unknown")
@@ -440,6 +467,10 @@ def classify_market_opportunities(
         if avail in ("injured", "suspended"):
             priority = "Baja"
         elif fills_structural or score >= 35:
+            priority = "Alta"
+        elif (p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff")) and (
+            p["position"] in needy or fills_structural
+        ):
             priority = "Alta"
         elif score >= 18:
             priority = "Media"
@@ -626,17 +657,79 @@ def build_recommendations(
         if not o.get("fills_need"):
             continue
         if o.get("trend") == "up" or (o.get("delta_5d") is not None and float(o["delta_5d"]) > 0):
+            ff = o.get("ff_mister_avg")
+            ff_bit = f" Media FF Mister Mixto {float(ff):.1f}." if ff is not None else ""
             recs.append({
                 "type": "bid",
                 "priority": o.get("priority") or "Media",
                 "title": f"Encaja en tu once: {o['name']}",
                 "reason": (
                     f"Cubre {o['position']}. Precio {o['price']:,} €. "
-                    f"Tendencia valor: {o.get('trend') or 'sin flecha'}."
+                    f"Tendencia valor: {o.get('trend') or 'sin flecha'}.{ff_bit}"
                 ),
                 "suggested_action": "comprar" if o.get("affordable") else "esperar",
                 "related_player_ids": [o["id"]],
             })
+
+    # Alta producción FF a buen precio (gestión diaria de plantilla)
+    for o in opportunities[:40]:
+        ff = o.get("ff_mister_avg")
+        prod = o.get("production_score")
+        price = float(o.get("price") or 0)
+        if ff is None and prod is None:
+            continue
+        try:
+            good = (ff is not None and float(ff) >= 5.2) or (prod is not None and float(prod) >= 60)
+            cheapish = price <= 8_000_000 or (
+                ff is not None and price > 0 and float(ff) / max(price / 1e6, 0.4) >= 1.0
+            )
+        except (TypeError, ValueError):
+            continue
+        if not (good and cheapish and o.get("affordable")):
+            continue
+        if any(r.get("related_player_ids") == [o["id"]] for r in recs):
+            continue
+        recs.append({
+            "type": "bid",
+            "priority": "Alta" if o.get("fills_need") or o.get("is_top_ff") else "Media",
+            "title": f"Producción FF atractiva: {o['name']}",
+            "reason": (
+                f"Media Mister Mixto {float(ff):.1f}" if ff is not None else f"Score producción {prod}"
+            )
+            + f" · {price:,.0f} €"
+            + (" · cubre carencia" if o.get("fills_need") else ""),
+            "suggested_action": "comprar",
+            "related_player_ids": [o["id"]],
+        })
+        if sum(1 for r in recs if "Producción FF" in (r.get("title") or "")) >= 3:
+            break
+
+    # Vende caro con baja producción FF
+    for p in me.get("squad", []):
+        price = float(p.get("price") or 0)
+        ff = p.get("ff_mister_avg")
+        if ff is None:
+            ff = (p.get("external") or {}).get("ff_mister_avg")
+        if price < 5_000_000 or ff is None:
+            continue
+        try:
+            if float(ff) >= 4.0:
+                continue
+        except (TypeError, ValueError):
+            continue
+        recs.append({
+            "type": "sell",
+            "priority": "Media",
+            "title": f"Revisa valor/producción: {p.get('name')}",
+            "reason": (
+                f"Cuesta {price:,.0f} € con media FF Mister Mixto {float(ff):.1f}. "
+                "Valora vender y reinvertir en mejor producción."
+            ),
+            "suggested_action": "vender",
+            "related_player_ids": [p.get("id")],
+        })
+        if sum(1 for r in recs if r.get("type") == "sell" and "producción" in (r.get("title") or "").lower()) >= 2:
+            break
 
     if not honest_live:
         for fa in free_agents[:5]:
@@ -813,6 +906,9 @@ def build_action_plan(
                 "budget_fit": bf,
                 "priority_score": o.get("priority_score"),
                 "trend": o.get("trend"),
+                "ff_mister_avg": o.get("ff_mister_avg"),
+                "production_score": o.get("production_score"),
+                "is_top_ff": o.get("is_top_ff"),
             })
         else:
             wait_bits = list(why_parts) if why_parts else []
@@ -826,6 +922,9 @@ def build_action_plan(
                 wait_bits.append("no cubre carencia urgente")
             if sofa is not None and float(sofa) < 6.2:
                 wait_bits.append(f"nota baja ({sofa})")
+            ff = o.get("ff_mister_avg")
+            if ff is not None:
+                wait_bits.append(f"FF media {float(ff):.1f}")
             if bf == "blocked":
                 wait_bits.append(f"sin saldo (hace falta ~{cost:,.0f} €)")
             elif bf == "stretch":
@@ -846,6 +945,9 @@ def build_action_plan(
                 "budget_fit": bf,
                 "priority_score": o.get("priority_score"),
                 "trend": o.get("trend"),
+                "ff_mister_avg": o.get("ff_mister_avg"),
+                "production_score": o.get("production_score"),
+                "is_top_ff": o.get("is_top_ff"),
             })
 
     # Ventas situacionales
@@ -930,9 +1032,23 @@ def build_payload() -> dict[str, Any]:
     n_squad = len(squad)
     squad = universe_ext[:n_squad]
     market_ext = universe_ext[n_squad:]
+
+    # Producción FF Mister Mixto (TOP + production_score) — fail-soft
+    pre_phase = detect_points_phase(list(squad) + list(market_ext))
+    universe_ff, ff_meta = enrich_players_with_ff_production(
+        list(squad) + list(market_ext),
+        points_phase=pre_phase,
+        market_universe=market_ext,
+    )
+    external_meta["ff_points"] = ff_meta.get("ff_points", "fail")
+    external_meta["ff_matched"] = ff_meta.get("matched", 0)
+    external_meta["ff_tops"] = ff_meta.get("top_count", 0)
+    external_meta["ff_threshold"] = ff_meta.get("threshold")
+    squad = universe_ff[:n_squad]
+    market_ext = universe_ff[n_squad:]
     me = {**me_raw, "squad": squad}
     log.info(
-        "External match %s/%s (FF=%s JP=%s Com=%s FotMob=%s filled=%s cache=%s)",
+        "External match %s/%s (FF=%s JP=%s Com=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
         external_meta.get("matched"),
         len(universe),
         external_meta.get("futbolfantasy"),
@@ -940,18 +1056,20 @@ def build_payload() -> dict[str, Any]:
         external_meta.get("comuniate"),
         external_meta.get("fotmob"),
         external_meta.get("fotmob_filled"),
+        external_meta.get("ff_points"),
+        external_meta.get("ff_tops"),
         external_meta.get("cache_used"),
     )
 
     diagnosis = diagnose_squad(squad)
 
-    # Fase de puntos (squad + mercado basta para el diagnóstico estructural)
-    points_phase = detect_points_phase(list(squad) + list(market_ext))
+    points_phase = pre_phase
     diagnostico_plantilla = analyze_squad(
         squad,
         balance=float(me.get("balance") or 0),
         squad_value=float(me.get("squad_value") or 0) or None,
         points_phase=points_phase,
+        market_universe=market_ext,
     )
     diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
     log.info(
@@ -971,6 +1089,22 @@ def build_payload() -> dict[str, Any]:
         structural_needs=diagnostico_plantilla.get("structural_needs") or [],
     )
     rivals = [estimate_rival_liquidity(r) for r in league.get("rivals", [])]
+
+    # FF production también en plantillas rivales (upgrades / clauses)
+    rival_flat: list[dict[str, Any]] = []
+    for r in rivals:
+        for p in r.get("squad") or []:
+            rival_flat.append(dict(p))
+    if rival_flat:
+        rival_ff, _ = enrich_players_with_ff_production(
+            rival_flat,
+            points_phase=points_phase,
+            market_universe=market_ext,
+        )
+        by_id = {str(p.get("id")): p for p in rival_ff if p.get("id")}
+        for r in rivals:
+            r["squad"] = [by_id.get(str(p.get("id")), p) for p in (r.get("squad") or [])]
+
 
     # Cláusulas: enriquecer top jugadores de plantillas rivales (AJAX fail-soft)
     clause_targets: list[dict[str, Any]] = []

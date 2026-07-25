@@ -793,6 +793,21 @@ tr.row-highlight td,
   color: #94a3b8;
 }
 
+.top-players-list {
+  list-style: none;
+  margin: 0.55rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.72rem;
+  color: #cbd5e1;
+}
+
+.top-players-list li {
+  padding: 0.25rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
 .line-status {
   display: grid;
   gap: 0.5rem;

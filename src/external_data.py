@@ -17,6 +17,11 @@ from typing import Any
 from scrapers import fetch_all_external
 from scrapers.comuniate import enrich_profiles_for_names
 from scrapers.name_match import match_player
+from scrapers.ff_points import (
+    fetch_ff_mister_points,
+    is_top_production,
+    production_score,
+)
 
 log = logging.getLogger("external_data")
 
@@ -157,6 +162,15 @@ def _empty_external() -> dict[str, Any]:
         "profile_url": None,
         "matched_name": None,
         "match_score": 0,
+        "ff_mister_avg": None,
+        "ff_mister_points": None,
+        "ff_apps": None,
+        "ff_season": None,
+        "ff_prior_avg": None,
+        "ff_prior_season": None,
+        "is_top_ff": False,
+        "top_reason": None,
+        "production_score": None,
     }
 
 
@@ -314,4 +328,175 @@ def enrich_players_with_external(players: list[dict[str, Any]]) -> tuple[list[di
     meta["sofascore_filled"] = sofa_on_players
     if sofa_on_players >= 5 and meta.get("sofascore") == "skip":
         meta["sofascore"] = "partial"
+    return enriched, meta
+
+
+def enrich_players_with_ff_production(
+    players: list[dict[str, Any]],
+    *,
+    points_phase: str = "preseason",
+    market_universe: list[dict[str, Any]] | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """
+    Añade medias Mister Mixto FF + is_top_ff + production_score.
+    Fail-soft: si scrape falla, intenta fallback TOP por percentil de precio de mercado.
+    """
+    meta: dict[str, Any] = {
+        "ff_points": "fail",
+        "matched": 0,
+        "top_count": 0,
+        "threshold": None,
+        "fallback_price": False,
+    }
+    bundle = fetch_ff_mister_points()
+    meta["ff_points"] = bundle.get("status") or "fail"
+    meta["threshold"] = bundle.get("threshold")
+
+    seasons = bundle.get("seasons") or [2026, 2025]
+    by_season = bundle.get("by_season") or {}
+    primary_key = str(seasons[0])
+    prior_key = str(seasons[1]) if len(seasons) > 1 else None
+    primary_recs = list(by_season.get(primary_key) or [])
+    prior_recs = list(by_season.get(prior_key) or []) if prior_key else []
+    threshold = float(bundle.get("threshold") or 5.5)
+
+    # Índice prior por nombre lower
+    prior_by_name: dict[str, dict[str, Any]] = {}
+    for r in prior_recs:
+        k = (r.get("name") or "").strip().lower()
+        if k:
+            prior_by_name[k] = r
+
+    enriched: list[dict[str, Any]] = []
+    matched = 0
+    top_n = 0
+
+    for p in players:
+        new_p = dict(p)
+        ext = dict(new_p.get("external") or _empty_external())
+        hit = None
+        score = 0
+        if primary_recs:
+            hit, score = match_player(p.get("name") or "", p.get("team"), primary_recs, threshold=82)
+        avg = None
+        points = None
+        apps = 0
+        season = None
+        prior_avg = None
+        prior_season = None
+
+        if hit:
+            matched += 1
+            avg = hit.get("mister_avg")
+            points = hit.get("mister_points")
+            apps = int(hit.get("apps") or 0)
+            season = hit.get("season_label") or hit.get("season")
+            # prior por mismo nombre matcheado
+            pk = (hit.get("name") or "").strip().lower()
+            pref = prior_by_name.get(pk)
+            if not pref:
+                pref, _ = match_player(hit.get("name") or "", hit.get("team"), prior_recs, threshold=85) if prior_recs else (None, 0)
+            if pref:
+                prior_avg = pref.get("mister_avg")
+                prior_season = pref.get("season_label") or pref.get("season")
+
+        # Si no hay primary pero sí prior
+        if avg is None and prior_recs and not hit:
+            phit, pscore = match_player(p.get("name") or "", p.get("team"), prior_recs, threshold=82)
+            if phit:
+                matched += 1
+                prior_avg = phit.get("mister_avg")
+                prior_season = phit.get("season_label") or phit.get("season")
+                apps = int(phit.get("apps") or 0)
+                score = pscore
+
+        mister_form = None
+        try:
+            if p.get("mister_avg") is not None and float(p["mister_avg"]) > 0:
+                mister_form = float(p["mister_avg"])
+            elif p.get("form") is not None and float(p["form"]) > 0:
+                mister_form = float(p["form"])
+        except (TypeError, ValueError):
+            mister_form = None
+
+        lp = ext.get("lineup_prob_ext")
+        if lp is None and p.get("lineup_prob") is not None:
+            try:
+                lp = float(p["lineup_prob"]) * 100.0
+            except (TypeError, ValueError):
+                lp = None
+
+        ref_avg = avg if avg is not None else prior_avg
+        is_top = is_top_production(ref_avg, apps, threshold) if ref_avg is not None else False
+        reason = None
+        if is_top and ref_avg is not None:
+            reason = f"FF Mister Mixto {float(ref_avg):.2f} · {apps} PJ ({season or prior_season or 'hist'})"
+            top_n += 1
+
+        prod = production_score(
+            avg=float(avg) if avg is not None else None,
+            prior_avg=float(prior_avg) if prior_avg is not None else None,
+            apps=apps,
+            lineup_prob=float(lp) if lp is not None else None,
+            mister_avg=mister_form,
+            points_phase=points_phase,
+        )
+
+        ext.update(
+            {
+                "ff_mister_avg": round(float(avg), 2) if avg is not None else None,
+                "ff_mister_points": round(float(points), 1) if points is not None else None,
+                "ff_apps": apps if hit or prior_avg is not None else None,
+                "ff_season": season,
+                "ff_prior_avg": round(float(prior_avg), 2) if prior_avg is not None else None,
+                "ff_prior_season": prior_season,
+                "is_top_ff": is_top,
+                "top_reason": reason,
+                "production_score": prod,
+                "ff_match_score": score if hit else None,
+            }
+        )
+        new_p["external"] = ext
+        new_p["ff_mister_avg"] = ext["ff_mister_avg"]
+        new_p["ff_prior_avg"] = ext["ff_prior_avg"]
+        new_p["production_score"] = prod
+        new_p["is_top_ff"] = is_top
+        new_p["top_reason"] = reason
+        enriched.append(new_p)
+
+    # Fallback TOP por percentil de precio vs universo mercado si casi no hubo matches FF
+    if matched < max(3, len(players) // 5) and meta["ff_points"] == "fail":
+        meta["fallback_price"] = True
+        universe = list(market_universe or []) + list(enriched)
+        prices = sorted(
+            float(x.get("price") or 0)
+            for x in universe
+            if float(x.get("price") or 0) > 0
+        )
+        cut = prices[int(len(prices) * 0.85)] if len(prices) >= 10 else None
+        if cut:
+            top_n = 0
+            for new_p in enriched:
+                price = float(new_p.get("price") or 0)
+                is_top = price >= cut
+                new_p["is_top_ff"] = is_top
+                if is_top:
+                    top_n += 1
+                    reason = f"Fallback precio mercado ≥ {cut/1e6:.1f}M€ (P85)"
+                    new_p["top_reason"] = reason
+                    ext = dict(new_p.get("external") or {})
+                    ext["is_top_ff"] = True
+                    ext["top_reason"] = reason
+                    new_p["external"] = ext
+
+    meta["matched"] = matched
+    meta["top_count"] = top_n
+    log.info(
+        "FF production match=%s/%s tops=%s thr=%s status=%s",
+        matched,
+        len(players),
+        top_n,
+        threshold,
+        meta["ff_points"],
+    )
     return enriched, meta
