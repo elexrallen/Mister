@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-25T15:10:15.595240+00:00",
+  "generated_at": "2026-07-25T15:22:36.584639+00:00",
   "sources": {
     "mister": "api",
     "performance": "disabled_for_live",
@@ -1019,12 +1019,12 @@
     "squad_value": 22837000,
     "rank": 4,
     "top_free_remaining": 0,
-    "critical_alerts": 1,
+    "critical_alerts": 3,
     "market_count": 23,
     "rivals_count": 8,
     "buy_now_count": 5,
-    "wait_count": 2,
-    "sell_count": 0,
+    "wait_count": 0,
+    "sell_count": 2,
     "clause_bid_count": 4,
     "budget_pressure": "low",
     "points_phase": "preseason"
@@ -1251,6 +1251,60 @@
       "priority_score": 118
     },
     {
+      "player_id": "15342",
+      "name": "A. Barrenetxea",
+      "position": "MF",
+      "action": "sell",
+      "sell_reason": "expensive_bench",
+      "bid": null,
+      "wait_risk": "low",
+      "sell_risk": "low",
+      "urgency": "high",
+      "why": "en tu once Mister pero sin titularidad real; fuera del once real (titularidad 50%); libera 6,737,000 € para titulares/producción; FF 4.7",
+      "rival_demand": 0,
+      "rival_targets": [],
+      "budget_fit": "comfortable",
+      "keep_if_rank_top": false,
+      "price": 6737000.0,
+      "lineup_pct": 50.0,
+      "ff_mister_avg": 4.67,
+      "production_score": 68.4,
+      "is_top_ff": false,
+      "xi_impact": "safe",
+      "is_useful_patch": false,
+      "in_lineup": true,
+      "plays_little": false,
+      "recent_minutes": 296.0,
+      "priority_score": 63
+    },
+    {
+      "player_id": "59789",
+      "name": "O. Óskarsson",
+      "position": "FW",
+      "action": "sell",
+      "sell_reason": "expensive_bench",
+      "bid": null,
+      "wait_risk": "low",
+      "sell_risk": "low",
+      "urgency": "high",
+      "why": "en tu once Mister pero sin titularidad real; fuera del once real (titularidad 20%); libera 2,496,000 € para titulares/producción; FF 4.8",
+      "rival_demand": 0,
+      "rival_targets": [],
+      "budget_fit": "comfortable",
+      "keep_if_rank_top": false,
+      "price": 2496000.0,
+      "lineup_pct": 20.0,
+      "ff_mister_avg": 4.8,
+      "production_score": 60.0,
+      "is_top_ff": false,
+      "xi_impact": "safe",
+      "is_useful_patch": false,
+      "in_lineup": true,
+      "plays_little": false,
+      "recent_minutes": 374.0,
+      "priority_score": 59
+    },
+    {
       "player_id": "28778",
       "name": "J. Sánchez",
       "position": "DF",
@@ -1262,46 +1316,6 @@
       "rival_demand": 0,
       "budget_fit": "comfortable",
       "priority_score": 40
-    },
-    {
-      "player_id": "65347",
-      "name": "R. Veiga",
-      "position": "DF",
-      "action": "wait",
-      "bid": 4642920,
-      "bid_ceiling": 4857870,
-      "wait_risk": "medium",
-      "urgency": "medium",
-      "why": "titularidad 50%; FF media 3.0 · riesgo de perderlo: medium",
-      "rival_demand": 0,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 106,
-      "trend": "up",
-      "ff_mister_avg": 2.97,
-      "production_score": 48.5,
-      "is_top_ff": false
-    },
-    {
-      "player_id": "22471",
-      "name": "J. Pacheco",
-      "position": "DF",
-      "action": "wait",
-      "bid": 190080,
-      "bid_ceiling": 198880,
-      "wait_risk": "medium",
-      "urgency": "medium",
-      "why": "duda de alineación; titularidad 10%; nota baja (5.85); FF media 3.0 · riesgo de perderlo: medium",
-      "rival_demand": 0,
-      "affordable": true,
-      "fills_need": true,
-      "budget_fit": "comfortable",
-      "priority_score": 104,
-      "trend": "up",
-      "ff_mister_avg": 3.0,
-      "production_score": 40.8,
-      "is_top_ff": false
     }
   ],
   "rival_upgrades": [
@@ -3619,15 +3633,37 @@
       },
       {
         "level": "warning",
+        "position": "MF",
+        "message": "Tienes 6 centrocampistas, pero solo 1 con titularidad real (ideal >=3)."
+      },
+      {
+        "level": "warning",
+        "position": "FW",
+        "message": "Tienes 3 delanteros, pero solo 1 con titularidad real (ideal >=2)."
+      },
+      {
+        "level": "warning",
         "position": "GK",
         "source": "structural",
         "message": "Tienes 2 porteros, pero no son del mismo club (sin tándem directo)."
       },
       {
-        "level": "warning",
+        "level": "critical",
         "position": "DF",
         "source": "structural",
-        "message": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales."
+        "message": "Línea defensiva crítica: 1 titulares reales sanos."
+      },
+      {
+        "level": "critical",
+        "position": "MF",
+        "source": "structural",
+        "message": "Centrocampo débil: solo 1 titulares fiables."
+      },
+      {
+        "level": "warning",
+        "position": "FW",
+        "source": "structural",
+        "message": "Tienes 3 delanteros, pero solo 1 con titularidad real (2 en tu once Mister). 1 juega(n) poco."
       }
     ],
     "by_position": {
@@ -3635,6 +3671,7 @@
         "count": 2,
         "healthy": 2,
         "starters": 1,
+        "plays_little": 1,
         "injured": 0,
         "status": "warning",
         "players": [
@@ -3774,7 +3811,8 @@
       "DF": {
         "count": 4,
         "healthy": 2,
-        "starters": 2,
+        "starters": 1,
+        "plays_little": 0,
         "injured": 2,
         "status": "critical",
         "players": [
@@ -4039,14 +4077,15 @@
             "top_reason": null
           }
         ],
-        "structural_message": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales."
+        "structural_message": "Línea defensiva crítica: 1 titulares reales sanos."
       },
       "MF": {
         "count": 6,
         "healthy": 6,
-        "starters": 4,
+        "starters": 1,
+        "plays_little": 2,
         "injured": 0,
-        "status": "ok",
+        "status": "critical",
         "players": [
           {
             "id": "15342",
@@ -4439,14 +4478,15 @@
             "top_reason": null
           }
         ],
-        "structural_message": "Centrocampo sólido: 4 titulares fijos como motor del equipo."
+        "structural_message": "Centrocampo débil: solo 1 titulares fiables."
       },
       "FW": {
         "count": 3,
         "healthy": 3,
-        "starters": 2,
+        "starters": 1,
+        "plays_little": 1,
         "injured": 0,
-        "status": "ok",
+        "status": "warning",
         "players": [
           {
             "id": "59789",
@@ -4644,7 +4684,7 @@
             "top_reason": null
           }
         ],
-        "structural_message": "Delantera con 2 referencias / TOP."
+        "structural_message": "Tienes 3 delanteros, pero solo 1 con titularidad real (2 en tu once Mister). 1 juega(n) poco."
       }
     }
   },
@@ -4668,94 +4708,52 @@
         "basis": "ff_mister_mixto"
       },
       "bench_inflated": {
-        "ok": true,
-        "status": "ok",
-        "value": 1403000,
-        "share_pct": 6.1,
+        "ok": false,
+        "status": "alert",
+        "value": 9233000,
+        "share_pct": 40.4,
         "threshold_pct": 15,
         "players": [
           {
-            "id": "11092",
-            "name": "A. Gorosabel",
-            "position": "DF",
-            "team": "Athletic",
-            "team_id": "1",
-            "price": 550000,
-            "lineup_prob": 0.0,
-            "in_lineup": true,
-            "form": 0.0,
-            "mister_avg": 0.0,
-            "ff_mister_avg": 2.42,
-            "production_score": 26.3,
-            "is_top_ff": false,
-            "top_reason": null
-          },
-          {
-            "id": "64199",
-            "name": "U. Egiluz",
-            "position": "DF",
-            "team": "Athletic",
-            "team_id": "1",
-            "price": 160000,
-            "lineup_prob": 0.0,
-            "in_lineup": true,
-            "form": 0.0,
-            "mister_avg": 0.0,
-            "ff_mister_avg": 0.0,
-            "production_score": null,
-            "is_top_ff": false,
-            "top_reason": null
-          },
-          {
-            "id": "59089",
-            "name": "A. Padilla",
-            "position": "GK",
-            "team": "Athletic",
-            "team_id": "1",
-            "price": 164000,
-            "lineup_prob": 0.1,
-            "in_lineup": false,
-            "form": 0.0,
-            "mister_avg": 0.0,
-            "ff_mister_avg": 1.0,
-            "production_score": 5.2,
-            "is_top_ff": false,
-            "top_reason": null
-          },
-          {
-            "id": "68259",
-            "name": "C. Macia",
+            "id": "15342",
+            "name": "A. Barrenetxea",
             "position": "MF",
-            "team": "Villarreal",
-            "team_id": "20",
-            "price": 208000,
-            "lineup_prob": 0.1,
-            "in_lineup": false,
+            "team": "Real Sociedad",
+            "team_id": "16",
+            "price": 6737000,
+            "lineup_prob": 0.5,
+            "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 296.0,
             "form": 0.0,
             "mister_avg": 0.0,
-            "ff_mister_avg": 1.6,
-            "production_score": 15.5,
+            "ff_mister_avg": 4.67,
+            "production_score": 68.4,
             "is_top_ff": false,
             "top_reason": null
           },
           {
-            "id": "21366",
-            "name": "U. Vencedor",
-            "position": "MF",
-            "team": "Athletic",
-            "team_id": "1",
-            "price": 160000,
-            "lineup_prob": 0.0,
-            "in_lineup": false,
+            "id": "59789",
+            "name": "O. Óskarsson",
+            "position": "FW",
+            "team": "Real Sociedad",
+            "team_id": "16",
+            "price": 2496000,
+            "lineup_prob": 0.2,
+            "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 374.0,
             "form": 0.0,
             "mister_avg": 0.0,
-            "ff_mister_avg": 2.38,
-            "production_score": 30.8,
+            "ff_mister_avg": 4.8,
+            "production_score": 60.0,
             "is_top_ff": false,
             "top_reason": null
           }
         ],
-        "message": "El banquillo no concentra demasiado valor."
+        "message": "Dinero estancado en el banquillo: 9.2 M€ (40% del valor de plantilla)."
       },
       "budget_distribution": {
         "estrellas_top": {
@@ -4765,13 +4763,13 @@
         },
         "titulares_medios": {
           "label": "Titulares medios",
-          "value": 21434000,
-          "pct": 93.9
+          "value": 10479000,
+          "pct": 45.9
         },
         "banquillo_parches": {
           "label": "Banquillo / parches",
-          "value": 1403000,
-          "pct": 6.1
+          "value": 12358000,
+          "pct": 54.1
         }
       }
     },
@@ -4794,6 +4792,9 @@
             "price": 1486000,
             "lineup_prob": 0.85,
             "in_lineup": true,
+            "plays_little": true,
+            "is_real_starter": true,
+            "recent_minutes": 0.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": null,
@@ -4810,6 +4811,9 @@
             "price": 164000,
             "lineup_prob": 0.1,
             "in_lineup": false,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 480.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 1.0,
@@ -4820,11 +4824,11 @@
         ]
       },
       "DF": {
-        "status": "warning",
+        "status": "critical",
         "count": 4,
         "healthy": 2,
-        "starters": 2,
-        "message": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales.",
+        "starters": 1,
+        "message": "Línea defensiva crítica: 1 titulares reales sanos.",
         "note": "Mister no distingue lateral/central; el consejo de laterales es heurístico.",
         "players": [
           {
@@ -4836,6 +4840,9 @@
             "price": 7245000,
             "lineup_prob": 0.8,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": true,
+            "recent_minutes": 450.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 4.06,
@@ -4852,6 +4859,9 @@
             "price": 582000,
             "lineup_prob": 0.1,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 219.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 2.46,
@@ -4868,6 +4878,9 @@
             "price": 550000,
             "lineup_prob": 0.0,
             "in_lineup": true,
+            "plays_little": true,
+            "is_real_starter": false,
+            "recent_minutes": 317.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 2.42,
@@ -4884,6 +4897,9 @@
             "price": 160000,
             "lineup_prob": 0.0,
             "in_lineup": true,
+            "plays_little": true,
+            "is_real_starter": false,
+            "recent_minutes": 47.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 0.0,
@@ -4894,13 +4910,13 @@
         ]
       },
       "MF": {
-        "status": "ok",
+        "status": "critical",
         "count": 6,
         "healthy": 6,
-        "starters": 4,
-        "quality_starters": 4,
+        "starters": 1,
+        "quality_starters": 1,
         "points_phase": "preseason",
-        "message": "Centrocampo sólido: 4 titulares fijos como motor del equipo.",
+        "message": "Centrocampo débil: solo 1 titulares fiables.",
         "players": [
           {
             "id": "15342",
@@ -4911,6 +4927,9 @@
             "price": 6737000,
             "lineup_prob": 0.5,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 296.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 4.67,
@@ -4927,6 +4946,9 @@
             "price": 816000,
             "lineup_prob": 0.0,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 243.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 2.85,
@@ -4943,6 +4965,9 @@
             "price": 791000,
             "lineup_prob": 1.0,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": true,
+            "recent_minutes": 371.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 2.68,
@@ -4959,6 +4984,9 @@
             "price": 324000,
             "lineup_prob": 0.3,
             "in_lineup": true,
+            "plays_little": true,
+            "is_real_starter": false,
+            "recent_minutes": 157.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 2.64,
@@ -4975,6 +5003,9 @@
             "price": 208000,
             "lineup_prob": 0.1,
             "in_lineup": false,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 203.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 1.6,
@@ -4991,6 +5022,9 @@
             "price": 160000,
             "lineup_prob": 0.0,
             "in_lineup": false,
+            "plays_little": true,
+            "is_real_starter": false,
+            "recent_minutes": 126.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 2.38,
@@ -5001,13 +5035,15 @@
         ]
       },
       "FW": {
-        "status": "ok",
+        "status": "warning",
         "count": 3,
         "healthy": 3,
-        "starters": 2,
-        "top_references": 2,
+        "starters": 1,
+        "plays_little": 1,
+        "fantasy_xi": 2,
+        "top_references": 1,
         "suggested_formation": null,
-        "message": "Delantera con 2 referencias / TOP.",
+        "message": "Tienes 3 delanteros, pero solo 1 con titularidad real (2 en tu once Mister). 1 juega(n) poco.",
         "players": [
           {
             "id": "59789",
@@ -5018,6 +5054,9 @@
             "price": 2496000,
             "lineup_prob": 0.2,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": false,
+            "recent_minutes": 374.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": 4.8,
@@ -5034,6 +5073,9 @@
             "price": 957000,
             "lineup_prob": 1.0,
             "in_lineup": true,
+            "plays_little": false,
+            "is_real_starter": true,
+            "recent_minutes": 373.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": null,
@@ -5050,6 +5092,9 @@
             "price": 161000,
             "lineup_prob": 0.0,
             "in_lineup": false,
+            "plays_little": true,
+            "is_real_starter": false,
+            "recent_minutes": 0.0,
             "form": 0.0,
             "mister_avg": 0.0,
             "ff_mister_avg": null,
@@ -5062,7 +5107,7 @@
     },
     "parches": {
       "status": "ok",
-      "count": 4,
+      "count": 3,
       "ideal_min": 2,
       "ideal": 3,
       "max_price": 2000000,
@@ -5076,6 +5121,9 @@
           "price": 957000,
           "lineup_prob": 1.0,
           "in_lineup": true,
+          "plays_little": false,
+          "is_real_starter": true,
+          "recent_minutes": 373.0,
           "form": 0.0,
           "mister_avg": 0.0,
           "ff_mister_avg": null,
@@ -5092,26 +5140,13 @@
           "price": 791000,
           "lineup_prob": 1.0,
           "in_lineup": true,
+          "plays_little": false,
+          "is_real_starter": true,
+          "recent_minutes": 371.0,
           "form": 0.0,
           "mister_avg": 0.0,
           "ff_mister_avg": 2.68,
           "production_score": 45.9,
-          "is_top_ff": false,
-          "top_reason": null
-        },
-        {
-          "id": "49275",
-          "name": "A. Almeida",
-          "position": "MF",
-          "team": "Valencia",
-          "team_id": "19",
-          "price": 324000,
-          "lineup_prob": 0.3,
-          "in_lineup": true,
-          "form": 0.0,
-          "mister_avg": 0.0,
-          "ff_mister_avg": 2.64,
-          "production_score": 36.4,
           "is_top_ff": false,
           "top_reason": null
         },
@@ -5124,6 +5159,9 @@
           "price": 1486000,
           "lineup_prob": 0.85,
           "in_lineup": true,
+          "plays_little": true,
+          "is_real_starter": true,
+          "recent_minutes": 0.0,
           "form": 0.0,
           "mister_avg": 0.0,
           "ff_mister_avg": null,
@@ -5132,7 +5170,7 @@
           "top_reason": null
         }
       ],
-      "message": "Fondo de armario sano: 4 parches fijos de bajo coste."
+      "message": "Fondo de armario sano: 3 parches fijos de bajo coste."
     },
     "consejos": [
       {
@@ -5142,6 +5180,33 @@
         "message": "Sin estrellas TOP por producción FF (ni fallback de mercado). Ideal: 3–4 TOP FF con el 50–60% del valor de plantilla.",
         "position": null,
         "related_player_ids": []
+      },
+      {
+        "level": "alert",
+        "code": "df_critical",
+        "title": "Defensa insuficiente",
+        "message": "Línea defensiva crítica: 1 titulares reales sanos.",
+        "position": "DF",
+        "related_player_ids": []
+      },
+      {
+        "level": "alert",
+        "code": "mf_critical",
+        "title": "Motor en peligro",
+        "message": "Centrocampo débil: solo 1 titulares fiables.",
+        "position": "MF",
+        "related_player_ids": []
+      },
+      {
+        "level": "alert",
+        "code": "bench_inflated",
+        "title": "Dinero en el banquillo",
+        "message": "Dinero estancado en el banquillo: 9.2 M€ (40% del valor de plantilla). Revisa: A. Barrenetxea, O. Óskarsson. Vende o mueve ese valor a una carencia.",
+        "position": null,
+        "related_player_ids": [
+          "15342",
+          "59789"
+        ]
       },
       {
         "level": "suggestion",
@@ -5155,33 +5220,19 @@
       },
       {
         "level": "suggestion",
-        "code": "df_thin",
-        "title": "Refuerza la zaga",
-        "message": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales.",
-        "position": "DF",
-        "related_player_ids": []
-      },
-      {
-        "level": "ok",
-        "code": "mf_ok",
-        "title": "Medular equilibrada",
-        "message": "Centrocampo sólido: 4 titulares fijos como motor del equipo.",
-        "position": "MF",
-        "related_player_ids": []
-      },
-      {
-        "level": "ok",
-        "code": "fw_ok",
-        "title": "Punta de lanza OK",
-        "message": "Delantera con 2 referencias / TOP.",
+        "code": "fw_low_minutes",
+        "title": "Delantera sin minutos",
+        "message": "Tienes 3 delanteros, pero solo 1 con titularidad real (2 en tu once Mister). 1 juega(n) poco.",
         "position": "FW",
-        "related_player_ids": []
+        "related_player_ids": [
+          "71509"
+        ]
       },
       {
         "level": "ok",
         "code": "patches_ok",
         "title": "Parches listos",
-        "message": "Fondo de armario sano: 4 parches fijos de bajo coste.",
+        "message": "Fondo de armario sano: 3 parches fijos de bajo coste.",
         "position": null,
         "related_player_ids": []
       }
@@ -5202,10 +5253,25 @@
         "priority": "Alta",
         "prefer_role": "lateral",
         "max_price": null,
-        "reason": "Faltan titulares fijos en defensa"
+        "reason": "Carencia crítica de defensas titulares"
+      },
+      {
+        "need": "mf_starter",
+        "position": "MF",
+        "priority": "Alta",
+        "max_price": null,
+        "reason": "Carencia crítica en mediocampo"
+      },
+      {
+        "need": "fw_top",
+        "position": "FW",
+        "priority": "Alta",
+        "max_price": null,
+        "min_price": 4000000,
+        "reason": "Faltan delanteros con titularidad real"
       }
     ],
-    "salud_score": 54,
+    "salud_score": 0,
     "points_phase": "preseason"
   },
   "rivals": [
@@ -11299,170 +11365,8 @@
     }
   ],
   "free_agents_top": [],
-  "recommendations": [
-    {
-      "type": "alert",
-      "priority": "Alta",
-      "title": "Alerta · DF",
-      "reason": "Solo 2 defensas disponibles (mín. 4).",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "top",
-      "priority": "Alta",
-      "title": "Bloque TOP (estrellas)",
-      "reason": "Sin estrellas TOP por producción FF (ni fallback de mercado). Concentración de valor TOP: 0.0%.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "tip",
-      "priority": "Alta",
-      "title": "Reequilibra las estrellas",
-      "reason": "Sin estrellas TOP por producción FF (ni fallback de mercado). Ideal: 3–4 TOP FF con el 50–60% del valor de plantilla.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "tip",
-      "priority": "Media",
-      "title": "Busca el suplente del titular",
-      "reason": "Tienes 2 porteros, pero no son del mismo club (sin tándem directo). Ideal: el segundo portero del mismo equipo.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "line",
-      "priority": "Media",
-      "title": "Línea · Defensa",
-      "reason": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "line",
-      "priority": "Media",
-      "title": "Línea · Portería",
-      "reason": "Tienes 2 porteros, pero no son del mismo club (sin tándem directo).",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "tip",
-      "priority": "Media",
-      "title": "Refuerza la zaga",
-      "reason": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "health",
-      "priority": "Media",
-      "title": "Salud de plantilla: 54/100",
-      "reason": "Hay grietas estructurales a vigilar. Revisa líneas, TOP y banquillo abajo.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "bench",
-      "priority": "Baja",
-      "title": "Banquillo y valor parado",
-      "reason": "El banquillo no concentra demasiado valor.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "patches",
-      "priority": "Baja",
-      "title": "Parches económicos",
-      "reason": "Fondo de armario sano: 4 parches fijos de bajo coste.",
-      "suggested_action": null,
-      "related_player_ids": []
-    }
-  ],
-  "squad_notes": [
-    {
-      "type": "alert",
-      "priority": "Alta",
-      "title": "Alerta · DF",
-      "reason": "Solo 2 defensas disponibles (mín. 4).",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "top",
-      "priority": "Alta",
-      "title": "Bloque TOP (estrellas)",
-      "reason": "Sin estrellas TOP por producción FF (ni fallback de mercado). Concentración de valor TOP: 0.0%.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "tip",
-      "priority": "Alta",
-      "title": "Reequilibra las estrellas",
-      "reason": "Sin estrellas TOP por producción FF (ni fallback de mercado). Ideal: 3–4 TOP FF con el 50–60% del valor de plantilla.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "tip",
-      "priority": "Media",
-      "title": "Busca el suplente del titular",
-      "reason": "Tienes 2 porteros, pero no son del mismo club (sin tándem directo). Ideal: el segundo portero del mismo equipo.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "line",
-      "priority": "Media",
-      "title": "Línea · Defensa",
-      "reason": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "line",
-      "priority": "Media",
-      "title": "Línea · Portería",
-      "reason": "Tienes 2 porteros, pero no son del mismo club (sin tándem directo).",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "tip",
-      "priority": "Media",
-      "title": "Refuerza la zaga",
-      "reason": "Solo 2 defensas titulares fijos (ideal ≥3). Prioriza laterales sobre centrales.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "health",
-      "priority": "Media",
-      "title": "Salud de plantilla: 54/100",
-      "reason": "Hay grietas estructurales a vigilar. Revisa líneas, TOP y banquillo abajo.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "bench",
-      "priority": "Baja",
-      "title": "Banquillo y valor parado",
-      "reason": "El banquillo no concentra demasiado valor.",
-      "suggested_action": null,
-      "related_player_ids": []
-    },
-    {
-      "type": "patches",
-      "priority": "Baja",
-      "title": "Parches económicos",
-      "reason": "Fondo de armario sano: 4 parches fijos de bajo coste.",
-      "suggested_action": null,
-      "related_player_ids": []
-    }
-  ],
+  "recommendations": [],
+  "squad_notes": [],
   "meta": {
     "filters_hint": {
       "positions": [

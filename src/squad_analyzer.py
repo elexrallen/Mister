@@ -29,7 +29,9 @@ DF_STARTERS_MIN = 3
 MF_STARTERS_MIN = 4
 FW_TOP_MIN = 2
 LINEUP_STARTER = getattr(config, "LINEUP_PROB_TITULAR", 0.70)
-LINEUP_REGULAR = 0.45  # juega con cierta regularidad (parches)
+LINEUP_REGULAR = getattr(config, "LINEUP_PROB_REGULAR", 0.45)
+LINEUP_LOW = getattr(config, "LINEUP_PROB_LOW", 0.40)
+MINUTES_RECENT_LOW = getattr(config, "MINUTES_RECENT_LOW", 90)
 
 
 def _f(v: Any, default: float = 0.0) -> float:
@@ -52,25 +54,74 @@ def _is_injured(p: dict[str, Any]) -> bool:
     return avail in ("injured", "suspended")
 
 
+def _lineup_frac(p: dict[str, Any]) -> float | None:
+    """Probabilidad de alineación real 0–1 (ignora once Mister)."""
+    ext = p.get("external") or {}
+    if ext.get("lineup_prob_ext") is not None:
+        try:
+            return max(0.0, min(1.0, float(ext["lineup_prob_ext"]) / 100.0))
+        except (TypeError, ValueError):
+            pass
+    if p.get("lineup_prob") is not None:
+        try:
+            v = float(p["lineup_prob"])
+            # Algunos consumidores guardan 0–100
+            if v > 1.0:
+                v = v / 100.0
+            return max(0.0, min(1.0, v))
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _recent_minutes(p: dict[str, Any]) -> float | None:
+    fm = p.get("fotmob_stats") or {}
+    if fm.get("minutos_ultimos_5") is None:
+        return None
+    try:
+        return float(fm["minutos_ultimos_5"])
+    except (TypeError, ValueError):
+        return None
+
+
 def _is_starter(p: dict[str, Any]) -> bool:
+    """Titular real (≥70% alineación). No usa el once fantasy de Mister."""
     if _is_injured(p):
         return False
-    if p.get("in_lineup") is True:
-        return True
-    return _f(p.get("lineup_prob")) >= LINEUP_STARTER
+    lp = _lineup_frac(p)
+    return lp is not None and lp >= LINEUP_STARTER
 
 
 def _is_regular(p: dict[str, Any]) -> bool:
-    """Titular o rota con frecuencia (útil para parches)."""
+    """Titular o rota con frecuencia real (útil para parches)."""
     if _is_injured(p):
         return False
-    if p.get("in_lineup") is True:
+    lp = _lineup_frac(p)
+    return lp is not None and lp >= LINEUP_REGULAR
+
+
+def _plays_little(p: dict[str, Any]) -> bool:
+    """Juega poco: minutos escasos, o % bajo sin evidencia de minutos altos."""
+    if _is_injured(p):
         return True
-    return _f(p.get("lineup_prob")) >= LINEUP_REGULAR
+    lp = _lineup_frac(p)
+    mins = _recent_minutes(p)
+    if mins is not None and mins < MINUTES_RECENT_LOW:
+        return True
+    if lp is not None and lp < LINEUP_LOW:
+        # Minutos altos contradicen un % bajo engañoso / desfasado
+        if mins is not None and mins >= MINUTES_RECENT_LOW * 2:
+            return False
+        return True
+    return False
 
 
 def _is_bench(p: dict[str, Any]) -> bool:
     return not _is_starter(p)
+
+
+def _in_fantasy_xi(p: dict[str, Any]) -> bool:
+    return p.get("in_lineup") is True
 
 
 def _player_value(p: dict[str, Any]) -> float:
@@ -131,8 +182,11 @@ def _slim(p: dict[str, Any]) -> dict[str, Any]:
         "team": p.get("team"),
         "team_id": p.get("team_id"),
         "price": _money(_player_value(p)),
-        "lineup_prob": p.get("lineup_prob"),
+        "lineup_prob": _lineup_frac(p),
         "in_lineup": p.get("in_lineup"),
+        "plays_little": _plays_little(p),
+        "is_real_starter": _is_starter(p),
+        "recent_minutes": _recent_minutes(p),
         "form": p.get("form"),
         "mister_avg": p.get("mister_avg") or p.get("form"),
         "ff_mister_avg": _ff_avg(p),
@@ -408,14 +462,14 @@ def _analyze_df(players: list[dict[str, Any]]) -> tuple[dict[str, Any], list[dic
     if len(starters) >= DF_STARTERS_MIN:
         status = "ok"
         message = (
-            f"Defensa con {len(starters)} titulares fijos sanos. "
+            f"Defensa con {len(starters)} titulares reales sanos. "
             "Prioriza laterales/carrileros al fichar (más puntos Fantasy que centrales)."
         )
         tips.append(_advice("ok", "df_ok", "Defensa estable", message, position="DF"))
     elif len(starters) >= 2:
         status = "warning"
         message = (
-            f"Solo {len(starters)} defensas titulares fijos (ideal ≥{DF_STARTERS_MIN}). "
+            f"Solo {len(starters)} defensas con titularidad real (ideal >={DF_STARTERS_MIN}). "
             "Prioriza laterales sobre centrales."
         )
         tips.append(_advice("suggestion", "df_thin", "Refuerza la zaga", message, position="DF"))
@@ -431,7 +485,7 @@ def _analyze_df(players: list[dict[str, Any]]) -> tuple[dict[str, Any], list[dic
         )
     else:
         status = "critical"
-        message = f"Línea defensiva crítica: {len(starters)} titulares sanos."
+        message = f"Línea defensiva crítica: {len(starters)} titulares reales sanos."
         tips.append(_advice("alert", "df_critical", "Defensa insuficiente", message, position="DF"))
         needs.append(
             {
@@ -483,7 +537,7 @@ def _analyze_mf(
 
     if len(quality) >= MF_STARTERS_MIN:
         status = "ok"
-        message = f"Centrocampo sólido: {len(quality)} titulares fijos como motor del equipo."
+        message = f"Centrocampo sólido: {len(quality)} titulares reales como motor del equipo."
         tips.append(_advice("ok", "mf_ok", "Medular equilibrada", message, position="MF"))
     elif len(quality) >= 3:
         status = "warning"
@@ -540,36 +594,72 @@ def _analyze_fw(
     needs: list[dict] = []
     healthy = [p for p in players if not _is_injured(p)]
     starters = [p for p in healthy if _is_starter(p)]
+    little = [p for p in healthy if _plays_little(p)]
+    fantasy_xi = [p for p in healthy if _in_fantasy_xi(p)]
     top_ids = {str(p.get("id")) for p in finance.get("top_players") or []}
-    # Referencias TOP: delanteros TOP FF o alta producción
+    # Referencias TOP: delanteros TOP FF o alta producción (sin fallback solo por precio)
     fw_tops = [
         p
         for p in players
         if _is_top_player(p) or str(p.get("id")) in top_ids or (_ff_avg(p) or 0) >= 5.5
     ]
     if len(fw_tops) < FW_TOP_MIN:
-        fw_sorted = sorted(players, key=lambda p: (_prod(p), _ff_avg(p) or 0, _player_value(p)), reverse=True)
+        fw_sorted = sorted(
+            players, key=lambda p: (_prod(p), _ff_avg(p) or 0, _player_value(p)), reverse=True
+        )
         fw_tops = [p for p in fw_sorted if (_ff_avg(p) or 0) >= 4.8 or _prod(p) >= 55][:FW_TOP_MIN]
-        if len(fw_tops) < FW_TOP_MIN:
-            fw_tops = [p for p in fw_sorted if _player_value(p) > 0][:FW_TOP_MIN]
 
     suggested_formation = None
-    if len(fw_tops) >= FW_TOP_MIN and len(starters) >= 2:
+    n = len(players)
+    n_real = len(starters)
+
+    if len(fw_tops) >= FW_TOP_MIN and n_real >= 2:
         status = "ok"
-        message = f"Delantera con {len(fw_tops)} referencias / TOP."
+        message = f"Delantera con {len(fw_tops)} referencias / TOP y {n_real} titulares reales."
         tips.append(_advice("ok", "fw_ok", "Punta de lanza OK", message, position="FW"))
+    elif n >= 2 and n_real < 2:
+        status = "critical" if n_real == 0 else "warning"
+        fant = f" ({len(fantasy_xi)} en tu once Mister)" if fantasy_xi else ""
+        message = (
+            f"Tienes {n} delanteros, pero solo {n_real} con titularidad real{fant}. "
+            f"{len(little)} juega(n) poco."
+        )
+        tips.append(
+            _advice(
+                "alert" if status == "critical" else "suggestion",
+                "fw_low_minutes",
+                "Delantera sin minutos",
+                message,
+                position="FW",
+                related=[str(p.get("id")) for p in little[:3] if p.get("id")],
+            )
+        )
+        needs.append(
+            {
+                "need": "fw_top",
+                "position": "FW",
+                "priority": "Alta",
+                "max_price": None,
+                "min_price": 4_000_000,
+                "reason": "Faltan delanteros con titularidad real",
+            }
+        )
+        if balance < 5_000_000:
+            suggested_formation = "4-5-1 o 3-5-2"
     elif len(fw_tops) >= 1:
         status = "warning"
-        # Si no hay caja para un 3er delantero TOP, sugerir sistema
         can_buy_third = balance >= 5_000_000
         if not can_buy_third:
             suggested_formation = "4-5-1 o 3-5-2"
             message = (
-                f"Solo {len(fw_tops)} delantero(s) referencia. "
+                f"Solo {len(fw_tops)} delantero(s) referencia ({n_real} titular(es) real(es)). "
                 f"Sin caja clara para un 3º TOP: valora sistema {suggested_formation}."
             )
         else:
-            message = f"Solo {len(fw_tops)} delantero referencia (ideal ≥{FW_TOP_MIN})."
+            message = (
+                f"Solo {len(fw_tops)} delantero referencia / {n_real} titulares reales "
+                f"(ideal >={FW_TOP_MIN})."
+            )
         tips.append(
             _advice("suggestion", "fw_thin", "Mejora la delantera", message, position="FW")
         )
@@ -586,7 +676,10 @@ def _analyze_fw(
     else:
         status = "critical"
         suggested_formation = "4-5-1 o 3-5-2"
-        message = "Sin delanteros TOP claros. Remonta con un 9 o cambia a 4-5-1 / 3-5-2."
+        message = (
+            f"Sin delanteros TOP claros ({n_real} titulares reales). "
+            "Remonta con un 9 o cambia a 4-5-1 / 3-5-2."
+        )
         tips.append(_advice("alert", "fw_critical", "Delantera vacía", message, position="FW"))
         needs.append(
             {
@@ -602,9 +695,11 @@ def _analyze_fw(
     return (
         {
             "status": status,
-            "count": len(players),
+            "count": n,
             "healthy": len(healthy),
-            "starters": len(starters),
+            "starters": n_real,
+            "plays_little": len(little),
+            "fantasy_xi": len(fantasy_xi),
             "top_references": len(fw_tops),
             "suggested_formation": suggested_formation,
             "message": message,

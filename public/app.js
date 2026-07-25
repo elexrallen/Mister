@@ -319,6 +319,8 @@
         : p.lineup_prob != null
           ? Number(p.lineup_prob) * 100
           : null;
+    const mins = Number((p.fotmob_stats || {}).minutos_ultimos_5);
+    const hasMins = Number.isFinite(mins) && mins >= 0 && (p.fotmob_stats || {}).minutos_ultimos_5 != null;
     let badge = `<span class="badge badge-baja">—</span>`;
     if (avail === "injured") {
       badge = `<span class="badge badge-baja-ext">Lesionado</span>`;
@@ -326,15 +328,28 @@
       badge = `<span class="badge badge-baja-ext">Sancionado</span>`;
     } else if (avail === "doubt") {
       badge = `<span class="badge badge-duda">Duda</span>`;
-    } else if (lineupExt != null && lineupExt >= 80) {
+    } else if (lineupExt != null && lineupExt >= 70) {
       badge = `<span class="badge badge-titular">Titular ${Math.round(lineupExt)}%</span>`;
+    } else if (lineupExt != null && lineupExt < 40) {
+      badge = `<span class="badge badge-baja-ext">Titular ${Math.round(lineupExt)}%</span>`;
+    } else if (lineupExt != null) {
+      badge = `<span class="badge badge-duda">Titular ${Math.round(lineupExt)}%</span>`;
     } else if (avail === "available") {
       badge = `<span class="badge badge-mint">OK</span>`;
+    }
+    const extras = [];
+    if (p.in_lineup) {
+      extras.push(`<span class="badge badge-once">Once</span>`);
+    }
+    const lowMins = hasMins && mins < 90;
+    const lowPct = lineupExt != null && lineupExt < 40 && !(hasMins && mins >= 180);
+    if (lowMins || lowPct) {
+      extras.push(`<span class="badge badge-baja-ext">Pocos min</span>`);
     }
     const link = ext.profile_url
       ? ` <a class="ext-link" href="${escapeHtml(ext.profile_url)}" target="_blank" rel="noopener noreferrer">FF/JP</a>`
       : "";
-    return `${badge}${link}`;
+    return `${badge}${extras.join(" ")}${link}`;
   };
 
   const fotmobCell = (p) => {
@@ -525,6 +540,7 @@
     if (!reason) return "";
     const map = {
       expensive_bench: "Banquillo caro",
+      low_minutes: "Pocos minutos",
       low_production: "Baja prod.",
       surplus_to_demand: "Excedente",
       fund_buy: "Financiar once",
@@ -580,6 +596,12 @@
           .join("");
         const secondaryChips = [
           sellReasonBadge(a.sell_reason),
+          a.in_lineup ? `<span class="badge badge-once">Once</span>` : "",
+          a.plays_little || (a.lineup_pct != null && Number(a.lineup_pct) < 40)
+            ? `<span class="badge badge-baja-ext">Pocos min</span>`
+            : a.lineup_pct != null
+              ? `<span class="badge badge-duda">Titular ${Math.round(Number(a.lineup_pct))}%</span>`
+              : "",
           a.mister_avg != null || a.points != null ? scoringLine(a) : "",
           a.ff_mister_avg != null
             ? `<span class="badge badge-duda">Mister ${Number(a.ff_mister_avg).toFixed(1)}</span>`
@@ -631,43 +653,6 @@
         focusPlayer(btn.getAttribute("data-focus-id"), btn.getAttribute("data-focus-tab") || "market");
       });
     });
-  }
-
-  function renderRecommendations(data) {
-    const box = document.getElementById("recommendations");
-    if (!box) return;
-    const typeLabel = {
-      health: "Salud",
-      top: "TOP",
-      bench: "Banquillo",
-      line: "Línea",
-      patches: "Parches",
-      tip: "Consejo",
-      rank: "Clasificación",
-      alert: "Alerta",
-    };
-    const prioRank = { Alta: 0, Media: 1, Baja: 2 };
-    const notes = [...(data.squad_notes || data.recommendations || [])].sort(
-      (a, b) => (prioRank[a.priority] ?? 9) - (prioRank[b.priority] ?? 9)
-    );
-    if (!notes.length) {
-      box.innerHTML = `<p class="text-slate-500 text-sm">Sin notas estructurales hoy.</p>`;
-      return;
-    }
-    box.innerHTML = notes
-      .map(
-        (r, idx) => `
-      <article class="rec-card note-card">
-        <div class="rec-top">
-          <span class="rec-rank" aria-hidden="true">#${idx + 1}</span>
-          ${priorityBadge(r.priority)}
-          <span class="rec-type">${escapeHtml(typeLabel[r.type] || r.type || "Nota")}</span>
-        </div>
-        <h3 class="rec-title">${escapeHtml(r.title)}</h3>
-        <p class="rec-reason">${escapeHtml(r.reason)}</p>
-      </article>`
-      )
-      .join("");
   }
 
   function renderMarket() {
@@ -909,7 +894,7 @@
             <span class="font-semibold text-white">${pos}</span>
             <span class="badge ${info.status === "critical" ? "badge-alta" : info.status === "warning" ? "badge-media" : "badge-mint"}">${info.status}</span>
           </div>
-          <p class="text-sm text-slate-400">${info.count} jugadores · ${info.healthy} sanos · ${info.starters} titulares</p>
+          <p class="text-sm text-slate-400">${info.count} jugadores · ${info.healthy} sanos · ${info.starters} titulares reales</p>
         </div>`;
       })
       .join("");
@@ -1151,7 +1136,6 @@
     renderMeta(DATA);
     renderKpis(DATA);
     renderActionQueue(DATA);
-    renderRecommendations(DATA);
     renderMarket();
     renderSquad();
     renderRadar();
@@ -1203,15 +1187,6 @@
 
   function initCollapses() {
     const isMobile = () => window.matchMedia("(max-width: 767px)").matches;
-
-    const recsBtn = document.getElementById("recs-toggle");
-    const recs = document.getElementById("recommendations");
-    if (recsBtn && recs) {
-      setExpanded(recsBtn, recs, !isMobile());
-      recsBtn.addEventListener("click", () => {
-        setExpanded(recsBtn, recs, recsBtn.getAttribute("aria-expanded") !== "true");
-      });
-    }
 
     const filtersBtn = document.getElementById("filters-toggle");
     const filtersBody = document.getElementById("filters-body");

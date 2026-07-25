@@ -188,26 +188,49 @@ def _is_star(p: dict[str, Any]) -> bool:
 
 
 def _is_reliable_starter(p: dict[str, Any]) -> bool:
-    """Titular fiable para el once (alineación ≥70% o en once Mister)."""
+    """Titular real (alineación ≥70%). Ignora el once fantasy de Mister."""
     if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
         return False
-    if p.get("in_lineup") is True:
-        return True
     lineup = _lineup_pct(p)
     return lineup is not None and lineup >= 70
 
 
+def _recent_minutes(p: dict[str, Any]) -> float | None:
+    fm = p.get("fotmob_stats") or {}
+    if fm.get("minutos_ultimos_5") is None:
+        return None
+    try:
+        return float(fm["minutos_ultimos_5"])
+    except (TypeError, ValueError):
+        return None
+
+
+def _plays_little(p: dict[str, Any]) -> bool:
+    """Poca titularidad real o minutos recientes bajos."""
+    if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
+        return True
+    lineup = _lineup_pct(p)
+    low_lp = getattr(config, "LINEUP_PROB_LOW", 0.40) * 100.0
+    mins_low = getattr(config, "MINUTES_RECENT_LOW", 90)
+    mins = _recent_minutes(p)
+    if mins is not None and mins < mins_low:
+        return True
+    if lineup is not None and lineup < low_lp:
+        if mins is not None and mins >= mins_low * 2:
+            return False
+        return True
+    return False
+
+
 def _is_useful_patch(p: dict[str, Any]) -> bool:
-    """Parche barato que juega: no vender salvo emergencia (versatilidad / fondo)."""
+    """Parche barato que juega de verdad: no vender salvo emergencia."""
     if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
         return False
     price = _money(p.get("price") or p.get("market_value"))
     if price <= 0 or price > 2_000_000:
         return False
     lineup = _lineup_pct(p)
-    if lineup is not None and lineup >= 45:
-        return True
-    return bool(p.get("in_lineup"))
+    return lineup is not None and lineup >= 45
 
 
 def _healthy_count(squad: list[dict[str, Any]], position: str) -> int:
@@ -355,6 +378,7 @@ def priority_score_sell(item: dict[str, Any]) -> int:
     reason = item.get("sell_reason") or ""
     score += {
         "expensive_bench": 42,
+        "low_minutes": 40,
         "low_production": 36,
         "fund_buy": 32,
         "injured_covered": 28,
@@ -421,6 +445,10 @@ def priority_score_sell(item: dict[str, Any]) -> int:
         score += 12  # dinero estancado fuera del once
     if price >= 8_000_000 and (pr is not None and pr < 45):
         score += 8
+    if item.get("plays_little"):
+        score += 14
+        if price >= 4_000_000:
+            score += 8
 
     if item.get("is_top_ff") or item.get("keep_if_rank_top"):
         score -= 40
@@ -544,6 +572,8 @@ def build_sell_opportunities(
             "xi_impact": xi,
             "is_useful_patch": _is_useful_patch(p),
             "in_lineup": bool(p.get("in_lineup")),
+            "plays_little": _plays_little(p),
+            "recent_minutes": _recent_minutes(p),
         }
 
     squad_value = sum(_money(p.get("price") or p.get("market_value")) for p in squad) or 1.0
@@ -573,6 +603,7 @@ def build_sell_opportunities(
 
         is_star = _is_star(p)
         is_starter = _is_reliable_starter(p)
+        plays_little = _plays_little(p)
         useful_patch = _is_useful_patch(p)
         keep_top = rank <= 2 and is_star and avail not in ("injured", "suspended")
         xi = _xi_impact_if_sold(squad, p)
@@ -580,13 +611,14 @@ def build_sell_opportunities(
         prod = _production_score(p)
         avg = _mister_avg(p)
         ptrend = _points_trend(p)
+        recent_mins = _recent_minutes(p)
 
-        # No tumbar el once: si el impacto es risk y no está lesionado, saltar ventas ofensivas
-        protect_xi = xi == "risk" and avail not in ("injured", "suspended")
+        # Solo proteger si es titular real y la línea quedaría bajo el suelo
+        protect_xi = xi == "risk" and is_starter and avail not in ("injured", "suspended")
         # Conservar parches útiles (versatilidad) salvo financiar crítico
         protect_patch = useful_patch and not (cash_tight and bool(critical_pos))
 
-        # 1) Banquillo caro / valor estancado fuera del once (≥3M o ≥7% plantilla)
+        # 1) Banquillo caro / valor estancado fuera del once real (≥3M o ≥7% plantilla)
         min_bench_price = max(3_000_000.0, squad_value * 0.07)
         bench_flag = (
             pid in expensive_bench_ids
@@ -607,9 +639,11 @@ def build_sell_opportunities(
         ):
             urg = "high" if bench_inflated or price >= 6_000_000 else "medium"
             bits = [
-                f"fuera del once fiable (titularidad {int(lineup) if lineup is not None else '—'}%)",
+                f"fuera del once real (titularidad {int(lineup) if lineup is not None else '—'}%)",
                 f"libera {price:,.0f} € para titulares/producción",
             ]
+            if p.get("in_lineup"):
+                bits.insert(0, "en tu once Mister pero sin titularidad real")
             if ff is not None:
                 bits.append(f"FF {ff:.1f}")
             item = base_item(
@@ -620,6 +654,34 @@ def build_sell_opportunities(
                 sell_risk="low" if xi == "safe" else "medium",
             )
             item["_pref"] = 50
+            add(item)
+
+        # 1b) Pocos minutos / titularidad baja a precio relevante
+        if (
+            plays_little
+            and price >= 3_000_000
+            and covered_if_sold
+            and not keep_top
+            and not protect_xi
+            and not protect_patch
+            and not is_star
+        ):
+            bits = []
+            if lineup is not None:
+                bits.append(f"titularidad {int(lineup)}%")
+            if recent_mins is not None:
+                bits.append(f"{int(recent_mins)}' en últimos partidos")
+            if p.get("in_lineup"):
+                bits.append("está en tu once fantasy")
+            bits.append(f"libera {price:,.0f} €")
+            item = base_item(
+                p,
+                reason="low_minutes",
+                why="; ".join(bits),
+                urgency="high" if price >= 5_000_000 else "medium",
+                sell_risk="low" if not is_starter else "medium",
+            )
+            item["_pref"] = 48
             add(item)
 
         # 2) Baja producción a precio alto → reinvertir en puntos
@@ -644,7 +706,7 @@ def build_sell_opportunities(
             if prod is not None:
                 bits.append(f"score {prod:.0f}")
             if not is_starter:
-                bits.append("no asegura titularidad")
+                bits.append("no asegura titularidad real")
             else:
                 bits.append("mejorable vs objetivo de máxima puntuación")
             item = base_item(

@@ -89,6 +89,10 @@ MIN_DF = 4
 MIN_MF = 4
 MIN_FW = 2
 LINEUP_PROB_TITULAR = 0.70
+LINEUP_PROB_REGULAR = 0.45
+LINEUP_PROB_LOW = 0.40
+# Minutos acumulados en últimos ~5 partidos (FotMob) bajo los cuales cuenta como "juega poco"
+MINUTES_RECENT_LOW = 90
 
 HISTORY_RETENTION_DAYS = 30
 CHOLLO_DELTA_MIN = 0.08

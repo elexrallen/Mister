@@ -247,11 +247,7 @@ def enrich_player(
         enriched["seasons"] = []
         enriched["ppg_source"] = "mister_form" if form is not None else "missing"
 
-    # Compat: lineup_prob solo si viene; si hay in_lineup lo reflejamos
-    if enriched.get("lineup_prob") is None and enriched.get("in_lineup") is True:
-        enriched["lineup_prob"] = 1.0
-    elif enriched.get("lineup_prob") is None and enriched.get("in_lineup") is False:
-        enriched["lineup_prob"] = 0.0
+    # No inventar lineup_prob desde el once Mister: titularidad real viene de FF/JP/ext.
     return enriched
 
 
@@ -259,8 +255,47 @@ def enrich_player(
 # Algoritmos — carencias, mercado, libres, rivales
 # ---------------------------------------------------------------------------
 
+def _lineup_frac_real(p: dict[str, Any]) -> float | None:
+    """0–1 de alineación real; no usa in_lineup fantasy."""
+    ext = p.get("external") or {}
+    if ext.get("lineup_prob_ext") is not None:
+        try:
+            return max(0.0, min(1.0, float(ext["lineup_prob_ext"]) / 100.0))
+        except (TypeError, ValueError):
+            pass
+    if p.get("lineup_prob") is not None:
+        try:
+            v = float(p["lineup_prob"])
+            if v > 1.0:
+                v = v / 100.0
+            return max(0.0, min(1.0, v))
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _recent_minutes(p: dict[str, Any]) -> float | None:
+    fm = p.get("fotmob_stats") or {}
+    if fm.get("minutos_ultimos_5") is None:
+        return None
+    try:
+        return float(fm["minutos_ultimos_5"])
+    except (TypeError, ValueError):
+        return None
+
+
+def _is_real_starter(p: dict[str, Any]) -> bool:
+    if p.get("injury"):
+        return False
+    avail = (p.get("external") or {}).get("availability")
+    if avail in ("injured", "suspended"):
+        return False
+    lp = _lineup_frac_real(p)
+    return lp is not None and lp >= config.LINEUP_PROB_TITULAR
+
+
 def diagnose_squad(squad: list[dict[str, Any]]) -> dict[str, Any]:
-    """Detecta carencias por posición, lesiones y titulares en once."""
+    """Detecta carencias por posición usando titulares reales (no once Mister)."""
     by_pos = {"GK": [], "DF": [], "MF": [], "FW": []}
     for p in squad:
         pos = p.get("position", "MF")
@@ -269,17 +304,37 @@ def diagnose_squad(squad: list[dict[str, Any]]) -> dict[str, Any]:
     alerts: list[dict[str, Any]] = []
     mins = {"GK": config.MIN_GK, "DF": config.MIN_DF, "MF": config.MIN_MF, "FW": config.MIN_FW}
     labels = {"GK": "Porteros", "DF": "Defensas", "MF": "Centrocampistas", "FW": "Delanteros"}
+    starter_ideal = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
 
     summary: dict[str, Any] = {}
     for pos, players in by_pos.items():
-        healthy = [p for p in players if not p.get("injury")]
-        starters = [
-            p for p in healthy
-            if p.get("in_lineup") is True
-            or float(p.get("lineup_prob") or 0) >= config.LINEUP_PROB_TITULAR
+        healthy = [
+            p
+            for p in players
+            if not p.get("injury")
+            and (p.get("external") or {}).get("availability") not in ("injured", "suspended")
         ]
-        injured = [p for p in players if p.get("injury")]
+        starters = [p for p in healthy if _is_real_starter(p)]
+        injured = [
+            p
+            for p in players
+            if p.get("injury")
+            or (p.get("external") or {}).get("availability") in ("injured", "suspended")
+        ]
+        plays_little = []
+        for p in healthy:
+            lp = _lineup_frac_real(p)
+            rm = _recent_minutes(p)
+            low_lp = lp is not None and lp < getattr(config, "LINEUP_PROB_LOW", 0.40)
+            low_min = rm is not None and rm < getattr(config, "MINUTES_RECENT_LOW", 90)
+            mins_floor = getattr(config, "MINUTES_RECENT_LOW", 90) * 2
+            if low_min or (low_lp and not (rm is not None and rm >= mins_floor)):
+                plays_little.append(p)
+
         status = "ok"
+        ideal = starter_ideal.get(pos, 2)
+        has_lineup_data = any(_lineup_frac_real(p) is not None for p in players)
+
         if len(healthy) < mins.get(pos, 2):
             status = "critical"
             alerts.append({
@@ -287,14 +342,26 @@ def diagnose_squad(squad: list[dict[str, Any]]) -> dict[str, Any]:
                 "position": pos,
                 "message": f"Solo {len(healthy)} {labels[pos].lower()} disponibles (mín. {mins[pos]}).",
             })
-        elif len(starters) < max(1, mins.get(pos, 2) - 1) and any(
-            p.get("in_lineup") is not None or p.get("lineup_prob") is not None for p in players
-        ):
-            status = "warning"
+        elif has_lineup_data and len(starters) < ideal:
+            status = "critical" if len(starters) == 0 and pos in ("FW", "GK") else "warning"
+            alerts.append({
+                "level": status if status in ("critical", "warning") else "warning",
+                "position": pos,
+                "message": (
+                    f"Tienes {len(players)} {labels[pos].lower()}, pero solo {len(starters)} "
+                    f"con titularidad real (ideal >={ideal})."
+                ),
+            })
+        elif has_lineup_data and len(plays_little) >= max(2, len(healthy) // 2) and pos == "FW":
+            if status == "ok":
+                status = "warning"
             alerts.append({
                 "level": "warning",
                 "position": pos,
-                "message": f"Pocos en el once / titulares en {labels[pos]} ({len(starters)}).",
+                "message": (
+                    f"{len(plays_little)} delantero(s) juegan poco "
+                    f"({len(starters)} titulares reales)."
+                ),
             })
         for inj in injured:
             alerts.append({
@@ -310,6 +377,7 @@ def diagnose_squad(squad: list[dict[str, Any]]) -> dict[str, Any]:
             "count": len(players),
             "healthy": len(healthy),
             "starters": len(starters),
+            "plays_little": len(plays_little),
             "injured": len(injured),
             "status": status,
             "players": players,
@@ -1136,21 +1204,8 @@ def build_payload() -> dict[str, Any]:
         allow_synthetic=not honest_live,
     )
 
-    recommendations = build_squad_notes(me, diagnosis, diagnostico_plantilla)
-    # Alias explícito para UI / consumidores
-    squad_notes = recommendations
-    # Dedup + orden Alta → Media → Baja
-    seen_t: set[str] = set()
-    rec_unique: list[dict[str, Any]] = []
-    for r in recommendations:
-        if r["title"] in seen_t:
-            continue
-        seen_t.add(r["title"])
-        rec_unique.append(r)
-    _prio = {"Alta": 0, "Media": 1, "Baja": 2}
-    rec_unique.sort(key=lambda r: (_prio.get(r.get("priority", ""), 9), r.get("title", "")))
-    recommendations = rec_unique[:12]
-    squad_notes = recommendations
+    recommendations: list[dict[str, Any]] = []
+    squad_notes: list[dict[str, Any]] = []
 
     action_plan = build_action_plan(
         me,
