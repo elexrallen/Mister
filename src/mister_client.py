@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from typing import Any
 
 import requests
@@ -26,6 +27,11 @@ import config
 log = logging.getLogger("mister_client")
 
 POS_MAP = {"1": "GK", "2": "DF", "3": "MF", "4": "FW"}
+
+
+def _strip_accents(text: str) -> str:
+    nk = unicodedata.normalize("NFKD", text or "")
+    return "".join(c for c in nk if not unicodedata.combining(c))
 
 
 def build_cookie_header() -> str:
@@ -114,6 +120,8 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
         "mister_avg": None,
         "prior_points": None,
         "prior_avg": None,
+        "team_id": None,
+        "team_name": None,
     }
     if not info:
         return out
@@ -146,6 +154,13 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
     owner = info.get("owner") if isinstance(info.get("owner"), dict) else {}
     out["owner_id"] = owner.get("id")
     out["owner_name"] = owner.get("name")
+    team = info.get("team") if isinstance(info.get("team"), dict) else {}
+    if team.get("id") is not None:
+        out["team_id"] = str(team.get("id"))
+    if team.get("name"):
+        out["team_name"] = str(team.get("name"))
+        if out["team_id"]:
+            register_team_id(out["team_id"], out["team_name"])
     # Puntuación temporada actual
     if info.get("points") is not None:
         try:
@@ -185,6 +200,46 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
             except (TypeError, ValueError):
                 pass
     return out
+
+
+def refresh_team_labels(
+    players: list[dict[str, Any]],
+    *,
+    max_lookups: int = 20,
+) -> int:
+    """
+    Corrige team/team_id con AJAX (1 lookup por team_id distinto).
+    Evita mapas obsoletos (p.ej. id 6 = Deportivo, no Celta).
+    """
+    if not players:
+        return 0
+    # Un jugador representativo por escudo
+    sample: dict[str, dict[str, Any]] = {}
+    for p in players:
+        tid = str(p.get("team_id") or "")
+        if not tid or tid in sample:
+            continue
+        if p.get("id"):
+            sample[tid] = p
+    lookups = 0
+    for tid, p in list(sample.items())[:max_lookups]:
+        info = fetch_player_community_info(p["id"])
+        fields = clause_fields_from_community(info)
+        lookups += 1
+        label = register_team_id(fields.get("team_id") or tid, fields.get("team_name"))
+        if not label:
+            continue
+        real_tid = str(fields.get("team_id") or tid)
+        for q in players:
+            if str(q.get("team_id") or "") == tid or str(q.get("id")) == str(p.get("id")):
+                q["team_id"] = real_tid
+                q["team"] = label
+    # Reaplicar mapa ya aprendido al resto
+    for q in players:
+        tid = str(q.get("team_id") or "")
+        if tid and tid in LALIGA_TEAMS:
+            q["team"] = LALIGA_TEAMS[tid]
+    return lookups
 
 
 def enrich_players_with_clauses(
@@ -228,6 +283,13 @@ def enrich_players_with_clauses(
         if fields.get("mister_avg") is not None:
             new_p["mister_avg"] = fields["mister_avg"]
             new_p["form"] = fields["mister_avg"]
+        if fields.get("team_id") or fields.get("team_name"):
+            tid = fields.get("team_id") or new_p.get("team_id")
+            label = register_team_id(tid, fields.get("team_name")) or team_label(tid)
+            if tid:
+                new_p["team_id"] = str(tid)
+            if label:
+                new_p["team"] = label
         if fields.get("prior_points") is not None:
             new_p["prior_points"] = fields["prior_points"]
         if fields.get("prior_avg") is not None:
@@ -461,33 +523,101 @@ def parse_clause_from_html(chunk: str) -> tuple[float | None, bool]:
     return None, False
 
 
-# IDs CDN comunes LaLiga (el HTML no siempre trae el nombre del club)
-# IDs de escudo Mister (cdn …/teams/{id}.png). Hay duplicados por temporada
-# (p.ej. Osasuna 3 y 50; Alavés 7 y 48).
-LALIGA_TEAMS = {
+# IDs de escudo Mister (cdn …/teams/{id}.png) — temporada actual (verificado vía AJAX).
+# Los IDs cambian entre temporadas; si un id no está, se completa en runtime.
+LALIGA_TEAMS: dict[str, str] = {
     "1": "Athletic",
     "2": "Atlético",
-    "3": "Osasuna",
-    "4": "Barcelona",
+    "3": "Barcelona",
     "5": "Betis",
-    "6": "Celta",
+    "6": "Deportivo",
     "7": "Alavés",
     "8": "Espanyol",
     "9": "Getafe",
     "10": "Girona",
     "12": "Levante",
-    "13": "Mallorca",
+    "13": "Málaga",
     "14": "Rayo",
     "15": "Real Madrid",
     "16": "Real Sociedad",
     "17": "Sevilla",
     "18": "Valencia",
-    "19": "Valladolid",
+    "19": "Valencia",
     "20": "Villarreal",
     "23": "Elche",
     "48": "Alavés",
     "50": "Osasuna",
 }
+
+
+def shorten_mister_club_name(name: str | None) -> str:
+    """Normaliza nombres largos del AJAX Mister a etiqueta corta de UI."""
+    raw = (name or "").strip()
+    if not raw:
+        return ""
+    key = _strip_accents(raw).lower()
+    key = re.sub(r"\s+", " ", key).strip()
+    aliases = {
+        "athletic club": "Athletic",
+        "athletic": "Athletic",
+        "atletico": "Atlético",
+        "atletico de madrid": "Atlético",
+        "club atletico de madrid": "Atlético",
+        "barcelona": "Barcelona",
+        "fc barcelona": "Barcelona",
+        "real betis": "Betis",
+        "betis": "Betis",
+        "celta": "Celta",
+        "celta de vigo": "Celta",
+        "rc celta": "Celta",
+        "deportivo": "Deportivo",
+        "deportivo da coruna": "Deportivo",
+        "deportivo de la coruna": "Deportivo",
+        "rc deportivo": "Deportivo",
+        "alaves": "Alavés",
+        "deportivo alaves": "Alavés",
+        "espanyol": "Espanyol",
+        "rcd espanyol": "Espanyol",
+        "getafe": "Getafe",
+        "girona": "Girona",
+        "girona fc": "Girona",
+        "levante": "Levante",
+        "levante ud": "Levante",
+        "malaga": "Málaga",
+        "malaga cf": "Málaga",
+        "mallorca": "Mallorca",
+        "rayo vallecano": "Rayo",
+        "rayo": "Rayo",
+        "real madrid": "Real Madrid",
+        "real sociedad": "Real Sociedad",
+        "sevilla": "Sevilla",
+        "sevilla fc": "Sevilla",
+        "valencia": "Valencia",
+        "valencia cf": "Valencia",
+        "villarreal": "Villarreal",
+        "villarreal cf": "Villarreal",
+        "elche": "Elche",
+        "elche cf": "Elche",
+        "osasuna": "Osasuna",
+        "ca osasuna": "Osasuna",
+        "real oviedo": "Oviedo",
+        "oviedo": "Oviedo",
+        "valladolid": "Valladolid",
+        "real valladolid": "Valladolid",
+    }
+    if key in aliases:
+        return aliases[key]
+    # Fallback: primera palabra significativa
+    return raw.split()[0] if raw else ""
+
+
+def register_team_id(team_id: str | int | None, team_name: str | None) -> str:
+    """Registra/actualiza el mapa id→club y devuelve la etiqueta corta."""
+    tid = str(team_id or "").strip()
+    label = shorten_mister_club_name(team_name)
+    if tid and label:
+        LALIGA_TEAMS[tid] = label
+    return label or (LALIGA_TEAMS.get(tid) if tid else "") or ""
 
 
 def team_label(team_id: str | None) -> str:
@@ -511,7 +641,7 @@ def resolve_team_label(team_id: str | None, fallback_name: str | None = None) ->
     label = team_label(team_id)
     if not is_unknown_team_label(label):
         return label
-    fb = (fallback_name or "").strip()
+    fb = shorten_mister_club_name(fallback_name) or (fallback_name or "").strip()
     return fb or label
 
 
@@ -994,6 +1124,13 @@ def fetch_live_league() -> dict[str, Any] | None:
 
     market = parse_market_players(market_html) if market_html else []
     squad = parse_team_players(team_html) if team_html else []
+
+    # Corregir clubes (mapa CDN cambia por temporada; p.ej. 6 = Deportivo)
+    try:
+        n_team = refresh_team_labels(list(squad) + list(market), max_lookups=18)
+        log.info("Team labels refresh lookups=%s", n_team)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("refresh_team_labels falló: %s", exc)
 
     market_by_id = {p["id"]: p for p in market}
     for p in squad:
