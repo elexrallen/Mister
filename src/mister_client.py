@@ -336,6 +336,22 @@ def parse_float_es(text: str) -> float:
         return 0.0
 
 
+def clean_player_name(raw: str) -> str:
+    """
+    Nombre visible Mister: puede incluir SVG de duda o emoji de cláusula dentro de .name.
+    """
+    t = re.sub(r"<[^>]+>", " ", raw or "")
+    t = re.sub(r"\s+", " ", t).strip()
+    return t
+
+
+# Captura .name aunque haya hijos (emoji/SVG); luego clean_player_name
+_NAME_UNDER_RE = (
+    r'<div class="name">([\s\S]*?)</div>\s*'
+    r'<div class="underName">([\s\S]*?)</div>'
+)
+
+
 def parse_streak_gw_points(html_chunk: str) -> list[int] | None:
     """
     Barras .streak de Mister: enteros por jornada, o None si solo hay '-'.
@@ -446,19 +462,57 @@ def parse_clause_from_html(chunk: str) -> tuple[float | None, bool]:
 
 
 # IDs CDN comunes LaLiga (el HTML no siempre trae el nombre del club)
+# IDs de escudo Mister (cdn …/teams/{id}.png). Hay duplicados por temporada
+# (p.ej. Osasuna 3 y 50; Alavés 7 y 48).
 LALIGA_TEAMS = {
-    "1": "Athletic", "2": "Atlético", "3": "Osasuna", "4": "Barcelona",
-    "5": "Betis", "6": "Celta", "7": "Alavés", "8": "Espanyol",
-    "9": "Getafe", "10": "Girona", "13": "Mallorca", "14": "Rayo",
-    "15": "Real Madrid", "16": "Real Sociedad", "17": "Sevilla",
-    "18": "Valencia", "19": "Valladolid", "20": "Villarreal",
+    "1": "Athletic",
+    "2": "Atlético",
+    "3": "Osasuna",
+    "4": "Barcelona",
+    "5": "Betis",
+    "6": "Celta",
+    "7": "Alavés",
+    "8": "Espanyol",
+    "9": "Getafe",
+    "10": "Girona",
+    "12": "Levante",
+    "13": "Mallorca",
+    "14": "Rayo",
+    "15": "Real Madrid",
+    "16": "Real Sociedad",
+    "17": "Sevilla",
+    "18": "Valencia",
+    "19": "Valladolid",
+    "20": "Villarreal",
+    "23": "Elche",
+    "48": "Alavés",
+    "50": "Osasuna",
 }
 
 
 def team_label(team_id: str | None) -> str:
     if not team_id:
         return ""
-    return LALIGA_TEAMS.get(str(team_id), f"Club {team_id}")
+    tid = str(team_id)
+    if tid in LALIGA_TEAMS:
+        return LALIGA_TEAMS[tid]
+    if tid in ("0", "1490"):
+        return ""
+    return f"Club {tid}"
+
+
+def is_unknown_team_label(team: str | None) -> bool:
+    t = (team or "").strip()
+    return not t or t.lower().startswith("club ")
+
+
+def resolve_team_label(team_id: str | None, fallback_name: str | None = None) -> str:
+    """Etiqueta Mister; si el id es desconocido, usa fallback externo (FF, etc.)."""
+    label = team_label(team_id)
+    if not is_unknown_team_label(label):
+        return label
+    fb = (fallback_name or "").strip()
+    return fb or label
 
 
 def parse_market_players(html: str) -> list[dict[str, Any]]:
@@ -472,14 +526,14 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
         r"teams/(\d+)\.png[\s\S]{0,250}?"
         r"data-position=['\"](\d)['\"][\s\S]{0,350}?"
         r"data-id_player=['\"](\d+)['\"][\s\S]{0,500}?"
-        r'<div class="name">\s*([^<]+?)\s*</div>\s*'
-        r'<div class="underName">([\s\S]*?)</div>',
+        + _NAME_UNDER_RE,
         re.I,
     )
     seen: set[str] = set()
     for m in pattern.finditer(html):
-        team_id, pos, pid, name, under = m.groups()
-        if pid in seen:
+        team_id, pos, pid, name_raw, under = m.groups()
+        name = clean_player_name(name_raw)
+        if not name or pid in seen:
             continue
         seen.add(pid)
         price = parse_euro_amount(under)
@@ -499,7 +553,7 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
 
         players.append({
             "id": pid,
-            "name": name.strip(),
+            "name": name,
             "position": _pos(pos),
             "team": team_label(team_id),
             "team_id": team_id,
@@ -544,8 +598,11 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
         after = html[m.end() : m.end() + 1600]
         end = after.find("</button>")
         body = after[:end] if end >= 0 else after
-        name_m = re.search(r'<div class="name">\s*([^<]+?)\s*</div>', body)
+        name_m = re.search(r'<div class="name">([\s\S]*?)</div>', body)
         if not name_m:
+            continue
+        name = clean_player_name(name_m.group(1))
+        if not name:
             continue
         seen.add(pid)
         team_m = re.search(r"teams/(\d+)\.png", body)
@@ -559,7 +616,7 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
         tid = team_m.group(1) if team_m else ""
         players.append({
             "id": pid,
-            "name": name_m.group(1).strip(),
+            "name": name,
             "position": _pos(pos_m.group(1)),
             "team": team_label(tid),
             "team_id": tid,
@@ -586,41 +643,45 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
         r"teams/(\d+)\.png[\s\S]{0,250}?"
         r"data-position=['\"](\d)['\"][\s\S]{0,350}?"
         r"data-id_player=['\"](\d+)['\"][\s\S]{0,500}?"
-        r'<div class="name">\s*([^<]+?)\s*</div>\s*'
-        r'<div class="underName">([\s\S]*?)</div>',
+        + _NAME_UNDER_RE,
         re.I,
     )
     for m in pattern.finditer(html):
-        team_id, pos, pid, name, under = m.groups()
+        team_id, pos, pid, name_raw, under = m.groups()
+        name = clean_player_name(name_raw)
+        if not name:
+            continue
         head = html[max(0, m.start() - 80) : m.end()]
         tail = html[m.end() : m.end() + 500]
         scoring = parse_scoring_tail(tail)
         pts_m = re.search(r'<div class="points">\s*([^<]+?)\s*</div>', head)
         points = int(parse_float_es(pts_m.group(1))) if pts_m else 0
+        price = parse_euro_amount(under)
         if pid in seen:
             # Completar precio / scoring si el del once no lo tenía
             for p in players:
                 if p["id"] == pid:
                     if not p.get("price"):
-                        p["price"] = parse_euro_amount(under)
+                        p["price"] = price
                         p["trend"] = trend_from_arrow(under)
                         dq = dict(p.get("data_quality") or {})
-                        dq["price"] = "mister"
+                        dq["price"] = "mister" if price else "missing"
                         p["data_quality"] = dq
                     if not p.get("points"):
                         p["points"] = points
-                    if p.get("mister_avg") is None and scoring.get("mister_avg") is not None:
-                        p["mister_avg"] = scoring["mister_avg"]
-                        p["form"] = scoring["mister_avg"]
+                    # En pretemporada el once trae 0,0; la lista tiene el mismo avg
+                    if scoring.get("mister_avg") is not None:
+                        if p.get("mister_avg") is None:
+                            p["mister_avg"] = scoring["mister_avg"]
+                            p["form"] = scoring["mister_avg"]
                     if not p.get("recent_gw_points") and scoring.get("recent_gw_points"):
                         p["recent_gw_points"] = scoring["recent_gw_points"]
                         p["points_trend"] = scoring["points_trend"]
             continue
         seen.add(pid)
-        price = parse_euro_amount(under)
         players.append({
             "id": pid,
-            "name": name.strip(),
+            "name": name,
             "position": _pos(pos),
             "team": team_label(team_id),
             "team_id": team_id,
@@ -630,7 +691,7 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
             "mister_avg": scoring.get("mister_avg"),
             "recent_gw_points": scoring.get("recent_gw_points"),
             "points_trend": scoring.get("points_trend") or "unknown",
-            "injury": False,
+            "injury": bool(re.search(r"st-injured|#injured|lesionado", head, re.I)),
             "in_lineup": False,
             "trend": trend_from_arrow(under),
             "price_delta_5d": None,
@@ -722,12 +783,13 @@ def parse_user_squad(html: str) -> list[dict[str, Any]]:
     seen: set[str] = set()
     pattern = re.compile(
         r'data-id_player=["\'](\d+)["\']([\s\S]{0,900}?)'
-        r'<div class="name">\s*([^<]+?)\s*</div>',
+        r'<div class="name">([\s\S]*?)</div>',
         re.I,
     )
     for m in pattern.finditer(html):
-        pid, mid, name = m.groups()
-        if pid in seen:
+        pid, mid, name_raw = m.groups()
+        name = clean_player_name(name_raw)
+        if not name or pid in seen:
             continue
         seen.add(pid)
         window_before = html[max(0, m.start() - 350) : m.start()]
@@ -755,7 +817,7 @@ def parse_user_squad(html: str) -> list[dict[str, Any]]:
         tid = team_m.group(1) if team_m else ""
         players.append({
             "id": pid,
-            "name": name.strip(),
+            "name": name,
             "position": _pos(pos_m.group(1)) if pos_m else "MF",
             "team": team_label(tid),
             "team_id": tid,
@@ -839,13 +901,13 @@ def parse_free_agents_hint(html: str) -> list[dict[str, Any]]:
         r"teams/(\d+)\.png[\s\S]{0,250}?"
         r"data-position=['\"](\d)['\"][\s\S]{0,350}?"
         r"data-id_player=['\"](\d+)['\"][\s\S]{0,500}?"
-        r'<div class="name">\s*([^<]+?)\s*</div>\s*'
-        r'<div class="underName">([\s\S]*?)</div>',
+        + _NAME_UNDER_RE,
         re.I,
     )
     for m in pattern.finditer(html):
-        team_id, pos, pid, name, under = m.groups()
-        if pid in seen:
+        team_id, pos, pid, name_raw, under = m.groups()
+        name = clean_player_name(name_raw)
+        if not name or pid in seen:
             continue
         chunk = html[max(0, m.start() - 200) : m.end() + 200].lower()
         if not any(x in chunk for x in ("libre", "sin due", "sin dueño", "free agent", "owner\":0", "owner':0")):
@@ -854,7 +916,7 @@ def parse_free_agents_hint(html: str) -> list[dict[str, Any]]:
         price = parse_euro_amount(under)
         players.append({
             "id": pid,
-            "name": name.strip(),
+            "name": name,
             "position": _pos(pos),
             "team": team_label(team_id),
             "team_id": team_id,
@@ -940,6 +1002,28 @@ def fetch_live_league() -> dict[str, Any] | None:
             dq = dict(p.get("data_quality") or {})
             dq["price"] = "mister"
             p["data_quality"] = dq
+
+    # Fail-soft: precios aún faltantes vía AJAX player-community-info
+    missing_price = [p for p in squad if not p.get("price")]
+    if missing_price:
+        filled, _ = enrich_players_with_clauses(missing_price, max_lookups=min(20, len(missing_price)))
+        by_id = {str(x.get("id")): x for x in filled}
+        for p in squad:
+            hit = by_id.get(str(p.get("id")))
+            if not hit:
+                continue
+            if not p.get("price") and hit.get("price"):
+                p["price"] = hit["price"]
+                p["market_value"] = hit.get("market_value") or hit.get("price")
+                dq = dict(p.get("data_quality") or {})
+                dq["price"] = "mister_ajax"
+                p["data_quality"] = dq
+            if hit.get("mister_avg") is not None and p.get("mister_avg") is None:
+                p["mister_avg"] = hit["mister_avg"]
+                p["form"] = hit["mister_avg"]
+            if hit.get("clause_known"):
+                p["clause"] = hit.get("clause")
+                p["clause_known"] = True
 
     if not squad and not market:
         log.warning("HTML sin jugadores parseables")

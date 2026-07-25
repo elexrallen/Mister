@@ -14,17 +14,16 @@ from typing import Any
 from urllib.parse import quote
 
 import requests
-from thefuzz import fuzz
 
 from scrapers.http_util import USER_AGENT
-from scrapers.name_match import normalize_name, normalize_team
+from scrapers.name_match import match_player, normalize_name
 
+MATCH_THRESHOLD = 78
 log = logging.getLogger("fotmob")
 
 SEARCH_URL = "https://apigw.fotmob.com/searchapi/suggest"
 PLAYER_URL = "https://www.fotmob.com/api/playerData"
 PLAYER_PAGE_URL = "https://www.fotmob.com/players/{id}"
-MATCH_THRESHOLD = 70
 DEFAULT_TIMEOUT = 12
 REQUEST_GAP_S = 0.3
 MAX_LOOKUPS_DEFAULT = 40
@@ -178,34 +177,8 @@ def _best_match(
     mister_team: str | None,
     candidates: list[dict[str, Any]],
 ) -> tuple[dict[str, Any] | None, int]:
-    target = normalize_name(mister_name)
-    # También comparar sin inicial: "p aubameyang" → "aubameyang"
-    target_alt = normalize_name(re.sub(r"^[A-Za-zÀ-ÿ]\.\s+", "", mister_name or ""))
-    team_n = normalize_team(mister_team or "")
-    best: dict[str, Any] | None = None
-    best_score = 0
-    for cand in candidates:
-        cname = normalize_name(str(cand.get("name") or ""))
-        if not cname:
-            continue
-        score = fuzz.token_set_ratio(target, cname)
-        if target_alt and target_alt != target:
-            score = max(score, fuzz.token_set_ratio(target_alt, cname))
-            # apellido vs apellido
-            t_last = target_alt.split()[-1] if target_alt.split() else ""
-            c_last = cname.split()[-1] if cname.split() else ""
-            if t_last and c_last and len(t_last) >= 3:
-                score = max(score, fuzz.ratio(t_last, c_last))
-        cteam = normalize_team(str(cand.get("team") or ""))
-        if team_n and cteam and (team_n in cteam or cteam in team_n):
-            score = min(100, score + 5)
-        if score > best_score:
-            best_score = score
-            best = cand
-    if best is None or best_score < MATCH_THRESHOLD:
-        return None, best_score
-    return best, best_score
-
+    """Delega en name_match (inicial + equipo) para evitar colisiones de apellido."""
+    return match_player(mister_name, mister_team, candidates, threshold=MATCH_THRESHOLD)
 
 def _collect_recent_matches(payload: dict[str, Any]) -> list[dict[str, Any]]:
     """Intenta varias rutas del JSON playerData."""

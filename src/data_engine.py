@@ -560,8 +560,193 @@ def find_free_agents_top(
 
 
 # ---------------------------------------------------------------------------
-# Motor de recomendaciones competitivas
+# Notas de plantilla (estructurales — no duplican la cola de acciones)
 # ---------------------------------------------------------------------------
+
+def build_squad_notes(
+    me: dict[str, Any],
+    diagnosis: dict[str, Any],
+    diagnostico: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """
+    Consejos estructurales: salud, líneas, banquillo, TOP, parches.
+    Sin fichajes/ventas/cláusulas por jugador (eso vive en action_plan).
+    """
+    notes: list[dict[str, Any]] = []
+    diag = diagnostico or {}
+    finance = diag.get("financiero") or {}
+    lineas = diag.get("lineas") or {}
+    parches = diag.get("parches") or {}
+    tips = list(diag.get("consejos") or [])
+
+    def add(
+        *,
+        ntype: str,
+        priority: str,
+        title: str,
+        reason: str,
+    ) -> None:
+        notes.append({
+            "type": ntype,
+            "priority": priority,
+            "title": title,
+            "reason": reason,
+            "suggested_action": None,
+            "related_player_ids": [],
+        })
+
+    # Salud global
+    score = diag.get("salud_score")
+    if score is not None:
+        try:
+            sc = int(score)
+        except (TypeError, ValueError):
+            sc = 0
+        if sc >= 75:
+            prio, tone = "Baja", "Plantilla en buen estado estructural"
+        elif sc >= 50:
+            prio, tone = "Media", "Hay grietas estructurales a vigilar"
+        else:
+            prio, tone = "Alta", "La estructura del equipo pide atención"
+        add(
+            ntype="health",
+            priority=prio,
+            title=f"Salud de plantilla: {sc}/100",
+            reason=tone + ". Revisa líneas, TOP y banquillo abajo.",
+        )
+
+    # TOP / estrellas
+    top = finance.get("top_check") or {}
+    if top:
+        st = top.get("status") or ("ok" if top.get("ok") else "warning")
+        prio = "Alta" if st == "critical" else ("Media" if st == "warning" else "Baja")
+        msg = top.get("message") or "Revisa el bloque de estrellas TOP."
+        share = top.get("share_pct")
+        if share is not None:
+            msg += f" Concentración de valor TOP: {share}%."
+        add(
+            ntype="top",
+            priority=prio,
+            title="Bloque TOP (estrellas)",
+            reason=msg,
+        )
+
+    # Banquillo inflado
+    bench = finance.get("bench_inflated") or {}
+    if bench:
+        inflated = bench.get("status") == "alert" or bench.get("ok") is False
+        msg = bench.get("message") or (
+            "Hay valor fuera del once." if inflated else "Banquillo sin exceso de valor."
+        )
+        add(
+            ntype="bench",
+            priority="Alta" if inflated else "Baja",
+            title="Banquillo y valor parado",
+            reason=msg,
+        )
+
+    # Líneas
+    labels = {"GK": "Portería", "DF": "Defensa", "MF": "Centrocampo", "FW": "Delantera"}
+    for pos in ("GK", "DF", "MF", "FW"):
+        info = lineas.get(pos) or {}
+        st = info.get("status") or "ok"
+        msg = info.get("message")
+        if not msg:
+            continue
+        if st == "ok":
+            continue  # no saturar con "todo bien" por línea
+        prio = "Alta" if st == "critical" else "Media"
+        add(
+            ntype="line",
+            priority=prio,
+            title=f"Línea · {labels.get(pos, pos)}",
+            reason=msg,
+        )
+
+    # Si todas las líneas OK, una nota positiva breve
+    if lineas and all((lineas.get(p) or {}).get("status", "ok") == "ok" for p in ("GK", "DF", "MF", "FW")):
+        add(
+            ntype="line",
+            priority="Baja",
+            title="Líneas equilibradas",
+            reason="Portería, defensa, medio y delantera cumplen el mínimo estructural.",
+        )
+
+    # Parches / fondo de armario
+    if parches:
+        st = parches.get("status") or "ok"
+        msg = parches.get("message") or "Revisa el fondo de armario."
+        prio = "Alta" if st == "critical" else ("Media" if st == "warning" else "Baja")
+        add(
+            ntype="patches",
+            priority=prio,
+            title="Parches económicos",
+            reason=msg,
+        )
+
+    # Consejos del analizador (alert/suggestion); sin IDs de jugador
+    for tip in tips:
+        level = tip.get("level") or "suggestion"
+        if level == "ok":
+            continue
+        title = tip.get("title") or "Consejo estructural"
+        # Evitar duplicar títulos ya añadidos por líneas/parches
+        if any(title.lower() in (n["title"] or "").lower() or (n["title"] or "").lower() in title.lower() for n in notes):
+            continue
+        msg = tip.get("message") or ""
+        if not msg:
+            continue
+        prio = "Alta" if level == "alert" else "Media"
+        add(
+            ntype="tip",
+            priority=prio,
+            title=title,
+            reason=msg,
+        )
+
+    # Contexto de clasificación (sin CTA de comprar)
+    rank = int(me.get("rank") or 0)
+    if rank:
+        balance = float(me.get("balance") or 0)
+        if rank <= 2:
+            add(
+                ntype="rank",
+                priority="Media",
+                title="Vas arriba en la clasificación",
+                reason=f"Puesto {rank}. Prioriza no romper el once fiable; caja {balance:,.0f} €.",
+            )
+        elif rank >= 7:
+            add(
+                ntype="rank",
+                priority="Media",
+                title="Zona baja de la tabla",
+                reason=f"Puesto {rank}. La cola del día ya prioriza carencias; aquí solo el contexto.",
+            )
+
+    # Alertas de diagnosis críticas sin nombrar fichajes concretos
+    for alert in diagnosis.get("alerts", []):
+        if alert.get("level") != "critical":
+            continue
+        if alert.get("source") == "structural":
+            continue  # ya cubierto por líneas
+        pos = alert.get("position") or ""
+        msg = alert.get("message") or f"Carencia crítica en {pos}."
+        title = f"Alerta · {pos}" if pos else "Alerta de plantilla"
+        if any(n["title"] == title for n in notes):
+            continue
+        add(ntype="alert", priority="Alta", title=title, reason=msg)
+
+    seen: set[str] = set()
+    unique: list[dict[str, Any]] = []
+    prio_ord = {"Alta": 0, "Media": 1, "Baja": 2}
+    for n in sorted(notes, key=lambda x: (prio_ord.get(x["priority"], 9), x.get("title") or "")):
+        key = n["title"]
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(n)
+    return unique[:12]
+
 
 def build_recommendations(
     me: dict[str, Any],
@@ -571,234 +756,10 @@ def build_recommendations(
     free_agents: list[dict[str, Any]],
     *,
     honest_live: bool = False,
+    diagnostico_plantilla: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """
-    Recomendaciones situacionales.
-    En honest_live: solo usa saldo, ranking, carencias, mercado y valor rival
-    (sin PPG histórico inventado ni libres TOP ficticios).
-    """
-    recs: list[dict[str, Any]] = []
-    rank = int(me.get("rank") or 99)
-    total = max(len(rivals) + 1, 2)
-    balance = float(me.get("balance") or 0)
-
-    if me.get("rank"):
-        if rank <= 2:
-            recs.append({
-                "type": "hold",
-                "priority": "Media",
-                "title": "Vas arriba en la clasificación",
-                "reason": f"Ocupas el puesto {rank} de {total}. Cuida la caja ({balance:,.0f} €) y no sobrepujes.",
-                "suggested_action": "no pujar en agresivo",
-                "related_player_ids": [],
-            })
-        elif rank >= total - 1:
-            recs.append({
-                "type": "bid",
-                "priority": "Alta",
-                "title": "Estás abajo en la tabla",
-                "reason": f"Puesto {rank}. Prioriza cubrir carencias del once con lo que hay en mercado.",
-                "suggested_action": "comprar",
-                "related_player_ids": [o["id"] for o in opportunities if o.get("fills_need")][:3],
-            })
-        else:
-            recs.append({
-                "type": "bid",
-                "priority": "Media",
-                "title": "Zona media de la liga",
-                "reason": f"Puesto {rank}. Equilibra carencias y precio; saldo disponible {balance:,.0f} €.",
-                "suggested_action": "comprar",
-                "related_player_ids": [],
-            })
-
-    for alert in diagnosis.get("alerts", []):
-        if alert.get("level") != "critical":
-            continue
-        pos = alert["position"]
-        market_fix = [o for o in opportunities if o["position"] == pos]
-        free_fix = [] if honest_live else [f for f in free_agents if f["position"] == pos]
-        target = market_fix or free_fix
-        reason = alert["message"]
-        if market_fix:
-            reason += f" En mercado: {market_fix[0]['name']} ({market_fix[0]['price']:,} €)."
-        elif not honest_live and free_fix:
-            reason += f" Libre TOP: {free_fix[0]['name']}."
-        else:
-            reason += " No hay opción clara hoy en el mercado parseado."
-        recs.append({
-            "type": "bid" if market_fix else "hold",
-            "priority": "Alta",
-            "title": f"Cubre carencia en {pos}",
-            "reason": reason,
-            "suggested_action": "comprar" if market_fix else "esperar",
-            "related_player_ids": [t["id"] for t in target[:2]],
-        })
-
-    # Rivales con plantilla cara (proxy de poder, NO es liquidez)
-    rich = sorted(
-        [r for r in rivals if float(r.get("squad_value") or r.get("squad_value_shown") or 0) >= 30_000_000],
-        key=lambda r: -float(r.get("squad_value") or 0),
-    )
-    for r in rich[:3]:
-        recs.append({
-            "type": "warn_rival",
-            "priority": "Media",
-            "title": f"{r['team_name']} tiene plantilla cara",
-            "reason": (
-                f"Valor publicado ~{int(r.get('squad_value') or 0):,} € "
-                f"(puesto {r.get('rank')}). No implica saldo líquido."
-            ),
-            "suggested_action": "vigilar pujas",
-            "related_player_ids": [],
-        })
-
-    # Mercado: flecha arriba + cubre carencia
-    for o in opportunities:
-        if not o.get("fills_need"):
-            continue
-        if o.get("trend") == "up" or (o.get("delta_5d") is not None and float(o["delta_5d"]) > 0):
-            ff = o.get("ff_mister_avg")
-            ff_bit = f" Media FF Mister Mixto {float(ff):.1f}." if ff is not None else ""
-            recs.append({
-                "type": "bid",
-                "priority": o.get("priority") or "Media",
-                "title": f"Encaja en tu once: {o['name']}",
-                "reason": (
-                    f"Cubre {o['position']}. Precio {o['price']:,} €. "
-                    f"Tendencia valor: {o.get('trend') or 'sin flecha'}.{ff_bit}"
-                ),
-                "suggested_action": "comprar" if o.get("affordable") else "esperar",
-                "related_player_ids": [o["id"]],
-            })
-
-    # Alta producción FF a buen precio (gestión diaria de plantilla)
-    for o in opportunities[:40]:
-        ff = o.get("ff_mister_avg")
-        prod = o.get("production_score")
-        price = float(o.get("price") or 0)
-        if ff is None and prod is None:
-            continue
-        try:
-            good = (ff is not None and float(ff) >= 5.2) or (prod is not None and float(prod) >= 60)
-            cheapish = price <= 8_000_000 or (
-                ff is not None and price > 0 and float(ff) / max(price / 1e6, 0.4) >= 1.0
-            )
-        except (TypeError, ValueError):
-            continue
-        if not (good and cheapish and o.get("affordable")):
-            continue
-        if any(r.get("related_player_ids") == [o["id"]] for r in recs):
-            continue
-        recs.append({
-            "type": "bid",
-            "priority": "Alta" if o.get("fills_need") or o.get("is_top_ff") else "Media",
-            "title": f"Producción FF atractiva: {o['name']}",
-            "reason": (
-                f"Media Mister Mixto {float(ff):.1f}" if ff is not None else f"Score producción {prod}"
-            )
-            + f" · {price:,.0f} €"
-            + (" · cubre carencia" if o.get("fills_need") else ""),
-            "suggested_action": "comprar",
-            "related_player_ids": [o["id"]],
-        })
-        if sum(1 for r in recs if "Producción FF" in (r.get("title") or "")) >= 3:
-            break
-
-    # Vende caro con baja producción FF
-    for p in me.get("squad", []):
-        price = float(p.get("price") or 0)
-        ff = p.get("ff_mister_avg")
-        if ff is None:
-            ff = (p.get("external") or {}).get("ff_mister_avg")
-        if price < 5_000_000 or ff is None:
-            continue
-        try:
-            if float(ff) >= 4.0:
-                continue
-        except (TypeError, ValueError):
-            continue
-        recs.append({
-            "type": "sell",
-            "priority": "Media",
-            "title": f"Revisa valor/producción: {p.get('name')}",
-            "reason": (
-                f"Cuesta {price:,.0f} € con media FF Mister Mixto {float(ff):.1f}. "
-                "Valora vender y reinvertir en mejor producción."
-            ),
-            "suggested_action": "vender",
-            "related_player_ids": [p.get("id")],
-        })
-        if sum(1 for r in recs if r.get("type") == "sell" and "producción" in (r.get("title") or "").lower()) >= 2:
-            break
-
-    if not honest_live:
-        for fa in free_agents[:5]:
-            if float(fa.get("avg_ppg") or 0) < 5.8:
-                continue
-            recs.append({
-                "type": "capture_free",
-                "priority": "Alta" if float(fa["avg_ppg"]) >= 6.5 else "Media",
-                "title": f"Captura libre TOP: {fa['name']}",
-                "reason": f"PPG histórico {fa['avg_ppg']} (modo demo/seed).",
-                "suggested_action": "comprar",
-                "related_player_ids": [fa["id"]],
-            })
-
-    for p in me.get("squad", []):
-        # Las ventas detalladas viven en action_plan; aquí solo eco de lesionados caros
-        ext = p.get("external") or {}
-        avail = ext.get("availability") or ("injured" if p.get("injury") else "unknown")
-        if avail in ("injured", "suspended") and float(p.get("price") or 0) >= 2_000_000:
-            recs.append({
-                "type": "sell",
-                "priority": "Media",
-                "title": f"Valora vender: {p['name']}",
-                "reason": f"Estado {avail}; revisa cobertura y cola de ventas.",
-                "suggested_action": "vender",
-                "related_player_ids": [p["id"]],
-            })
-
-    # Mercado atractivo pero lesionado/sancionado (fuentes externas)
-    for o in opportunities:
-        ext = o.get("external") or {}
-        avail = ext.get("availability") or ("injured" if o.get("injury") else "")
-        if avail not in ("injured", "suspended"):
-            continue
-        if o.get("fills_need") or float(o.get("score") or 0) >= 10 or o.get("affordable"):
-            recs.append({
-                "type": "warn_injury",
-                "priority": "Alta",
-                "title": f"Cuidado: {o['name']} no disponible",
-                "reason": (
-                    f"Estado externo: {avail}. "
-                    f"Aunque el precio/encaje sea atractivo, baja la prioridad de puja."
-                ),
-                "suggested_action": "evitar / esperar",
-                "related_player_ids": [o["id"]],
-            })
-
-    if honest_live:
-        recs.append({
-            "type": "hold",
-            "priority": "Baja",
-            "title": "Datos aún no disponibles",
-            "reason": (
-                "No hay PPG multi-temporada ni lista fiable de libres TOP desde Mister. "
-                "Las pujas recomendadas son heurística sobre precio/carencia, no predicción histórica."
-            ),
-            "suggested_action": "usar con criterio",
-            "related_player_ids": [],
-        })
-
-    seen: set[str] = set()
-    unique: list[dict[str, Any]] = []
-    prio = {"Alta": 0, "Media": 1, "Baja": 2}
-    for r in sorted(recs, key=lambda x: prio.get(x["priority"], 9)):
-        if r["title"] in seen:
-            continue
-        seen.add(r["title"])
-        unique.append(r)
-    return unique[:12]
+    """Compat: delega en notas estructurales (la cola cubre las acciones)."""
+    return build_squad_notes(me, diagnosis, diagnostico_plantilla)
 
 
 def _rival_demand_for_position(rivals: list[dict[str, Any]], position: str) -> list[dict[str, Any]]:
@@ -823,6 +784,7 @@ def build_action_plan(
     price_series: dict[str, list[float]] | None = None,
     rival_upgrades: list[dict[str, Any]] | None = None,
     points_phase: str = "preseason",
+    diagnostico_plantilla: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Fuente de verdad diaria:
@@ -950,7 +912,7 @@ def build_action_plan(
                 "is_top_ff": o.get("is_top_ff"),
             })
 
-    # Ventas situacionales
+    # Ventas situacionales (once fiable / producción / banquillo)
     sells = build_sell_opportunities(
         me,
         diagnosis,
@@ -959,6 +921,7 @@ def build_action_plan(
         delta_fn=compute_delta_from_history,
         market_opportunities=opportunities,
         points_phase=points_phase,
+        diagnostico_plantilla=diagnostico_plantilla,
     )
     plan.extend(sells)
 
@@ -1173,36 +1136,10 @@ def build_payload() -> dict[str, Any]:
         allow_synthetic=not honest_live,
     )
 
-    recommendations = build_recommendations(
-        me, diagnosis, opportunities, rivals, free_agents, honest_live=honest_live
-    )
-    # Demandas rivales → recomendaciones warn_rival_bid
-    for o in opportunities[:15]:
-        demand = _rival_demand_for_position(rivals, o.get("position") or "")
-        top = [d for d in demand if int(d.get("rank") or 99) <= 3]
-        if top and o.get("priority") in ("Alta", "Media"):
-            recommendations.insert(0, {
-                "type": "warn_rival_bid",
-                "priority": "Alta" if o.get("fills_need") else "Media",
-                "title": f"Rivales top quieren {o['position']}: {o['name']}",
-                "reason": (
-                    f"Gap en {', '.join(t['team_name'] for t in top[:3])}. "
-                    f"Si esperas, riesgo alto de perderlo."
-                ),
-                "suggested_action": "pujar ya o vigilar",
-                "related_player_ids": [o["id"]],
-            })
-    for u in rival_upgrades:
-        if u.get("action") == "clause_bid":
-            recommendations.insert(0, {
-                "type": "clause",
-                "priority": "Alta" if u.get("fills_need") else "Media",
-                "title": f"Cláusula: {u['name']}",
-                "reason": u.get("why") or "Mejora plantilla rival asequible.",
-                "suggested_action": "pagar cláusula",
-                "related_player_ids": [u["player_id"]],
-            })
-    # Dedup recommendations again
+    recommendations = build_squad_notes(me, diagnosis, diagnostico_plantilla)
+    # Alias explícito para UI / consumidores
+    squad_notes = recommendations
+    # Dedup + orden Alta → Media → Baja
     seen_t: set[str] = set()
     rec_unique: list[dict[str, Any]] = []
     for r in recommendations:
@@ -1210,10 +1147,10 @@ def build_payload() -> dict[str, Any]:
             continue
         seen_t.add(r["title"])
         rec_unique.append(r)
-    # Orden intuitivo: Alta → Media → Baja (tiro hecho)
     _prio = {"Alta": 0, "Media": 1, "Baja": 2}
     rec_unique.sort(key=lambda r: (_prio.get(r.get("priority", ""), 9), r.get("title", "")))
-    recommendations = rec_unique[:14]
+    recommendations = rec_unique[:12]
+    squad_notes = recommendations
 
     action_plan = build_action_plan(
         me,
@@ -1223,6 +1160,7 @@ def build_payload() -> dict[str, Any]:
         price_series=price_series,
         rival_upgrades=rival_upgrades,
         points_phase=points_phase,
+        diagnostico_plantilla=diagnostico_plantilla,
     )
 
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
@@ -1325,6 +1263,7 @@ def build_payload() -> dict[str, Any]:
         "rivals": rivals,
         "free_agents_top": free_agents,
         "recommendations": recommendations,
+        "squad_notes": squad_notes,
         "meta": {
             "filters_hint": {
                 "positions": ["GK", "DF", "MF", "FW"],

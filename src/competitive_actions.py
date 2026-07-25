@@ -160,16 +160,54 @@ def detect_points_phase(players: list[dict[str, Any]]) -> str:
     return "preseason"
 
 
+def _is_top_ff(p: dict[str, Any]) -> bool:
+    if p.get("is_top_ff"):
+        return True
+    return bool((p.get("external") or {}).get("is_top_ff"))
+
+
 def _is_star(p: dict[str, Any]) -> bool:
+    """Estrella / pieza de once: TOP FF, o titular con buen rating/media."""
+    if _is_top_ff(p):
+        return True
     lineup = _lineup_pct(p)
     rating = _fotmob_rating(p)
     avg = _mister_avg(p)
+    prod = _production_score(p)
+    ff = _ff_avg(p)
     if lineup is not None and lineup >= 80:
         if rating is not None and rating >= 7.0:
             return True
         if avg is not None and avg >= 5.0:
             return True
+        if ff is not None and ff >= 5.0:
+            return True
+        if prod is not None and prod >= 58:
+            return True
     return False
+
+
+def _is_reliable_starter(p: dict[str, Any]) -> bool:
+    """Titular fiable para el once (alineación ≥70% o en once Mister)."""
+    if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
+        return False
+    if p.get("in_lineup") is True:
+        return True
+    lineup = _lineup_pct(p)
+    return lineup is not None and lineup >= 70
+
+
+def _is_useful_patch(p: dict[str, Any]) -> bool:
+    """Parche barato que juega: no vender salvo emergencia (versatilidad / fondo)."""
+    if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
+        return False
+    price = _money(p.get("price") or p.get("market_value"))
+    if price <= 0 or price > 2_000_000:
+        return False
+    lineup = _lineup_pct(p)
+    if lineup is not None and lineup >= 45:
+        return True
+    return bool(p.get("in_lineup"))
 
 
 def _healthy_count(squad: list[dict[str, Any]], position: str) -> int:
@@ -184,6 +222,41 @@ def _healthy_count(squad: list[dict[str, Any]], position: str) -> int:
             continue
         n += 1
     return n
+
+
+def _starter_count(squad: list[dict[str, Any]], position: str) -> int:
+    return sum(
+        1
+        for p in squad
+        if (p.get("position") or "") == position and _is_reliable_starter(p)
+    )
+
+
+def _xi_impact_if_sold(squad: list[dict[str, Any]], player: dict[str, Any]) -> str:
+    """
+    safe  → el once/línea aguanta sin él
+    risk  → vendería un titular dejando la línea justa
+    soft  → cobertura sana pero pierdes un regular
+    """
+    pos = player.get("position") or "MF"
+    mins = _mins()
+    min_need = mins.get(pos, 2)
+    # Conteos excluyendo al jugador
+    others = [p for p in squad if str(p.get("id")) != str(player.get("id"))]
+    healthy = _healthy_count(others, pos)
+    starters = _starter_count(others, pos)
+    was_starter = _is_reliable_starter(player)
+
+    # Mínimos de titulares por línea (estrategia once fiable)
+    starter_floor = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}.get(pos, 2)
+
+    if healthy < min_need:
+        return "risk"
+    if was_starter and starters < starter_floor:
+        return "risk"
+    if was_starter and starters < starter_floor + 1:
+        return "soft"
+    return "safe"
 
 
 def _mins() -> dict[str, int]:
@@ -274,26 +347,87 @@ def priority_score_buy(item: dict[str, Any]) -> int:
 
 
 def priority_score_sell(item: dict[str, Any]) -> int:
+    """
+    Prioriza ventas que mejoran el once: banquillo caro, baja producción,
+    liberar caja; protege titulares TOP / once fiable.
+    """
     score = 0
     reason = item.get("sell_reason") or ""
     score += {
-        "fund_buy": 30,
-        "surplus_to_demand": 25,
-        "injured_covered": 20,
-        "form_drop": 15,
+        "expensive_bench": 42,
+        "low_production": 36,
+        "fund_buy": 32,
+        "injured_covered": 28,
+        "surplus_to_demand": 22,
+        "form_drop": 16,
     }.get(reason, 10)
+
     if item.get("budget_fit") == "funding":
-        score += 15
+        score += 12
     demand = int(item.get("rival_demand") or 0)
-    score += min(15, demand * 5)
+    score += min(12, demand * 4)
+
     sell_risk = item.get("sell_risk") or item.get("wait_risk") or "medium"
     if sell_risk == "high":
-        score -= 15
+        score -= 18
     elif sell_risk == "low":
         score += 5
-    if item.get("keep_if_rank_top"):
+
+    xi = item.get("xi_impact") or "soft"
+    if xi == "safe":
+        score += 10
+    elif xi == "risk":
         score -= 30
-    return score
+
+    lineup = item.get("lineup_pct")
+    try:
+        lp = float(lineup) if lineup is not None else None
+    except (TypeError, ValueError):
+        lp = None
+    if lp is not None:
+        if lp < 40:
+            score += 18
+        elif lp < 60:
+            score += 10
+        elif lp >= 80:
+            score -= 22
+
+    prod = item.get("production_score")
+    try:
+        pr = float(prod) if prod is not None else None
+    except (TypeError, ValueError):
+        pr = None
+    if pr is not None:
+        if pr < 35:
+            score += 16
+        elif pr < 45:
+            score += 8
+        elif pr >= 60:
+            score -= 16
+
+    ff = item.get("ff_mister_avg")
+    try:
+        ffv = float(ff) if ff is not None else None
+    except (TypeError, ValueError):
+        ffv = None
+    if ffv is not None:
+        if ffv < 3.5:
+            score += 10
+        elif ffv >= 5.2:
+            score -= 12
+
+    price = _money(item.get("price"))
+    if price >= 5_000_000 and (lp is None or lp < 65):
+        score += 12  # dinero estancado fuera del once
+    if price >= 8_000_000 and (pr is not None and pr < 45):
+        score += 8
+
+    if item.get("is_top_ff") or item.get("keep_if_rank_top"):
+        score -= 40
+    if item.get("is_useful_patch"):
+        score -= 20  # conservar versatilidad / fondo de armario
+
+    return int(score)
 
 
 def priority_score_clause(item: dict[str, Any]) -> int:
@@ -315,13 +449,34 @@ def build_sell_opportunities(
     delta_fn=None,
     market_opportunities: list[dict[str, Any]] | None = None,
     points_phase: str = "preseason",
+    diagnostico_plantilla: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
-    """Ventas situacionales con motivos tipados."""
+    """
+    Ventas orientadas a estrategia Fantasy:
+    máxima puntuación, titularidades, once fiable y no estancar valor en banquillo.
+    """
     price_series = price_series or {}
     squad = list(me.get("squad") or [])
     balance = _money(me.get("balance"))
     rank = int(me.get("rank") or 99)
     mins = _mins()
+    diag = diagnostico_plantilla or {}
+    finance = diag.get("financiero") or {}
+    bench_info = finance.get("bench_inflated") or {}
+    bench_inflated = bool(
+        bench_info.get("status") == "alert" or bench_info.get("ok") is False
+    )
+    # Solo usar la lista del diagnóstico si el banquillo está realmente inflado
+    expensive_bench_ids = (
+        {
+            str(p.get("id"))
+            for p in (bench_info.get("players") or [])
+            if p.get("id") is not None
+        }
+        if bench_inflated
+        else set()
+    )
+
     critical_pos = {
         a["position"] for a in diagnosis.get("alerts", []) if a.get("level") == "critical"
     }
@@ -329,7 +484,6 @@ def build_sell_opportunities(
         pos for pos, info in diagnosis.get("by_position", {}).items()
         if info.get("status") in ("critical", "warning")
     }
-    # Precio mínimo de mercado para carencias (financiar)
     need_costs: list[float] = []
     for o in market_opportunities or []:
         if o.get("fills_need") and o.get("position") in (critical_pos | needy):
@@ -343,16 +497,56 @@ def build_sell_opportunities(
     def add(item: dict[str, Any]) -> None:
         pid = str(item["player_id"])
         if pid in seen:
-            # quedarse el de mayor urgency/score
             prev = next(x for x in sells if str(x["player_id"]) == pid)
             urg = {"high": 0, "medium": 1, "low": 2}
+            # Preferir el motivo de mayor score estratégico
             if urg.get(item.get("urgency"), 9) < urg.get(prev.get("urgency"), 9):
+                sells.remove(prev)
+                seen.discard(pid)
+            elif (item.get("_pref") or 0) > (prev.get("_pref") or 0):
                 sells.remove(prev)
                 seen.discard(pid)
             else:
                 return
         seen.add(pid)
         sells.append(item)
+
+    def base_item(p: dict[str, Any], *, reason: str, why: str, urgency: str, sell_risk: str) -> dict[str, Any]:
+        pid = str(p.get("id") or "")
+        pos = p.get("position") or "MF"
+        price = _money(p.get("price") or p.get("market_value"))
+        lineup = _lineup_pct(p)
+        ff = _ff_avg(p)
+        prod = _production_score(p)
+        demand = rival_demand_for_position(rivals, pos)
+        xi = _xi_impact_if_sold(squad, p)
+        keep_top = rank <= 2 and _is_star(p) and _ext_avail(p) not in ("injured", "suspended")
+        return {
+            "player_id": pid,
+            "name": p.get("name"),
+            "position": pos,
+            "action": "sell",
+            "sell_reason": reason,
+            "bid": None,
+            "wait_risk": "low",
+            "sell_risk": sell_risk,
+            "urgency": urgency,
+            "why": why,
+            "rival_demand": len(demand),
+            "rival_targets": demand[:3],
+            "budget_fit": "funding" if cash_tight else "comfortable",
+            "keep_if_rank_top": keep_top,
+            "price": price,
+            "lineup_pct": lineup,
+            "ff_mister_avg": ff,
+            "production_score": prod,
+            "is_top_ff": _is_top_ff(p),
+            "xi_impact": xi,
+            "is_useful_patch": _is_useful_patch(p),
+            "in_lineup": bool(p.get("in_lineup")),
+        }
+
+    squad_value = sum(_money(p.get("price") or p.get("market_value")) for p in squad) or 1.0
 
     for p in squad:
         pid = str(p.get("id") or "")
@@ -364,11 +558,8 @@ def build_sell_opportunities(
         lineup = _lineup_pct(p)
         rating = _fotmob_rating(p)
         healthy = _healthy_count(squad, pos)
+        starters = _starter_count(squad, pos)
         min_need = mins.get(pos, 2)
-        covered_if_sold = healthy > min_need or (
-            avail in ("injured", "suspended") and healthy >= min_need
-        )
-        # healthy_count already excludes injured; for injured player, covered if healthy >= min
         if avail in ("injured", "suspended"):
             covered_if_sold = healthy >= min_need
         else:
@@ -381,96 +572,174 @@ def build_sell_opportunities(
             delta = delta_fn(pid, price, price_series)
 
         is_star = _is_star(p)
+        is_starter = _is_reliable_starter(p)
+        useful_patch = _is_useful_patch(p)
         keep_top = rank <= 2 and is_star and avail not in ("injured", "suspended")
-
-        # 1) injured_covered
-        if avail in ("injured", "suspended") and covered_if_sold and price > 0:
-            add({
-                "player_id": pid,
-                "name": p.get("name"),
-                "position": pos,
-                "action": "sell",
-                "sell_reason": "injured_covered",
-                "bid": None,
-                "wait_risk": "low",
-                "sell_risk": "low",
-                "urgency": "medium",
-                "why": f"{avail} con cobertura en {pos}; libera valor ({price:,.0f} €).",
-                "rival_demand": len(demand),
-                "rival_targets": demand[:3],
-                "budget_fit": "funding" if cash_tight else "comfortable",
-                "keep_if_rank_top": False,
-                "price": price,
-            })
-
-        # 2) surplus_to_demand
-        if healthy > min_need and demand and not keep_top:
-            # no esencial: baja titularidad o no star
-            if lineup is None or lineup < 80 or not is_star:
-                urg = "high" if top_demand else "medium"
-                names = ", ".join(d["team_name"] for d in (top_demand or demand)[:2] if d.get("team_name"))
-                add({
-                    "player_id": pid,
-                    "name": p.get("name"),
-                    "position": pos,
-                    "action": "sell",
-                    "sell_reason": "surplus_to_demand",
-                    "bid": None,
-                    "wait_risk": "low",
-                    "sell_risk": "low" if healthy > min_need + 1 else "medium",
-                    "urgency": urg,
-                    "why": f"Excedente {pos} · rivales con gap: {names or 'varios'}.",
-                    "rival_demand": len(demand),
-                    "rival_targets": demand[:3],
-                    "budget_fit": "funding" if cash_tight else "comfortable",
-                    "keep_if_rank_top": False,
-                    "price": price,
-                })
-
-        # 3) fund_buy
-        if cash_tight and needy and covered_if_sold and not keep_top:
-            essential = is_star or (lineup is not None and lineup >= 80)
-            weak = (rating is not None and rating < 6.5) or (lineup is not None and lineup < 80)
-            if not essential or weak:
-                add({
-                    "player_id": pid,
-                    "name": p.get("name"),
-                    "position": pos,
-                    "action": "sell",
-                    "sell_reason": "fund_buy",
-                    "bid": None,
-                    "wait_risk": "low",
-                    "sell_risk": "medium" if healthy <= min_need + 1 else "low",
-                    "urgency": "high" if critical_pos else "medium",
-                    "why": (
-                        f"Caja justa ({balance:,.0f} €) vs carencia; "
-                        f"vender libera ~{price:,.0f} € con cobertura en {pos}."
-                    ),
-                    "rival_demand": len(demand),
-                    "rival_targets": demand[:3],
-                    "budget_fit": "funding",
-                    "keep_if_rank_top": False,
-                    "price": price,
-                })
-
-        # 4) form_drop — media/tendencia Mister + producción FF floja a precio alto
-        form_bad = (lineup is not None and lineup < 50) or (rating is not None and rating < 6.0)
-        avg = _mister_avg(p)
-        ptrend = _points_trend(p)
+        xi = _xi_impact_if_sold(squad, p)
         ff = _ff_avg(p)
         prod = _production_score(p)
+        avg = _mister_avg(p)
+        ptrend = _points_trend(p)
+
+        # No tumbar el once: si el impacto es risk y no está lesionado, saltar ventas ofensivas
+        protect_xi = xi == "risk" and avail not in ("injured", "suspended")
+        # Conservar parches útiles (versatilidad) salvo financiar crítico
+        protect_patch = useful_patch and not (cash_tight and bool(critical_pos))
+
+        # 1) Banquillo caro / valor estancado fuera del once (≥3M o ≥7% plantilla)
+        min_bench_price = max(3_000_000.0, squad_value * 0.07)
+        bench_flag = (
+            pid in expensive_bench_ids
+            or (
+                not is_starter
+                and price >= min_bench_price
+                and (prod is None or prod < 52)
+                and not useful_patch
+            )
+        )
+        if (
+            bench_flag
+            and covered_if_sold
+            and not keep_top
+            and not protect_xi
+            and not protect_patch
+            and price > 0
+        ):
+            urg = "high" if bench_inflated or price >= 6_000_000 else "medium"
+            bits = [
+                f"fuera del once fiable (titularidad {int(lineup) if lineup is not None else '—'}%)",
+                f"libera {price:,.0f} € para titulares/producción",
+            ]
+            if ff is not None:
+                bits.append(f"FF {ff:.1f}")
+            item = base_item(
+                p,
+                reason="expensive_bench",
+                why="; ".join(bits),
+                urgency=urg,
+                sell_risk="low" if xi == "safe" else "medium",
+            )
+            item["_pref"] = 50
+            add(item)
+
+        # 2) Baja producción a precio alto → reinvertir en puntos
+        low_prod = False
+        if price >= 4_000_000 and not is_star:
+            if ff is not None and ff < 4.0:
+                low_prod = True
+            if prod is not None and prod < 42:
+                low_prod = True
+            if points_phase == "active" and avg is not None and avg < 4.2:
+                low_prod = True
+        if (
+            low_prod
+            and covered_if_sold
+            and not keep_top
+            and not protect_xi
+            and not protect_patch
+        ):
+            bits = [f"producción floja para {price / 1e6:.1f} M€"]
+            if ff is not None:
+                bits.append(f"FF {ff:.1f}")
+            if prod is not None:
+                bits.append(f"score {prod:.0f}")
+            if not is_starter:
+                bits.append("no asegura titularidad")
+            else:
+                bits.append("mejorable vs objetivo de máxima puntuación")
+            item = base_item(
+                p,
+                reason="low_production",
+                why="; ".join(bits),
+                urgency="medium" if is_starter else "high",
+                sell_risk="medium" if is_starter else "low",
+            )
+            item["_pref"] = 45
+            add(item)
+
+        # 3) Lesionado/sancionado con cobertura
+        if avail in ("injured", "suspended") and covered_if_sold and price > 0:
+            item = base_item(
+                p,
+                reason="injured_covered",
+                why=f"{avail} con cobertura en {pos}; libera valor ({price:,.0f} €) sin romper el once.",
+                urgency="medium",
+                sell_risk="low",
+            )
+            item["_pref"] = 40
+            add(item)
+
+        # 4) Excedente → vender el de menor impacto (no titulares estrella)
+        if healthy > min_need and demand and not keep_top and not protect_xi and not protect_patch:
+            # Solo si no es de los mejores titulares de la línea
+            weak_surplus = (
+                not is_starter
+                or (lineup is not None and lineup < 75)
+                or (prod is not None and prod < 50)
+                or not is_star
+            )
+            starter_floor = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}.get(pos, 2)
+            starters_after = starters - (1 if is_starter else 0)
+            # Evitar vender si la línea de titulares quedaría bajo el suelo del once
+            if weak_surplus and starters_after >= starter_floor:
+                urg = "high" if top_demand and not is_starter else "medium"
+                names = ", ".join(
+                    d["team_name"] for d in (top_demand or demand)[:2] if d.get("team_name")
+                )
+                item = base_item(
+                    p,
+                    reason="surplus_to_demand",
+                    why=(
+                        f"Excedente {pos} (sanos {healthy}/{min_need}, titulares {starters}); "
+                        f"rivales con gap: {names or 'varios'}."
+                    ),
+                    urgency=urg,
+                    sell_risk="low" if healthy > min_need + 1 and not is_starter else "medium",
+                )
+                item["_pref"] = 30
+                add(item)
+
+        # 5) Financiar carencia del once (prioriza no titulares)
+        if cash_tight and needy and covered_if_sold and not keep_top and not protect_xi:
+            if protect_patch and not critical_pos:
+                pass
+            else:
+                essential = is_star or is_starter
+                weak = (rating is not None and rating < 6.5) or (lineup is not None and lineup < 75) or not is_starter
+                if not essential or weak:
+                    item = base_item(
+                        p,
+                        reason="fund_buy",
+                        why=(
+                            f"Caja justa ({balance:,.0f} €) vs carencia del once; "
+                            f"vender libera ~{price:,.0f} € con cobertura en {pos}."
+                        ),
+                        urgency="high" if critical_pos else "medium",
+                        sell_risk="medium" if is_starter or healthy <= min_need + 1 else "low",
+                    )
+                    item["_pref"] = 35
+                    add(item)
+
+        # 6) Forma / tendencia a la baja
+        form_bad = (lineup is not None and lineup < 50) or (rating is not None and rating < 6.0)
         if points_phase == "active":
             if avg is not None and avg < 4.0:
                 form_bad = True
             if ptrend == "down":
                 form_bad = True
-        # Caro con baja producción Fantasy histórica
         if price >= 4_000_000 and (
             (ff is not None and ff < 3.8) or (prod is not None and prod < 38)
         ):
             form_bad = True
         delta_bad = delta is not None and float(delta) <= -0.08
-        if covered_if_sold and not keep_top and price >= 2_000_000 and (form_bad or delta_bad):
+        if (
+            covered_if_sold
+            and not keep_top
+            and not protect_xi
+            and not protect_patch
+            and price >= 2_000_000
+            and (form_bad or delta_bad)
+        ):
             bits = []
             if lineup is not None and lineup < 50:
                 bits.append(f"titularidad {int(lineup)}%")
@@ -484,29 +753,26 @@ def build_sell_opportunities(
                 bits.append("tendencia pts ↓")
             if delta_bad:
                 bits.append(f"Δprecio {float(delta)*100:.1f}%")
-            add({
-                "player_id": pid,
-                "name": p.get("name"),
-                "position": pos,
-                "action": "sell",
-                "sell_reason": "form_drop",
-                "bid": None,
-                "wait_risk": "low",
-                "sell_risk": "medium",
-                "urgency": "low",
-                "why": "; ".join(bits) or "Forma/valor a la baja.",
-                "rival_demand": len(demand),
-                "rival_targets": demand[:3],
-                "budget_fit": "funding" if cash_tight else "comfortable",
-                "keep_if_rank_top": False,
-                "price": price,
-                "ff_mister_avg": ff,
-                "production_score": prod,
-            })
+            item = base_item(
+                p,
+                reason="form_drop",
+                why="; ".join(bits) or "Forma/valor a la baja.",
+                urgency="low",
+                sell_risk="medium",
+            )
+            item["_pref"] = 20
+            add(item)
 
     for s in sells:
+        s.pop("_pref", None)
         s["priority_score"] = priority_score_sell(s)
-    sells.sort(key=lambda x: (-int(x.get("priority_score") or 0),))
+    sells.sort(
+        key=lambda x: (
+            -int(x.get("priority_score") or 0),
+            0 if x.get("xi_impact") == "safe" else 1,
+            -_money(x.get("price")),
+        )
+    )
     return sells[:8]
 
 

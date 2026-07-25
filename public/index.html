@@ -102,8 +102,8 @@
     <section aria-labelledby="recs-title" class="panel">
       <button type="button" class="collapse-toggle" id="recs-toggle" aria-expanded="true" aria-controls="recommendations">
         <div>
-          <h2 id="recs-title" class="section-title">Recomendaciones</h2>
-          <p class="section-hint">Contexto competitivo del día</p>
+          <h2 id="recs-title" class="section-title">Notas de plantilla</h2>
+          <p class="section-hint">Salud, líneas, banquillo y TOP — sin duplicar la cola</p>
         </div>
         <span class="collapse-chevron" aria-hidden="true"></span>
       </button>
@@ -168,22 +168,23 @@
       </div>
 
       <div id="tab-market" class="tab-panel active p-3 md:p-6" role="tabpanel">
+        <div class="list-sort" data-list="market" aria-label="Ordenar mercado"></div>
         <div id="market-cards" class="card-list" aria-live="polite"></div>
         <div class="table-wrap desktop-only">
           <table class="data-table" id="table-market">
             <thead>
               <tr>
-                <th>Jugador</th>
-                <th>Pos</th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="name">Jugador</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="position">Pos</button></th>
                 <th>Estado</th>
-                <th>Señales</th>
-                <th>Categoría</th>
-                <th>Precio</th>
-                <th>Δ5d</th>
-                <th>FotMob</th>
-                <th>Puja rec.</th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="mister">Mister</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="category">Categoría</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="price">Precio</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="delta">Δ5d</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="fotmob">FotMob</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="bid">Puja rec.</button></th>
                 <th>Techo</th>
-                <th>Prioridad</th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="priority">Prioridad</button></th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -206,18 +207,19 @@
         </section>
         <div id="squad-alerts" class="space-y-2 mb-4"></div>
         <div id="squad-positions" class="grid md:grid-cols-2 gap-3 mb-4"></div>
+        <div class="list-sort" data-list="squad" aria-label="Ordenar plantilla"></div>
         <div id="squad-cards" class="card-list"></div>
         <div class="table-wrap desktop-only">
           <table class="data-table" id="table-squad">
             <thead>
               <tr>
-                <th>Jugador</th>
-                <th>Pos</th>
-                <th>Precio</th>
-                <th>Forma</th>
-                <th>Alineación</th>
-                <th>FotMob</th>
-                <th>Estado</th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="name">Jugador</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="position">Pos</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="price">Precio</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="form">Forma</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="lineup">Alineación</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="fotmob">FotMob</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="mister">Mister</button></th>
               </tr>
             </thead>
             <tbody></tbody>
@@ -227,19 +229,20 @@
 
       <div id="tab-radar" class="tab-panel p-3 md:p-6" role="tabpanel" hidden>
         <h3 class="font-display text-base md:text-lg mb-3 text-white">Objetivos en rivales</h3>
+        <div class="list-sort" data-list="upgrades" aria-label="Ordenar objetivos"></div>
         <div id="upgrade-cards" class="card-list mb-6"></div>
         <div class="table-wrap desktop-only mb-8">
           <table class="data-table" id="table-rival-upgrades">
             <thead>
               <tr>
-                <th>Jugador</th>
-                <th>Pos</th>
-                <th>Dueño</th>
-                <th>Valor</th>
-                <th>Media / Pts</th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="name">Jugador</button></th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="position">Pos</button></th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="owner">Dueño</button></th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="value">Valor</button></th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="mister">Media / Pts</button></th>
                 <th>Tendencia</th>
-                <th>Cláusula</th>
-                <th>Acción</th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="clause">Cláusula</button></th>
+                <th><button type="button" class="th-sort" data-list="upgrades" data-key="action">Acción</button></th>
                 <th>Por qué</th>
               </tr>
             </thead>
@@ -247,34 +250,36 @@
           </table>
         </div>
         <h3 class="font-display text-base md:text-lg mb-3 text-white">Libres TOP</h3>
+        <div class="list-sort" data-list="free" aria-label="Ordenar libres"></div>
         <div id="free-cards" class="card-list mb-6"></div>
         <div class="table-wrap desktop-only mb-8">
           <table class="data-table" id="table-free">
             <thead>
               <tr>
-                <th>Jugador</th>
-                <th>Pos</th>
-                <th>Precio ref.</th>
-                <th>PPG hist.</th>
-                <th>Fiabilidad</th>
-                <th>ROI / M€</th>
+                <th><button type="button" class="th-sort" data-list="free" data-key="name">Jugador</button></th>
+                <th><button type="button" class="th-sort" data-list="free" data-key="position">Pos</button></th>
+                <th><button type="button" class="th-sort" data-list="free" data-key="price">Precio ref.</button></th>
+                <th><button type="button" class="th-sort" data-list="free" data-key="ppg">PPG hist.</button></th>
+                <th><button type="button" class="th-sort" data-list="free" data-key="reliability">Fiabilidad</button></th>
+                <th><button type="button" class="th-sort" data-list="free" data-key="roi">ROI / M€</button></th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
         <h3 class="font-display text-base md:text-lg mb-3 text-white">Rivales</h3>
+        <div class="list-sort" data-list="rivals" aria-label="Ordenar rivales"></div>
         <div id="rivals-cards" class="card-list mb-4"></div>
         <div class="table-wrap desktop-only">
           <table class="data-table" id="table-rivals">
             <thead>
               <tr>
-                <th>#</th>
-                <th>Equipo</th>
-                <th>Manager</th>
-                <th>Puntos</th>
-                <th>Liquidez / Valor</th>
-                <th>Actividad</th>
+                <th><button type="button" class="th-sort" data-list="rivals" data-key="rank">#</button></th>
+                <th><button type="button" class="th-sort" data-list="rivals" data-key="team">Equipo</button></th>
+                <th><button type="button" class="th-sort" data-list="rivals" data-key="manager">Manager</button></th>
+                <th><button type="button" class="th-sort" data-list="rivals" data-key="points">Puntos</button></th>
+                <th><button type="button" class="th-sort" data-list="rivals" data-key="liquidity">Liquidez / Valor</button></th>
+                <th><button type="button" class="th-sort" data-list="rivals" data-key="activity">Actividad</button></th>
                 <th>Carencias</th>
               </tr>
             </thead>

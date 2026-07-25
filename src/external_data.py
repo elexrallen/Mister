@@ -312,6 +312,12 @@ def enrich_players_with_external(players: list[dict[str, Any]]) -> tuple[list[di
                 "matched_name": best.get("name"),
                 "match_score": score,
             }
+            # Mister a veces trae escudos nuevos (Club 50…) → completar con club FF/Comuniate
+            team_now = str(new_p.get("team") or "")
+            ext_team = (best.get("team") or "").strip()
+            if ext_team and (not team_now or team_now.lower().startswith("club ")):
+                new_p["team"] = ext_team
+                new_p["team_resolved_from"] = "external"
             if ext.get("sofascore_avg_5") is not None:
                 sofa_on_players += 1
             if avail in ("injured", "suspended"):
@@ -391,6 +397,12 @@ def enrich_players_with_ff_production(
             points = hit.get("mister_points")
             apps = int(hit.get("apps") or 0)
             season = hit.get("season_label") or hit.get("season")
+            # Completar club desconocido (Club 50, etc.) con el de FF
+            team_now = str(new_p.get("team") or "")
+            ff_team = (hit.get("team") or "").strip()
+            if ff_team and (not team_now or team_now.lower().startswith("club ")):
+                new_p["team"] = ff_team
+                new_p["team_resolved_from"] = "ff_mister"
             # prior por mismo nombre matcheado
             pk = (hit.get("name") or "").strip().lower()
             pref = prior_by_name.get(pk)

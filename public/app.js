@@ -12,6 +12,264 @@
   /** @type {BeforeInstallPromptEvent | null} */
   let deferredPrompt = null;
 
+  const POS_ORDER = { GK: 0, DF: 1, MF: 2, FW: 3 };
+  const PRIO_ORDER = { Alta: 0, Media: 1, Baja: 2 };
+
+  /** Estado de ordenación por listado */
+  const SORT = {
+    market: { key: "priority", dir: "asc" },
+    squad: { key: "position", dir: "asc" },
+    upgrades: { key: "score", dir: "desc" },
+    free: { key: "roi", dir: "desc" },
+    rivals: { key: "rank", dir: "asc" },
+  };
+
+  const SORT_OPTIONS = {
+    market: [
+      { key: "priority", label: "Prioridad" },
+      { key: "price", label: "Precio" },
+      { key: "bid", label: "Puja rec." },
+      { key: "mister", label: "Media Mister" },
+      { key: "fotmob", label: "FotMob" },
+      { key: "delta", label: "Tendencia" },
+      { key: "name", label: "Nombre" },
+      { key: "position", label: "Posición" },
+      { key: "category", label: "Categoría" },
+    ],
+    squad: [
+      { key: "position", label: "Posición" },
+      { key: "price", label: "Precio" },
+      { key: "form", label: "Forma" },
+      { key: "lineup", label: "Alineación" },
+      { key: "mister", label: "Media Mister" },
+      { key: "fotmob", label: "FotMob" },
+      { key: "name", label: "Nombre" },
+    ],
+    upgrades: [
+      { key: "score", label: "Mejor upgrade" },
+      { key: "clause", label: "Cláusula" },
+      { key: "value", label: "Valor" },
+      { key: "mister", label: "Media Mister" },
+      { key: "name", label: "Nombre" },
+      { key: "position", label: "Posición" },
+      { key: "owner", label: "Dueño" },
+      { key: "action", label: "Acción" },
+    ],
+    free: [
+      { key: "roi", label: "ROI / M€" },
+      { key: "ppg", label: "PPG" },
+      { key: "price", label: "Precio" },
+      { key: "reliability", label: "Fiabilidad" },
+      { key: "name", label: "Nombre" },
+      { key: "position", label: "Posición" },
+    ],
+    rivals: [
+      { key: "rank", label: "Clasificación" },
+      { key: "points", label: "Puntos" },
+      { key: "liquidity", label: "Liquidez / valor" },
+      { key: "team", label: "Equipo" },
+      { key: "manager", label: "Manager" },
+      { key: "activity", label: "Actividad" },
+    ],
+  };
+
+  const SORT_GETTERS = {
+    market: {
+      name: (p) => String(p.name || "").toLowerCase(),
+      position: (p) => POS_ORDER[p.position] ?? 9,
+      price: (p) => Number(p.price) || 0,
+      delta: (p) =>
+        p.delta_5d != null ? Number(p.delta_5d) : p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0,
+      fotmob: (p) => {
+        const fm = p.fotmob_stats || {};
+        const v = fm.rating_promedio ?? (p.external || {}).sofascore_avg_5;
+        return v != null ? Number(v) : -1;
+      },
+      bid: (p) => Number(p.puja_recomendada) || 0,
+      priority: (p) => PRIO_ORDER[p.priority] ?? 9,
+      mister: (p) => {
+        const v = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+        return v != null ? Number(v) : -1;
+      },
+      category: (p) => String(p.category_label || p.category || "").toLowerCase(),
+    },
+    squad: {
+      name: (p) => String(p.name || "").toLowerCase(),
+      position: (p) => POS_ORDER[p.position] ?? 9,
+      price: (p) => Number(p.price) || 0,
+      form: (p) => {
+        const mister = p.form != null ? Number(p.form) : p.mister_avg != null ? Number(p.mister_avg) : null;
+        if (mister != null && mister > 0) return mister;
+        const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+        return ff != null ? Number(ff) : -1;
+      },
+      lineup: (p) => (p.lineup_prob != null ? Number(p.lineup_prob) : -1),
+      fotmob: (p) => {
+        const fm = p.fotmob_stats || {};
+        const v = fm.rating_promedio ?? (p.external || {}).sofascore_avg_5;
+        return v != null ? Number(v) : -1;
+      },
+      mister: (p) => {
+        const v = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+        return v != null ? Number(v) : -1;
+      },
+    },
+    upgrades: {
+      name: (p) => String(p.name || "").toLowerCase(),
+      position: (p) => POS_ORDER[p.position] ?? 9,
+      owner: (p) => String(p.owner_team || "").toLowerCase(),
+      value: (p) => Number(p.market_value) || 0,
+      mister: (p) => {
+        const v = p.ff_mister_avg ?? p.mister_avg;
+        return v != null ? Number(v) : -1;
+      },
+      clause: (p) => (p.clause_known && p.clause != null ? Number(p.clause) : Number.POSITIVE_INFINITY),
+      action: (p) => (p.action === "clause_bid" ? 0 : 1),
+      score: (p) => Number(p.upgrade_score ?? p.priority_score) || 0,
+    },
+    free: {
+      name: (p) => String(p.name || "").toLowerCase(),
+      position: (p) => POS_ORDER[p.position] ?? 9,
+      price: (p) => Number(p.price) || 0,
+      ppg: (p) => (p.avg_ppg != null ? Number(p.avg_ppg) : -1),
+      reliability: (p) => (p.reliability != null ? Number(p.reliability) : -1),
+      roi: (p) => (p.roi_ppg_per_million != null ? Number(p.roi_ppg_per_million) : -1),
+    },
+    rivals: {
+      rank: (p) => Number(p.rank) || 99,
+      team: (p) => String(p.team_name || "").toLowerCase(),
+      manager: (p) => String(p.manager || "").toLowerCase(),
+      points: (p) => Number(p.points) || 0,
+      liquidity: (p) =>
+        p.liquidity_estimated != null
+          ? Number(p.liquidity_estimated)
+          : p.squad_value != null
+            ? Number(p.squad_value)
+            : 0,
+      activity: (p) => String(p.activity || "").toLowerCase(),
+    },
+  };
+
+  function sortRows(listId, rows) {
+    const state = SORT[listId] || { key: "name", dir: "asc" };
+    const getter = (SORT_GETTERS[listId] || {})[state.key];
+    if (!getter || !rows.length) return rows;
+    const dir = state.dir === "desc" ? -1 : 1;
+    return [...rows].sort((a, b) => {
+      const va = getter(a);
+      const vb = getter(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (typeof va === "string" || typeof vb === "string") {
+        return String(va).localeCompare(String(vb), "es", { sensitivity: "base" }) * dir;
+      }
+      if (va === vb) {
+        const na = String(a.name || a.team_name || "");
+        const nb = String(b.name || b.team_name || "");
+        return na.localeCompare(nb, "es", { sensitivity: "base" });
+      }
+      return va < vb ? -1 * dir : 1 * dir;
+    });
+  }
+
+  function setSort(listId, key, { toggleDir = false, dir } = {}) {
+    if (!SORT[listId]) return;
+    if (key && SORT[listId].key === key && toggleDir) {
+      SORT[listId].dir = SORT[listId].dir === "asc" ? "desc" : "asc";
+    } else if (key) {
+      const prev = SORT[listId].key;
+      SORT[listId].key = key;
+      if (dir) {
+        SORT[listId].dir = dir;
+      } else if (prev !== key) {
+        const textKeys = new Set(["name", "team", "manager", "owner", "category", "activity", "position", "priority", "action", "rank"]);
+        SORT[listId].dir = textKeys.has(key) ? "asc" : "desc";
+      }
+    } else if (toggleDir) {
+      SORT[listId].dir = SORT[listId].dir === "asc" ? "desc" : "asc";
+    }
+    syncSortUI(listId);
+    if (!DATA) return;
+    if (listId === "market") renderMarket();
+    else if (listId === "squad") renderSquad();
+    else renderRadar();
+  }
+
+  function syncSortUI(listId) {
+    const state = SORT[listId];
+    if (!state) return;
+    document.querySelectorAll(`.list-sort[data-list="${listId}"]`).forEach((bar) => {
+      const sel = bar.querySelector(".sort-select");
+      const btn = bar.querySelector(".sort-dir");
+      if (sel) sel.value = state.key;
+      if (btn) {
+        btn.textContent = state.dir === "asc" ? "↑ Asc" : "↓ Desc";
+        btn.setAttribute("aria-label", state.dir === "asc" ? "Orden ascendente" : "Orden descendente");
+      }
+    });
+    document.querySelectorAll(`.th-sort[data-list="${listId}"]`).forEach((btn) => {
+      const active = btn.getAttribute("data-key") === state.key;
+      btn.classList.toggle("is-active", active);
+      btn.setAttribute("aria-sort", active ? (state.dir === "asc" ? "ascending" : "descending") : "none");
+      const mark = btn.querySelector(".sort-mark");
+      if (mark) mark.textContent = active ? (state.dir === "asc" ? " ↑" : " ↓") : "";
+    });
+  }
+
+  function buildSortBars() {
+    document.querySelectorAll(".list-sort[data-list]").forEach((bar) => {
+      const listId = bar.getAttribute("data-list");
+      const opts = SORT_OPTIONS[listId] || [];
+      const state = SORT[listId] || { key: opts[0]?.key, dir: "asc" };
+      bar.innerHTML = `
+        <label class="sort-label" for="sort-${listId}">Ordenar</label>
+        <select id="sort-${listId}" class="sort-select" data-list="${listId}">
+          ${opts
+            .map(
+              (o) =>
+                `<option value="${escapeHtml(o.key)}" ${o.key === state.key ? "selected" : ""}>${escapeHtml(
+                  o.label
+                )}</option>`
+            )
+            .join("")}
+        </select>
+        <button type="button" class="sort-dir" data-list="${listId}">${
+          state.dir === "asc" ? "↑ Asc" : "↓ Desc"
+        }</button>`;
+    });
+    document.querySelectorAll(".th-sort").forEach((btn) => {
+      if (btn.querySelector(".sort-mark")) return;
+      const mark = document.createElement("span");
+      mark.className = "sort-mark";
+      mark.setAttribute("aria-hidden", "true");
+      btn.appendChild(mark);
+    });
+    Object.keys(SORT).forEach(syncSortUI);
+  }
+
+  function initSortControls() {
+    buildSortBars();
+    document.addEventListener("change", (e) => {
+      const t = e.target;
+      if (!(t instanceof HTMLSelectElement) || !t.classList.contains("sort-select")) return;
+      setSort(t.getAttribute("data-list"), t.value);
+    });
+    document.addEventListener("click", (e) => {
+      const t = e.target;
+      if (!(t instanceof Element)) return;
+      const dirBtn = t.closest(".sort-dir");
+      if (dirBtn) {
+        setSort(dirBtn.getAttribute("data-list"), null, { toggleDir: true });
+        return;
+      }
+      const thBtn = t.closest(".th-sort");
+      if (thBtn) {
+        setSort(thBtn.getAttribute("data-list"), thBtn.getAttribute("data-key"), { toggleDir: true });
+      }
+    });
+  }
+
   const formatMoney = (n) => {
     if (n == null || Number.isNaN(Number(n))) return "—";
     const v = Number(n);
@@ -93,6 +351,19 @@
         ? `<div class="text-[10px] text-slate-500 leading-tight">${mins}' · ${goals}G</div>`
         : "";
     return `<div class="leading-tight"><span>${Number(rating).toFixed(1)}</span>${extra}</div>`;
+  };
+
+  /** Forma Mister; en pretemporada (0) cae a media FF Mister Mixto. */
+  const formCell = (p) => {
+    const mister = p.form != null ? Number(p.form) : p.mister_avg != null ? Number(p.mister_avg) : null;
+    const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+    if (mister != null && !Number.isNaN(mister) && mister > 0) {
+      return Number(mister).toFixed(1);
+    }
+    if (ff != null && !Number.isNaN(Number(ff))) {
+      return `<span title="Media FF Mister Mixto (pretemporada)">${Number(ff).toFixed(1)} <span class="text-[10px] text-slate-500">FF</span></span>`;
+    }
+    return "—";
   };
 
   const signalChips = (p) => {
@@ -253,8 +524,10 @@
   const sellReasonBadge = (reason) => {
     if (!reason) return "";
     const map = {
+      expensive_bench: "Banquillo caro",
+      low_production: "Baja prod.",
       surplus_to_demand: "Excedente",
-      fund_buy: "Financiar",
+      fund_buy: "Financiar once",
       injured_covered: "Lesión",
       form_drop: "Forma",
     };
@@ -362,47 +635,49 @@
 
   function renderRecommendations(data) {
     const box = document.getElementById("recommendations");
+    if (!box) return;
+    const typeLabel = {
+      health: "Salud",
+      top: "TOP",
+      bench: "Banquillo",
+      line: "Línea",
+      patches: "Parches",
+      tip: "Consejo",
+      rank: "Clasificación",
+      alert: "Alerta",
+    };
     const prioRank = { Alta: 0, Media: 1, Baja: 2 };
-    const recs = [...(data.recommendations || [])].sort(
+    const notes = [...(data.squad_notes || data.recommendations || [])].sort(
       (a, b) => (prioRank[a.priority] ?? 9) - (prioRank[b.priority] ?? 9)
     );
-    if (!recs.length) {
-      box.innerHTML = `<p class="text-slate-500 text-sm">Sin recomendaciones para hoy.</p>`;
+    if (!notes.length) {
+      box.innerHTML = `<p class="text-slate-500 text-sm">Sin notas estructurales hoy.</p>`;
       return;
     }
-    box.innerHTML = recs
+    box.innerHTML = notes
       .map(
         (r, idx) => `
-      <article class="rec-card" ${
-        (r.related_player_ids || [])[0]
-          ? `data-focus-id="${escapeHtml((r.related_player_ids || [])[0])}" role="button" tabindex="0"`
-          : ""
-      }>
+      <article class="rec-card note-card">
         <div class="rec-top">
           <span class="rec-rank" aria-hidden="true">#${idx + 1}</span>
           ${priorityBadge(r.priority)}
-          <span class="rec-type">${escapeHtml(r.type || "")}</span>
+          <span class="rec-type">${escapeHtml(typeLabel[r.type] || r.type || "Nota")}</span>
         </div>
         <h3 class="rec-title">${escapeHtml(r.title)}</h3>
         <p class="rec-reason">${escapeHtml(r.reason)}</p>
-        <p class="rec-action">Acción: ${escapeHtml(r.suggested_action || "—")}</p>
       </article>`
       )
       .join("");
-    box.querySelectorAll("[data-focus-id]").forEach((el) => {
-      const go = () => focusPlayer(el.getAttribute("data-focus-id"), "market");
-      el.addEventListener("click", go);
-      el.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") go();
-      });
-    });
   }
 
   function renderMarket() {
     const tbody = document.querySelector("#table-market tbody");
     const cards = document.getElementById("market-cards");
     const f = getFilters();
-    const rows = (DATA.market_opportunities || []).filter((p) => matchPlayer(p, f));
+    const rows = sortRows(
+      "market",
+      (DATA.market_opportunities || []).filter((p) => matchPlayer(p, f))
+    );
     if (!rows.length) {
       tbody.innerHTML = `<tr><td colspan="11" class="text-slate-500">Sin resultados con estos filtros.</td></tr>`;
       if (cards) cards.innerHTML = `<p class="empty-state">Sin resultados con estos filtros.</p>`;
@@ -642,7 +917,10 @@
     const f = getFilters();
     const tbody = document.querySelector("#table-squad tbody");
     const cards = document.getElementById("squad-cards");
-    const rows = (DATA.me?.squad || []).filter((p) => matchPlayer(p, f));
+    const rows = sortRows(
+      "squad",
+      (DATA.me?.squad || []).filter((p) => matchPlayer(p, f))
+    );
     tbody.innerHTML = rows.length
       ? rows
           .map(
@@ -653,7 +931,7 @@
               </td>
               <td>${posChip(p.position)}</td>
               <td>${formatMoney(p.price)}</td>
-              <td>${p.form != null ? Number(p.form).toFixed(1) : "—"}</td>
+              <td>${formCell(p)}</td>
               <td>${p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"}</td>
               <td>${fotmobCell(p)}</td>
               <td>${externalStatusBadge(p)} ${signalChips(p)} ${ffAvgLine(p)}</td>
@@ -676,7 +954,7 @@
             <div class="player-card-meta">${externalStatusBadge(p)} ${ffAvgLine(p)} ${signalChips(p)}</div>
             <div class="player-card-stats">
               <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
-              <div><div class="stat-label">Forma</div><div class="stat-value">${p.form != null ? Number(p.form).toFixed(1) : "—"}</div></div>
+              <div><div class="stat-label">Forma</div><div class="stat-value">${formCell(p)}</div></div>
               <div><div class="stat-label">Alineación</div><div class="stat-value">${p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"}</div></div>
               <div><div class="stat-label">FotMob</div><div class="stat-value">${fotmobCell(p)}</div></div>
             </div>
@@ -691,10 +969,13 @@
     const f = getFilters();
     const upBody = document.querySelector("#table-rival-upgrades tbody");
     const upCards = document.getElementById("upgrade-cards");
-    const ups = (DATA.rival_upgrades || []).filter((p) => {
-      const fake = { name: p.name, position: p.position, team: p.owner_team, price: p.market_value };
-      return matchPlayer(fake, f);
-    });
+    const ups = sortRows(
+      "upgrades",
+      (DATA.rival_upgrades || []).filter((p) => {
+        const fake = { name: p.name, position: p.position, team: p.owner_team, price: p.market_value };
+        return matchPlayer(fake, f);
+      })
+    );
     if (upBody) {
       upBody.innerHTML = ups.length
         ? ups
@@ -754,7 +1035,10 @@
 
     const freeBody = document.querySelector("#table-free tbody");
     const freeCards = document.getElementById("free-cards");
-    const free = (DATA.free_agents_top || []).filter((p) => matchPlayer(p, f));
+    const free = sortRows(
+      "free",
+      (DATA.free_agents_top || []).filter((p) => matchPlayer(p, f))
+    );
     const freeNote = (DATA.meta && DATA.meta.free_agents_note) || null;
     const freeEmpty = escapeHtml(freeNote || "Sin libres TOP con estos filtros.");
     if (freeBody) {
@@ -804,7 +1088,7 @@
 
     const rivalsBody = document.querySelector("#table-rivals tbody");
     const rivalsCards = document.getElementById("rivals-cards");
-    const rivals = [...(DATA.rivals || [])].sort((a, b) => (a.rank || 99) - (b.rank || 99));
+    const rivals = sortRows("rivals", [...(DATA.rivals || [])]);
     if (rivalsBody) {
       rivalsBody.innerHTML = rivals
         .map(
@@ -1047,6 +1331,7 @@
     initTabs();
     initCollapses();
     initFilters();
+    initSortControls();
     initPwa();
     loadData();
   });

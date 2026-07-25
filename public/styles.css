@@ -597,6 +597,10 @@ footer,
   color: #5eead4;
 }
 
+.note-card {
+  cursor: default;
+}
+
 @media (min-width: 768px) {
   .rec-card {
     padding: 1rem 1.1rem;
@@ -716,6 +720,83 @@ footer,
 .tab-panel.active {
   display: block;
   animation: fadeUp 0.3s ease;
+}
+
+/* Ordenación de listados */
+.list-sort {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--stroke);
+  border-radius: 0.75rem;
+  background: rgba(7, 11, 20, 0.45);
+}
+
+.sort-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.sort-select {
+  flex: 1 1 9rem;
+  min-width: 0;
+  appearance: none;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--stroke);
+  border-radius: 0.55rem;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  padding: 0.45rem 0.65rem;
+}
+
+.sort-dir {
+  flex: 0 0 auto;
+  border: 1px solid var(--stroke);
+  border-radius: 0.55rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: #5eead4;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.45rem 0.7rem;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sort-dir:hover,
+  .sort-select:hover {
+    border-color: rgba(45, 212, 191, 0.35);
+  }
+}
+
+.th-sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.th-sort.is-active {
+  color: #5eead4;
+}
+
+.sort-mark {
+  font-size: 0.7rem;
+  color: #5eead4;
 }
 
 /* Cards (mobile) vs tables (desktop) */
