@@ -26,8 +26,15 @@ from scrapers.ff_points import (
 log = logging.getLogger("external_data")
 
 SRC_DIR = Path(__file__).resolve().parent
-CACHE_PATH = SRC_DIR / "cache" / "external_latest.json"
+CACHE_PATH = SRC_DIR / "cache" / "external_latest.json"  # legacy LaLiga
 SEED_PATH = SRC_DIR / "external_seed.json"
+
+
+def _cache_path_for(competition: str) -> Path:
+    comp = (competition or "laliga").strip().lower()
+    if comp in ("", "laliga"):
+        return CACHE_PATH
+    return SRC_DIR / "cache" / f"external_latest_{comp}.json"
 
 AVAIL_PRIO = {
     "suspended": 4,
@@ -174,24 +181,34 @@ def _empty_external() -> dict[str, Any]:
     }
 
 
-def _load_candidates_from_cache_or_seed(meta: dict[str, Any]) -> list[dict[str, Any]]:
-    cache = _load_json(CACHE_PATH)
+def _load_candidates_from_cache_or_seed(
+    meta: dict[str, Any],
+    *,
+    competition: str = "laliga",
+) -> list[dict[str, Any]]:
+    cache = _load_json(_cache_path_for(competition))
     if isinstance(cache, dict) and cache.get("players"):
         meta["cache_used"] = True
         for k in ("futbolfantasy", "jornadaperfecta", "comuniate", "sofascore"):
             meta[k] = "cache"
-        log.info("Usando caché externa (%d jugadores)", len(cache["players"]))
+        log.info(
+            "Usando caché externa [%s] (%d jugadores)",
+            competition,
+            len(cache["players"]),
+        )
         return list(cache["players"])
 
-    seed = _load_json(SEED_PATH)
-    if isinstance(seed, list) and seed:
-        meta["cache_used"] = False
-        for k in ("futbolfantasy", "jornadaperfecta", "comuniate"):
-            meta[k] = "fail"
-        meta["sofascore"] = "skip"
-        meta["errors"].append("fallback_seed")
-        log.info("Usando external_seed.json (%d)", len(seed))
-        return seed
+    # Seed solo LaLiga (nombres/clubes españoles)
+    if (competition or "laliga").strip().lower() == "laliga":
+        seed = _load_json(SEED_PATH)
+        if isinstance(seed, list) and seed:
+            meta["cache_used"] = False
+            for k in ("futbolfantasy", "jornadaperfecta", "comuniate"):
+                meta[k] = "fail"
+            meta["sofascore"] = "skip"
+            meta["errors"].append("fallback_seed")
+            log.info("Usando external_seed.json (%d)", len(seed))
+            return seed
     return []
 
 
@@ -225,11 +242,17 @@ def _overlay_sofa_like(candidates: list[dict[str, Any]], recs: list[dict[str, An
             })
 
 
-def enrich_players_with_external(players: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+def enrich_players_with_external(
+    players: list[dict[str, Any]],
+    *,
+    competition: str = "laliga",
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Devuelve jugadores enriquecidos + meta
     {futbolfantasy, jornadaperfecta, comuniate, sofascore, matched, cache_used, errors}.
+    competition: `laliga` | `premier`.
     """
+    comp = (competition or "laliga").strip().lower() or "laliga"
     meta: dict[str, Any] = {
         "futbolfantasy": "fail",
         "jornadaperfecta": "fail",
@@ -239,13 +262,18 @@ def enrich_players_with_external(players: list[dict[str, Any]]) -> tuple[list[di
         "cache_used": False,
         "errors": [],
         "sofascore_filled": 0,
+        "competition": comp,
     }
 
     team_names = list({str(p.get("team") or "") for p in players if p.get("team")})
     candidates: list[dict[str, Any]] = []
 
     try:
-        bundle = fetch_all_external(team_names, sofascore_candidates=None)
+        bundle = fetch_all_external(
+            team_names,
+            competition=comp,
+            sofascore_candidates=None,
+        )
         status = dict(bundle.get("status") or {})
         com_catalog = bundle.get("comuniate") or []
         candidates = _merge_source_records(
@@ -255,20 +283,20 @@ def enrich_players_with_external(players: list[dict[str, Any]]) -> tuple[list[di
             [],
         )
 
-        # 1) Fichas Comuniate para universo Mister → sofascore_id + media fallback
-        mister_names = [str(p.get("name") or "") for p in players if p.get("name")]
-        com_enriched = enrich_profiles_for_names(
-            mister_names,
-            catalog=com_catalog,
-            limit=min(20, max(8, len(mister_names))),
-        )
-        if com_enriched:
-            _overlay_sofa_like(candidates, com_enriched)
-            if status.get("comuniate") == "ok":
-                status["comuniate"] = "ok"
-            # Si hay medias vía Comuniate, ya contamos partial sofa
-            n_com_avg = sum(1 for c in com_enriched if c.get("sofascore_avg_5") is not None)
-            log.info("Comuniate medias en fichas: %s", n_com_avg)
+        # 1) Fichas Comuniate (solo LaLiga) → sofascore_id + media fallback
+        if comp == "laliga" and com_catalog:
+            mister_names = [str(p.get("name") or "") for p in players if p.get("name")]
+            com_enriched = enrich_profiles_for_names(
+                mister_names,
+                catalog=com_catalog,
+                limit=min(20, max(8, len(mister_names))),
+            )
+            if com_enriched:
+                _overlay_sofa_like(candidates, com_enriched)
+                if status.get("comuniate") == "ok":
+                    status["comuniate"] = "ok"
+                n_com_avg = sum(1 for c in com_enriched if c.get("sofascore_avg_5") is not None)
+                log.info("Comuniate medias en fichas: %s", n_com_avg)
 
         # Sofascore API desactivada (403 habitual). La nota la aporta FotMob
         # en data_engine; Comuniate puede dejar medias parciales como fallback.
@@ -279,17 +307,18 @@ def enrich_players_with_external(players: list[dict[str, Any]]) -> tuple[list[di
             meta[k] = v
 
         if candidates:
-            _save_json(CACHE_PATH, {
+            _save_json(_cache_path_for(comp), {
                 "fetched_at": _now().isoformat(),
                 "players": candidates,
                 "status": status,
+                "competition": comp,
             })
         else:
-            candidates = _load_candidates_from_cache_or_seed(meta)
+            candidates = _load_candidates_from_cache_or_seed(meta, competition=comp)
     except Exception as exc:  # noqa: BLE001
-        log.warning("Scrape externo falló: %s", exc)
+        log.warning("Scrape externo [%s] falló: %s", comp, exc)
         meta["errors"].append(str(exc))
-        candidates = _load_candidates_from_cache_or_seed(meta)
+        candidates = _load_candidates_from_cache_or_seed(meta, competition=comp)
 
     enriched: list[dict[str, Any]] = []
     matched = 0
@@ -342,21 +371,30 @@ def enrich_players_with_ff_production(
     *,
     points_phase: str = "preseason",
     market_universe: list[dict[str, Any]] | None = None,
+    competition: str = "laliga",
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
-    Añade medias Mister Mixto FF + is_top_ff + production_score.
+    Añade medias FF (Mister Mixto / Fantasy RPG) + is_top_ff + production_score.
     Fail-soft: si scrape falla, intenta fallback TOP por percentil de precio de mercado.
+    competition: `laliga` | `premier`.
     """
+    comp = (competition or "laliga").strip().lower() or "laliga"
     meta: dict[str, Any] = {
         "ff_points": "fail",
         "matched": 0,
         "top_count": 0,
         "threshold": None,
         "fallback_price": False,
+        "competition": comp,
+        "scoring": None,
     }
-    bundle = fetch_ff_mister_points()
+    bundle = fetch_ff_mister_points(competition=comp)
     meta["ff_points"] = bundle.get("status") or "fail"
     meta["threshold"] = bundle.get("threshold")
+    meta["scoring"] = bundle.get("scoring")
+    avg_scale = float(bundle.get("avg_scale") or 8.0)
+    top_floor = float(bundle.get("top_floor") or 5.5)
+    scoring_label = str(bundle.get("scoring") or ("Fantasy RPG" if comp == "premier" else "Mister Mixto"))
 
     seasons = bundle.get("seasons") or [2026, 2025]
     by_season = bundle.get("by_season") or {}
@@ -364,7 +402,11 @@ def enrich_players_with_ff_production(
     prior_key = str(seasons[1]) if len(seasons) > 1 else None
     primary_recs = list(by_season.get(primary_key) or [])
     prior_recs = list(by_season.get(prior_key) or []) if prior_key else []
-    threshold = float(bundle.get("threshold") or 5.5)
+    # Pretemporada: si 2026 está vacío/casi vacío, prior pasa a ser la fuente principal
+    if len(primary_recs) < 20 and prior_recs:
+        primary_recs, prior_recs = prior_recs, primary_recs
+        primary_key, prior_key = (prior_key or primary_key), primary_key
+    threshold = float(bundle.get("threshold") or top_floor)
 
     # Índice prior por nombre lower
     prior_by_name: dict[str, dict[str, Any]] = {}
@@ -439,10 +481,17 @@ def enrich_players_with_ff_production(
                 lp = None
 
         ref_avg = avg if avg is not None else prior_avg
-        is_top = is_top_production(ref_avg, apps, threshold) if ref_avg is not None else False
+        is_top = (
+            is_top_production(ref_avg, apps, threshold, top_floor=top_floor)
+            if ref_avg is not None
+            else False
+        )
         reason = None
         if is_top and ref_avg is not None:
-            reason = f"FF Mister Mixto {float(ref_avg):.2f} · {apps} PJ ({season or prior_season or 'hist'})"
+            reason = (
+                f"FF {scoring_label} {float(ref_avg):.2f} · {apps} PJ "
+                f"({season or prior_season or 'hist'})"
+            )
             top_n += 1
 
         prod = production_score(
@@ -452,6 +501,7 @@ def enrich_players_with_ff_production(
             lineup_prob=float(lp) if lp is not None else None,
             mister_avg=mister_form,
             points_phase=points_phase,
+            avg_scale=avg_scale,
         )
 
         ext.update(
@@ -466,6 +516,7 @@ def enrich_players_with_ff_production(
                 "top_reason": reason,
                 "production_score": prod,
                 "ff_match_score": score if hit else None,
+                "ff_scoring": scoring_label,
             }
         )
         new_p["external"] = ext
@@ -504,7 +555,9 @@ def enrich_players_with_ff_production(
     meta["matched"] = matched
     meta["top_count"] = top_n
     log.info(
-        "FF production match=%s/%s tops=%s thr=%s status=%s",
+        "FF production [%s/%s] match=%s/%s tops=%s thr=%s status=%s",
+        comp,
+        scoring_label,
         matched,
         len(players),
         top_n,

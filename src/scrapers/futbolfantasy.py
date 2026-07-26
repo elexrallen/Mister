@@ -1,6 +1,7 @@
 """
 Scraper Fútbol Fantasy — lesionados/sancionados + % titularidad por equipo.
 Fail-soft: ante DOM distinto → [] + warning.
+Soporta LaLiga (`laliga`) y Premier (`premier` → path `/premier-league/`).
 """
 
 from __future__ import annotations
@@ -16,9 +17,18 @@ from .teams import display_team_from_slug, team_slug
 log = logging.getLogger("scrapers.ff")
 
 BASE = "https://www.futbolfantasy.com"
-LESIONADOS = f"{BASE}/laliga/lesionados"
-SANCIONADOS = f"{BASE}/laliga/sancionados"
 MAX_TEAM_PAGES = 12
+
+# competition key → path segment en futbolfantasy.com
+FF_PATH: dict[str, str] = {
+    "laliga": "laliga",
+    "premier": "premier-league",
+}
+
+
+def _ff_path(competition: str) -> str:
+    key = (competition or "laliga").strip().lower()
+    return FF_PATH.get(key, FF_PATH["laliga"])
 
 
 def _abs(url: str | None) -> str | None:
@@ -27,8 +37,8 @@ def _abs(url: str | None) -> str | None:
     return urljoin(BASE, url)
 
 
-def _parse_lesionados() -> list[dict[str, Any]]:
-    soup = get_soup(LESIONADOS)
+def _parse_lesionados(path: str) -> list[dict[str, Any]]:
+    soup = get_soup(f"{BASE}/{path}/lesionados")
     if not soup:
         return []
     out: list[dict[str, Any]] = []
@@ -39,12 +49,10 @@ def _parse_lesionados() -> list[dict[str, Any]]:
         href = _abs(a.get("href"))
         row = a.find_parent(class_="row") or a.parent
         row_txt = row.get_text(" ", strip=True) if row else ""
-        # Equipo suele ir antes del %: "Athletic 0% Unai Egiluz ..."
         team = None
         m = re.match(r"^(.+?)\s+\d{1,3}%\s+", row_txt)
         if m:
             team = m.group(1).strip()
-        # % de disponibilidad / titularidad en la ficha de lesión
         pcts = [int(x) for x in re.findall(r"(\d{1,3})\s*%", row_txt)]
         lineup_prob = pcts[0] if pcts else 0
         out.append({
@@ -57,12 +65,12 @@ def _parse_lesionados() -> list[dict[str, Any]]:
             "profile_url": href,
             "source": "futbolfantasy",
         })
-    log.info("FF lesionados: %d", len(out))
+    log.info("FF [%s] lesionados: %d", path, len(out))
     return out
 
 
-def _parse_sancionados() -> list[dict[str, Any]]:
-    soup = get_soup(SANCIONADOS)
+def _parse_sancionados(path: str) -> list[dict[str, Any]]:
+    soup = get_soup(f"{BASE}/{path}/sancionados")
     if not soup:
         return []
     out: list[dict[str, Any]] = []
@@ -80,12 +88,12 @@ def _parse_sancionados() -> list[dict[str, Any]]:
             "profile_url": _abs(a.get("href")),
             "source": "futbolfantasy",
         })
-    log.info("FF sancionados: %d", len(out))
+    log.info("FF [%s] sancionados: %d", path, len(out))
     return out
 
 
-def _parse_team_page(slug: str) -> list[dict[str, Any]]:
-    url = f"{BASE}/laliga/equipos/{slug}"
+def _parse_team_page(path: str, slug: str) -> list[dict[str, Any]]:
+    url = f"{BASE}/{path}/equipos/{slug}"
     soup = get_soup(url)
     if not soup:
         return []
@@ -107,7 +115,6 @@ def _parse_team_page(slug: str) -> list[dict[str, Any]]:
             m = re.search(r"(\d{1,3})\s*%", el.get_text(" ", strip=True))
         lineup_prob = int(m.group(1)) if m else None
         link = el.select_one("a[href*='/jugadores/']")
-        # Chollo heurístico: % alto pero no estrella de lista (sin señal explícita → False)
         is_reco = lineup_prob is not None and lineup_prob >= 80
         out.append({
             "name": name,
@@ -122,11 +129,17 @@ def _parse_team_page(slug: str) -> list[dict[str, Any]]:
     return out
 
 
-def fetch_futbolfantasy(team_names: list[str] | None = None) -> list[dict[str, Any]]:
+def fetch_futbolfantasy(
+    team_names: list[str] | None = None,
+    *,
+    competition: str = "laliga",
+) -> list[dict[str, Any]]:
     """
     Devuelve registros de jugadores FF.
     team_names: equipos Mister a enriquecer con % (cap MAX_TEAM_PAGES).
+    competition: `laliga` | `premier`.
     """
+    path = _ff_path(competition)
     try:
         by_key: dict[str, dict[str, Any]] = {}
 
@@ -138,14 +151,11 @@ def fetch_futbolfantasy(team_names: list[str] | None = None) -> list[dict[str, A
             if not prev:
                 by_key[key] = rec
                 return
-            # Preferir estado más grave; conservar mejor %
             prio = {"suspended": 3, "injured": 2, "doubt": 1, "available": 0, "unknown": 0}
             if prio.get(rec.get("availability"), 0) > prio.get(prev.get("availability"), 0):
                 prev["availability"] = rec["availability"]
             if rec.get("lineup_prob") is not None:
                 if prev.get("lineup_prob") is None or rec["lineup_prob"] < prev.get("lineup_prob", 999):
-                    # En lesión el % suele ser el de disponibilidad; en plantilla el de titularidad.
-                    # Si el nuevo viene de lesionados (availability injured) y prev available, baja.
                     if rec.get("availability") in ("injured", "suspended"):
                         prev["lineup_prob"] = rec["lineup_prob"]
                     elif prev.get("availability") not in ("injured", "suspended"):
@@ -159,9 +169,9 @@ def fetch_futbolfantasy(team_names: list[str] | None = None) -> list[dict[str, A
             if rec.get("is_chollo"):
                 prev["is_chollo"] = True
 
-        for rec in _parse_lesionados():
+        for rec in _parse_lesionados(path):
             upsert(rec)
-        for rec in _parse_sancionados():
+        for rec in _parse_sancionados(path):
             upsert(rec)
 
         slugs: list[str] = []
@@ -173,14 +183,14 @@ def fetch_futbolfantasy(team_names: list[str] | None = None) -> list[dict[str, A
                 slugs.append(slug)
         for slug in slugs[:MAX_TEAM_PAGES]:
             try:
-                for rec in _parse_team_page(slug):
+                for rec in _parse_team_page(path, slug):
                     upsert(rec)
             except Exception as exc:  # noqa: BLE001
-                log.warning("FF team %s falló: %s", slug, exc)
+                log.warning("FF team %s/%s falló: %s", path, slug, exc)
 
         result = list(by_key.values())
-        log.info("FF total registros: %d", len(result))
+        log.info("FF [%s] total registros: %d", path, len(result))
         return result
     except Exception as exc:  # noqa: BLE001
-        log.warning("FF scraper falló: %s", exc)
+        log.warning("FF scraper [%s] falló: %s", path, exc)
         return []

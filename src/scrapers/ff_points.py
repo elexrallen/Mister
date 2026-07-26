@@ -1,8 +1,11 @@
 """
-Fútbol Fantasy Analytics — puntos Mister Mixto por temporada.
+Fútbol Fantasy Analytics — puntos fantasy por temporada.
 
-Fuente: /analytics/estadisticas-puntos/{year}
-Fail-soft + caché en disco (TTL 36h).
+LaLiga:  /analytics/estadisticas-puntos/{year}          → Mister Mixto
+Premier: /analytics/premier-league/estadisticas-puntos/{year} → Fantasy RPG
+         (fallback Futmondo Stats / Mister Mixto si aparecen)
+
+Fail-soft + caché en disco (TTL 36h) por competición.
 """
 
 from __future__ import annotations
@@ -19,9 +22,7 @@ from .http_util import get_soup
 log = logging.getLogger("scrapers.ff_points")
 
 BASE = "https://www.futbolfantasy.com"
-ANALYTICS = f"{BASE}/analytics/estadisticas-puntos"
 CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
-CACHE_PATH = CACHE_DIR / "ff_mister_points.json"
 CACHE_TTL_HOURS = 36
 
 # Temporadas a scrapear: year en URL = fin de temporada (2026 → 2025/26)
@@ -29,7 +30,38 @@ DEFAULT_SEASONS = [2026, 2025]
 
 MIN_APPS_TOP = 15
 TOP_PERCENTILE = 0.85
-TOP_AVG_FLOOR = 5.5
+TOP_AVG_FLOOR = 5.5  # LaLiga Mister Mixto
+
+# Perfil por competición: URL, columnas de scoring (prioridad), escala media, floor TOP
+COMPETITION_PROFILES: dict[str, dict[str, Any]] = {
+    "laliga": {
+        "url_tpl": f"{BASE}/analytics/estadisticas-puntos/{{year}}",
+        "cache_name": "ff_mister_points.json",
+        "score_columns": [
+            ("Total - Mister Mixto", "Media - Mister Mixto"),
+        ],
+        "avg_scale": 8.0,
+        "top_floor": 5.5,
+        "label": "Mister Mixto",
+    },
+    "premier": {
+        "url_tpl": f"{BASE}/analytics/premier-league/estadisticas-puntos/{{year}}",
+        "cache_name": "ff_premier_points.json",
+        "score_columns": [
+            ("Total - Mister Mixto", "Media - Mister Mixto"),
+            ("Total - Fantasy RPG", "Media - Fantasy RPG"),
+            ("Total - Futmondo Stats", "Media - Futmondo Stats"),
+        ],
+        "avg_scale": 16.0,  # RPG ~8–18 → map similar a Mister Mixto 2–8
+        "top_floor": 10.0,
+        "label": "Fantasy RPG",
+    },
+}
+
+
+def _profile(competition: str) -> dict[str, Any]:
+    key = (competition or "laliga").strip().lower()
+    return COMPETITION_PROFILES.get(key, COMPETITION_PROFILES["laliga"])
 
 
 def _now() -> datetime:
@@ -43,7 +75,6 @@ def _parse_num(raw: str | None) -> float | None:
     if not s or s in ("-", "—", "–"):
         return None
     s = s.replace(".", "").replace(",", ".") if s.count(",") == 1 and s.count(".") > 1 else s.replace(",", ".")
-    # European: 1.234,56 rare here; usually 4,50 or 202
     try:
         return float(s)
     except ValueError:
@@ -56,43 +87,59 @@ def _parse_num(raw: str | None) -> float | None:
             return None
 
 
-def _col_indexes(soup) -> tuple[int, int, int] | None:
-    """Return (apps_idx, mister_total_idx, mister_avg_idx) from thead titles."""
+def _col_indexes(
+    soup,
+    score_columns: list[tuple[str, str]],
+) -> tuple[int, int, int, str] | None:
+    """
+    Return (apps_idx, total_idx, avg_idx, scoring_label) from thead titles.
+    score_columns: lista de (total_title, avg_title) en orden de preferencia.
+    """
     ths = soup.select("table thead th")
     if not ths:
         return None
     apps_idx = None
-    total_idx = None
-    avg_idx = None
+    by_title: dict[str, int] = {}
     for i, th in enumerate(ths):
-        title = (th.get("title") or th.get_text(" ", strip=True) or "").strip()
+        title = (th.get("title") or "").strip()
         text = th.get_text(" ", strip=True)
-        if text == "P" and apps_idx is None:
+        if title:
+            by_title[title] = i
+        # Partidos: title "Partidos" o texto "P"
+        if apps_idx is None and (title == "Partidos" or text == "P"):
             apps_idx = i
-        if title == "Total - Mister Mixto":
-            total_idx = i
-        if title == "Media - Mister Mixto":
-            avg_idx = i
+
+    total_idx = avg_idx = None
+    label = ""
+    for tot_name, avg_name in score_columns:
+        if tot_name in by_title and avg_name in by_title:
+            total_idx = by_title[tot_name]
+            avg_idx = by_title[avg_name]
+            label = tot_name.replace("Total - ", "")
+            break
+
     if apps_idx is None or total_idx is None or avg_idx is None:
         log.warning(
-            "FF points: columnas Mister Mixto no encontradas (apps=%s total=%s avg=%s)",
+            "FF points: columnas no encontradas (apps=%s total=%s avg=%s tried=%s)",
             apps_idx,
             total_idx,
             avg_idx,
+            [c[0] for c in score_columns],
         )
         return None
-    return apps_idx, total_idx, avg_idx
+    return apps_idx, total_idx, avg_idx, label
 
 
-def _parse_season(year: int) -> list[dict[str, Any]]:
-    url = f"{ANALYTICS}/{year}"
+def _parse_season(year: int, competition: str = "laliga") -> list[dict[str, Any]]:
+    prof = _profile(competition)
+    url = str(prof["url_tpl"]).format(year=year)
     soup = get_soup(url, timeout=25)
     if not soup:
         return []
-    idxs = _col_indexes(soup)
+    idxs = _col_indexes(soup, list(prof["score_columns"]))
     if not idxs:
         return []
-    apps_i, tot_i, avg_i = idxs
+    apps_i, tot_i, avg_i, scoring_label = idxs
     out: list[dict[str, Any]] = []
     for tr in soup.select("table tbody tr"):
         tds = tr.select("td")
@@ -127,55 +174,85 @@ def _parse_season(year: int) -> list[dict[str, Any]]:
                 "season_label": f"{year - 1}/{str(year)[2:]}",
                 "profile_url": link.get("href") if link else None,
                 "source": "futbolfantasy_points",
+                "scoring": scoring_label,
+                "competition": (competition or "laliga").strip().lower(),
             }
         )
-    log.info("FF Mister Mixto %s: %d jugadores", year, len(out))
+    log.info(
+        "FF points [%s/%s] %s: %d jugadores (%s)",
+        competition,
+        year,
+        scoring_label,
+        len(out),
+        url.split(".com")[-1],
+    )
     return out
 
 
-def _load_cache() -> dict[str, Any] | None:
+def _cache_path(competition: str) -> Path:
+    return CACHE_DIR / str(_profile(competition)["cache_name"])
+
+
+def _load_cache(competition: str) -> dict[str, Any] | None:
+    path = _cache_path(competition)
     try:
-        if not CACHE_PATH.is_file():
+        if not path.is_file():
             return None
-        data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+        data = json.loads(path.read_text(encoding="utf-8"))
         ts = data.get("fetched_at")
         if not ts:
             return None
         fetched = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         if _now() - fetched > timedelta(hours=CACHE_TTL_HOURS):
             return None
+        # Evitar mezclar caches de otra competición
+        if data.get("competition") and data.get("competition") != (competition or "laliga"):
+            return None
         return data
     except Exception as exc:  # noqa: BLE001
-        log.warning("FF points cache ilegible: %s", exc)
+        log.warning("FF points cache ilegible (%s): %s", competition, exc)
         return None
 
 
-def _save_cache(payload: dict[str, Any]) -> None:
+def _save_cache(competition: str, payload: dict[str, Any]) -> None:
+    path = _cache_path(competition)
     try:
         CACHE_DIR.mkdir(parents=True, exist_ok=True)
-        CACHE_PATH.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     except Exception as exc:  # noqa: BLE001
-        log.warning("FF points cache no escrita: %s", exc)
+        log.warning("FF points cache no escrita (%s): %s", competition, exc)
 
 
-def compute_top_threshold(records: list[dict[str, Any]]) -> float:
+def compute_top_threshold(
+    records: list[dict[str, Any]],
+    *,
+    top_floor: float | None = None,
+) -> float:
     """Media mínima P85 entre jugadores con PJ suficientes (o floor)."""
+    floor = float(top_floor if top_floor is not None else TOP_AVG_FLOOR)
     avgs = sorted(
         float(r["mister_avg"])
         for r in records
         if r.get("mister_avg") is not None and int(r.get("apps") or 0) >= MIN_APPS_TOP
     )
     if not avgs:
-        return TOP_AVG_FLOOR
+        return floor
     idx = int(len(avgs) * TOP_PERCENTILE)
     idx = min(max(idx, 0), len(avgs) - 1)
-    return max(TOP_AVG_FLOOR, round(avgs[idx], 2))
+    return max(floor, round(avgs[idx], 2))
 
 
-def is_top_production(avg: float | None, apps: int, threshold: float) -> bool:
+def is_top_production(
+    avg: float | None,
+    apps: int,
+    threshold: float,
+    *,
+    top_floor: float | None = None,
+) -> bool:
+    floor = float(top_floor if top_floor is not None else TOP_AVG_FLOOR)
     if avg is None:
         return False
-    if apps < MIN_APPS_TOP and avg < TOP_AVG_FLOOR + 0.5:
+    if apps < MIN_APPS_TOP and avg < floor + 0.5:
         return False
     return float(avg) >= threshold
 
@@ -188,30 +265,29 @@ def production_score(
     lineup_prob: float | None = None,
     mister_avg: float | None = None,
     points_phase: str = "preseason",
+    avg_scale: float = 8.0,
 ) -> float:
     """
     Score 0–100 para gestión diaria.
     Pretemporada: FF (+ prior). Active: mezcla Mister vivo + FF.
+    avg_scale: media “buena” de referencia (Mister Mixto ~8, Fantasy RPG ~16).
     """
+    scale = float(avg_scale) if avg_scale and avg_scale > 0 else 8.0
     score = 0.0
     primary = avg
     if points_phase == "active" and mister_avg is not None and float(mister_avg) > 0:
-        # Temporada viva manda; FF como ancla
         primary = 0.65 * float(mister_avg) + 0.35 * float(avg or mister_avg)
     elif primary is None and prior_avg is not None:
         primary = prior_avg
 
     if primary is not None:
-        # Media Mister típica ~2–8 → map a 0–70
-        score += max(0.0, min(70.0, (float(primary) / 8.0) * 70.0))
+        score += max(0.0, min(70.0, (float(primary) / scale) * 70.0))
     if prior_avg is not None and avg is not None and points_phase != "active":
-        # Tendencia histórica suave
         delta = float(avg) - float(prior_avg)
         score += max(-5.0, min(5.0, delta * 3))
     elif prior_avg is not None and avg is None:
-        score += max(0.0, min(55.0, (float(prior_avg) / 8.0) * 55.0))
+        score += max(0.0, min(55.0, (float(prior_avg) / scale) * 55.0))
 
-    # Fiabilidad por partidos
     if apps >= 30:
         score += 15
     elif apps >= 15:
@@ -221,7 +297,7 @@ def production_score(
 
     if lineup_prob is not None:
         lp = float(lineup_prob)
-        if lp > 1.5:  # viene en %
+        if lp > 1.5:
             lp = lp / 100.0
         score += max(0.0, min(15.0, lp * 15.0))
 
@@ -231,47 +307,64 @@ def production_score(
 def fetch_ff_mister_points(
     seasons: list[int] | None = None,
     *,
+    competition: str = "laliga",
     use_cache: bool = True,
 ) -> dict[str, Any]:
     """
     Devuelve:
       {
-        status, threshold, seasons,
+        status, threshold, seasons, competition, scoring, avg_scale, top_floor,
         by_season: {2026: [records...], ...},
         records: flat list (latest season first),
         fetched_at
       }
     """
+    comp = (competition or "laliga").strip().lower()
+    prof = _profile(comp)
     seasons = seasons or list(DEFAULT_SEASONS)
     if use_cache:
-        cached = _load_cache()
+        cached = _load_cache(comp)
         if cached and cached.get("by_season"):
-            log.info("FF Mister points desde caché (%s)", cached.get("fetched_at"))
+            log.info(
+                "FF points [%s] desde caché (%s)",
+                comp,
+                cached.get("fetched_at"),
+            )
             return cached
 
     by_season: dict[str, list[dict[str, Any]]] = {}
     status = "ok"
+    scoring_used = str(prof.get("label") or "")
     try:
         for year in seasons:
             try:
-                rows = _parse_season(year)
+                rows = _parse_season(year, competition=comp)
                 by_season[str(year)] = rows
+                if rows and rows[0].get("scoring"):
+                    scoring_used = str(rows[0]["scoring"])
                 if not rows:
                     status = "partial"
             except Exception as exc:  # noqa: BLE001
-                log.warning("FF points season %s falló: %s", year, exc)
+                log.warning("FF points [%s] season %s falló: %s", comp, year, exc)
                 by_season[str(year)] = []
                 status = "partial"
     except Exception as exc:  # noqa: BLE001
-        log.warning("FF points scraper falló: %s", exc)
+        log.warning("FF points scraper [%s] falló: %s", comp, exc)
         status = "fail"
         by_season = {str(y): [] for y in seasons}
 
     primary_year = str(seasons[0])
     primary = by_season.get(primary_year) or []
-    threshold = compute_top_threshold(primary) if primary else TOP_AVG_FLOOR
+    # Si la temporada actual está vacía (pretemporada), usar prior para threshold
+    thr_source = primary
+    if not thr_source:
+        for y in seasons[1:]:
+            if by_season.get(str(y)):
+                thr_source = by_season[str(y)]
+                break
+    top_floor = float(prof["top_floor"])
+    threshold = compute_top_threshold(thr_source, top_floor=top_floor) if thr_source else top_floor
 
-    # Flat: primary then others
     flat: list[dict[str, Any]] = []
     for y in seasons:
         flat.extend(by_season.get(str(y)) or [])
@@ -284,9 +377,13 @@ def fetch_ff_mister_points(
         "records": flat,
         "fetched_at": _now().isoformat().replace("+00:00", "Z"),
         "source": "futbolfantasy_analytics",
+        "competition": comp,
+        "scoring": scoring_used,
+        "avg_scale": float(prof["avg_scale"]),
+        "top_floor": top_floor,
     }
     if payload["status"] != "fail":
-        _save_cache(payload)
+        _save_cache(comp, payload)
     return payload
 
 
@@ -297,4 +394,5 @@ __all__ = [
     "production_score",
     "MIN_APPS_TOP",
     "TOP_AVG_FLOOR",
+    "COMPETITION_PROFILES",
 ]

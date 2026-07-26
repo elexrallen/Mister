@@ -40,7 +40,7 @@ jobs:
           MISTER_LEAGUE_ID: ${{ secrets.MISTER_LEAGUE_ID }}
           MISTER_TEAM_ID: ${{ secrets.MISTER_TEAM_ID }}
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
-        run: python src/data_engine.py
+        run: python src/data_engine.py --league all
 
       - name: Verify live data (not mock fallback)
         run: |
@@ -53,6 +53,10 @@ jobs:
           source = str(meta.get("source") or "")
           has_secrets = bool(os.environ.get("MISTER_TOKEN") or os.environ.get("MISTER_COOKIE"))
           print(f"source={source!r} balance_ok={meta.get('balance_ok')} market_ok={meta.get('market_ok')}")
+          idx = Path("public/data/leagues.json")
+          if idx.is_file():
+              leagues = json.loads(idx.read_text(encoding="utf-8"))
+              print("leagues", [L.get("slug") for L in (leagues.get("leagues") or [])])
           if has_secrets and (not source or "mock" in source.lower() or meta.get("balance_ok") is False):
               print("::error::Secrets presentes pero el motor no obtuvo datos live de Mister.")
               print("Renueva MISTER_TOKEN + MISTER_X_AUTH (+ PHPSESSID) en Settings → Secrets.")
@@ -68,7 +72,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/latest_data.json public/data/history/
+          git add public/data/latest_data.json public/data/history/ public/data/leagues.json public/data/leagues/ || true
           if git diff --staged --quiet; then
             echo "No data changes to commit."
           else

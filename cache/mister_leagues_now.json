@@ -1,0 +1,78 @@
+{
+  "active": {
+    "community": "PREMIER LEAGUE ©",
+    "id_community": 906674,
+    "competition": "Premier League",
+    "id_competition": 3,
+    "id_uc": 15406037,
+    "code": "PREMIER",
+    "balance": {
+      "current": 50000000,
+      "future": 50000000,
+      "maxDebt": 50000000
+    },
+    "communities": {
+      "906674": {
+        "id": 906674,
+        "name": "PREMIER LEAGUE ©",
+        "code": "PREMIER",
+        "id_competition": 3,
+        "mode": "contest",
+        "direct_transfer": 1,
+        "max_debt": 4,
+        "community_icon": null,
+        "id_uc": 15406037,
+        "balance": 50000000,
+        "offers": 0,
+        "flag_emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+        "ts_pic": 1635946770,
+        "cmp_updated": "2026-07-13 11:57:10",
+        "icon_url": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/contests/icon-6182989b1d0ad.png?version=20260724084836",
+        "prize": null,
+        "updated": "2026-07-24 08:48:36",
+        "sidebar_visible": 1,
+        "blocked": 0,
+        "mgid": null,
+        "logoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/competitions/3.png?version=20260713115710"
+      },
+      "2500716": {
+        "id": 2500716,
+        "name": "Liga del patio",
+        "code": "24L1VY",
+        "id_competition": 1,
+        "mode": "private",
+        "direct_transfer": 1,
+        "max_debt": 4,
+        "community_icon": "🇪🇸",
+        "id_uc": 15399168,
+        "balance": 18629000,
+        "offers": 0,
+        "flag_emoji": "🇪🇸",
+        "ts_pic": 1635946738,
+        "cmp_updated": "2026-06-29 11:46:11",
+        "icon_url": null,
+        "prize": null,
+        "updated": null,
+        "sidebar_visible": null,
+        "blocked": null,
+        "mgid": null,
+        "logoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/competitions/1.png?version=20260629114611"
+      }
+    },
+    "uc_name": "Emilio A. Guillen Ramos",
+    "mode": "contest",
+    "type": "lfm"
+  },
+  "sidebar_leagues": [
+    {
+      "id_community": "906674",
+      "href": "https://mister.mundodeportivo.com/action/change?id_community=906674",
+      "name": "PREMIER LEAGUE ©"
+    },
+    {
+      "id_community": "2500716",
+      "href": "https://mister.mundodeportivo.com/action/change?id_community=2500716",
+      "name": "Liga del patio"
+    }
+  ]
+}

@@ -1259,10 +1259,57 @@ def fetch_balance() -> dict[str, Any]:
     return {}
 
 
-def fetch_live_league() -> dict[str, Any] | None:
+def switch_community(id_community: str | int) -> dict[str, Any]:
+    """
+    Cambia la comunidad activa de la sesión Mister.
+    GET /action/change?id_community=… → parsea _FG_user.
+    """
+    cid = str(id_community).strip()
+    if not cid:
+        return {}
+    url = f"{config.MISTER_API_BASE}/action/change?id_community={cid}"
+    try:
+        resp = requests.get(url, headers=mister_headers(referer=url), timeout=30, allow_redirects=True)
+        resp.raise_for_status()
+        resp.encoding = resp.apparent_encoding or "utf-8"
+        html = resp.text
+    except Exception as exc:  # noqa: BLE001
+        log.warning("switch_community(%s) falló: %s", cid, exc)
+        return {}
+
+    fg_user = _extract_js_object(html, "_FG_user") or {}
+    got = str(fg_user.get("id_community") or "")
+    if got and got != cid:
+        log.warning("switch_community: pedí %s, sesión quedó en %s", cid, got)
+    elif got == cid:
+        log.info(
+            "switch_community OK → %s (%s) uc=%s",
+            fg_user.get("community"),
+            cid,
+            fg_user.get("id_uc"),
+        )
+    return fg_user
+
+
+def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] | None:
     """Orquesta balance + HTML market/team/standings → schema interno (solo datos reales)."""
     if not (config.MISTER_TOKEN or config.MISTER_COOKIE):
         return None
+
+    target_cid = str(community_id or config.MISTER_LEAGUE_ID or "").strip() or None
+    if target_cid:
+        # Peek sesión actual vía /team (ligero) o switch directo
+        try:
+            peek = fetch_html("/team")
+            cur = _extract_js_object(peek, "_FG_user") or {}
+            cur_cid = str(cur.get("id_community") or "")
+            if cur_cid != target_cid:
+                switched = switch_community(target_cid)
+                if not switched or str(switched.get("id_community") or "") != target_cid:
+                    log.warning("No se pudo activar comunidad %s", target_cid)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("peek/switch comunidad falló: %s — intento switch directo", exc)
+            switch_community(target_cid)
 
     balance_data = fetch_balance()
     market_html = team_html = standings_html = ""
@@ -1284,6 +1331,7 @@ def fetch_live_league() -> dict[str, Any] | None:
 
     fg_user = _extract_js_object(market_html or team_html, "_FG_user") or {}
     fg_cfg = _extract_js_object(market_html or team_html, "_FG_cfg") or {}
+    _ = fg_cfg  # disponible para debug futuro
 
     bal = 0
     if balance_data:
@@ -1367,6 +1415,12 @@ def fetch_live_league() -> dict[str, Any] | None:
     community = fg_user.get("id_community") or config.MISTER_LEAGUE_ID or "mister-live"
     team_name = (me_row or {}).get("team_name") or fg_user.get("uc_name") or fg_user.get("name") or "Mi equipo"
     manager = fg_user.get("name") or "Yo"
+    competition = str(fg_user.get("competition") or "")
+    id_competition = fg_user.get("id_competition")
+    try:
+        id_competition_i = int(id_competition) if id_competition is not None else None
+    except (TypeError, ValueError):
+        id_competition_i = None
 
     notes = [
         "Saldo: /ajax/balance",
@@ -1375,6 +1429,7 @@ def fetch_live_league() -> dict[str, Any] | None:
         "Clasificación/rivales: HTML /standings (valor plantilla, no liquidez)",
         "Plantillas rivales: HTML /users/{id}/… + pool /ajax/sw/players",
         "Sin PPG multi-temporada inventado",
+        f"Comunidad activa: {fg_user.get('community')} ({community}) · {competition or '?'}",
     ]
     if full_pool:
         notes.append(
@@ -1391,6 +1446,8 @@ def fetch_live_league() -> dict[str, Any] | None:
             "id": str(community),
             "name": str(fg_user.get("community") or "Liga Mister"),
             "total_managers": len(rivals) + (1 if me_row or squad else 0),
+            "competition": competition or None,
+            "id_competition": id_competition_i,
         },
         "me": {
             "team_id": my_uc or "me",
@@ -1419,6 +1476,10 @@ def fetch_live_league() -> dict[str, Any] | None:
             "pool_size": int(pool_meta.get("pool_size") or 0) if full_pool else 0,
             "pool_free_count": int(pool_meta.get("free_count") or len(free_pool)),
             "pool_owned_count": int(pool_meta.get("owned_count") or 0) if full_pool else 0,
+            "id_community": str(community),
+            "competition": competition or None,
+            "id_competition": id_competition_i,
+            "id_uc": my_uc or None,
             "source": "mister_html+ajax_balance+sw_players",
             "honest_mode": True,
             "notes": notes,

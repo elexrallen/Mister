@@ -1,5 +1,6 @@
 """
 Scraper Jornada Perfecta — lesionados/dudas + titulares probables por partido.
+Soporta LaLiga (raíz) y Premier (`/premier/...`).
 """
 
 from __future__ import annotations
@@ -14,10 +15,26 @@ from .http_util import get_soup
 log = logging.getLogger("scrapers.jp")
 
 BASE = "https://www.jornadaperfecta.com"
-ONCES = f"{BASE}/onces-posibles/"
-LESIONADOS = f"{BASE}/lesionados/"
 MAX_MATCHES = 8
 STARTER_PROB = 85
+
+# competition → prefijo de ruta ("" = LaLiga en raíz del sitio)
+JP_PREFIX: dict[str, str] = {
+    "laliga": "",
+    "premier": "premier",
+}
+
+
+def _jp_prefix(competition: str) -> str:
+    key = (competition or "laliga").strip().lower()
+    return JP_PREFIX.get(key, "")
+
+
+def _jp_url(prefix: str, path: str) -> str:
+    path = path.lstrip("/")
+    if prefix:
+        return f"{BASE}/{prefix}/{path}"
+    return f"{BASE}/{path}"
 
 
 def _abs(url: str | None) -> str | None:
@@ -35,12 +52,12 @@ def _status_from_alt(alt: str | None) -> str:
     if "duda" in a:
         return "doubt"
     if "disponible" in a or "observ" in a:
-        return "doubt"  # observación = no pleno
+        return "doubt"
     return "unknown"
 
 
-def _parse_lesionados() -> list[dict[str, Any]]:
-    soup = get_soup(LESIONADOS)
+def _parse_lesionados(prefix: str) -> list[dict[str, Any]]:
+    soup = get_soup(_jp_url(prefix, "lesionados/"))
     if not soup:
         return []
     out: list[dict[str, Any]] = []
@@ -73,12 +90,12 @@ def _parse_lesionados() -> list[dict[str, Any]]:
             "profile_url": _abs(name_a.get("href")),
             "source": "jornadaperfecta",
         })
-    log.info("JP lesionados/dudas: %d", len(out))
+    log.info("JP [%s] lesionados/dudas: %d", prefix or "laliga", len(out))
     return out
 
 
-def _match_links() -> list[str]:
-    soup = get_soup(ONCES)
+def _match_links(prefix: str) -> list[str]:
+    soup = get_soup(_jp_url(prefix, "onces-posibles/"))
     if not soup:
         return []
     links: list[str] = []
@@ -89,7 +106,12 @@ def _match_links() -> list[str]:
             continue
         if "/partido/" not in href:
             continue
-        # Solo LaLiga (evitar premier/segunda en path relativo ya filtrado)
+        # Aislar competición: Premier solo /premier/partido/; LaLiga excluye /premier/
+        if prefix == "premier":
+            if "/premier/partido/" not in href:
+                continue
+        elif "/premier/" in href:
+            continue
         seen.add(href)
         links.append(href)
     return links[:MAX_MATCHES]
@@ -99,27 +121,19 @@ def _parse_match(url: str) -> list[dict[str, Any]]:
     soup = get_soup(url)
     if not soup:
         return []
-    # slug equipos desde URL: .../barcelona-athletic
-    m = re.search(r"/partido/\d+/([^/]+)/?$", url)
-    teams = []
-    if m:
-        parts = m.group(1).split("-")
-        # heurística: dos clubes; algunos tienen rayo-vallecano / real-madrid
-        # Mejor: usar los dos .campo-futbol en orden
-        pass
     campos = soup.select(".campo-futbol")
-    # Intentar nombres desde title "Barcelona - Athletic"
     title = (soup.title.string if soup.title else "") or ""
     title_teams = re.split(r"\s+[-–]\s+", title.split("|")[0].strip())
     out: list[dict[str, Any]] = []
+    # Selectores: LaLiga usa .player-name-pintar; Premier a veces vacío (JS / pretemporada)
+    name_sels = ".player-name-pintar, .player-name, .nombre-jugador"
     for i, campo in enumerate(campos[:2]):
         team = title_teams[i].strip() if i < len(title_teams) else None
         if team and "|" in team:
             team = team.split("|")[0].strip()
-        # limpiar "Jornada..." si se coló
         if team and "alineacion" in team.lower():
             team = None
-        for n in campo.select(".player-name-pintar"):
+        for n in campo.select(name_sels):
             name = n.get_text(" ", strip=True)
             if not name:
                 continue
@@ -136,7 +150,8 @@ def _parse_match(url: str) -> list[dict[str, Any]]:
     return out
 
 
-def fetch_jornadaperfecta() -> list[dict[str, Any]]:
+def fetch_jornadaperfecta(*, competition: str = "laliga") -> list[dict[str, Any]]:
+    prefix = _jp_prefix(competition)
     try:
         by_key: dict[str, dict[str, Any]] = {}
 
@@ -165,9 +180,9 @@ def fetch_jornadaperfecta() -> list[dict[str, Any]]:
             if rec.get("is_recommendation"):
                 prev["is_recommendation"] = True
 
-        for rec in _parse_lesionados():
+        for rec in _parse_lesionados(prefix):
             upsert(rec)
-        for link in _match_links():
+        for link in _match_links(prefix):
             try:
                 for rec in _parse_match(link):
                     upsert(rec)
@@ -175,8 +190,8 @@ def fetch_jornadaperfecta() -> list[dict[str, Any]]:
                 log.warning("JP partido %s falló: %s", link, exc)
 
         result = list(by_key.values())
-        log.info("JP total registros: %d", len(result))
+        log.info("JP [%s] total registros: %d", prefix or "laliga", len(result))
         return result
     except Exception as exc:  # noqa: BLE001
-        log.warning("JP scraper falló: %s", exc)
+        log.warning("JP scraper [%s] falló: %s", prefix or "laliga", exc)
         return []

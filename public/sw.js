@@ -4,7 +4,7 @@
  * - Network-first (con fallback a cache) para data/latest_data.json
  */
 
-const CACHE_VERSION = "mfa-v20";
+const CACHE_VERSION = "mfa-v21";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
@@ -37,7 +37,14 @@ self.addEventListener("activate", (event) => {
 });
 
 function isDataRequest(url) {
-  return url.pathname.endsWith("/data/latest_data.json") || url.pathname.endsWith("latest_data.json");
+  const p = url.pathname;
+  return (
+    p.endsWith("/data/latest_data.json") ||
+    p.endsWith("latest_data.json") ||
+    p.endsWith("/data/leagues.json") ||
+    p.endsWith("leagues.json") ||
+    /\/data\/leagues\/[^/]+\/latest_data\.json$/.test(p)
+  );
 }
 
 self.addEventListener("fetch", (event) => {

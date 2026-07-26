@@ -78,9 +78,10 @@ def money(n: float | int) -> int:
 # Capa 1 — Mister Fantasy (ajax live + mock)
 # ---------------------------------------------------------------------------
 
-def fetch_mister_league() -> tuple[dict[str, Any], str]:
+def fetch_mister_league(community_id: str | None = None) -> tuple[dict[str, Any], str]:
     """
     Intenta leer Mister con cookie JWT (`token`) + header `x-auth`.
+    Si community_id se pasa, cambia a esa comunidad antes del scrape.
     Si no hay credenciales o falla → mock local.
     """
     if config.USE_MISTER_MOCK:
@@ -88,13 +89,15 @@ def fetch_mister_league() -> tuple[dict[str, Any], str]:
         return load_json(config.MOCK_DATA_PATH), "mock"
 
     try:
-        log.info("Conectando a Mister (/ajax/*) con sesión...")
-        live = fetch_live_league()
+        log.info("Conectando a Mister (/ajax/*) community=%s...", community_id or "sesión")
+        live = fetch_live_league(community_id=community_id)
         if not live or not all(k in live for k in ("me", "market", "rivals", "pool_top")):
             log.warning("Sesión OK parcial o shape incompleto → fallback a mock")
             return load_json(config.MOCK_DATA_PATH), "mock"
         meta = live.get("_live_meta", {})
-        log.info("Mister live OK — meta=%s", meta)
+        log.info("Mister live OK — meta=%s", {k: meta.get(k) for k in (
+            "id_community", "competition", "id_competition", "balance_ok", "market_ok", "pool_size"
+        )})
         return live, "api"
     except Exception as exc:  # noqa: BLE001
         log.warning("Mister live falló (%s) → fallback a mock", exc)
@@ -139,6 +142,35 @@ def load_recent_price_map(days: int = 5) -> dict[str, list[float]]:
             if pid is not None and price is not None:
                 series.setdefault(pid, []).append(float(price))
     return series
+
+
+def load_recent_price_map_for_league(slug: str, days: int = 5) -> dict[str, list[float]]:
+    """Histórico de precios por liga; fallback al history global."""
+    hist = config.league_history_dir(slug)
+    if hist.exists():
+        snaps = sorted(hist.glob("*.json"))[-days:]
+        series: dict[str, list[float]] = {}
+        for snap_path in snaps:
+            try:
+                snap = load_json(snap_path)
+            except Exception:  # noqa: BLE001
+                continue
+            for bucket in ("market_opportunities", "me"):
+                items = snap.get(bucket) if bucket != "me" else snap.get("me", {}).get("squad", [])
+                if not items:
+                    continue
+                for p in items:
+                    pid, price = p.get("id"), p.get("price")
+                    if pid is None or price is None:
+                        continue
+                    series.setdefault(pid, []).append(float(price))
+            for p in snap.get("free_agents_top", []):
+                pid, price = p.get("id"), p.get("price")
+                if pid is not None and price is not None:
+                    series.setdefault(pid, []).append(float(price))
+        if series:
+            return series
+    return load_recent_price_map(days=days)
 
 
 def compute_delta_from_history(player_id: str, current_price: float, series: dict[str, list[float]]) -> float | None:
@@ -1189,13 +1221,36 @@ def build_action_plan(
 # Orquestación
 # ---------------------------------------------------------------------------
 
-def build_payload() -> dict[str, Any]:
-    league, mister_source = fetch_mister_league()
+def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
+    league_cfg = dict(league_cfg or config.get_league())
+    slug = str(league_cfg.get("slug") or config.DEFAULT_LEAGUE_SLUG)
+    season_start = str(
+        league_cfg.get("season_start")
+        or getattr(config, "SEASON_START_DATE", "2026-08-15")
+    )
+    id_competition = league_cfg.get("id_competition")
+    try:
+        id_competition_i = int(id_competition) if id_competition is not None else None
+    except (TypeError, ValueError):
+        id_competition_i = None
+    is_laliga = id_competition_i == int(getattr(config, "LALIGA_COMPETITION_ID", 1))
+
+    league, mister_source = fetch_mister_league(
+        community_id=str(league_cfg.get("id_community") or "") or None
+    )
     live_meta = league.pop("_live_meta", {}) if isinstance(league, dict) else {}
     # Catálogo completo solo se usa para libres/ownership en mister_client; no va al JSON
     if isinstance(league, dict):
         league.pop("pool_all", None)
     honest_live = mister_source == "api" or bool(live_meta.get("honest_mode"))
+
+    # Preferir competición real de la sesión si vino en live_meta
+    if live_meta.get("id_competition") is not None:
+        try:
+            id_competition_i = int(live_meta["id_competition"])
+            is_laliga = id_competition_i == int(getattr(config, "LALIGA_COMPETITION_ID", 1))
+        except (TypeError, ValueError):
+            pass
 
     seed = load_performance_seed()
     relevant_ids: list[str] = []
@@ -1214,7 +1269,8 @@ def build_payload() -> dict[str, Any]:
         perf_raw, perf_source = fetch_api_football_enrichment(relevant_ids, seed)
         perf_idx = index_performance(perf_raw)
 
-    price_series = load_recent_price_map(days=config.TRADING_WINDOW_DAYS)
+    # Histórico de precios: preferir history de la liga
+    price_series = load_recent_price_map_for_league(slug, days=config.TRADING_WINDOW_DAYS)
 
     me_raw = league["me"]
     squad = [
@@ -1246,7 +1302,8 @@ def build_payload() -> dict[str, Any]:
             row["min_bid"] = row["price"]
         market_combined.append(row)
     log.info(
-        "Mercado+libres: day=%s free_added=%s total=%s (pool_size=%s)",
+        "Mercado+libres [%s]: day=%s free_added=%s total=%s (pool_size=%s)",
+        slug,
         n_market_day,
         len(market_combined) - n_market_day,
         len(market_combined),
@@ -1257,9 +1314,39 @@ def build_payload() -> dict[str, Any]:
         for p in market_combined
     ]
 
-    # Enriquecimiento externo (FF/JP/Comuniate) — fail-soft
+    # Enriquecimiento externo (FF/JP; Comuniate solo LaLiga)
     universe = squad + market_raw
-    universe_ext, external_meta = enrich_players_with_external(universe)
+    external_key = config.external_competition_key(
+        league_cfg=league_cfg,
+        id_competition=id_competition_i,
+    )
+    if external_key:
+        universe_ext, external_meta = enrich_players_with_external(
+            universe,
+            competition=external_key,
+        )
+    else:
+        universe_ext = []
+        for p in universe:
+            row = dict(p)
+            row.setdefault("external", {})
+            universe_ext.append(row)
+        external_meta = {
+            "futbolfantasy": "skip",
+            "jornadaperfecta": "skip",
+            "comuniate": "skip",
+            "sofascore": "skip",
+            "matched": 0,
+            "cache_used": False,
+            "errors": [],
+            "sofascore_filled": 0,
+            "note": (
+                f"Sin scrapers externos para {league_cfg.get('competition') or 'esta competición'} "
+                f"(id_competition={id_competition_i}). Usamos Mister (+ FotMob fail-soft)."
+            ),
+        }
+        log.info("Skip externos: sin mapping para id_competition=%s", id_competition_i)
+
     # FotMob: nota / minutos / goles / xG últimos 5 (reemplaza Sofascore)
     universe_ext, fotmob_meta = enrich_players_with_fotmob(universe_ext)
     external_meta["fotmob"] = fotmob_meta.get("fotmob", "skip")
@@ -1269,19 +1356,28 @@ def build_payload() -> dict[str, Any]:
     squad = universe_ext[:n_squad]
     market_ext = universe_ext[n_squad:]
 
-    # Producción FF Mister Mixto (TOP + production_score) — fail-soft
+    # Producción FF (Mister Mixto LaLiga / Fantasy RPG Premier)
     pre_phase = detect_points_phase(list(squad) + list(market_ext))
-    universe_ff, ff_meta = enrich_players_with_ff_production(
-        list(squad) + list(market_ext),
-        points_phase=pre_phase,
-        market_universe=market_ext,
-    )
-    external_meta["ff_points"] = ff_meta.get("ff_points", "fail")
-    external_meta["ff_matched"] = ff_meta.get("matched", 0)
-    external_meta["ff_tops"] = ff_meta.get("top_count", 0)
-    external_meta["ff_threshold"] = ff_meta.get("threshold")
-    squad = universe_ff[:n_squad]
-    market_ext = universe_ff[n_squad:]
+    if external_key:
+        universe_ff, ff_meta = enrich_players_with_ff_production(
+            list(squad) + list(market_ext),
+            points_phase=pre_phase,
+            market_universe=market_ext,
+            competition=external_key,
+        )
+        external_meta["ff_points"] = ff_meta.get("ff_points", "fail")
+        external_meta["ff_matched"] = ff_meta.get("matched", 0)
+        external_meta["ff_tops"] = ff_meta.get("top_count", 0)
+        external_meta["ff_threshold"] = ff_meta.get("threshold")
+        external_meta["ff_scoring"] = ff_meta.get("scoring")
+        squad = universe_ff[:n_squad]
+        market_ext = universe_ff[n_squad:]
+    else:
+        external_meta["ff_points"] = "skip"
+        external_meta["ff_matched"] = 0
+        external_meta["ff_tops"] = 0
+        external_meta["ff_threshold"] = None
+        external_meta["ff_scoring"] = None
     me = {**me_raw, "squad": squad}
     log.info(
         "External match %s/%s (FF=%s JP=%s Com=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
@@ -1309,7 +1405,7 @@ def build_payload() -> dict[str, Any]:
     )
     diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
     comp = detect_competition_phase(
-        season_start=getattr(config, "SEASON_START_DATE", "2026-08-15"),
+        season_start=season_start,
         points_phase=points_phase,
     )
     competition_phase = str(comp.get("competition_phase") or "preseason")
@@ -1339,16 +1435,17 @@ def build_payload() -> dict[str, Any]:
     )
     rivals = [estimate_rival_liquidity(r) for r in league.get("rivals", [])]
 
-    # FF production también en plantillas rivales (upgrades / clauses)
+    # FF production también en plantillas rivales (misma competición)
     rival_flat: list[dict[str, Any]] = []
     for r in rivals:
         for p in r.get("squad") or []:
             rival_flat.append(dict(p))
-    if rival_flat:
+    if rival_flat and external_key:
         rival_ff, _ = enrich_players_with_ff_production(
             rival_flat,
             points_phase=points_phase,
             market_universe=market_ext,
+            competition=external_key,
         )
         by_id = {str(p.get("id")): p for p in rival_ff if p.get("id")}
         for r in rivals:
@@ -1396,7 +1493,7 @@ def build_payload() -> dict[str, Any]:
     # Refinar fase con rivales (puede matizar active vs preseason)
     points_phase = detect_points_phase(phase_universe)
     comp = detect_competition_phase(
-        season_start=getattr(config, "SEASON_START_DATE", "2026-08-15"),
+        season_start=season_start,
         points_phase=points_phase,
     )
     competition_phase = str(comp.get("competition_phase") or "preseason")
@@ -1499,17 +1596,40 @@ def build_payload() -> dict[str, Any]:
         external_notes.append(
             "Libres: no disponibles de forma fiable — el KPI no inventa cracks."
         )
+    if external_meta.get("note"):
+        external_notes.append(str(external_meta["note"]))
     base_notes = live_meta.get("notes") if honest_live else [
         "Modo demo/mock: parte de PPG y libres TOP son seed local.",
     ]
 
+    # Asegurar metadatos de liga en el objeto league del payload
+    league_out = dict(league.get("league") or {})
+    league_out["slug"] = slug
+    league_out["id"] = league_out.get("id") or str(league_cfg.get("id_community") or "")
+    league_out["name"] = league_out.get("name") or league_cfg.get("name")
+    league_out["competition"] = (
+        league_out.get("competition")
+        or live_meta.get("competition")
+        or league_cfg.get("competition")
+    )
+    league_out["id_competition"] = (
+        league_out.get("id_competition")
+        if league_out.get("id_competition") is not None
+        else id_competition_i
+    )
+
     now = datetime.now(timezone.utc)
     payload = {
         "generated_at": now.isoformat(),
+        "league_slug": slug,
         "sources": {
             "mister": mister_source,
             "performance": perf_source,
             "honest_live": honest_live,
+            "league_slug": slug,
+            "id_community": live_meta.get("id_community") or league_cfg.get("id_community"),
+            "competition": league_out.get("competition"),
+            "id_competition": league_out.get("id_competition"),
             "external": {
                 "futbolfantasy": external_meta.get("futbolfantasy", "fail"),
                 "jornadaperfecta": external_meta.get("jornadaperfecta", "fail"),
@@ -1521,13 +1641,14 @@ def build_payload() -> dict[str, Any]:
                 "fotmob_matched": external_meta.get("fotmob_matched", 0),
                 "fotmob_filled": external_meta.get("fotmob_filled", 0),
                 "cache_used": bool(external_meta.get("cache_used")),
+                "note": external_meta.get("note"),
             },
             "rivals_squads": bool(live_meta.get("rivals_squads_ok")),
             "clauses": clause_meta.get("clauses", "skip"),
             "clauses_known": clause_meta.get("known", 0),
             "points_phase": points_phase,
             "competition_phase": competition_phase,
-            "season_start": comp.get("season_start") or getattr(config, "SEASON_START_DATE", "2026-08-15"),
+            "season_start": comp.get("season_start") or season_start,
             "free_agents": free_note,
             "pool_size": live_meta.get("pool_size") or 0,
             "pool_free": live_meta.get("pool_free_count") or len(free_agents),
@@ -1535,7 +1656,7 @@ def build_payload() -> dict[str, Any]:
             "daily_market_count": n_market_day,
             "market_day_slots": int(getattr(config, "MARKET_DAY_SLOTS", 16)),
         },
-        "league": league.get("league", {}),
+        "league": league_out,
         "me": {
             "team_id": me.get("team_id"),
             "manager": me.get("manager"),
@@ -1637,11 +1758,12 @@ def build_payload() -> dict[str, Any]:
     return payload
 
 
-def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS) -> None:
-    if not config.HISTORY_DIR.exists():
+def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS, history_dir: Path | None = None) -> None:
+    hdir = history_dir or config.HISTORY_DIR
+    if not hdir.exists():
         return
     cutoff = datetime.now(timezone.utc).date() - timedelta(days=retention_days)
-    for path in config.HISTORY_DIR.glob("*.json"):
+    for path in hdir.glob("*.json"):
         try:
             day = datetime.strptime(path.stem, "%Y-%m-%d").date()
         except ValueError:
@@ -1651,29 +1773,119 @@ def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS) -> None:
             log.info("Snapshot antiguo eliminado: %s", path.name)
 
 
-def write_outputs(payload: dict[str, Any]) -> None:
-    save_json(config.LATEST_DATA_PATH, payload)
+def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None = None) -> Path:
+    """Escribe JSON de la liga + history; si es default, copia a latest_data.json."""
+    league_cfg = dict(league_cfg or config.get_league(payload.get("league_slug")))
+    slug = str(league_cfg.get("slug") or config.DEFAULT_LEAGUE_SLUG)
+    out_path = config.league_data_path(slug)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    save_json(out_path, payload)
+
+    hist_dir = config.league_history_dir(slug)
+    hist_dir.mkdir(parents=True, exist_ok=True)
     day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    # Snapshot ligero para series de precios (no duplicar todo el diagnóstico si se desea,
-    # pero guardamos el payload completo para análisis competitivo histórico).
-    snap_path = config.HISTORY_DIR / f"{day}.json"
-    save_json(snap_path, payload)
-    prune_history()
-    log.info("Escrito %s", config.LATEST_DATA_PATH)
-    log.info("Snapshot %s", snap_path)
+    save_json(hist_dir / f"{day}.json", payload)
+    prune_history(history_dir=hist_dir)
+
+    is_default = slug == config.DEFAULT_LEAGUE_SLUG or bool(league_cfg.get("default"))
+    if is_default:
+        save_json(config.LATEST_DATA_PATH, payload)
+        config.HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+        save_json(config.HISTORY_DIR / f"{day}.json", payload)
+        prune_history(history_dir=config.HISTORY_DIR)
+
+    log.info("Escrito %s (slug=%s default=%s)", out_path, slug, is_default)
+    return out_path
 
 
-def main() -> int:
+def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -> None:
+    """
+    Escribe leagues.json.
+    Si merge=True (p.ej. --league slug), conserva entradas de otras ligas ya indexadas.
+    """
+    by_slug: dict[str, dict[str, Any]] = {}
+    if merge and config.LEAGUES_INDEX_PATH.is_file():
+        try:
+            prev = json.loads(config.LEAGUES_INDEX_PATH.read_text(encoding="utf-8"))
+            for e in prev.get("leagues") or []:
+                if isinstance(e, dict) and e.get("slug"):
+                    by_slug[str(e["slug"])] = e
+        except Exception as exc:  # noqa: BLE001
+            log.warning("No se pudo fusionar leagues.json previo: %s", exc)
+    for e in entries:
+        if e.get("slug"):
+            by_slug[str(e["slug"])] = e
+    # Orden del registro LEAGUES; el resto al final
+    ordered: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for L in config.LEAGUES:
+        slug = str(L["slug"])
+        if slug in by_slug:
+            ordered.append(by_slug[slug])
+            seen.add(slug)
+    for slug, e in by_slug.items():
+        if slug not in seen:
+            ordered.append(e)
+    index = {
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "default_slug": config.DEFAULT_LEAGUE_SLUG,
+        "leagues": ordered,
+    }
+    save_json(config.LEAGUES_INDEX_PATH, index)
+    log.info("Índice ligas → %s (%s)", config.LEAGUES_INDEX_PATH, len(ordered))
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Mister Fantasy Advisor — data engine")
+    parser.add_argument(
+        "--league",
+        default="all",
+        help="slug de liga, id_community, o 'all' (default)",
+    )
+    args = parser.parse_args(argv)
+
     log.info("=== Mister Fantasy Advisor — data engine ===")
     log.info("USE_MISTER_MOCK=%s USE_PERF_SEED=%s", config.USE_MISTER_MOCK, config.USE_PERF_SEED)
-    payload = build_payload()
-    write_outputs(payload)
-    log.info(
-        "OK — oportunidades=%s libres=%s recomendaciones=%s",
-        len(payload["market_opportunities"]),
-        len(payload["free_agents_top"]),
-        len(payload["recommendations"]),
-    )
+
+    if str(args.league).strip().lower() in ("all", "*"):
+        targets = [dict(L) for L in config.LEAGUES]
+        merge_index = False
+    else:
+        targets = [config.get_league(str(args.league))]
+        merge_index = True
+
+    index_entries: list[dict[str, Any]] = []
+    for L in targets:
+        slug = L["slug"]
+        log.info("--- Liga %s (%s) ---", slug, L.get("name"))
+        payload = build_payload(L)
+        path = write_outputs(payload, league_cfg=L)
+        index_entries.append(
+            {
+                "slug": slug,
+                "name": L.get("name"),
+                "competition": (payload.get("league") or {}).get("competition") or L.get("competition"),
+                "id_community": L.get("id_community"),
+                "id_competition": L.get("id_competition"),
+                "season_start": L.get("season_start"),
+                "default": bool(L.get("default")),
+                "generated_at": payload.get("generated_at"),
+                "path": f"leagues/{slug}/latest_data.json",
+                "balance": (payload.get("me") or {}).get("balance"),
+                "rank": (payload.get("me") or {}).get("rank"),
+            }
+        )
+        log.info(
+            "OK [%s] — oportunidades=%s libres=%s buy_now=%s",
+            slug,
+            len(payload["market_opportunities"]),
+            len(payload["free_agents_top"]),
+            (payload.get("kpis") or {}).get("buy_now_count"),
+        )
+
+    write_leagues_index(index_entries, merge=merge_index)
     return 0
 
 

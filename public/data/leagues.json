@@ -1,0 +1,32 @@
+{
+  "generated_at": "2026-07-26T10:58:39.115347+00:00",
+  "default_slug": "laliga-patio",
+  "leagues": [
+    {
+      "slug": "laliga-patio",
+      "name": "Liga del patio",
+      "competition": "LaLiga",
+      "id_community": "2500716",
+      "id_competition": 1,
+      "season_start": "2026-08-15",
+      "default": true,
+      "generated_at": "2026-07-26T10:37:05.852739+00:00",
+      "path": "leagues/laliga-patio/latest_data.json",
+      "balance": 18629000,
+      "rank": 4
+    },
+    {
+      "slug": "premier",
+      "name": "PREMIER LEAGUE",
+      "competition": "Premier League",
+      "id_community": "906674",
+      "id_competition": 3,
+      "season_start": "2026-08-16",
+      "default": false,
+      "generated_at": "2026-07-26T10:58:39.103744+00:00",
+      "path": "leagues/premier/latest_data.json",
+      "balance": 50000000,
+      "rank": 50
+    }
+  ]
+}

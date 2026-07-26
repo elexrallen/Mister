@@ -54,9 +54,13 @@
     <div class="max-w-6xl mx-auto px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-4 md:pb-6">
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <p class="brand-eyebrow">Mister · Liga privada</p>
+          <p class="brand-eyebrow">Mister · <span id="league-competition-label">Liga privada</span></p>
           <h1 class="font-display brand-title">Mister Fantasy Advisor</h1>
           <p class="brand-sub">Qué hacer hoy con tu saldo, plantilla y rivales.</p>
+          <label class="league-switcher">
+            <span class="sr-only">Liga activa</span>
+            <select id="league-select" aria-label="Seleccionar liga"></select>
+          </label>
         </div>
         <div class="update-chip shrink-0" title="Última actualización">
           <span class="update-dot" aria-hidden="true"></span>

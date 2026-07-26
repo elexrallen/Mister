@@ -1538,20 +1538,95 @@
   }
 
   // ---- Boot ----
-  async function loadData() {
+  const LEAGUE_STORAGE_KEY = "mfa_league_slug";
+  let LEAGUES_INDEX = null;
+  let currentLeagueSlug = null;
+
+  function dataUrlForSlug(slug) {
+    if (!slug) return "./data/latest_data.json";
+    return `./data/leagues/${encodeURIComponent(slug)}/latest_data.json`;
+  }
+
+  function fillLeagueSelect(index, selectedSlug) {
+    const sel = document.getElementById("league-select");
+    if (!sel) return;
+    const leagues = (index && index.leagues) || [];
+    if (!leagues.length) {
+      sel.innerHTML = `<option value="">Liga actual</option>`;
+      return;
+    }
+    sel.innerHTML = leagues
+      .map((L) => {
+        const label = `${L.name || L.slug}${L.competition ? ` · ${L.competition}` : ""}`;
+        const selAttr = L.slug === selectedSlug ? " selected" : "";
+        return `<option value="${escapeHtml(L.slug)}"${selAttr}>${escapeHtml(label)}</option>`;
+      })
+      .join("");
+  }
+
+  function updateLeagueChrome(data) {
+    const league = (data && data.league) || {};
+    const sources = (data && data.sources) || {};
+    const comp =
+      league.competition || sources.competition || (LEAGUES_INDEX && LEAGUES_INDEX.leagues
+        ? (LEAGUES_INDEX.leagues.find((L) => L.slug === currentLeagueSlug) || {}).competition
+        : null);
+    const label = document.getElementById("league-competition-label");
+    if (label) label.textContent = comp || league.name || "Liga privada";
+  }
+
+  async function loadLeaguesIndex() {
+    try {
+      const res = await fetch("./data/leagues.json", { cache: "no-cache" });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadData(slugOverride) {
     const errEl = document.getElementById("load-error");
     try {
-      const res = await fetch("./data/latest_data.json", { cache: "no-cache" });
+      if (!LEAGUES_INDEX) LEAGUES_INDEX = await loadLeaguesIndex();
+      const defaultSlug =
+        (LEAGUES_INDEX && LEAGUES_INDEX.default_slug) ||
+        ((LEAGUES_INDEX && LEAGUES_INDEX.leagues) || []).find((L) => L.default)?.slug ||
+        "laliga-patio";
+      const stored = localStorage.getItem(LEAGUE_STORAGE_KEY);
+      const slug =
+        slugOverride ||
+        stored ||
+        defaultSlug;
+      currentLeagueSlug = slug;
+      fillLeagueSelect(LEAGUES_INDEX, slug);
+
+      let res = await fetch(dataUrlForSlug(slug), { cache: "no-cache" });
+      if (!res.ok && slug) {
+        res = await fetch("./data/latest_data.json", { cache: "no-cache" });
+      }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       DATA = await res.json();
+      localStorage.setItem(LEAGUE_STORAGE_KEY, slug);
+      updateLeagueChrome(DATA);
       errEl.classList.add("hidden");
       renderAll();
     } catch (err) {
       console.error(err);
       errEl.textContent =
-        "No se pudo cargar latest_data.json. Sirve la carpeta public/ por HTTP y ejecuta el data engine.";
+        "No se pudo cargar los datos de la liga. Sirve public/ por HTTP y ejecuta el data engine (--league all).";
       errEl.classList.remove("hidden");
     }
+  }
+
+  function initLeagueSwitcher() {
+    const sel = document.getElementById("league-select");
+    if (!sel) return;
+    sel.addEventListener("change", () => {
+      const slug = sel.value;
+      if (!slug || slug === currentLeagueSlug) return;
+      loadData(slug);
+    });
   }
 
   function initFilters() {
@@ -1586,6 +1661,7 @@
     initTabs();
     initCollapses();
     initFilters();
+    initLeagueSwitcher();
     initSortControls();
     initPwa();
     loadData();

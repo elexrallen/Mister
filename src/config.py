@@ -23,6 +23,63 @@ PERFORMANCE_HISTORY_PATH = SRC_DIR / "performance_history.json"
 
 # Salidas
 LATEST_DATA_PATH = DATA_DIR / "latest_data.json"
+LEAGUES_DIR = DATA_DIR / "leagues"
+LEAGUES_INDEX_PATH = DATA_DIR / "leagues.json"
+
+# Registro multi-liga (misma cuenta Mister, varias comunidades)
+LEAGUES: list[dict] = [
+    {
+        "slug": "laliga-patio",
+        "name": "Liga del patio",
+        "id_community": "2500716",
+        "id_competition": 1,
+        "competition": "LaLiga",
+        "external": "laliga",
+        "season_start": "2026-08-15",
+        "default": True,
+    },
+    {
+        "slug": "premier",
+        "name": "PREMIER LEAGUE",
+        "id_community": "906674",
+        "id_competition": 3,
+        "competition": "Premier League",
+        "external": "premier",
+        "season_start": "2026-08-16",
+        "default": False,
+    },
+]
+
+
+def get_league(slug: str | None = None) -> dict:
+    """Resuelve liga por slug; default si slug vacío/desconocido."""
+    wanted = (slug or "").strip() or os.environ.get("MISTER_LEAGUE_SLUG", "").strip()
+    if wanted:
+        for L in LEAGUES:
+            if L["slug"] == wanted or str(L["id_community"]) == wanted:
+                return dict(L)
+    for L in LEAGUES:
+        if L.get("default"):
+            return dict(L)
+    return dict(LEAGUES[0])
+
+
+def default_league_slug() -> str:
+    env = os.environ.get("MISTER_LEAGUE_SLUG", "").strip()
+    if env:
+        return get_league(env)["slug"]
+    for L in LEAGUES:
+        if L.get("default"):
+            return str(L["slug"])
+    return str(LEAGUES[0]["slug"])
+
+
+def league_data_path(slug: str) -> Path:
+    return LEAGUES_DIR / slug / "latest_data.json"
+
+
+def league_history_dir(slug: str) -> Path:
+    return LEAGUES_DIR / slug / "history"
 
 
 def _load_dotenv(path: Path) -> None:
@@ -52,6 +109,8 @@ def _load_dotenv(path: Path) -> None:
 
 
 _load_dotenv(ROOT_DIR / ".env")
+
+DEFAULT_LEAGUE_SLUG = default_league_slug()
 
 # --- Credenciales / Secrets ---
 # Auth real de Mister (DevTools → Network → /ajax/*):
@@ -98,7 +157,7 @@ LINEUP_PROB_LOW = 0.40
 # Minutos acumulados en últimos ~5 partidos (FotMob) bajo los cuales cuenta como "juega poco"
 MINUTES_RECENT_LOW = 90
 
-# Campeonato / pretemporada
+# Campeonato / pretemporada (fallback global; cada liga puede sobreescribir)
 SEASON_START_DATE = os.environ.get("SEASON_START_DATE", "2026-08-15").strip()
 # Plazas típicas del mercado diario (meta UI; el HTML puede traer más/menos)
 MARKET_DAY_SLOTS = 16
@@ -107,6 +166,34 @@ RAMP_DAYS_BEFORE_KICKOFF = 7
 # Paquete del día: colchón de caja y tope del fichaje secundario (parche)
 PACKAGE_CASH_RESERVE = 8_000_000
 PACKAGE_SECONDARY_MAX = 2_500_000
+# id_competition Mister → clave de scrapers externos (FF/JP)
+LALIGA_COMPETITION_ID = 1
+PREMIER_COMPETITION_ID = 3
+EXTERNAL_BY_COMPETITION_ID: dict[int, str] = {
+    LALIGA_COMPETITION_ID: "laliga",
+    PREMIER_COMPETITION_ID: "premier",
+}
+
+
+def external_competition_key(
+    *,
+    league_cfg: dict | None = None,
+    id_competition: int | None = None,
+) -> str | None:
+    """Resuelve `laliga` | `premier` | None para scrapers externos."""
+    cfg = league_cfg or {}
+    ext = (cfg.get("external") or "").strip().lower()
+    if ext in ("laliga", "premier"):
+        return ext
+    cid = id_competition
+    if cid is None and cfg.get("id_competition") is not None:
+        try:
+            cid = int(cfg["id_competition"])
+        except (TypeError, ValueError):
+            cid = None
+    if cid is not None:
+        return EXTERNAL_BY_COMPETITION_ID.get(int(cid))
+    return None
 
 HISTORY_RETENTION_DAYS = 30
 CHOLLO_DELTA_MIN = 0.08

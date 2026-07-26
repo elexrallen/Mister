@@ -23,8 +23,18 @@ from data_engine import (  # noqa: E402
 from squad_analyzer import analyze_squad, merge_structural_into_diagnosis  # noqa: E402
 
 
-def main() -> None:
-    path = config.LATEST_DATA_PATH
+def main(argv: list[str] | None = None) -> None:
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Refresh diagnosis without re-scraping Mister")
+    parser.add_argument("--league", default="", help="slug de liga (default: latest_data / default slug)")
+    args = parser.parse_args(argv)
+
+    if args.league:
+        L = config.get_league(args.league)
+        path = config.league_data_path(L["slug"])
+    else:
+        path = config.LATEST_DATA_PATH
     data = json.loads(path.read_text(encoding="utf-8"))
     me = data["me"]
     squad = list(me.get("squad") or [])
@@ -35,6 +45,11 @@ def main() -> None:
         or "preseason"
     )
     balance = float(me.get("balance") or 0)
+    season_start = (
+        (data.get("sources") or {}).get("season_start")
+        or (data.get("kpis") or {}).get("season_start")
+        or getattr(config, "SEASON_START_DATE", "2026-08-15")
+    )
 
     diagnosis = diagnose_squad(squad)
     plant = analyze_squad(
@@ -47,7 +62,7 @@ def main() -> None:
     diagnosis = merge_structural_into_diagnosis(diagnosis, plant)
 
     comp = detect_competition_phase(
-        season_start=getattr(config, "SEASON_START_DATE", "2026-08-15"),
+        season_start=season_start,
         points_phase=points_phase,
     )
     competition_phase = str(comp.get("competition_phase") or "preseason")
@@ -173,9 +188,18 @@ def main() -> None:
     data["kpis"] = kpis
 
     save_json(path, data)
-    hist = config.HISTORY_DIR / f"{datetime.now(timezone.utc).date().isoformat()}.json"
-    config.HISTORY_DIR.mkdir(parents=True, exist_ok=True)
-    save_json(hist, data)
+    # History por liga si aplica
+    slug = data.get("league_slug") or (args.league and config.get_league(args.league)["slug"])
+    if slug:
+        hist_dir = config.league_history_dir(str(slug))
+        hist_dir.mkdir(parents=True, exist_ok=True)
+        save_json(hist_dir / f"{datetime.now(timezone.utc).date().isoformat()}.json", data)
+    if not args.league or slug == config.DEFAULT_LEAGUE_SLUG:
+        hist = config.HISTORY_DIR / f"{datetime.now(timezone.utc).date().isoformat()}.json"
+        config.HISTORY_DIR.mkdir(parents=True, exist_ok=True)
+        save_json(hist, data)
+        if path != config.LATEST_DATA_PATH:
+            save_json(config.LATEST_DATA_PATH, data)
 
     fw = diagnosis["by_position"]["FW"]
     buys = [a for a in action_plan if a.get("action") == "buy_now"]
