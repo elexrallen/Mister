@@ -35,6 +35,7 @@ LEAGUES: list[dict] = [
         "id_competition": 1,
         "competition": "LaLiga",
         "external": "laliga",
+        "market_mode": "auction",
         "season_start": "2026-08-15",
         "default": True,
     },
@@ -45,10 +46,17 @@ LEAGUES: list[dict] = [
         "id_competition": 3,
         "competition": "Premier League",
         "external": "premier",
-        "season_start": "2026-08-16",
+        "market_mode": "fixed",
+        "season_start": "2026-08-21",
         "default": False,
     },
 ]
+
+
+def league_market_mode(league_cfg: dict | None = None) -> str:
+    """auction (subasta/exclusivo) | fixed (precio listado / plantillas compartidas)."""
+    mode = str((league_cfg or {}).get("market_mode") or "auction").strip().lower()
+    return mode if mode in ("auction", "fixed") else "auction"
 
 
 def get_league(slug: str | None = None) -> dict:

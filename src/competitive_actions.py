@@ -493,7 +493,14 @@ def other_gaps_min_cost(
     return sum(others[:3])
 
 
-def rival_demand_for_position(rivals: list[dict[str, Any]], position: str) -> list[dict[str, Any]]:
+def rival_demand_for_position(
+    rivals: list[dict[str, Any]],
+    position: str,
+    *,
+    market_mode: str = "auction",
+) -> list[dict[str, Any]]:
+    if (market_mode or "auction") == "fixed":
+        return []
     demand = []
     for r in rivals:
         gaps = r.get("position_gaps") or []
@@ -511,8 +518,11 @@ def wait_risk(
     rivals: list[dict[str, Any]],
     *,
     fills_need: bool,
+    market_mode: str = "auction",
 ) -> str:
-    demand = rival_demand_for_position(rivals, o.get("position") or "")
+    if (market_mode or "auction") == "fixed":
+        return "low"
+    demand = rival_demand_for_position(rivals, o.get("position") or "", market_mode=market_mode)
     top_demand = sum(1 for d in demand if int(d.get("rank") or 99) <= 3)
     score = 0
     score += min(3, len(demand))
@@ -1472,23 +1482,28 @@ def annotate_market_budget_risk(
     balance: float,
     *,
     points_phase: str = "preseason",
+    market_mode: str = "auction",
 ) -> list[dict[str, Any]]:
     """Añade budget_fit, wait_risk, priority_score y reordena mercado."""
     out: list[dict[str, Any]] = []
     bal = _money(balance)
+    mode = market_mode or "auction"
     for o in opportunities:
         row = dict(o)
         fills = bool(row.get("fills_need"))
-        risk = wait_risk(row, rivals, fills_need=fills)
+        risk = wait_risk(row, rivals, fills_need=fills, market_mode=mode)
         cost = _money(row.get("puja_recomendada") or row.get("price"))
         min_c = _money(row.get("puja_minima") or row.get("price"))
         bf = budget_fit(cost, bal, min_cost=min_c)
         row["wait_risk"] = risk
         row["budget_fit"] = bf
-        row["rival_demand"] = len(rival_demand_for_position(rivals, row.get("position") or ""))
+        row["rival_demand"] = len(
+            rival_demand_for_position(rivals, row.get("position") or "", market_mode=mode)
+        )
         row["mister_avg"] = _mister_avg(row)
         row["points_trend"] = _points_trend(row)
         row["points_phase"] = points_phase
+        row["market_mode"] = mode
         row["priority_score"] = priority_score_buy({
             **row,
             "risk": risk,
@@ -1519,9 +1534,10 @@ def finalize_action_plan(
     *,
     balance: float | None = None,
     funding_info: dict[str, Any] | None = None,
+    market_mode: str = "auction",
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
-    Cola operativa = paquete del día (máx. 2 buy_now compatibles) + plan B.
+    Cola operativa = paquete del día (máx. 2 buy_now compatibles) + plan B / also_good.
     No reserva 1 compra por posición: evita la sensación de «compra los 3».
     Devuelve (action_plan, daily_package).
     """
@@ -1529,6 +1545,7 @@ def finalize_action_plan(
     secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
     package_id = datetime.now(timezone.utc).date().isoformat()
     bal = float(balance) if balance is not None else 0.0
+    fixed = (market_mode or "auction") == "fixed"
 
     action_base = {
         "buy_now": 1000,
@@ -1564,11 +1581,12 @@ def finalize_action_plan(
                 daily_boost = 120
             elif item.get("action") == "wait":
                 daily_boost = -80
+        rival_boost = 0 if fixed else min(20, int(item.get("rival_demand") or 0) * 4)
         item["_queue_rank"] = (
             base
             + int(item.get("priority_score") or 0)
             + urg_bonus.get(item.get("urgency"), 0)
-            + min(20, int(item.get("rival_demand") or 0) * 4)
+            + rival_boost
             + need_boost
             + daily_boost
         )
@@ -1654,7 +1672,9 @@ def finalize_action_plan(
         item["package_id"] = package_id
         if primary and pid == primary_id:
             item["queue_role"] = "primary"
-            item["package_note"] = "Foco del día — pujar"
+            item["package_note"] = (
+                "Foco del día — fichar al precio" if fixed else "Foco del día — pujar"
+            )
             item["alt_for"] = None
             continue
         if secondary and pid == secondary_id:
@@ -1663,15 +1683,22 @@ def finalize_action_plan(
             item["alt_for"] = None
             continue
 
-        # Resto: demote a wait (plan B / no acumular)
+        # Resto: demote a wait (plan B / also_good / no acumular)
         why_prev = (item.get("why") or "").strip()
         if primary and item.get("position") == primary.get("position"):
             item["action"] = "wait"
-            item["queue_role"] = "alt_if_lost"
-            item["alt_for"] = primary.get("player_id")
-            item["package_note"] = f"Plan B si se va {primary_name}"
-            item["urgency"] = "medium"
-            prefix = f"Plan B si se va {primary_name}"
+            if fixed:
+                item["queue_role"] = "also_good"
+                item["alt_for"] = primary.get("player_id")
+                item["package_note"] = "También válido — sin prisa (plantillas compartidas)"
+                item["urgency"] = "low"
+                prefix = "También válido — sin prisa"
+            else:
+                item["queue_role"] = "alt_if_lost"
+                item["alt_for"] = primary.get("player_id")
+                item["package_note"] = f"Plan B si se va {primary_name}"
+                item["urgency"] = "medium"
+                prefix = f"Plan B si se va {primary_name}"
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         else:
             item["action"] = "wait"
@@ -1690,7 +1717,7 @@ def finalize_action_plan(
             item["_queue_rank"] = 10_000 + int(item.get("priority_score") or 0)
         elif role == "secondary":
             item["_queue_rank"] = 9_000 + int(item.get("priority_score") or 0)
-        elif role == "alt_if_lost":
+        elif role in ("alt_if_lost", "also_good"):
             item["_queue_rank"] = 700 + int(item.get("priority_score") or 0)
         elif role == "do_not_stack":
             item["_queue_rank"] = 550 + int(item.get("priority_score") or 0) // 2
@@ -1706,11 +1733,11 @@ def finalize_action_plan(
     per_action: dict[str, int] = {}
     limits = {
         "buy_now": 2,  # paquete: primary + secondary
-        "clause_bid": 4,
+        "clause_bid": 0 if fixed else 4,
         "wait": 8,  # alts + waits del día
         "avoid": 3,
         "sell": 5,
-        "scout": 3,
+        "scout": 0 if fixed else 3,
     }
     max_pipeline_waits = 2
     max_alt_waits = 3
@@ -1738,7 +1765,7 @@ def finalize_action_plan(
             if cost > sim_balance:
                 return False
         if a == "wait":
-            if role == "alt_if_lost":
+            if role in ("alt_if_lost", "also_good"):
                 if alt_waits >= max_alt_waits:
                     return False
                 alt_waits += 1
@@ -1761,15 +1788,15 @@ def finalize_action_plan(
         capped.append(clean)
         return True
 
-    # Paquete → plan B / no acumular → resto (cláusulas, waits genéricos…)
+    # Paquete → also_good / plan B / no acumular → resto
     for item in plan:
         if item.get("queue_role") in ("primary", "secondary"):
             _append(item)
     for item in plan:
-        if item.get("queue_role") in ("alt_if_lost", "do_not_stack"):
+        if item.get("queue_role") in ("alt_if_lost", "also_good", "do_not_stack"):
             _append(item)
     for item in plan:
-        if item.get("queue_role") in ("primary", "secondary", "alt_if_lost", "do_not_stack"):
+        if item.get("queue_role") in ("primary", "secondary", "alt_if_lost", "also_good", "do_not_stack"):
             continue
         if len(capped) >= max_total:
             break
@@ -1782,8 +1809,18 @@ def finalize_action_plan(
         spend += _item_buy_cost(secondary)
     residual_after = max(0.0, bal - spend)
 
+    if primary:
+        note = (
+            "Hasta 2 fichajes prioritarios al precio de mercado; el resto sin prisa."
+            if fixed
+            else "Hasta 2 pujas compatibles hoy; el resto es plan B o no acumular."
+        )
+    else:
+        note = "Sin compra clara en el mercado de hoy."
+
     daily_package: dict[str, Any] = {
         "package_id": package_id,
+        "market_mode": "fixed" if fixed else "auction",
         "primary": (
             {
                 "player_id": primary.get("player_id"),
@@ -1817,11 +1854,7 @@ def finalize_action_plan(
         "spend_cap": spend,
         "cash_reserve": cash_reserve,
         "residual_after": residual_after,
-        "note": (
-            "Hasta 2 pujas compatibles hoy; el resto es plan B o no acumular."
-            if primary
-            else "Sin compra clara en el mercado de hoy."
-        ),
+        "note": note,
     }
     # funding_info reservado por compatibilidad de firma
     _ = funding_info

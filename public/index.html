@@ -118,7 +118,7 @@
     <section aria-labelledby="actions-title" class="panel panel-flush">
       <div class="panel-head">
         <h2 id="actions-title" class="section-title">Cola del día</h2>
-        <p class="section-hint">Plan de hoy: hasta 2 pujas compatibles · el resto es plan B</p>
+        <p id="actions-hint" class="section-hint">Plan de hoy: hasta 2 pujas compatibles · el resto es plan B</p>
       </div>
       <div id="action-queue" class="action-queue-list" aria-live="polite">
         <p class="text-slate-500 text-sm px-4 py-6">Cargando…</p>
@@ -204,8 +204,8 @@
                 <th><button type="button" class="th-sort" data-list="market" data-key="price">Precio</button></th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="delta">Δ5d</button></th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="fotmob">FotMob</button></th>
-                <th><button type="button" class="th-sort" data-list="market" data-key="bid">Puja rec.</button></th>
-                <th>Techo</th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="bid" id="th-bid-label">Puja rec.</button></th>
+                <th data-col="techo" id="th-techo">Techo</th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="priority">Prioridad</button></th>
               </tr>
             </thead>

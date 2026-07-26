@@ -15,6 +15,17 @@
   const POS_ORDER = { GK: 0, DF: 1, MF: 2, FW: 3 };
   const PRIO_ORDER = { Alta: 0, Media: 1, Baja: 2 };
 
+  function isFixedMarket(data) {
+    const d = data || DATA;
+    if (!d) return false;
+    const mode =
+      (d.league && d.league.market_mode) ||
+      (d.sources && d.sources.market_mode) ||
+      (d.daily_package && d.daily_package.market_mode) ||
+      "auction";
+    return String(mode).toLowerCase() === "fixed";
+  }
+
   /** Estado de ordenación por listado */
   const SORT = {
     market: { key: "priority", dir: "asc" },
@@ -658,12 +669,46 @@
     const total = (DATA.market_opportunities || []).length;
     const slots = (DATA.kpis || {}).market_day_slots;
     if (marketScope === "today") {
-      hint.textContent =
-        daily > 0
+      hint.textContent = isFixedMarket()
+        ? daily > 0
+          ? `Mercado del día · precio fijo · ${daily}${slots != null ? ` (ref. ${slots} plazas)` : ""}`
+          : "Sin mercado del día en los datos — prueba «Todos los libres»"
+        : daily > 0
           ? `Solo pujables ahora · ${daily}${slots != null ? ` (ref. ${slots} plazas)` : ""}`
           : "Sin mercado del día en los datos — prueba «Todos los libres»";
     } else {
       hint.textContent = `Pool de libres enriquecido · ${total} jugadores`;
+    }
+  }
+
+  function syncMarketModeUi(data) {
+    const fixed = isFixedMarket(data);
+    const actionsHint = document.getElementById("actions-hint");
+    if (actionsHint) {
+      actionsHint.textContent = fixed
+        ? "Plan de hoy: hasta 2 fichajes al precio · el resto sin prisa"
+        : "Plan de hoy: hasta 2 pujas compatibles · el resto es plan B";
+    }
+    const bidTh = document.getElementById("th-bid-label");
+    if (bidTh) bidTh.textContent = fixed ? "Precio" : "Puja rec.";
+    const techoTh = document.getElementById("th-techo");
+    if (techoTh) {
+      techoTh.hidden = fixed;
+      techoTh.style.display = fixed ? "none" : "";
+    }
+    const radarPanel = document.getElementById("tab-radar");
+    if (radarPanel) {
+      const upgradesTitle = Array.from(radarPanel.querySelectorAll("h3")).find((h) =>
+        /Objetivos en rivales/i.test(h.textContent || "")
+      );
+      const upgradeCards = document.getElementById("upgrade-cards");
+      const upgradeTable = document.getElementById("table-rival-upgrades");
+      const upgradeSort = radarPanel.querySelector('.list-sort[data-list="upgrades"]');
+      [upgradesTitle, upgradeCards, upgradeTable && upgradeTable.closest(".table-wrap"), upgradeSort].forEach(
+        (el) => {
+          if (el) el.hidden = fixed;
+        }
+      );
     }
   }
 
@@ -672,8 +717,9 @@
     if (!box) return;
     const plan = data.action_plan || [];
     const pkg = data.daily_package || {};
+    const fixed = isFixedMarket(data);
     const labels = {
-      buy_now: { title: "Pujar", cls: "act-buy" },
+      buy_now: { title: fixed ? "Fichar" : "Pujar", cls: "act-buy" },
       clause_bid: { title: "Cláusula", cls: "act-clause" },
       sell: { title: "Vender", cls: "act-sell" },
       avoid: { title: "Evitar", cls: "act-avoid" },
@@ -684,6 +730,7 @@
       if (role === "primary") return `<span class="badge badge-mint">Hacer</span>`;
       if (role === "secondary") return `<span class="badge badge-titular">También si cabe</span>`;
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Plan B</span>`;
+      if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
       if (role === "do_not_stack") return `<span class="badge badge-baja">No acumular</span>`;
       return "";
     };
@@ -721,10 +768,11 @@
         : "";
 
     const doToday = plan.filter((a) => a.queue_role === "primary" || a.queue_role === "secondary");
-    const planB = plan.filter((a) => a.queue_role === "alt_if_lost");
+    const planB = plan.filter((a) => a.queue_role === "alt_if_lost" || a.queue_role === "also_good");
     const noStack = plan.filter((a) => a.queue_role === "do_not_stack");
     const other = plan.filter(
-      (a) => !["primary", "secondary", "alt_if_lost", "do_not_stack"].includes(a.queue_role)
+      (a) =>
+        !["primary", "secondary", "alt_if_lost", "also_good", "do_not_stack"].includes(a.queue_role)
     );
 
     const renderItem = (a, rankLabel, opts = {}) => {
@@ -802,10 +850,10 @@
             }
             ${a.why ? `<p class="queue-why">${escapeHtml(a.why)}</p>` : ""}
             ${
-              rivals || a.compared_to
+              (!fixed && rivals) || a.compared_to
                 ? `<p class="queue-meta">${[
                     a.compared_to ? `Mejora a ${escapeHtml(a.compared_to)}` : "",
-                    rivals ? `Interesados: ${escapeHtml(rivals)}` : "",
+                    !fixed && rivals ? `Interesados: ${escapeHtml(rivals)}` : "",
                   ]
                     .filter(Boolean)
                     .join(" · ")}</p>`
@@ -862,7 +910,7 @@
       packageHint +
       fundingHint +
       section("Plan de hoy", doToday, "numbered") +
-      section("Si se van / plan B", planB, "muted") +
+      section(fixed ? "También válidos" : "Si se van / plan B", planB, "muted") +
       section("No acumular con el paquete", noStack, "muted") +
       section("Otras acciones", otherVisible, "muted") +
       otherHidden.map((a) => renderItem(a, null, { muted: true, hidden: true })).join("") +
@@ -898,7 +946,7 @@
         ? "Sin jugadores en el mercado de hoy con estos filtros."
         : "Sin resultados con estos filtros.";
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="11" class="text-slate-500">${emptyMsg}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${isFixedMarket() ? 10 : 11}" class="text-slate-500">${emptyMsg}</td></tr>`;
       if (cards) cards.innerHTML = `<p class="empty-state">${emptyMsg}</p>`;
       return;
     }
@@ -926,7 +974,7 @@
           }</td>
           <td>${fotmobCell(p)}</td>
           <td class="text-mint-400 font-medium">${formatMoney(p.puja_recomendada)}</td>
-          <td>${formatMoney(p.puja_techo)}</td>
+          ${isFixedMarket() ? "" : `<td>${formatMoney(p.puja_techo)}</td>`}
           <td>${priorityBadge(p.priority)}</td>
         </tr>`;
       })
@@ -953,7 +1001,7 @@
             </div>
             <div class="player-card-stats">
               <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
-              <div><div class="stat-label">Puja rec.</div><div class="stat-value text-mint-400">${formatMoney(p.puja_recomendada)}</div></div>
+              <div><div class="stat-label">${isFixedMarket() ? "Precio fichaje" : "Puja rec."}</div><div class="stat-value text-mint-400">${formatMoney(p.puja_recomendada)}</div></div>
               <div><div class="stat-label">Δ / tendencia</div><div class="stat-value ${d >= 0 ? "delta-up" : "delta-down"}">${deltaLabel}</div></div>
               <div><div class="stat-label">FotMob</div><div class="stat-value">${fotmobCell(p)}</div></div>
             </div>
@@ -1405,6 +1453,7 @@
 
   function renderAll() {
     if (!DATA) return;
+    syncMarketModeUi(DATA);
     renderMeta(DATA);
     renderKpis(DATA);
     renderActionQueue(DATA);
