@@ -116,5 +116,16 @@ jobs:
             echo "No data changes to commit."
           else
             git commit -m "chore: update fantasy data snapshot"
-            git push
+            # main puede haber avanzado (otro commit / deploy) mientras corría el job
+            for i in 1 2 3; do
+              git pull --rebase origin main
+              if git push; then
+                echo "Push OK"
+                exit 0
+              fi
+              echo "Push rechazado (intento $i); reintento tras rebase..."
+              sleep 3
+            done
+            echo "::error::No se pudo pushear el snapshot tras 3 intentos"
+            exit 1
           fi
