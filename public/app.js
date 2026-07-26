@@ -358,7 +358,7 @@
       extras.push(`<span class="badge badge-baja-ext">Pocos min</span>`);
     }
     const link = ext.profile_url
-      ? ` <a class="ext-link" href="${escapeHtml(ext.profile_url)}" target="_blank" rel="noopener noreferrer">FF/JP</a>`
+      ? ` <a class="ext-link" href="${escapeHtml(ext.profile_url)}" target="_blank" rel="noopener noreferrer" title="Abrir ficha">Fuente</a>`
       : "";
     return `${badge}${extras.join(" ")}${link}`;
   };
@@ -468,6 +468,8 @@
 
   function focusPlayer(playerId, tab) {
     if (!playerId) return;
+    // Click en jugador → abrir ficha FF / fuente; si no hay URL, resaltar en la app
+    if (openPlayerSource(playerId)) return;
     selectTab(tab || "market");
     const preferCards = window.matchMedia("(max-width: 767px)").matches;
     const sel = preferCards
@@ -495,6 +497,115 @@
         setTimeout(() => retry.classList.remove("row-highlight"), 2500);
       }
     }
+  }
+
+  /** Busca el registro del jugador en los listados del payload. */
+  function findPlayerRecord(playerId) {
+    if (playerId == null || !DATA) return null;
+    const id = String(playerId);
+    const pools = [
+      DATA.market_opportunities,
+      DATA.free_agents_top,
+      (DATA.me && DATA.me.squad) || [],
+      DATA.rival_upgrades,
+      DATA.action_plan,
+    ];
+    for (const list of pools) {
+      if (!list || !list.length) continue;
+      const hit = list.find(
+        (p) => String(p.id || p.player_id || "") === id
+      );
+      if (hit) return hit;
+    }
+    // Rivales: buscar en sus plantillas
+    for (const r of DATA.rivals || []) {
+      const hit = (r.squad || []).find((p) => String(p.id || "") === id);
+      if (hit) return hit;
+    }
+    return null;
+  }
+
+  /**
+   * URL de ficha externa: FF jugadores > JP jugador > profile_url > Mister.
+   */
+  function playerSourceUrl(p) {
+    if (!p) return null;
+    const candidates = [];
+    const ext = p.external || {};
+    if (ext.profile_url) candidates.push(String(ext.profile_url));
+    if (p.profile_url) candidates.push(String(p.profile_url));
+    if (ext.ff_profile_url) candidates.push(String(ext.ff_profile_url));
+
+    const score = (u) => {
+      const s = String(u || "");
+      if (!s) return -1;
+      if (s.includes("futbolfantasy.com/jugadores/")) return 50;
+      if (s.includes("jornadaperfecta.com/jugador/")) return 40;
+      if (s.includes("comuniate.com") && s.includes("jugador")) return 30;
+      if (s.includes("/partido/")) return 5;
+      if (s.startsWith("http")) return 20;
+      return 10;
+    };
+
+    let best = null;
+    let bestScore = -1;
+    for (const u of candidates) {
+      const sc = score(u);
+      if (sc > bestScore) {
+        bestScore = sc;
+        best = u;
+      }
+    }
+    if (best && bestScore >= 20) return best;
+
+    // Fallback Mister
+    const mid = p.id || p.player_id;
+    if (mid) {
+      const slug = String(p.name || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "");
+      return slug
+        ? `https://mister.mundodeportivo.com/players/${mid}/${slug}`
+        : `https://mister.mundodeportivo.com/players/${mid}`;
+    }
+    return best;
+  }
+
+  /** Abre la ficha en pestaña nueva. Devuelve true si abrió algo. */
+  function openPlayerSource(playerIdOrRecord) {
+    const rec =
+      typeof playerIdOrRecord === "object" && playerIdOrRecord
+        ? playerIdOrRecord
+        : findPlayerRecord(playerIdOrRecord);
+    const url = playerSourceUrl(rec);
+    if (!url) return false;
+    window.open(url, "_blank", "noopener,noreferrer");
+    return true;
+  }
+
+  /** Click/teclado en filas y cards con data-player-id → ficha externa. */
+  function bindPlayerOpenClicks(root, tab) {
+    if (!root) return;
+    root.querySelectorAll("[data-player-id]").forEach((el) => {
+      if (el.dataset.boundOpen === "1") return;
+      el.dataset.boundOpen = "1";
+      const go = () => focusPlayer(el.getAttribute("data-player-id"), tab);
+      el.addEventListener("click", (e) => {
+        if (e.target.closest("a.ext-link")) return;
+        go();
+      });
+      if (el.matches("[tabindex], button, [role='button'], [role='link']")) {
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            go();
+          }
+        });
+      }
+    });
   }
 
   // ---- Filtros compartidos ----
@@ -990,9 +1101,9 @@
     tbody.innerHTML = rows
       .map((p) => {
         const d = Number(p.delta_5d || 0);
-        return `<tr data-player-id="${escapeHtml(p.id)}">
+        return `<tr data-player-id="${escapeHtml(p.id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
           <td>
-            <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+            <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
             <div class="text-xs text-slate-500">${escapeHtml(p.team || "")}</div>
           </td>
           <td>${posChip(p.position)}</td>
@@ -1022,10 +1133,10 @@
           const d = Number(p.delta_5d || 0);
           const deltaLabel =
             p.delta_5d != null ? pct(d) : p.trend === "up" ? "↑" : p.trend === "down" ? "↓" : "—";
-          return `<article class="player-card" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0">
+          return `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
             <div class="player-card-top">
               <div>
-                <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
                 <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
               </div>
               ${priorityBadge(p.priority)}
@@ -1046,13 +1157,11 @@
         })
         .join("");
       cards.querySelectorAll(".player-card").forEach((el) => {
-        const go = () => focusPlayer(el.getAttribute("data-player-id"), "market");
-        el.addEventListener("click", go);
-        el.addEventListener("keydown", (e) => {
-          if (e.key === "Enter" || e.key === " ") go();
-        });
+        /* bound via bindPlayerOpenClicks */
       });
     }
+    bindPlayerOpenClicks(tbody, "market");
+    bindPlayerOpenClicks(cards, "market");
   }
 
   function renderSquadHealth() {
@@ -1266,9 +1375,9 @@
     tbody.innerHTML = rows.length
       ? rows
           .map(
-            (p) => `<tr data-player-id="${escapeHtml(p.id)}">
+            (p) => `<tr data-player-id="${escapeHtml(p.id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
               <td>
-                <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
                 <div class="text-xs text-slate-500">${escapeHtml(p.team || "")}</div>
               </td>
               <td>${posChip(p.position)}</td>
@@ -1285,10 +1394,10 @@
       cards.innerHTML = rows.length
         ? rows
             .map(
-              (p) => `<article class="player-card" data-player-id="${escapeHtml(p.id)}">
+              (p) => `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
             <div class="player-card-top">
               <div>
-                <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
                 <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
               </div>
               ${posChip(p.position)}
@@ -1304,7 +1413,9 @@
             )
             .join("")
         : `<p class="empty-state">Sin resultados.</p>`;
+      bindPlayerOpenClicks(cards, "squad");
     }
+    bindPlayerOpenClicks(tbody, "squad");
   }
 
   function renderRadar() {
@@ -1322,9 +1433,9 @@
       upBody.innerHTML = ups.length
         ? ups
             .map(
-              (u) => `<tr data-player-id="${escapeHtml(u.player_id)}">
+              (u) => `<tr data-player-id="${escapeHtml(u.player_id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
             <td>
-              <div class="font-medium text-white">${escapeHtml(u.name)}</div>
+              <div class="font-medium text-white player-name-link">${escapeHtml(u.name)}</div>
               ${u.compared_to ? `<div class="text-xs text-mint-500/80">Mejora a ${escapeHtml(u.compared_to)}</div>` : ""}
             </td>
             <td>${posChip(u.position)}</td>
@@ -1346,10 +1457,10 @@
       upCards.innerHTML = ups.length
         ? ups
             .map(
-              (u) => `<article class="player-card" data-player-id="${escapeHtml(u.player_id)}">
+              (u) => `<article class="player-card is-clickable" data-player-id="${escapeHtml(u.player_id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
             <div class="player-card-top">
               <div>
-                <div class="font-medium text-white">${escapeHtml(u.name)}</div>
+                <div class="font-medium text-white player-name-link">${escapeHtml(u.name)}</div>
                 <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(u.owner_team || "")} · #${u.owner_rank ?? "—"}</div>
                 ${u.compared_to ? `<div class="text-xs text-mint-500/80 mt-0.5">Mejora a ${escapeHtml(u.compared_to)}</div>` : ""}
               </div>
@@ -1387,9 +1498,9 @@
       freeBody.innerHTML = free.length
         ? free
             .map(
-              (p) => `<tr data-player-id="${escapeHtml(p.id)}">
+              (p) => `<tr data-player-id="${escapeHtml(p.id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
           <td>
-            <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+            <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
             <div class="text-xs text-slate-500">${escapeHtml(p.team || "")}</div>
           </td>
           <td>${posChip(p.position)}</td>
@@ -1406,10 +1517,10 @@
       freeCards.innerHTML = free.length
         ? free
             .map(
-              (p) => `<article class="player-card" data-player-id="${escapeHtml(p.id)}">
+              (p) => `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
             <div class="player-card-top">
               <div>
-                <div class="font-medium text-white">${escapeHtml(p.name)}</div>
+                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
                 <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
               </div>
               ${posChip(p.position)}
@@ -1427,6 +1538,11 @@
             .join("")
         : `<p class="empty-state">${freeEmpty}</p>`;
     }
+
+    bindPlayerOpenClicks(upBody, "radar");
+    bindPlayerOpenClicks(upCards, "radar");
+    bindPlayerOpenClicks(freeBody, "radar");
+    bindPlayerOpenClicks(freeCards, "radar");
 
     const rivalsBody = document.querySelector("#table-rivals tbody");
     const rivalsCards = document.getElementById("rivals-cards");

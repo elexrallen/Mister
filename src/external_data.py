@@ -119,8 +119,23 @@ def _merge_source_records(
             existing["sofascore_id"] = r["sofascore_id"]
         if r.get("profile_url"):
             cur = existing.get("profile_url") or ""
-            new = r["profile_url"]
-            if not cur or ("/partido/" in cur and "/partido/" not in str(new)):
+            new = str(r["profile_url"])
+            # Preferir ficha de jugador FF; evitar quedarse con /partido/ de JP
+            def _rank(u: str) -> int:
+                s = str(u or "")
+                if "futbolfantasy.com/jugadores/" in s:
+                    return 5
+                if "jornadaperfecta.com/jugador/" in s:
+                    return 4
+                if "comuniate.com" in s and "/jugador" in s:
+                    return 3
+                if "/partido/" in s:
+                    return 0
+                if s:
+                    return 2
+                return 0
+
+            if _rank(new) >= _rank(cur):
                 existing["profile_url"] = new
 
     for r in ff:
@@ -424,6 +439,7 @@ def enrich_players_with_ff_production(
         ext = dict(new_p.get("external") or _empty_external())
         hit = None
         score = 0
+        profile_src = None
         if primary_recs:
             hit, score = match_player(p.get("name") or "", p.get("team"), primary_recs, threshold=82)
         avg = None
@@ -435,6 +451,7 @@ def enrich_players_with_ff_production(
 
         if hit:
             matched += 1
+            profile_src = hit
             avg = hit.get("mister_avg")
             points = hit.get("mister_points")
             apps = int(hit.get("apps") or 0)
@@ -453,12 +470,15 @@ def enrich_players_with_ff_production(
             if pref:
                 prior_avg = pref.get("mister_avg")
                 prior_season = pref.get("season_label") or pref.get("season")
+                if not profile_src.get("profile_url") and pref.get("profile_url"):
+                    profile_src = pref
 
         # Si no hay primary pero sí prior
         if avg is None and prior_recs and not hit:
             phit, pscore = match_player(p.get("name") or "", p.get("team"), prior_recs, threshold=82)
             if phit:
                 matched += 1
+                profile_src = phit
                 prior_avg = phit.get("mister_avg")
                 prior_season = phit.get("season_label") or phit.get("season")
                 apps = int(phit.get("apps") or 0)
@@ -519,6 +539,20 @@ def enrich_players_with_ff_production(
                 "ff_scoring": scoring_label,
             }
         )
+        # Preferir ficha FF de analytics si no hay URL de jugador o solo hay link a partido
+        ff_url = str((profile_src or {}).get("profile_url") or "") or None
+        if ff_url:
+            cur = str(ext.get("profile_url") or "")
+            better = (
+                not cur
+                or "/partido/" in cur
+                or (
+                    "futbolfantasy.com/jugadores/" in ff_url
+                    and "futbolfantasy.com/jugadores/" not in cur
+                )
+            )
+            if better:
+                ext["profile_url"] = ff_url
         new_p["external"] = ext
         new_p["ff_mister_avg"] = ext["ff_mister_avg"]
         new_p["ff_prior_avg"] = ext["ff_prior_avg"]

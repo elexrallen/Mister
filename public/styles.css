@@ -801,6 +801,24 @@ footer,
   font-size: 0.7rem;
 }
 
+tr.player-row.is-clickable,
+.player-card.is-clickable {
+  cursor: pointer;
+}
+tr.player-row.is-clickable:hover td {
+  background: rgba(56, 189, 248, 0.06);
+}
+.player-name-link {
+  text-decoration: underline;
+  text-decoration-color: rgba(148, 163, 184, 0.35);
+  text-underline-offset: 2px;
+}
+.player-card.is-clickable:hover .player-name-link,
+tr.player-row.is-clickable:hover .player-name-link {
+  text-decoration-color: rgba(125, 211, 252, 0.8);
+  color: #e0f2fe;
+}
+
 .filter-field {
   display: flex;
   flex-direction: column;
