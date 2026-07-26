@@ -193,6 +193,13 @@ def _empty_external() -> dict[str, Any]:
         "is_top_ff": False,
         "top_reason": None,
         "production_score": None,
+        "gw_lineup_prob": None,
+        "gw_role": None,
+        "gw_starter": False,
+        "gw_doubt": False,
+        "gw_out": False,
+        "gw_opponent": None,
+        "gw_fixture_id": None,
     }
 
 
@@ -257,6 +264,96 @@ def _overlay_sofa_like(candidates: list[dict[str, Any]], recs: list[dict[str, An
             })
 
 
+def _apply_matchday_overlay(
+    candidates: list[dict[str, Any]],
+    matchday: dict[str, Any] | None,
+) -> list[dict[str, Any]]:
+    """
+    Pisa lineup_prob con % de la previa de jornada (más fresco).
+    Añade flags gw_role / gw_lineup_prob en el candidato.
+    """
+    if not matchday:
+        return candidates
+    md_players = list(matchday.get("players") or [])
+    if not md_players:
+        return candidates
+
+    # Índice por nombre lower
+    by_key: dict[str, dict[str, Any]] = {
+        (c.get("name") or "").strip().lower(): c for c in candidates if c.get("name")
+    }
+
+    for mp in md_players:
+        name = (mp.get("name") or "").strip()
+        key = name.lower()
+        if not key:
+            continue
+        pct = mp.get("lineup_prob")
+        try:
+            pct_i = int(pct) if pct is not None else None
+        except (TypeError, ValueError):
+            pct_i = None
+        role = mp.get("role") or "bench"
+        gw_starter = bool(role == "starter" and pct_i is not None and pct_i >= 70)
+        gw_doubt = bool(pct_i is not None and 40 <= pct_i < 70)
+        gw_out = bool(pct_i is not None and pct_i < 40)
+
+        existing = by_key.get(key)
+        if existing:
+            # Matchday pisa % (salvo lesionado/sancionado FF con prio)
+            avail = existing.get("availability") or "unknown"
+            if avail not in ("injured", "suspended") and pct_i is not None:
+                existing["lineup_prob"] = pct_i
+            elif avail in ("injured", "suspended") and pct_i is not None and pct_i < (
+                existing.get("lineup_prob") or 999
+            ):
+                existing["lineup_prob"] = pct_i
+            existing["gw_lineup_prob"] = pct_i
+            existing["gw_role"] = role
+            existing["gw_starter"] = gw_starter
+            existing["gw_doubt"] = gw_doubt
+            existing["gw_out"] = gw_out
+            existing["gw_opponent"] = mp.get("opponent")
+            existing["gw_fixture_id"] = mp.get("fixture_id")
+            if pct_i is not None and pct_i >= 80:
+                existing["is_recommendation"] = True
+            src = "futbolfantasy_matchday"
+            if src not in (existing.get("sources") or []):
+                existing.setdefault("sources", []).append(src)
+            if mp.get("profile_url") and (
+                not existing.get("profile_url")
+                or "/partido/" in str(existing.get("profile_url"))
+            ):
+                existing["profile_url"] = mp["profile_url"]
+            if mp.get("team") and not existing.get("team"):
+                existing["team"] = mp["team"]
+        else:
+            rec = {
+                "name": name,
+                "team": mp.get("team"),
+                "availability": "available",
+                "lineup_prob": pct_i,
+                "is_chollo": False,
+                "is_recommendation": bool(pct_i is not None and pct_i >= 80),
+                "sofascore_avg_5": None,
+                "points_streak": "unknown",
+                "profile_url": mp.get("profile_url"),
+                "sofascore_id": None,
+                "sources": ["futbolfantasy_matchday"],
+                "gw_lineup_prob": pct_i,
+                "gw_role": role,
+                "gw_starter": gw_starter,
+                "gw_doubt": gw_doubt,
+                "gw_out": gw_out,
+                "gw_opponent": mp.get("opponent"),
+                "gw_fixture_id": mp.get("fixture_id"),
+            }
+            by_key[key] = rec
+            candidates.append(rec)
+
+    return candidates
+
+
 def enrich_players_with_external(
     players: list[dict[str, Any]],
     *,
@@ -264,7 +361,7 @@ def enrich_players_with_external(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Devuelve jugadores enriquecidos + meta
-    {futbolfantasy, jornadaperfecta, comuniate, sofascore, matched, cache_used, errors}.
+    {futbolfantasy, jornadaperfecta, comuniate, sofascore, ff_matchday, matched, ...}.
     competition: `laliga` | `premier`.
     """
     comp = (competition or "laliga").strip().lower() or "laliga"
@@ -273,15 +370,18 @@ def enrich_players_with_external(
         "jornadaperfecta": "fail",
         "comuniate": "fail",
         "sofascore": "skip",
+        "ff_matchday": "fail",
         "matched": 0,
         "cache_used": False,
         "errors": [],
         "sofascore_filled": 0,
         "competition": comp,
+        "matchday": None,
     }
 
     team_names = list({str(p.get("team") or "") for p in players if p.get("team")})
     candidates: list[dict[str, Any]] = []
+    matchday: dict[str, Any] | None = None
 
     try:
         bundle = fetch_all_external(
@@ -291,12 +391,14 @@ def enrich_players_with_external(
         )
         status = dict(bundle.get("status") or {})
         com_catalog = bundle.get("comuniate") or []
+        matchday = bundle.get("ff_matchday") if isinstance(bundle.get("ff_matchday"), dict) else None
         candidates = _merge_source_records(
             bundle.get("futbolfantasy") or [],
             bundle.get("jornadaperfecta") or [],
             com_catalog,
             [],
         )
+        candidates = _apply_matchday_overlay(candidates, matchday)
 
         # 1) Fichas Comuniate (solo LaLiga) → sofascore_id + media fallback
         if comp == "laliga" and com_catalog:
@@ -327,6 +429,11 @@ def enrich_players_with_external(
                 "players": candidates,
                 "status": status,
                 "competition": comp,
+                "matchday": {
+                    "jornada": (matchday or {}).get("jornada"),
+                    "fixtures_count": len((matchday or {}).get("fixtures") or []),
+                    "status": (matchday or {}).get("status"),
+                },
             })
         else:
             candidates = _load_candidates_from_cache_or_seed(meta, competition=comp)
@@ -355,6 +462,13 @@ def enrich_players_with_external(
                 "profile_url": best.get("profile_url"),
                 "matched_name": best.get("name"),
                 "match_score": score,
+                "gw_lineup_prob": best.get("gw_lineup_prob"),
+                "gw_role": best.get("gw_role"),
+                "gw_starter": bool(best.get("gw_starter")),
+                "gw_doubt": bool(best.get("gw_doubt")),
+                "gw_out": bool(best.get("gw_out")),
+                "gw_opponent": best.get("gw_opponent"),
+                "gw_fixture_id": best.get("gw_fixture_id"),
             }
             # Mister a veces trae escudos nuevos (Club 50…) → completar con club FF/Comuniate
             team_now = str(new_p.get("team") or "")
@@ -371,6 +485,12 @@ def enrich_players_with_external(
                     new_p["lineup_prob"] = float(ext["lineup_prob_ext"]) / 100.0
                 except (TypeError, ValueError):
                     pass
+            # Top-level GW flags for scoring convenience
+            new_p["gw_lineup_prob"] = ext.get("gw_lineup_prob")
+            new_p["gw_role"] = ext.get("gw_role")
+            new_p["gw_starter"] = ext.get("gw_starter")
+            new_p["gw_doubt"] = ext.get("gw_doubt")
+            new_p["gw_out"] = ext.get("gw_out")
         new_p["external"] = ext
         enriched.append(new_p)
 
@@ -378,6 +498,30 @@ def enrich_players_with_external(
     meta["sofascore_filled"] = sofa_on_players
     if sofa_on_players >= 5 and meta.get("sofascore") == "skip":
         meta["sofascore"] = "partial"
+
+    # Resumen matchday para payload (sin listas enormes de jugadores por fixture)
+    if matchday and matchday.get("status") not in (None, "fail", "skip"):
+        meta["matchday"] = {
+            "status": matchday.get("status"),
+            "jornada": matchday.get("jornada"),
+            "competition": matchday.get("competition") or comp,
+            "fixtures_count": len(matchday.get("fixtures") or []),
+            "players_count": len(matchday.get("players") or []),
+            "fetched_at": matchday.get("fetched_at"),
+            "cache_used": bool(matchday.get("cache_used")),
+            "fixtures": [
+                {
+                    "id": f.get("id"),
+                    "home": f.get("home"),
+                    "away": f.get("away"),
+                    "kickoff": f.get("kickoff"),
+                    "url": f.get("url"),
+                    "players_count": f.get("players_count") or len(f.get("players") or []),
+                }
+                for f in (matchday.get("fixtures") or [])[:12]
+            ],
+        }
+        meta["ff_matchday"] = matchday.get("status") or meta.get("ff_matchday")
     return enriched, meta
 
 

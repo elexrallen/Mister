@@ -1,0 +1,7 @@
+name = "mister-refresh"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+# Opcional: fija el repo aquí o con `wrangler secret put GITHUB_REPO`
+# [vars]
+# GITHUB_REPO = "elexrallen/Mister"

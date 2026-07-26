@@ -6,6 +6,7 @@ from typing import Any
 
 from .comuniate import fetch_comuniate
 from .futbolfantasy import fetch_futbolfantasy
+from .ff_matchday import fetch_ff_matchday
 from .jornadaperfecta import fetch_jornadaperfecta
 
 # Competiciones con scrapers FF/JP cableados
@@ -33,11 +34,13 @@ def fetch_all_external(
             "jornadaperfecta": [],
             "comuniate": [],
             "sofascore": [],
+            "ff_matchday": {"status": "skip", "fixtures": [], "players": []},
             "status": {
                 "futbolfantasy": "skip",
                 "jornadaperfecta": "skip",
                 "comuniate": "skip",
                 "sofascore": "skip",
+                "ff_matchday": "skip",
             },
             "competition": comp,
         }
@@ -47,6 +50,10 @@ def fetch_all_external(
 
     jp = fetch_jornadaperfecta(competition=comp)
     status["jornadaperfecta"] = "ok" if jp else "fail"
+
+    matchday = fetch_ff_matchday(competition=comp)
+    md_status = str(matchday.get("status") or "fail")
+    status["ff_matchday"] = md_status if md_status in ("ok", "partial", "cache") else "fail"
 
     # Comuniate cubre LaLiga Fantasy; Premier no tiene sección usable
     if comp == "laliga":
@@ -63,9 +70,10 @@ def fetch_all_external(
         "jornadaperfecta": jp,
         "comuniate": com,
         "sofascore": [],
+        "ff_matchday": matchday,
         "status": status,
         "competition": comp,
     }
 
 
-__all__ = ["fetch_all_external", "SUPPORTED_EXTERNAL"]
+__all__ = ["fetch_all_external", "SUPPORTED_EXTERNAL", "fetch_ff_matchday"]

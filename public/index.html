@@ -62,12 +62,24 @@
             <select id="league-select" aria-label="Seleccionar liga"></select>
           </label>
         </div>
-        <div class="update-chip shrink-0" title="Última actualización">
-          <span class="update-dot" aria-hidden="true"></span>
-          <div class="text-right">
-            <p class="text-[10px] uppercase tracking-wider text-slate-500 leading-none">Actualizado</p>
-            <p id="updated-at" class="text-xs text-mint-400 font-medium mt-0.5">—</p>
+        <div class="update-chip-wrap shrink-0">
+          <div class="update-chip" title="Última actualización">
+            <span class="update-dot" id="update-dot" aria-hidden="true"></span>
+            <div class="text-right">
+              <p class="text-[10px] uppercase tracking-wider text-slate-500 leading-none">Actualizado</p>
+              <p id="updated-at" class="text-xs text-mint-400 font-medium mt-0.5">—</p>
+            </div>
           </div>
+          <button
+            type="button"
+            id="btn-refresh"
+            class="btn-refresh"
+            title="Regenerar datos en la nube (GitHub Actions)"
+            aria-label="Actualizar datos"
+          >
+            Actualizar
+          </button>
+          <p id="refresh-status" class="refresh-status" role="status" aria-live="polite" hidden></p>
         </div>
       </div>
     </div>
@@ -94,6 +106,29 @@
           <span id="campaign-market" class="campaign-stat-value">—</span>
         </div>
       </div>
+    </section>
+
+    <section id="matchday-panel" class="matchday-panel" aria-label="Jornada FF" hidden>
+      <div class="matchday-main">
+        <p class="matchday-kicker">Alineaciones FF</p>
+        <p id="matchday-title" class="matchday-title">Jornada —</p>
+        <p id="matchday-summary" class="matchday-summary">—</p>
+      </div>
+      <div class="matchday-stats">
+        <div>
+          <span class="matchday-stat-label">Titular</span>
+          <span id="matchday-start" class="matchday-stat-value">—</span>
+        </div>
+        <div>
+          <span class="matchday-stat-label">Duda</span>
+          <span id="matchday-doubt" class="matchday-stat-value">—</span>
+        </div>
+        <div>
+          <span class="matchday-stat-label">Fuera</span>
+          <span id="matchday-sit" class="matchday-stat-value">—</span>
+        </div>
+      </div>
+      <ul id="matchday-advice" class="matchday-advice" aria-label="Consejos de once"></ul>
     </section>
 
     <section aria-label="Indicadores clave" class="kpi-strip">

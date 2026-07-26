@@ -1,6 +1,11 @@
-# Actualización diaria del dataset Mister Fantasy Advisor.
-# Genera public/data/latest_data.json + snapshot en history/ y lo commitea.
-# GitHub Pages (rama main → /public) se regenera solo tras el push.
+# Actualización del dataset Mister Fantasy Advisor.
+# Genera public/data/*.json + history/ y lo commitea.
+# GitHub Pages (rama main → /public) se regenera tras el push.
+#
+# Disparos:
+#   - cron diario
+#   - workflow_dispatch (Actions UI)
+#   - repository_dispatch type=refresh-data (botón PWA vía Cloudflare Worker)
 
 name: Daily data update
 
@@ -8,7 +13,19 @@ on:
   schedule:
     # 06:00 UTC ≈ 08:00 CEST (mañana antes del mercado)
     - cron: "0 6 * * *"
+  repository_dispatch:
+    types: [refresh-data]
   workflow_dispatch:
+    inputs:
+      league:
+        description: Liga a regenerar
+        required: true
+        default: all
+        type: choice
+        options:
+          - all
+          - laliga-patio
+          - premier
 
 permissions:
   contents: write
@@ -19,6 +36,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Resolve league
+        id: league
+        run: |
+          LEAGUE="all"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            LEAGUE="${{ github.event.inputs.league }}"
+          elif [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            LEAGUE="${{ github.event.client_payload.league }}"
+          fi
+          if [ -z "$LEAGUE" ]; then
+            LEAGUE="all"
+          fi
+          case "$LEAGUE" in
+            all|laliga-patio|premier) ;;
+            *)
+              echo "Liga desconocida '$LEAGUE' → all"
+              LEAGUE="all"
+              ;;
+          esac
+          echo "league=$LEAGUE" >> "$GITHUB_OUTPUT"
+          echo "Regenerando liga: $LEAGUE"
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -40,7 +79,7 @@ jobs:
           MISTER_LEAGUE_ID: ${{ secrets.MISTER_LEAGUE_ID }}
           MISTER_TEAM_ID: ${{ secrets.MISTER_TEAM_ID }}
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
-        run: python src/data_engine.py --league all
+        run: python src/data_engine.py --league "${{ steps.league.outputs.league }}"
 
       - name: Verify live data (not mock fallback)
         run: |

@@ -708,6 +708,77 @@
     }
   }
 
+  function renderMatchday(data) {
+    const panel = document.getElementById("matchday-panel");
+    if (!panel) return;
+    const md = data.matchday;
+    const advice = Array.isArray(data.gw_xi_advice) ? data.gw_xi_advice : [];
+    const srcOk =
+      data.sources &&
+      data.sources.external &&
+      ["ok", "partial", "cache"].includes(String(data.sources.external.ff_matchday || ""));
+    if (!md || !srcOk) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    const j = md.jornada != null ? `Jornada ${md.jornada}` : "Jornada";
+    const title = document.getElementById("matchday-title");
+    if (title) title.textContent = `${j} · FF`;
+    const fx = md.fixtures_count != null ? `${md.fixtures_count} partidos` : "";
+    const summary = document.getElementById("matchday-summary");
+    if (summary) {
+      summary.textContent = fx
+        ? `${fx} · posibles alineaciones Fútbol Fantasy`
+        : "Posibles alineaciones Fútbol Fantasy";
+    }
+    const counts = { start: 0, doubt: 0, sit: 0 };
+    for (const a of advice) {
+      const k = a && a.advice;
+      if (k && counts[k] != null) counts[k] += 1;
+    }
+    const elStart = document.getElementById("matchday-start");
+    const elDoubt = document.getElementById("matchday-doubt");
+    const elSit = document.getElementById("matchday-sit");
+    if (elStart) elStart.textContent = String(counts.start);
+    if (elDoubt) elDoubt.textContent = String(counts.doubt);
+    if (elSit) elSit.textContent = String(counts.sit);
+    const list = document.getElementById("matchday-advice");
+    if (list) {
+      const rows = advice.slice(0, 8).map((a) => {
+        const badge =
+          a.advice === "start"
+            ? "badge-mint"
+            : a.advice === "sit"
+              ? "badge-baja-ext"
+              : "badge-duda";
+        const label =
+          a.advice === "start" ? "Alinear" : a.advice === "sit" ? "No alinear" : "Duda";
+        const prob = a.prob != null ? `${Math.round(Number(a.prob))}%` : "—";
+        const why = a.why ? escapeHtml(a.why) : "";
+        return `<li class="matchday-advice-item">
+          <span class="badge ${badge}">${label}</span>
+          <button type="button" class="player-link" data-player-id="${escapeHtml(
+            String(a.player_id || "")
+          )}">${escapeHtml(a.name || "—")}</button>
+          <span class="matchday-prob">${prob}</span>
+          <span class="matchday-why text-xs text-slate-400">${why}</span>
+        </li>`;
+      });
+      list.innerHTML = rows.length
+        ? rows.join("")
+        : `<li class="matchday-advice-item text-slate-500">Sin señal GW en tu plantilla aún.</li>`;
+      list.querySelectorAll("[data-player-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-player-id");
+          const squad = (data.me && data.me.squad) || [];
+          const p = squad.find((x) => String(x.id) === String(id));
+          if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+        });
+      });
+    }
+  }
+
   function renderKpis(data) {
     const k = data.kpis || {};
     document.getElementById("kpi-balance").textContent = formatMoney(k.balance);
@@ -716,6 +787,7 @@
     document.getElementById("kpi-free").textContent =
       k.top_free_remaining != null ? String(k.top_free_remaining) : "—";
     renderCampaign(data);
+    renderMatchday(data);
   }
 
   function renderMeta(data) {
@@ -1813,12 +1885,146 @@
       updateLeagueChrome(DATA);
       errEl.classList.add("hidden");
       renderAll();
+      return DATA;
     } catch (err) {
       console.error(err);
       errEl.textContent =
         "No se pudo cargar los datos de la liga. Sirve public/ por HTTP y ejecuta el data engine (--league all).";
       errEl.classList.remove("hidden");
+      return null;
     }
+  }
+
+  let refreshInFlight = false;
+
+  function setRefreshUi(state, message) {
+    const wrap = document.querySelector(".update-chip-wrap");
+    const btn = document.getElementById("btn-refresh");
+    const status = document.getElementById("refresh-status");
+    if (wrap) wrap.classList.toggle("is-refreshing", state === "busy");
+    if (btn) {
+      btn.disabled = state === "busy";
+      btn.textContent = state === "busy" ? "Actualizando…" : "Actualizar";
+    }
+    if (status) {
+      if (!message) {
+        status.hidden = true;
+        status.textContent = "";
+        status.classList.remove("is-error", "is-ok");
+      } else {
+        status.hidden = false;
+        status.textContent = message;
+        status.classList.toggle("is-error", state === "error");
+        status.classList.toggle("is-ok", state === "ok");
+      }
+    }
+  }
+
+  async function loadRefreshConfig() {
+    try {
+      const res = await fetch("./refresh-config.json", { cache: "no-cache" });
+      if (!res.ok) return null;
+      const cfg = await res.json();
+      if (!cfg || !cfg.url) return null;
+      return cfg;
+    } catch {
+      return null;
+    }
+  }
+
+  async function pollUntilUpdated(prevGeneratedAt, { timeoutMs = 8 * 60 * 1000, intervalMs = 12000 } = {}) {
+    const started = Date.now();
+    while (Date.now() - started < timeoutMs) {
+      await new Promise((r) => setTimeout(r, intervalMs));
+      const data = await loadData(currentLeagueSlug);
+      const next = data && data.generated_at;
+      if (next && String(next) !== String(prevGeneratedAt || "")) {
+        return true;
+      }
+      const elapsedMin = Math.round((Date.now() - started) / 60000);
+      setRefreshUi(
+        "busy",
+        elapsedMin > 0
+          ? `Esperando snapshot… (~${elapsedMin} min)`
+          : "Workflow en marcha…"
+      );
+    }
+    return false;
+  }
+
+  async function refreshData() {
+    if (refreshInFlight) return;
+    refreshInFlight = true;
+    const prev = DATA && DATA.generated_at;
+    const league = currentLeagueSlug || "all";
+    try {
+      setRefreshUi("busy", "Disparando actualización…");
+      const cfg = await loadRefreshConfig();
+      if (!cfg || !cfg.url) {
+        await loadData(league);
+        setRefreshUi(
+          "error",
+          "Sin refresh-config.json. Copia el example y despliega el Worker (ver workers/refresh-proxy)."
+        );
+        return;
+      }
+
+      const res = await fetch(cfg.url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Refresh-Key": cfg.key || "",
+        },
+        body: JSON.stringify({ league }),
+      });
+      let payload = null;
+      try {
+        payload = await res.json();
+      } catch {
+        payload = null;
+      }
+
+      if (res.status === 429) {
+        const sec = (payload && payload.retry_after_seconds) || 120;
+        setRefreshUi("error", `Espera ${sec}s antes de volver a actualizar.`);
+        return;
+      }
+      if (!res.ok || (payload && payload.ok === false)) {
+        const err = (payload && payload.error) || `HTTP ${res.status}`;
+        setRefreshUi("error", `No se pudo disparar: ${err}`);
+        return;
+      }
+
+      setRefreshUi("busy", "Regenerando en la nube (2–6 min)…");
+      const ok = await pollUntilUpdated(prev);
+      if (ok) {
+        setRefreshUi("ok", "Datos actualizados.");
+        setTimeout(() => setRefreshUi("idle", ""), 5000);
+      } else {
+        setRefreshUi(
+          "error",
+          "Timeout: revisa Actions. Puedes pulsar Actualizar más tarde."
+        );
+      }
+    } catch (err) {
+      console.error(err);
+      setRefreshUi("error", "Error de red al actualizar.");
+    } finally {
+      refreshInFlight = false;
+      const btn = document.getElementById("btn-refresh");
+      const wrap = document.querySelector(".update-chip-wrap");
+      if (wrap) wrap.classList.remove("is-refreshing");
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = "Actualizar";
+      }
+    }
+  }
+
+  function initRefreshButton() {
+    const btn = document.getElementById("btn-refresh");
+    if (!btn) return;
+    btn.addEventListener("click", () => refreshData());
   }
 
   function initLeagueSwitcher() {
@@ -1865,6 +2071,7 @@
     initFilters();
     initLeagueSwitcher();
     initSortControls();
+    initRefreshButton();
     initPwa();
     loadData();
   });

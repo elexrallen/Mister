@@ -29,6 +29,7 @@ from fotmob_service import enrich_players_with_fotmob
 from competitive_actions import (
     annotate_market_budget_risk,
     budget_fit,
+    build_gw_xi_advice,
     build_rival_upgrade_targets,
     build_sell_opportunities,
     detect_competition_phase,
@@ -592,6 +593,20 @@ def classify_market_opportunities(
             lineup_ext = float(p["lineup_prob"]) * 100
         if lineup_ext is not None and float(lineup_ext) >= 80:
             score += 20
+        # Señal jornada FF (posibles alineaciones): más fresca que ficha/JP
+        gw_out = bool(p.get("gw_out") or ext.get("gw_out"))
+        gw_doubt = bool(p.get("gw_doubt") or ext.get("gw_doubt"))
+        gw_starter = bool(p.get("gw_starter") or ext.get("gw_starter"))
+        if gw_out:
+            score -= 28
+            if "alerta_baja" not in categories:
+                categories.insert(0, "alerta_baja")
+        elif gw_doubt:
+            score -= 10
+        elif gw_starter:
+            score += 14
+            if p["position"] in needy:
+                score += 6
         if ext.get("is_chollo_ext") or ext.get("is_recommendation_ext"):
             score += 10
         sofa = ext.get("sofascore_avg_5")
@@ -613,7 +628,7 @@ def classify_market_opportunities(
             categories.insert(0, "ajuste_estructural")
         coverage_label = cov.get("coverage_label") or struct_label
 
-        if avail in ("injured", "suspended"):
+        if avail in ("injured", "suspended") or gw_out:
             priority = "Baja"
         elif blocked:
             # Nunca Alta solo por producción/estructura si no hay caja
@@ -1071,6 +1086,9 @@ def build_action_plan(
         line_covered = bool(o.get("line_already_covered"))
         is_upgrade = bool(o.get("is_upgrade"))
         on_daily = bool(o.get("on_daily_market") or o.get("seller") == "market")
+        ext_o = o.get("external") or {}
+        gw_out = bool(o.get("gw_out") or ext_o.get("gw_out"))
+        gw_starter = bool(o.get("gw_starter") or ext_o.get("gw_starter"))
         prod_ok = False
         try:
             prod_ok = float(o.get("production_score") or 0) >= 35 or (
@@ -1078,6 +1096,9 @@ def build_action_plan(
             )
         except (TypeError, ValueError):
             prod_ok = bool(o.get("is_top_ff")) and not o.get("sample_thin")
+
+        if gw_out:
+            why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
         if o.get("sample_thin") and (o.get("ff_mister_avg") is not None or o.get("production_score")):
             apps_n = o.get("ff_apps")
@@ -1149,11 +1170,25 @@ def build_action_plan(
             if is_upgrade and bf in ("comfortable", "tight") and real_starter_cand:
                 buy_now = True
                 why_parts.append("upgrade claro vs lo que tienes en la línea")
+            # Titular GW FF + hueco: refuerzo buy_now
+            if (
+                gw_starter
+                and on_daily
+                and bf in ("comfortable", "tight")
+                and (fills or fills_cov or structural_gap)
+            ):
+                buy_now = True
+                if not any("FF jornada" in w for w in why_parts):
+                    why_parts.append("FF jornada: titular probable esta semana")
 
         # Defensa extra: nunca buy_now fuera del mercado del día
         if buy_now and not on_daily:
             buy_now = False
             why_parts.append("aún no está en el mercado de hoy")
+        if buy_now and gw_out:
+            buy_now = False
+            if not any("no titular" in w for w in why_parts):
+                why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
         # Sin caja → no buy_now (stretch por crowding también queda fuera de buy_now agresivo)
         if buy_now and bf not in ("comfortable", "tight"):
@@ -1465,10 +1500,12 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "jornadaperfecta": "skip",
             "comuniate": "skip",
             "sofascore": "skip",
+            "ff_matchday": "skip",
             "matched": 0,
             "cache_used": False,
             "errors": [],
             "sofascore_filled": 0,
+            "matchday": None,
             "note": (
                 f"Sin scrapers externos para {league_cfg.get('competition') or 'esta competición'} "
                 f"(id_competition={id_competition_i}). Usamos Mister (+ FotMob fail-soft)."
@@ -1708,6 +1745,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         market_mode=market_mode,
     )
 
+    matchday_meta = external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None
+    gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
+
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
     bal = float(me.get("balance") or 0)
     funding_info = estimate_gap_funding(
@@ -1804,6 +1844,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "futbolfantasy": external_meta.get("futbolfantasy", "fail"),
                 "jornadaperfecta": external_meta.get("jornadaperfecta", "fail"),
                 "comuniate": external_meta.get("comuniate", "fail"),
+                "ff_matchday": external_meta.get("ff_matchday", "fail"),
                 "sofascore": "skip",
                 "fotmob": external_meta.get("fotmob", "skip"),
                 "matched": external_meta.get("matched", 0),
@@ -1882,6 +1923,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "free_agents_top": free_agents,
         "recommendations": recommendations,
         "squad_notes": squad_notes,
+        "matchday": matchday_meta,
+        "gw_xi_advice": gw_xi_advice,
         "meta": {
             "filters_hint": {
                 "positions": ["GK", "DF", "MF", "FW"],

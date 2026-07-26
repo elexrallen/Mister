@@ -5,9 +5,9 @@ Dashboard Jamstack + PWA para tomar mejores decisiones diarias en tu liga privad
 ## Qué incluye
 
 - **Pipeline Python** (`src/data_engine.py`) que materializa `public/data/latest_data.json`
-- **GitHub Action** diaria (07:00 UTC) + disparo manual
+- **GitHub Action** diaria (06:00 UTC) + disparo manual + `repository_dispatch` desde la PWA
 - **Dashboard estático** (HTML + Tailwind CDN + JS) en `/public`, listo para **GitHub Pages**
-- **PWA instalable** en el móvil (manifest + service worker)
+- **PWA instalable** en el móvil (manifest + service worker) con botón **Actualizar** (nube)
 
 ## Fuentes de datos (5 capas)
 
@@ -51,6 +51,7 @@ El JSON incluye `recommendations[]` según:
 ```
 .
 ├── .github/workflows/daily_update.yml
+├── workers/refresh-proxy/   # Cloudflare Worker: botón Actualizar → Actions
 ├── src/
 │   ├── data_engine.py
 │   ├── config.py
@@ -66,6 +67,7 @@ El JSON incluye `recommendations[]` según:
 │   ├── app.js
 │   ├── styles.css
 │   ├── sw.js
+│   ├── refresh-config.example.json
 │   ├── manifest.webmanifest
 │   ├── icons/
 │   └── data/
@@ -150,6 +152,20 @@ Repo → **Settings → Secrets and variables → Actions**
 | `FOOTBALL_API_KEY` | No | [API-Football](https://www.api-football.com/) |
 
 Luego: **Actions → Daily data update → Run workflow**.
+
+### Actualizar desde la PWA (móvil, sin PC)
+
+El botón **Actualizar** del header dispara el mismo workflow en la nube vía un Cloudflare Worker (no expone secrets de Mister).
+
+Guía completa: [`workers/refresh-proxy/README.md`](workers/refresh-proxy/README.md).
+
+Resumen:
+
+1. Despliega el Worker y configura `GITHUB_TOKEN` (PAT Actions write) + `REFRESH_KEY`.
+2. Copia `public/refresh-config.example.json` → `public/refresh-config.json` con la URL del Worker y la misma key.
+3. Commit/push del config. En la app, pulsa **Actualizar** y espera 2–6 min.
+
+También puedes lanzar el workflow a mano con input `league` (`all` / `laliga-patio` / `premier`), o vía `repository_dispatch` type `refresh-data`.
 
 ### 4) Si solo carga mock
 

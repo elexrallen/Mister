@@ -260,6 +260,17 @@ def _plays_little(p: dict[str, Any]) -> bool:
     """Poca titularidad real o minutos recientes bajos."""
     if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
         return True
+    ext = p.get("external") or {}
+    if p.get("gw_out") or ext.get("gw_out"):
+        return True
+    gw_prob = p.get("gw_lineup_prob")
+    if gw_prob is None:
+        gw_prob = ext.get("gw_lineup_prob")
+    try:
+        if gw_prob is not None and float(gw_prob) < 40:
+            return True
+    except (TypeError, ValueError):
+        pass
     lineup = _lineup_pct(p)
     low_lp = getattr(config, "LINEUP_PROB_LOW", 0.40) * 100.0
     mins_low = getattr(config, "MINUTES_RECENT_LOW", 90)
@@ -271,6 +282,89 @@ def _plays_little(p: dict[str, Any]) -> bool:
             return False
         return True
     return False
+
+
+def build_gw_xi_advice(
+    squad: list[dict[str, Any]] | None,
+    *,
+    matchday: dict[str, Any] | None = None,
+    limit: int = 12,
+) -> list[dict[str, Any]]:
+    """
+    Consejos de once para la jornada FF: start / sit / doubt.
+    Solo jugadores de la plantilla con señal gw_*.
+    """
+    out: list[dict[str, Any]] = []
+    jornada = (matchday or {}).get("jornada")
+    for p in squad or []:
+        ext = p.get("external") or {}
+        prob = p.get("gw_lineup_prob")
+        if prob is None:
+            prob = ext.get("gw_lineup_prob")
+        # Solo señal de jornada FF (no ficha/JP genérico)
+        if prob is None and not (
+            p.get("gw_starter")
+            or p.get("gw_doubt")
+            or p.get("gw_out")
+            or ext.get("gw_starter")
+            or ext.get("gw_doubt")
+            or ext.get("gw_out")
+        ):
+            continue
+        if prob is None:
+            continue
+        try:
+            prob_f = float(prob)
+        except (TypeError, ValueError):
+            continue
+
+        role = p.get("gw_role") or ext.get("gw_role")
+        gw_starter = bool(p.get("gw_starter") or ext.get("gw_starter"))
+        gw_doubt = bool(p.get("gw_doubt") or ext.get("gw_doubt"))
+        gw_out = bool(p.get("gw_out") or ext.get("gw_out"))
+        opponent = p.get("gw_opponent") or ext.get("gw_opponent")
+
+        if gw_out or prob_f < 40:
+            advice = "sit"
+            why = f"FF jornada: {prob_f:.0f}% — mejor no alinear"
+        elif gw_doubt or (40 <= prob_f < 70):
+            advice = "doubt"
+            why = f"FF jornada: {prob_f:.0f}% — duda de titularidad"
+        elif gw_starter or prob_f >= 70:
+            advice = "start"
+            why = f"FF jornada: {prob_f:.0f}% titular probable"
+        else:
+            continue
+
+        if opponent:
+            why = f"{why} (vs {opponent})"
+        if role == "bench" and advice == "start":
+            why = f"{why}; aparece en banquillo FF pero con % alto"
+
+        out.append(
+            {
+                "player_id": p.get("id"),
+                "name": p.get("name"),
+                "position": p.get("position"),
+                "team": p.get("team"),
+                "advice": advice,
+                "prob": round(prob_f, 0),
+                "role": role,
+                "opponent": opponent,
+                "jornada": jornada,
+                "why": why,
+                "in_lineup": bool(p.get("in_lineup")),
+            }
+        )
+
+    order = {"sit": 0, "doubt": 1, "start": 2}
+    out.sort(
+        key=lambda x: (
+            order.get(str(x.get("advice")), 9),
+            -float(x.get("prob") or 0) if x.get("advice") == "start" else float(x.get("prob") or 0),
+        )
+    )
+    return out[: max(1, limit)]
 
 
 def _is_useful_patch(p: dict[str, Any]) -> bool:
@@ -967,6 +1061,41 @@ def build_sell_opportunities(
                 sell_risk="high" if protect_depth else ("low" if not is_starter else "medium"),
             )
             item["_pref"] = 48
+            add(item)
+
+        # 1c) No juega esta jornada (FF posibles alineaciones) — no vender TOP por duda media
+        ext = p.get("external") or {}
+        gw_out = bool(p.get("gw_out") or ext.get("gw_out"))
+        gw_prob = p.get("gw_lineup_prob")
+        if gw_prob is None:
+            gw_prob = ext.get("gw_lineup_prob")
+        try:
+            gw_prob_f = float(gw_prob) if gw_prob is not None else None
+        except (TypeError, ValueError):
+            gw_prob_f = None
+        if (
+            gw_out
+            and price >= 2_500_000
+            and covered_if_sold
+            and not keep_top
+            and not protect_xi
+            and not protect_patch
+        ):
+            opp = p.get("gw_opponent") or ext.get("gw_opponent")
+            bits = [
+                f"FF jornada: no juega / {int(gw_prob_f) if gw_prob_f is not None else 'bajo'}%"
+            ]
+            if opp:
+                bits.append(f"vs {opp}")
+            bits.append(f"libera {price:,.0f} € si hay mejor opción")
+            item = base_item(
+                p,
+                reason="low_minutes",
+                why="; ".join(bits),
+                urgency="medium",
+                sell_risk="medium" if is_starter else "low",
+            )
+            item["_pref"] = 46
             add(item)
 
         # 2) Baja producción a precio alto → reinvertir en puntos
