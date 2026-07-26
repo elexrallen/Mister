@@ -1537,12 +1537,20 @@ def finalize_action_plan(
             need_boost += 25
         if item.get("crowds_out_gaps"):
             need_boost -= 50
+        # Mercado del día primero; libres del pool (wait pipeline) al final
+        daily_boost = 0
+        if item.get("action") in ("buy_now", "wait", "avoid"):
+            if item.get("on_daily_market") or item.get("seller") == "market":
+                daily_boost = 120
+            elif item.get("action") == "wait":
+                daily_boost = -80
         item["_queue_rank"] = (
             base
             + int(item.get("priority_score") or 0)
             + urg_bonus.get(item.get("urgency"), 0)
             + min(20, int(item.get("rival_demand") or 0) * 4)
             + need_boost
+            + daily_boost
         )
     plan.sort(
         key=lambda x: (
@@ -1551,16 +1559,18 @@ def finalize_action_plan(
         )
     )
 
-    # Reserva: mejor buy_now por posición que cubra carencia (titularidad real / estructural)
+    # Reserva: mejor buy_now del MERCADO DEL DÍA por posición con carencia
     reserved: list[dict[str, Any]] = []
     seen_pos: set[str] = set()
     for item in plan:
         if item.get("action") != "buy_now":
             continue
+        if not (item.get("on_daily_market") or item.get("seller") == "market"):
+            continue
         pos = item.get("position") or ""
         if not pos or pos in seen_pos:
             continue
-        if item.get("fills_need") or item.get("fills_structural"):
+        if item.get("fills_need") or item.get("fills_structural") or item.get("fills_coverage_gap"):
             reserved.append(item)
             seen_pos.add(pos)
 
@@ -1574,6 +1584,9 @@ def finalize_action_plan(
         "sell": 5,
         "scout": 3,
     }
+    # Como mucho 2 waits de pipeline (libres fuera del mercado de hoy)
+    max_pipeline_waits = 2
+    pipeline_waits = 0
     # Tope global = suma de límites por acción (sin cortar a 12 artificialmente)
     max_total = sum(limits.values())
     used_ids: set[str] = set()
@@ -1620,7 +1633,7 @@ def finalize_action_plan(
         return False
 
     def _append(item: dict[str, Any]) -> bool:
-        nonlocal sim_balance
+        nonlocal sim_balance, pipeline_waits
         a = item.get("action") or ""
         pid = str(item.get("player_id") or "")
         if pid and pid in used_ids:
@@ -1629,6 +1642,12 @@ def finalize_action_plan(
             return False
         if a == "buy_now" and not _can_afford_buy(item):
             return False
+        if a == "wait" and not (
+            item.get("on_daily_market") or item.get("seller") == "market"
+        ):
+            if pipeline_waits >= max_pipeline_waits:
+                return False
+            pipeline_waits += 1
         if len(capped) >= max_total:
             return False
         per_action[a] = per_action.get(a, 0) + 1

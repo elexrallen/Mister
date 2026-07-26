@@ -958,10 +958,21 @@ def build_action_plan(
         fills_cov = bool(o.get("fills_coverage_gap"))
         line_covered = bool(o.get("line_already_covered"))
         is_upgrade = bool(o.get("is_upgrade"))
-        on_daily = bool(o.get("on_daily_market"))
+        on_daily = bool(o.get("on_daily_market") or o.get("seller") == "market")
 
+        # Cola del día = mercado pujable ahora. Libres del pool no entran como buy_now.
+        if not on_daily:
+            # Pipeline breve: solo vigilantes claros (no saturar la cola)
+            if not (
+                (fills_cov or fills or structural_gap)
+                and real_starter_cand
+                and o.get("priority") == "Alta"
+            ):
+                continue
+            why_parts.append("libre del pool — aún no está en el mercado de hoy")
+            buy_now = False
         # Línea ya cubierta → no insistir salvo upgrade claro
-        if line_covered and not is_upgrade:
+        elif line_covered and not is_upgrade:
             buy_now = False
             why_parts.append("línea ya cubierta — no insistir en la puja")
         else:
@@ -970,10 +981,7 @@ def build_action_plan(
                 why_parts.append("cubre carencia crítica")
             if fills_cov and real_starter_cand:
                 buy_now = True
-                why_parts.append(
-                    "cubre hueco de profundidad/titularidad"
-                    + (" (mercado de hoy)" if on_daily else "")
-                )
+                why_parts.append("cubre hueco de profundidad/titularidad (mercado de hoy)")
             if fills and structural_gap and real_starter_cand:
                 buy_now = True
                 why_parts.append("cubre necesidad estructural (titularidad real)")
@@ -1001,6 +1009,11 @@ def build_action_plan(
             if is_upgrade and bf in ("comfortable", "tight") and real_starter_cand:
                 buy_now = True
                 why_parts.append("upgrade claro vs lo que tienes en la línea")
+
+        # Defensa extra: nunca buy_now fuera del mercado del día
+        if buy_now and not on_daily:
+            buy_now = False
+            why_parts.append("aún no está en el mercado de hoy")
 
         # Sin caja → no buy_now (stretch por crowding también queda fuera de buy_now agresivo)
         if buy_now and bf not in ("comfortable", "tight"):
@@ -1115,7 +1128,11 @@ def build_action_plan(
                 "bid": o.get("puja_recomendada"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
-                "urgency": "medium" if fills or structural_gap or fills_cov or risk != "low" else "low",
+                "urgency": (
+                    "low"
+                    if not on_daily
+                    else ("medium" if fills or structural_gap or fills_cov or risk != "low" else "low")
+                ),
                 "why": ("; ".join(dict.fromkeys(wait_bits)) or "Sin urgencia") + f" · riesgo de perderlo: {risk}",
                 "rival_demand": len(demand),
                 "affordable": bf in ("comfortable", "tight"),
