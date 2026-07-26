@@ -671,6 +671,7 @@
     const box = document.getElementById("action-queue");
     if (!box) return;
     const plan = data.action_plan || [];
+    const pkg = data.daily_package || {};
     const labels = {
       buy_now: { title: "Pujar", cls: "act-buy" },
       clause_bid: { title: "Cláusula", cls: "act-clause" },
@@ -679,6 +680,13 @@
       wait: { title: "Esperar", cls: "act-wait" },
       scout: { title: "Vigilar", cls: "act-scout" },
     };
+    const roleChip = (role) => {
+      if (role === "primary") return `<span class="badge badge-mint">Hacer</span>`;
+      if (role === "secondary") return `<span class="badge badge-titular">También si cabe</span>`;
+      if (role === "alt_if_lost") return `<span class="badge badge-duda">Plan B</span>`;
+      if (role === "do_not_stack") return `<span class="badge badge-baja">No acumular</span>`;
+      return "";
+    };
 
     if (!plan.length) {
       box.innerHTML = `<p class="queue-empty">Sin acciones claras hoy.</p>`;
@@ -686,6 +694,17 @@
     }
 
     const fp = data.funding_plan || {};
+    const packageHint = pkg.primary
+      ? `<p class="queue-package-hint">Plan de hoy: <strong>${escapeHtml(
+          pkg.primary.name || ""
+        )}</strong>${
+          pkg.secondary ? ` + <strong>${escapeHtml(pkg.secondary.name || "")}</strong>` : ""
+        } · gasto ~${formatMoney(pkg.spend_cap)} · queda ~${formatMoney(
+          pkg.residual_after
+        )}</p>`
+      : pkg.note
+        ? `<p class="queue-package-hint">${escapeHtml(pkg.note)}</p>`
+        : "";
     const fundingHint =
       fp.target != null && Number(fp.target) > 0
         ? `<p class="queue-funding-hint">Caja vs carencias Alta: objetivo ~${formatMoney(
@@ -701,67 +720,73 @@
           }</p>`
         : "";
 
-    const hasMore = plan.length > QUEUE_PREVIEW;
-    const expanded = queueExpanded || !hasMore;
+    const doToday = plan.filter((a) => a.queue_role === "primary" || a.queue_role === "secondary");
+    const planB = plan.filter((a) => a.queue_role === "alt_if_lost");
+    const noStack = plan.filter((a) => a.queue_role === "do_not_stack");
+    const other = plan.filter(
+      (a) => !["primary", "secondary", "alt_if_lost", "do_not_stack"].includes(a.queue_role)
+    );
 
-    const itemsHtml = plan
-      .map((a, idx) => {
-        const meta = labels[a.action] || { title: a.action || "Acción", cls: "act-wait" };
-        const tab =
-          a.action === "sell" ? "squad" : a.action === "clause_bid" || a.action === "scout" ? "radar" : "market";
-        const rivals = (a.rival_targets || [])
-          .map((t) => t.team_name)
-          .filter(Boolean)
-          .slice(0, 2)
-          .join(", ");
-        const money =
-          a.action === "clause_bid" && a.clause != null
-            ? formatMoney(a.clause)
-            : a.bid != null
-              ? formatMoney(a.bid)
-              : "";
-        const primaryChips = [
-          riskBadge(a.wait_risk || a.sell_risk),
-          budgetBadge(a.budget_fit),
-          fundingChip(a),
-          coverageChips(a),
-          a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
-        ]
-          .filter(Boolean)
-          .join("");
-        const secondaryChips = [
-          sellReasonBadge(a.sell_reason),
-          a.fills_structural && a.structural_label
-            ? `<span class="badge badge-mint">${escapeHtml(a.structural_label)}</span>`
-            : a.fills_need
-              ? `<span class="badge badge-duda">Carencia</span>`
-              : "",
-          a.in_lineup ? `<span class="badge badge-once">Once</span>` : "",
-          a.plays_little || (a.lineup_pct != null && Number(a.lineup_pct) < 40)
-            ? `<span class="badge badge-baja-ext">Pocos min</span>`
-            : a.lineup_pct != null
-              ? `<span class="badge badge-duda">Titular ${Math.round(Number(a.lineup_pct))}%</span>`
-              : "",
-          a.mister_avg != null || a.points != null ? scoringLine(a) : "",
-          a.ff_mister_avg != null
-            ? `<span class="badge badge-duda">Mister ${Number(a.ff_mister_avg).toFixed(1)}</span>`
+    const renderItem = (a, rankLabel, opts = {}) => {
+      const meta = labels[a.action] || { title: a.action || "Acción", cls: "act-wait" };
+      const tab =
+        a.action === "sell" ? "squad" : a.action === "clause_bid" || a.action === "scout" ? "radar" : "market";
+      const rivals = (a.rival_targets || [])
+        .map((t) => t.team_name)
+        .filter(Boolean)
+        .slice(0, 2)
+        .join(", ");
+      const money =
+        a.action === "clause_bid" && a.clause != null
+          ? formatMoney(a.clause)
+          : a.bid != null
+            ? formatMoney(a.bid)
+            : "";
+      const primaryChips = [
+        roleChip(a.queue_role),
+        riskBadge(a.wait_risk || a.sell_risk),
+        budgetBadge(a.budget_fit),
+        fundingChip(a),
+        coverageChips(a),
+        a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
+      ]
+        .filter(Boolean)
+        .join("");
+      const secondaryChips = [
+        sellReasonBadge(a.sell_reason),
+        a.fills_structural && a.structural_label
+          ? `<span class="badge badge-mint">${escapeHtml(a.structural_label)}</span>`
+          : a.fills_need
+            ? `<span class="badge badge-duda">Carencia</span>`
             : "",
-          pointsTrendBadge(a.points_trend),
-        ]
-          .filter(Boolean)
-          .join("");
-        const muted =
-          a.line_already_covered && !a.is_upgrade && (a.action === "wait" || a.action === "scout");
-        const hidden = !expanded && idx >= QUEUE_PREVIEW;
-        const topCls = idx < 3 ? " is-top" : "";
-        return `<button type="button" class="queue-item ${meta.cls}${topCls}${
-          muted ? " is-covered" : ""
-        }${hidden ? " is-collapsed-extra" : ""}" role="listitem" data-focus-id="${escapeHtml(
-          a.player_id
-        )}" data-focus-tab="${tab}" ${hidden ? "hidden" : ""} aria-label="${escapeHtml(
-          meta.title
-        )} ${escapeHtml(a.name || "")}, prioridad ${idx + 1}">
-          <span class="queue-rank" aria-hidden="true">${idx + 1}</span>
+        a.in_lineup ? `<span class="badge badge-once">Once</span>` : "",
+        a.plays_little || (a.lineup_pct != null && Number(a.lineup_pct) < 40)
+          ? `<span class="badge badge-baja-ext">Pocos min</span>`
+          : a.lineup_pct != null
+            ? `<span class="badge badge-duda">Titular ${Math.round(Number(a.lineup_pct))}%</span>`
+            : "",
+        a.mister_avg != null || a.points != null ? scoringLine(a) : "",
+        a.ff_mister_avg != null
+          ? `<span class="badge badge-duda">Mister ${Number(a.ff_mister_avg).toFixed(1)}</span>`
+          : "",
+        pointsTrendBadge(a.points_trend),
+      ]
+        .filter(Boolean)
+        .join("");
+      const muted =
+        opts.muted ||
+        a.queue_role === "do_not_stack" ||
+        (a.line_already_covered && !a.is_upgrade && (a.action === "wait" || a.action === "scout"));
+      const topCls = a.queue_role === "primary" || a.queue_role === "secondary" ? " is-top" : "";
+      const rankDisplay = rankLabel != null ? String(rankLabel) : "·";
+      return `<button type="button" class="queue-item ${meta.cls}${topCls}${
+        muted ? " is-covered" : ""
+      }${opts.hidden ? " is-collapsed-extra" : ""}" role="listitem" data-focus-id="${escapeHtml(
+        a.player_id
+      )}" data-focus-tab="${tab}" ${opts.hidden ? "hidden" : ""} aria-label="${escapeHtml(
+        meta.title
+      )} ${escapeHtml(a.name || "")}">
+          <span class="queue-rank" aria-hidden="true">${escapeHtml(rankDisplay)}</span>
           <div class="queue-body">
             <div class="queue-primary">
               <div class="queue-headline">
@@ -770,6 +795,11 @@
               </div>
               ${money ? `<span class="queue-money">${money}</span>` : ""}
             </div>
+            ${
+              a.package_note
+                ? `<p class="queue-package-note">${escapeHtml(a.package_note)}</p>`
+                : ""
+            }
             ${a.why ? `<p class="queue-why">${escapeHtml(a.why)}</p>` : ""}
             ${
               rivals || a.compared_to
@@ -791,23 +821,52 @@
             }
           </div>
         </button>`;
-      })
-      .join("");
+    };
 
-    const rest = plan.length - QUEUE_PREVIEW;
+    const section = (title, items, rankMode) => {
+      if (!items.length) return "";
+      let n = 0;
+      const body = items
+        .map((a) => {
+          if (rankMode === "numbered") {
+            n += 1;
+            return renderItem(a, n);
+          }
+          return renderItem(a, null, { muted: rankMode === "muted" });
+        })
+        .join("");
+      return `<div class="queue-section">
+        <h3 class="queue-section-title">${escapeHtml(title)}</h3>
+        ${body}
+      </div>`;
+    };
+
+    const OTHER_PREVIEW = 3;
+    const hasMore = other.length > OTHER_PREVIEW;
+    const expanded = queueExpanded || !hasMore;
+    const otherVisible = expanded ? other : other.slice(0, OTHER_PREVIEW);
+    const otherHidden = expanded ? [] : other.slice(OTHER_PREVIEW);
+
+    const rest = other.length - OTHER_PREVIEW;
     const toggleHtml = hasMore
       ? `<button type="button" class="queue-expand-btn" id="queue-expand-btn" aria-expanded="${
           expanded ? "true" : "false"
         }">${
-          expanded
-            ? `Mostrar menos`
-            : `Ver las ${rest} restantes · ${plan.length} en total`
+          expanded ? `Mostrar menos` : `Ver ${rest} acciones más (cláusulas / evitar / vigilar)`
         }</button>`
       : "";
 
     box.className = "action-queue-list" + (expanded ? " is-expanded" : "");
     box.setAttribute("role", "list");
-    box.innerHTML = fundingHint + itemsHtml + toggleHtml;
+    box.innerHTML =
+      packageHint +
+      fundingHint +
+      section("Plan de hoy", doToday, "numbered") +
+      section("Si se van / plan B", planB, "muted") +
+      section("No acumular con el paquete", noStack, "muted") +
+      section("Otras acciones", otherVisible, "muted") +
+      otherHidden.map((a) => renderItem(a, null, { muted: true, hidden: true })).join("") +
+      toggleHtml;
 
     box.querySelectorAll("[data-focus-id]").forEach((btn) => {
       btn.addEventListener("click", () => {

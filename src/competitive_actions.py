@@ -549,9 +549,12 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     bf = item.get("budget_fit") or "blocked"
     score += {"comfortable": 20, "tight": 10, "stretch": 0, "blocked": -25, "funding": 8}.get(str(bf), 0)
     if item.get("crowds_out_gaps"):
-        score -= 35
+        score -= 55
+        cost = _money(item.get("cost") or item.get("bid") or item.get("price"))
+        if cost >= 8_000_000:
+            score -= 20  # caro que aprieta gaps: no apilar en el paquete
     elif item.get("leaves_gap_budget"):
-        score += 12
+        score += 18
     score += min(15, int(item.get("rival_demand") or 0) * 5)
     if item.get("improves_owned"):
         score += 20
@@ -1497,18 +1500,36 @@ def annotate_market_budget_risk(
     return out
 
 
+def _is_daily_market_item(item: dict[str, Any]) -> bool:
+    return bool(item.get("on_daily_market") or item.get("seller") == "market")
+
+
+def _item_buy_cost(item: dict[str, Any]) -> float:
+    for key in ("cost", "bid", "puja_recomendada", "price"):
+        if item.get(key) is not None:
+            try:
+                return float(item[key])
+            except (TypeError, ValueError):
+                pass
+    return 0.0
+
+
 def finalize_action_plan(
     plan: list[dict[str, Any]],
     *,
     balance: float | None = None,
     funding_info: dict[str, Any] | None = None,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
-    Una sola cola 'a tiro hecho': lo más accionable y urgente primero.
-    Orden: score unificado (tipo de acción + priority_score + urgencia), luego caps.
-    Reserva diversidad: al menos un buy_now por posición con carencia.
-    Resta costes de buy_now del saldo simulado para no recomendar fichajes incompatibles.
+    Cola operativa = paquete del día (máx. 2 buy_now compatibles) + plan B.
+    No reserva 1 compra por posición: evita la sensación de «compra los 3».
+    Devuelve (action_plan, daily_package).
     """
+    cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+    secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
+    package_id = datetime.now(timezone.utc).date().isoformat()
+    bal = float(balance) if balance is not None else 0.0
+
     action_base = {
         "buy_now": 1000,
         "clause_bid": 920,
@@ -1536,11 +1557,10 @@ def finalize_action_plan(
         if item.get("leaves_gap_budget"):
             need_boost += 25
         if item.get("crowds_out_gaps"):
-            need_boost -= 50
-        # Mercado del día primero; libres del pool (wait pipeline) al final
+            need_boost -= 70
         daily_boost = 0
         if item.get("action") in ("buy_now", "wait", "avoid"):
-            if item.get("on_daily_market") or item.get("seller") == "market":
+            if _is_daily_market_item(item):
                 daily_boost = 120
             elif item.get("action") == "wait":
                 daily_boost = -80
@@ -1552,6 +1572,7 @@ def finalize_action_plan(
             + need_boost
             + daily_boost
         )
+
     plan.sort(
         key=lambda x: (
             -int(x.get("_queue_rank") or 0),
@@ -1559,116 +1580,250 @@ def finalize_action_plan(
         )
     )
 
-    # Reserva: mejor buy_now del MERCADO DEL DÍA por posición con carencia
-    reserved: list[dict[str, Any]] = []
-    seen_pos: set[str] = set()
+    daily_buys = [
+        i
+        for i in plan
+        if i.get("action") == "buy_now" and _is_daily_market_item(i)
+    ]
+
+    def _primary_sort_key(item: dict[str, Any]) -> tuple:
+        cost = _item_buy_cost(item)
+        residual = bal - cost
+        leaves = bool(item.get("leaves_gap_budget")) or residual >= cash_reserve
+        crowds = bool(item.get("crowds_out_gaps"))
+        fills = bool(
+            item.get("fills_coverage_gap")
+            or item.get("fills_structural")
+            or item.get("fills_need")
+        )
+        return (
+            0 if crowds else 1,
+            1 if leaves else 0,
+            1 if fills else 0,
+            int(item.get("_queue_rank") or 0),
+            int(item.get("priority_score") or 0),
+            -cost,  # a igualdad, preferir más barato
+        )
+
+    primary: dict[str, Any] | None = None
+    if daily_buys:
+        preferred = [
+            i
+            for i in daily_buys
+            if (bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget")
+        ]
+        pool = preferred or daily_buys
+        primary = max(pool, key=_primary_sort_key)
+
+    secondary: dict[str, Any] | None = None
+    residual_after_primary = bal
+    if primary is not None:
+        residual_after_primary = max(0.0, bal - _item_buy_cost(primary))
+        primary_pos = primary.get("position")
+        for cand in sorted(daily_buys, key=_primary_sort_key, reverse=True):
+            if str(cand.get("player_id") or "") == str(primary.get("player_id") or ""):
+                continue
+            if cand.get("position") == primary_pos:
+                continue
+            cost = _item_buy_cost(cand)
+            if cost <= 0 or cost > secondary_max:
+                continue
+            if cost > residual_after_primary:
+                continue
+            if not (
+                cand.get("fills_coverage_gap")
+                or cand.get("fills_structural")
+                or cand.get("fills_need")
+            ):
+                continue
+            # No vaciar el colchón con el secundario
+            if residual_after_primary - cost < cash_reserve * 0.45 and cost > 1_200_000:
+                continue
+            secondary = cand
+            break
+
+    primary_id = str(primary.get("player_id") or "") if primary else ""
+    secondary_id = str(secondary.get("player_id") or "") if secondary else ""
+    primary_name = str(primary.get("name") or "") if primary else ""
+    demoted: list[dict[str, Any]] = []
+
     for item in plan:
         if item.get("action") != "buy_now":
             continue
-        if not (item.get("on_daily_market") or item.get("seller") == "market"):
+        pid = str(item.get("player_id") or "")
+        item["package_id"] = package_id
+        if primary and pid == primary_id:
+            item["queue_role"] = "primary"
+            item["package_note"] = "Foco del día — pujar"
+            item["alt_for"] = None
             continue
-        pos = item.get("position") or ""
-        if not pos or pos in seen_pos:
+        if secondary and pid == secondary_id:
+            item["queue_role"] = "secondary"
+            item["package_note"] = "También si cabe — parche barato"
+            item["alt_for"] = None
             continue
-        if item.get("fills_need") or item.get("fills_structural") or item.get("fills_coverage_gap"):
-            reserved.append(item)
-            seen_pos.add(pos)
+
+        # Resto: demote a wait (plan B / no acumular)
+        why_prev = (item.get("why") or "").strip()
+        if primary and item.get("position") == primary.get("position"):
+            item["action"] = "wait"
+            item["queue_role"] = "alt_if_lost"
+            item["alt_for"] = primary.get("player_id")
+            item["package_note"] = f"Plan B si se va {primary_name}"
+            item["urgency"] = "medium"
+            prefix = f"Plan B si se va {primary_name}"
+            item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
+        else:
+            item["action"] = "wait"
+            item["queue_role"] = "do_not_stack"
+            item["alt_for"] = primary.get("player_id") if primary else None
+            item["package_note"] = "No acumular con el paquete de hoy"
+            item["urgency"] = "low"
+            prefix = "No acumular con el paquete de hoy"
+            item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
+        demoted.append(item)
+
+    # Re-rank tras demote
+    for item in plan:
+        role = item.get("queue_role")
+        if role == "primary":
+            item["_queue_rank"] = 10_000 + int(item.get("priority_score") or 0)
+        elif role == "secondary":
+            item["_queue_rank"] = 9_000 + int(item.get("priority_score") or 0)
+        elif role == "alt_if_lost":
+            item["_queue_rank"] = 700 + int(item.get("priority_score") or 0)
+        elif role == "do_not_stack":
+            item["_queue_rank"] = 550 + int(item.get("priority_score") or 0) // 2
+
+    plan.sort(
+        key=lambda x: (
+            -int(x.get("_queue_rank") or 0),
+            -int(x.get("priority_score") or 0),
+        )
+    )
 
     capped: list[dict[str, Any]] = []
     per_action: dict[str, int] = {}
     limits = {
-        "buy_now": 6,
+        "buy_now": 2,  # paquete: primary + secondary
         "clause_bid": 4,
-        "wait": 5,
+        "wait": 8,  # alts + waits del día
         "avoid": 3,
         "sell": 5,
         "scout": 3,
     }
-    # Como mucho 2 waits de pipeline (libres fuera del mercado de hoy)
     max_pipeline_waits = 2
+    max_alt_waits = 3
+    max_stack_waits = 2
     pipeline_waits = 0
-    # Tope global = suma de límites por acción (sin cortar a 12 artificialmente)
+    alt_waits = 0
+    stack_waits = 0
     max_total = sum(limits.values())
     used_ids: set[str] = set()
     sim_balance = float(balance) if balance is not None else None
-    covered_pos: set[str] = set()
-
-    def _buy_cost(item: dict[str, Any]) -> float:
-        for key in ("cost", "bid", "puja_recomendada", "price"):
-            if item.get(key) is not None:
-                try:
-                    return float(item[key])
-                except (TypeError, ValueError):
-                    pass
-        return 0.0
-
-    def _can_afford_buy(item: dict[str, Any]) -> bool:
-        nonlocal sim_balance
-        if sim_balance is None:
-            return True
-        cost = _buy_cost(item)
-        if cost > sim_balance:
-            return False
-        pos = item.get("position")
-        # Ya cubrimos esa carencia en la cola: no apilar más buy_now de la misma línea
-        if pos and pos in covered_pos:
-            return False
-        others = [
-            float(g.get("cost") or 0)
-            for g in (funding_info or {}).get("all_gap_costs")
-            or (funding_info or {}).get("gap_costs")
-            or []
-            if g.get("position") not in covered_pos
-            and g.get("position") != pos
-        ]
-        others.sort(reverse=True)
-        other_min = sum(others[:3]) if others else 0.0
-        residual = sim_balance - cost
-        if other_min <= 0:
-            return True
-        if residual >= other_min * 0.85:
-            return True
-        if not covered_pos and (item.get("urgency") == "high" or item.get("fills_structural")):
-            return residual >= 0
-        return False
 
     def _append(item: dict[str, Any]) -> bool:
-        nonlocal sim_balance, pipeline_waits
+        nonlocal sim_balance, pipeline_waits, alt_waits, stack_waits
         a = item.get("action") or ""
         pid = str(item.get("player_id") or "")
+        role = item.get("queue_role")
         if pid and pid in used_ids:
             return False
         if per_action.get(a, 0) >= limits.get(a, 3):
             return False
-        if a == "buy_now" and not _can_afford_buy(item):
+        if a == "buy_now" and role not in ("primary", "secondary"):
             return False
-        if a == "wait" and not (
-            item.get("on_daily_market") or item.get("seller") == "market"
-        ):
-            if pipeline_waits >= max_pipeline_waits:
+        if a == "buy_now" and sim_balance is not None:
+            cost = _item_buy_cost(item)
+            if cost > sim_balance:
                 return False
-            pipeline_waits += 1
+        if a == "wait":
+            if role == "alt_if_lost":
+                if alt_waits >= max_alt_waits:
+                    return False
+                alt_waits += 1
+            elif role == "do_not_stack":
+                if stack_waits >= max_stack_waits:
+                    return False
+                stack_waits += 1
+            elif not _is_daily_market_item(item):
+                if pipeline_waits >= max_pipeline_waits:
+                    return False
+                pipeline_waits += 1
         if len(capped) >= max_total:
             return False
         per_action[a] = per_action.get(a, 0) + 1
         if pid:
             used_ids.add(pid)
         if a == "buy_now" and sim_balance is not None:
-            sim_balance = max(0.0, sim_balance - _buy_cost(item))
-            if item.get("position"):
-                covered_pos.add(item["position"])
+            sim_balance = max(0.0, sim_balance - _item_buy_cost(item))
         clean = {k: v for k, v in item.items() if k != "_queue_rank"}
         capped.append(clean)
         return True
 
-    for item in reserved:
-        if not _append(item):
-            if len(capped) >= max_total:
-                break
-
+    # Paquete → plan B / no acumular → resto (cláusulas, waits genéricos…)
     for item in plan:
+        if item.get("queue_role") in ("primary", "secondary"):
+            _append(item)
+    for item in plan:
+        if item.get("queue_role") in ("alt_if_lost", "do_not_stack"):
+            _append(item)
+    for item in plan:
+        if item.get("queue_role") in ("primary", "secondary", "alt_if_lost", "do_not_stack"):
+            continue
         if len(capped) >= max_total:
             break
         _append(item)
 
-    return capped
+    spend = 0.0
+    if primary:
+        spend += _item_buy_cost(primary)
+    if secondary:
+        spend += _item_buy_cost(secondary)
+    residual_after = max(0.0, bal - spend)
+
+    daily_package: dict[str, Any] = {
+        "package_id": package_id,
+        "primary": (
+            {
+                "player_id": primary.get("player_id"),
+                "name": primary.get("name"),
+                "position": primary.get("position"),
+                "bid": primary.get("bid") or primary.get("cost"),
+            }
+            if primary
+            else None
+        ),
+        "secondary": (
+            {
+                "player_id": secondary.get("player_id"),
+                "name": secondary.get("name"),
+                "position": secondary.get("position"),
+                "bid": secondary.get("bid") or secondary.get("cost"),
+            }
+            if secondary
+            else None
+        ),
+        "alts": [
+            {
+                "player_id": a.get("player_id"),
+                "name": a.get("name"),
+                "position": a.get("position"),
+                "queue_role": a.get("queue_role"),
+                "alt_for": a.get("alt_for"),
+            }
+            for a in demoted[:6]
+        ],
+        "spend_cap": spend,
+        "cash_reserve": cash_reserve,
+        "residual_after": residual_after,
+        "note": (
+            "Hasta 2 pujas compatibles hoy; el resto es plan B o no acumular."
+            if primary
+            else "Sin compra clara en el mercado de hoy."
+        ),
+    }
+    # funding_info reservado por compatibilidad de firma
+    _ = funding_info
+
+    return capped, daily_package

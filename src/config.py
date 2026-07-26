@@ -104,6 +104,9 @@ SEASON_START_DATE = os.environ.get("SEASON_START_DATE", "2026-08-15").strip()
 MARKET_DAY_SLOTS = 16
 # Días antes de J1 en los que la fase pasa a "ramp"
 RAMP_DAYS_BEFORE_KICKOFF = 7
+# Paquete del día: colchón de caja y tope del fichaje secundario (parche)
+PACKAGE_CASH_RESERVE = 8_000_000
+PACKAGE_SECONDARY_MAX = 2_500_000
 
 HISTORY_RETENTION_DAYS = 30
 CHOLLO_DELTA_MIN = 0.08

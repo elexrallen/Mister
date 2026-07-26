@@ -888,11 +888,12 @@ def build_action_plan(
     rival_upgrades: list[dict[str, Any]] | None = None,
     points_phase: str = "preseason",
     diagnostico_plantilla: dict[str, Any] | None = None,
-) -> list[dict[str, Any]]:
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Fuente de verdad diaria:
     buy_now | clause_bid | sell | avoid | wait | scout
-    ordenado por presupuesto + riesgo (priority_score).
+    Empaquetado: máx. 2 buy_now compatibles + plan B.
+    Devuelve (action_plan, daily_package).
     """
     plan: list[dict[str, Any]] = []
     price_series = price_series or {}
@@ -1040,9 +1041,11 @@ def build_action_plan(
             prio_i = None
         if prio_i is not None:
             if crowds_out:
-                prio_i -= 35
+                prio_i -= 55
+                if cost >= 8_000_000:
+                    prio_i -= 20
             elif leaves_budget:
-                prio_i += 12
+                prio_i += 18
             if fills_cov:
                 prio_i += 18
             if on_daily and fills_cov:
@@ -1430,7 +1433,7 @@ def build_payload() -> dict[str, Any]:
     recommendations: list[dict[str, Any]] = []
     squad_notes: list[dict[str, Any]] = []
 
-    action_plan = build_action_plan(
+    action_plan, daily_package = build_action_plan(
         me,
         diagnosis,
         opportunities,
@@ -1578,6 +1581,7 @@ def build_payload() -> dict[str, Any]:
             "gaps": funding_info.get("gap_costs") or [],
             "positions": funding_info.get("positions") or [],
         },
+        "daily_package": daily_package,
         "action_plan": action_plan,
         "rival_upgrades": rival_upgrades,
         "market_opportunities": opportunities,

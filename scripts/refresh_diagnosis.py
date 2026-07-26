@@ -82,7 +82,7 @@ def main() -> None:
         top_n=3,
     )
 
-    action_plan = build_action_plan(
+    action_plan, daily_package = build_action_plan(
         me,
         diagnosis,
         opportunities,
@@ -99,6 +99,7 @@ def main() -> None:
     data["diagnostico_plantilla"] = plant
     data["market_opportunities"] = opportunities
     data["action_plan"] = action_plan
+    data["daily_package"] = daily_package
     data["funding_plan"] = {
         "target": funding.get("funding_target"),
         "shortfall": funding.get("funding_shortfall"),
@@ -182,6 +183,8 @@ def main() -> None:
     sells = [a for a in action_plan if a.get("action") == "sell"]
     covered_waits = [a for a in waits if a.get("line_already_covered")]
     gap_buys = [a for a in buys if a.get("fills_coverage_gap")]
+    prim = (daily_package or {}).get("primary") or {}
+    sec = (daily_package or {}).get("secondary") or {}
     print(
         f"OK phase={competition_phase} days_to_j1={comp.get('days_to_kickoff')} "
         f"lines_ok={plant.get('lines_ok')} depth_gaps={plant.get('depth_gaps')} "
@@ -191,13 +194,23 @@ def main() -> None:
         f"covered_waits={len(covered_waits)} sells={len(sells)} "
         f"FW_starters={fw.get('starters_real', fw.get('starters'))}"
     )
+    print(
+        f"  package primary={prim.get('name')} secondary={sec.get('name')} "
+        f"spend={daily_package.get('spend_cap')} residual={daily_package.get('residual_after')}"
+    )
     for a in buys[:12]:
         print(
-            f"  buy {a.get('name')} [{a.get('position')}] "
+            f"  buy [{a.get('queue_role')}] {a.get('name')} [{a.get('position')}] "
             f"cov={a.get('position_coverage')} gap={a.get('fills_coverage_gap')} "
-            f"upg={a.get('is_upgrade')} daily={a.get('on_daily_market')} "
-            f"urg={a.get('urgency')} cost={a.get('cost') or a.get('bid')}"
+            f"daily={a.get('on_daily_market')} urg={a.get('urgency')} "
+            f"cost={a.get('cost') or a.get('bid')}"
         )
+    for a in waits:
+        if a.get("queue_role") in ("alt_if_lost", "do_not_stack"):
+            print(
+                f"  {a.get('queue_role')} {a.get('name')} [{a.get('position')}] "
+                f"{(a.get('why') or '')[:90]}"
+            )
     for a in covered_waits[:8]:
         print(
             f"  wait-covered {a.get('name')} [{a.get('position')}] "

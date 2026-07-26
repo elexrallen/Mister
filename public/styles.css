@@ -439,6 +439,46 @@ footer,
   color: #94a3b8;
 }
 
+.queue-package-hint {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(45, 212, 191, 0.28);
+  background: rgba(45, 212, 191, 0.08);
+  font-size: 0.8rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.queue-package-hint strong {
+  color: #5eead4;
+  font-weight: 600;
+}
+
+.queue-section {
+  margin-top: 0.75rem;
+}
+
+.queue-section:first-of-type {
+  margin-top: 0.35rem;
+}
+
+.queue-section-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.queue-package-note {
+  margin: 0.15rem 0 0.25rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #5eead4;
+}
+
 .queue-expand-btn {
   display: block;
   width: 100%;
