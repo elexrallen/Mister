@@ -88,12 +88,29 @@ MIN_GK = 2
 MIN_DF = 4
 MIN_MF = 4
 MIN_FW = 2
+# Plantilla objetivo ~15 con alternativas por línea
+IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
+# Titulares reales mínimos por línea (resto = banquillo usable)
+STARTERS_TARGET = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
 LINEUP_PROB_TITULAR = 0.70
 LINEUP_PROB_REGULAR = 0.45
 LINEUP_PROB_LOW = 0.40
 # Minutos acumulados en últimos ~5 partidos (FotMob) bajo los cuales cuenta como "juega poco"
 MINUTES_RECENT_LOW = 90
 
+# Campeonato / pretemporada
+SEASON_START_DATE = os.environ.get("SEASON_START_DATE", "2026-08-15").strip()
+# Plazas típicas del mercado diario (meta UI; el HTML puede traer más/menos)
+MARKET_DAY_SLOTS = 16
+# Días antes de J1 en los que la fase pasa a "ramp"
+RAMP_DAYS_BEFORE_KICKOFF = 7
+
 HISTORY_RETENTION_DAYS = 30
 CHOLLO_DELTA_MIN = 0.08
 TRADING_WINDOW_DAYS = 5
+
+# Pool completo Mister via POST /ajax/sw/players (páginas de 50)
+MISTER_POOL_PAGE_SIZE = 50
+MISTER_POOL_MAX_OFFSET = 2000
+# Techo de filtros value/clause (0 en el filtro = nadie; hay que abrir rango)
+MISTER_POOL_VALUE_CEILING = 100_000_000

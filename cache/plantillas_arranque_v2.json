@@ -1,0 +1,2161 @@
+{
+  "context": {
+    "balance_m": 27.58,
+    "squad_value_m": 22.84,
+    "capital_m": 50.42,
+    "universe": 504,
+    "pool_size": 502,
+    "free": 371,
+    "owned": 131,
+    "current_squad": [
+      {
+        "name": "O. Óskarsson",
+        "pos": "FW",
+        "price_m": 2.5,
+        "sc": 60.0,
+        "lp": 20,
+        "top": false
+      },
+      {
+        "name": "P. Aubameyang",
+        "pos": "FW",
+        "price_m": 0.96,
+        "sc": 9.0,
+        "lp": 60,
+        "top": false
+      },
+      {
+        "name": "A. Barrenetxea",
+        "pos": "MF",
+        "price_m": 6.74,
+        "sc": 68.4,
+        "lp": 50,
+        "top": false
+      },
+      {
+        "name": "T. Almada",
+        "pos": "MF",
+        "price_m": 0.82,
+        "sc": 34.9,
+        "lp": 0,
+        "top": false
+      },
+      {
+        "name": "J. Guridi",
+        "pos": "MF",
+        "price_m": 0.79,
+        "sc": 30.9,
+        "lp": 50,
+        "top": false
+      },
+      {
+        "name": "A. Almeida",
+        "pos": "MF",
+        "price_m": 0.32,
+        "sc": 36.4,
+        "lp": 30,
+        "top": false
+      },
+      {
+        "name": "A. Catena",
+        "pos": "DF",
+        "price_m": 7.25,
+        "sc": 62.4,
+        "lp": 80,
+        "top": false
+      },
+      {
+        "name": "A. Christensen",
+        "pos": "DF",
+        "price_m": 0.58,
+        "sc": 21.5,
+        "lp": 50,
+        "top": false
+      },
+      {
+        "name": "A. Gorosabel",
+        "pos": "DF",
+        "price_m": 0.55,
+        "sc": 26.3,
+        "lp": 0,
+        "top": false
+      },
+      {
+        "name": "U. Egiluz",
+        "pos": "DF",
+        "price_m": 0.16,
+        "sc": 0.0,
+        "lp": 0,
+        "top": false
+      },
+      {
+        "name": "L. Júnior",
+        "pos": "GK",
+        "price_m": 1.49,
+        "sc": 12.8,
+        "lp": 85,
+        "top": false
+      },
+      {
+        "name": "A. Padilla",
+        "pos": "GK",
+        "price_m": 0.16,
+        "sc": 5.2,
+        "lp": 10,
+        "top": false
+      },
+      {
+        "name": "C. Macia",
+        "pos": "MF",
+        "price_m": 0.21,
+        "sc": 14.0,
+        "lp": 50,
+        "top": false
+      },
+      {
+        "name": "U. Vencedor",
+        "pos": "MF",
+        "price_m": 0.16,
+        "sc": 30.8,
+        "lp": 0,
+        "top": false
+      },
+      {
+        "name": "K. Sánchez",
+        "pos": "FW",
+        "price_m": 0.16,
+        "sc": 1.5,
+        "lp": 10,
+        "top": false
+      }
+    ],
+    "dead_weight": [
+      "T. Almada",
+      "A. Gorosabel",
+      "U. Egiluz",
+      "A. Padilla",
+      "C. Macia",
+      "U. Vencedor",
+      "K. Sánchez"
+    ]
+  },
+  "elite_free": [
+    {
+      "name": "Kylian Mbappé",
+      "pos": "FW",
+      "price_m": 24.67,
+      "sc": 94.0,
+      "lp": 90,
+      "top": true,
+      "ff": 7.68
+    },
+    {
+      "name": "Mikel Oyarzabal",
+      "pos": "FW",
+      "price_m": 18.69,
+      "sc": 84.8,
+      "lp": 80,
+      "top": true,
+      "ff": 6.03
+    },
+    {
+      "name": "Lamine Yamal",
+      "pos": "FW",
+      "price_m": 23.97,
+      "sc": 83.8,
+      "lp": 50,
+      "top": true,
+      "ff": 9.07
+    },
+    {
+      "name": "Vinícius Júnior",
+      "pos": "FW",
+      "price_m": 21.43,
+      "sc": 82.4,
+      "lp": 90,
+      "top": true,
+      "ff": 5.94
+    },
+    {
+      "name": "Christantus Uche",
+      "pos": "FW",
+      "price_m": 7.32,
+      "sc": 81.9,
+      "lp": 85,
+      "top": true,
+      "ff": 7.33
+    },
+    {
+      "name": "T. Martínez",
+      "pos": "FW",
+      "price_m": 11.71,
+      "sc": 80.7,
+      "lp": 80,
+      "top": true,
+      "ff": 5.57
+    },
+    {
+      "name": "Germán Valera",
+      "pos": "MF",
+      "price_m": 12.66,
+      "sc": 79.7,
+      "lp": 90,
+      "top": false,
+      "ff": 5.28
+    },
+    {
+      "name": "Gerard Moreno",
+      "pos": "FW",
+      "price_m": 13.87,
+      "sc": 79.0,
+      "lp": 40,
+      "top": true,
+      "ff": 6.64
+    },
+    {
+      "name": "Georges Mikautadze",
+      "pos": "FW",
+      "price_m": 13.54,
+      "sc": 77.3,
+      "lp": 85,
+      "top": true,
+      "ff": 5.66
+    },
+    {
+      "name": "Damián Rodríguez",
+      "pos": "MF",
+      "price_m": 0.16,
+      "sc": 77.0,
+      "lp": 50,
+      "top": false,
+      "ff": null
+    },
+    {
+      "name": "Unai Marrero",
+      "pos": "GK",
+      "price_m": 0.2,
+      "sc": 76.5,
+      "lp": 10,
+      "top": true,
+      "ff": 8.0
+    },
+    {
+      "name": "Jorge de Frutos",
+      "pos": "MF",
+      "price_m": 12.03,
+      "sc": 75.8,
+      "lp": 85,
+      "top": false,
+      "ff": 5.22
+    },
+    {
+      "name": "J. Garcia",
+      "pos": "GK",
+      "price_m": 18.14,
+      "sc": 75.3,
+      "lp": 50,
+      "top": true,
+      "ff": 6.6
+    },
+    {
+      "name": "Alberto Moleiro",
+      "pos": "MF",
+      "price_m": 13.3,
+      "sc": 74.2,
+      "lp": 85,
+      "top": false,
+      "ff": 5.19
+    },
+    {
+      "name": "Nicolas Pépé",
+      "pos": "FW",
+      "price_m": 14.46,
+      "sc": 73.9,
+      "lp": 85,
+      "top": false,
+      "ff": 5.14
+    },
+    {
+      "name": "Marko Dmitrović",
+      "pos": "GK",
+      "price_m": 9.86,
+      "sc": 73.4,
+      "lp": 95,
+      "top": false,
+      "ff": 4.97
+    }
+  ],
+  "clause_roi": [
+    {
+      "name": "Ter Stegen",
+      "pos": "GK",
+      "owner": "Jony",
+      "clause_m": 1.0,
+      "sc": 73.4,
+      "lp": 50,
+      "top": false,
+      "roi": 73.4
+    },
+    {
+      "name": "Wojciech Szczęsny",
+      "pos": "GK",
+      "owner": "Jesus Rodriguez Crespo",
+      "clause_m": 1.0,
+      "sc": 49.7,
+      "lp": 50,
+      "top": false,
+      "roi": 49.7
+    },
+    {
+      "name": "Mario Martín",
+      "pos": "MF",
+      "owner": "Jesus Rodriguez Crespo",
+      "clause_m": 1.05,
+      "sc": 45.9,
+      "lp": 50,
+      "top": false,
+      "roi": 43.8
+    },
+    {
+      "name": "Julio Díaz",
+      "pos": "DF",
+      "owner": "Jony",
+      "clause_m": 1.0,
+      "sc": 43.8,
+      "lp": 50,
+      "top": false,
+      "roi": 43.8
+    },
+    {
+      "name": "Robert Navarro",
+      "pos": "MF",
+      "owner": "Jponce13",
+      "clause_m": 1.11,
+      "sc": 48.3,
+      "lp": 50,
+      "top": false,
+      "roi": 43.5
+    },
+    {
+      "name": "Abde Rebbach",
+      "pos": "MF",
+      "owner": "Jony",
+      "clause_m": 1.12,
+      "sc": 46.7,
+      "lp": 50,
+      "top": false,
+      "roi": 41.5
+    },
+    {
+      "name": "Moi Gómez",
+      "pos": "MF",
+      "owner": "Francisco",
+      "clause_m": 1.0,
+      "sc": 40.5,
+      "lp": 50,
+      "top": false,
+      "roi": 40.5
+    },
+    {
+      "name": "Youssef Enríquez",
+      "pos": "DF",
+      "owner": "Manuel",
+      "clause_m": 1.0,
+      "sc": 38.1,
+      "lp": 50,
+      "top": false,
+      "roi": 38.1
+    },
+    {
+      "name": "Pablo Ibáñez",
+      "pos": "MF",
+      "owner": "Adriano de Dios Muñoz",
+      "clause_m": 1.2,
+      "sc": 45.5,
+      "lp": 50,
+      "top": false,
+      "roi": 38.0
+    },
+    {
+      "name": "Iker Muñoz",
+      "pos": "MF",
+      "owner": "Jponce13",
+      "clause_m": 1.0,
+      "sc": 36.9,
+      "lp": 50,
+      "top": false,
+      "roi": 36.9
+    },
+    {
+      "name": "Victor Chust",
+      "pos": "DF",
+      "owner": "Jesus Rodriguez Crespo",
+      "clause_m": 1.28,
+      "sc": 45.8,
+      "lp": 50,
+      "top": false,
+      "roi": 35.9
+    },
+    {
+      "name": "Tyrhys Dolan",
+      "pos": "MF",
+      "owner": "Francisco",
+      "clause_m": 1.35,
+      "sc": 47.6,
+      "lp": 50,
+      "top": false,
+      "roi": 35.3
+    }
+  ],
+  "plans": [
+    {
+      "name": "1 - Dream asequible (Oyarzabal + Uche)",
+      "tag": "Mejor techo sin hipoteca",
+      "tone": "success",
+      "thesis": "Con 27.6 M€ de caja y 371 libres del pool, el mejor equilibrio es Oyarzabal (TOP ~18.7 M€, 80% alineacion) + Uche (TOP ~7.3 M€, 85%). Mantienes Catena / Junior / Barrenetxea y rellenas con clausulas ROI y titulares baratos.",
+      "why": "2 TOP reales sin gastar Mbappe/Yamal. Colchon para mercado diario o clausulas.",
+      "budget_m": 33.2,
+      "spent_m": 33.25,
+      "cash_after_m": -0.05,
+      "sell_cash_m": 5.62,
+      "sells": [
+        "O. Óskarsson",
+        "T. Almada",
+        "A. Almeida",
+        "A. Christensen",
+        "A. Gorosabel",
+        "U. Egiluz",
+        "A. Padilla",
+        "C. Macia",
+        "U. Vencedor",
+        "K. Sánchez"
+      ],
+      "tops": 2,
+      "starters70": 8,
+      "xi_score": 652.3,
+      "counts": {
+        "GK": 2,
+        "DF": 4,
+        "MF": 3,
+        "FW": 3
+      },
+      "xi": [
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "68248",
+          "name": "Oso",
+          "pos": "DF",
+          "cost": 2600000.0,
+          "sc": 69.0,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "68498",
+          "name": "Zaid Romero",
+          "pos": "DF",
+          "cost": 2837000.0,
+          "sc": 62.4,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15342",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 68.4,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "64524",
+          "name": "Martim Neto",
+          "pos": "MF",
+          "cost": 380000.0,
+          "sc": 48.9,
+          "lp": 70,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "5916",
+          "name": "J. Guridi",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 30.9,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "564",
+          "name": "Mikel Oyarzabal",
+          "pos": "FW",
+          "cost": 18688000.0,
+          "sc": 84.8,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "58383",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost": 7318000.0,
+          "sc": 81.9,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "squad": [
+        {
+          "id": "68248",
+          "name": "Oso",
+          "pos": "DF",
+          "cost": 2600000.0,
+          "sc": 69.0,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "68498",
+          "name": "Zaid Romero",
+          "pos": "DF",
+          "cost": 2837000.0,
+          "sc": 62.4,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "564",
+          "name": "Mikel Oyarzabal",
+          "pos": "FW",
+          "cost": 18688000.0,
+          "sc": 84.8,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "58383",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost": 7318000.0,
+          "sc": 81.9,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "59581",
+          "name": "L. Júnior",
+          "pos": "GK",
+          "cost": 0.0,
+          "sc": 12.8,
+          "lp": 85,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "15342",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 68.4,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "64524",
+          "name": "Martim Neto",
+          "pos": "MF",
+          "cost": 380000.0,
+          "sc": 48.9,
+          "lp": 70,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "5916",
+          "name": "J. Guridi",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 30.9,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "moves": [
+        {
+          "action": "Vender",
+          "name": "O. Óskarsson",
+          "pos": "FW",
+          "cost_m": 2.5,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "T. Almada",
+          "pos": "MF",
+          "cost_m": 0.82,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Almeida",
+          "pos": "MF",
+          "cost_m": 0.32,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Christensen",
+          "pos": "DF",
+          "cost_m": 0.58,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Gorosabel",
+          "pos": "DF",
+          "cost_m": 0.55,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Egiluz",
+          "pos": "DF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Padilla",
+          "pos": "GK",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "C. Macia",
+          "pos": "MF",
+          "cost_m": 0.21,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Vencedor",
+          "pos": "MF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "K. Sánchez",
+          "pos": "FW",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Mikel Oyarzabal",
+          "pos": "FW",
+          "cost_m": 18.69,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Fichar",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost_m": 7.32,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Clausula",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost_m": 1.0,
+          "detail": "clausula · Jony",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Oso",
+          "pos": "DF",
+          "cost_m": 2.6,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Zaid Romero",
+          "pos": "DF",
+          "cost_m": 2.84,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost_m": 0.43,
+          "detail": "relleno titular",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Martim Neto",
+          "pos": "MF",
+          "cost_m": 0.38,
+          "detail": "relleno titular",
+          "top": false
+        }
+      ]
+    },
+    {
+      "name": "2 - Saqueo estrellas (vender Barrenetxea)",
+      "tag": "Maximo techo de puntos",
+      "tone": "warning",
+      "thesis": "Vendes Barrenetxea (~6.74 M€) + lastre y llegas a ~39.03 M€. Objetivo: Vinicius + Uche (o Mbappe + Uche), cracks libres que hoy nadie tiene en la liga.",
+      "why": "Mayor XI score esperado. Riesgo: caja fina y dependes de relleno barato titular.",
+      "budget_m": 39.03,
+      "spent_m": 38.96,
+      "cash_after_m": 0.07,
+      "sell_cash_m": 11.45,
+      "sells": [
+        "T. Almada",
+        "A. Gorosabel",
+        "U. Egiluz",
+        "A. Padilla",
+        "C. Macia",
+        "U. Vencedor",
+        "K. Sánchez",
+        "A. Barrenetxea",
+        "O. Óskarsson"
+      ],
+      "tops": 2,
+      "starters70": 9,
+      "xi_score": 607.0,
+      "counts": {
+        "GK": 2,
+        "DF": 4,
+        "MF": 3,
+        "FW": 3
+      },
+      "xi": [
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "68248",
+          "name": "Oso",
+          "pos": "DF",
+          "cost": 2600000.0,
+          "sc": 69.0,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "68498",
+          "name": "Zaid Romero",
+          "pos": "DF",
+          "cost": 2837000.0,
+          "sc": 62.4,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "52372",
+          "name": "Javi Guerra",
+          "pos": "MF",
+          "cost": 3107000.0,
+          "sc": 63.9,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "5916",
+          "name": "J. Guridi",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 30.9,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "71002",
+          "name": "Ramón Enríquez",
+          "pos": "MF",
+          "cost": 234000.0,
+          "sc": 10.5,
+          "lp": 70,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "12900",
+          "name": "Vinícius Júnior",
+          "pos": "FW",
+          "cost": 21435000.0,
+          "sc": 82.4,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "58383",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost": 7318000.0,
+          "sc": 81.9,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "squad": [
+        {
+          "id": "68248",
+          "name": "Oso",
+          "pos": "DF",
+          "cost": 2600000.0,
+          "sc": 69.0,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "68498",
+          "name": "Zaid Romero",
+          "pos": "DF",
+          "cost": 2837000.0,
+          "sc": 62.4,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "12900",
+          "name": "Vinícius Júnior",
+          "pos": "FW",
+          "cost": 21435000.0,
+          "sc": 82.4,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "58383",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost": 7318000.0,
+          "sc": 81.9,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "59581",
+          "name": "L. Júnior",
+          "pos": "GK",
+          "cost": 0.0,
+          "sc": 12.8,
+          "lp": 85,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "52372",
+          "name": "Javi Guerra",
+          "pos": "MF",
+          "cost": 3107000.0,
+          "sc": 63.9,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "5916",
+          "name": "J. Guridi",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 30.9,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "71002",
+          "name": "Ramón Enríquez",
+          "pos": "MF",
+          "cost": 234000.0,
+          "sc": 10.5,
+          "lp": 70,
+          "src": "free",
+          "owner": null,
+          "top": false
+        }
+      ],
+      "moves": [
+        {
+          "action": "Vender",
+          "name": "T. Almada",
+          "pos": "MF",
+          "cost_m": 0.82,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Gorosabel",
+          "pos": "DF",
+          "cost_m": 0.55,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Egiluz",
+          "pos": "DF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Padilla",
+          "pos": "GK",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "C. Macia",
+          "pos": "MF",
+          "cost_m": 0.21,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Vencedor",
+          "pos": "MF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "K. Sánchez",
+          "pos": "FW",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost_m": 6.74,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "O. Óskarsson",
+          "pos": "FW",
+          "cost_m": 2.5,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Vinícius Júnior",
+          "pos": "FW",
+          "cost_m": 21.43,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Fichar",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost_m": 7.32,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Clausula",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost_m": 1.0,
+          "detail": "clausula · Jony",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Oso",
+          "pos": "DF",
+          "cost_m": 2.6,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Zaid Romero",
+          "pos": "DF",
+          "cost_m": 2.84,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Javi Guerra",
+          "pos": "MF",
+          "cost_m": 3.11,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost_m": 0.43,
+          "detail": "relleno titular",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Ramón Enríquez",
+          "pos": "MF",
+          "cost_m": 0.23,
+          "detail": "relleno titular",
+          "top": false
+        }
+      ]
+    },
+    {
+      "name": "3 - Raid 1 mega (Kylian Mbappé)",
+      "tag": "Apuesta a un crack libre",
+      "tone": "info",
+      "thesis": "Un solo golpe al libre mas productivo que cabe (~24.67 M€). Mantienes Barrenetxea/Catena y rellenas con titulares baratos del pool.",
+      "why": "Simple de ejecutar. Si el crack falla, el plan se cae mas que el equilibrado.",
+      "budget_m": 32.3,
+      "spent_m": 32.3,
+      "cash_after_m": -0.0,
+      "sell_cash_m": 4.71,
+      "sells": [
+        "T. Almada",
+        "A. Gorosabel",
+        "U. Egiluz",
+        "A. Padilla",
+        "C. Macia",
+        "U. Vencedor",
+        "K. Sánchez",
+        "O. Óskarsson"
+      ],
+      "tops": 1,
+      "starters70": 9,
+      "xi_score": 650.9,
+      "counts": {
+        "GK": 2,
+        "DF": 4,
+        "MF": 5,
+        "FW": 3
+      },
+      "xi": [
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "56925",
+          "name": "J. Aramburu",
+          "pos": "DF",
+          "cost": 1897000.0,
+          "sc": 55.0,
+          "lp": 80,
+          "src": "market",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "29163",
+          "name": "Omar El Hilali",
+          "pos": "DF",
+          "cost": 920000.0,
+          "sc": 54.1,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15342",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 68.4,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "55057",
+          "name": "Djibril Sow",
+          "pos": "MF",
+          "cost": 1184000.0,
+          "sc": 60.5,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "56628",
+          "name": "Lucien Agoumé",
+          "pos": "MF",
+          "cost": 904000.0,
+          "sc": 59.1,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "58954",
+          "name": "Kylian Mbappé",
+          "pos": "FW",
+          "cost": 24670000.0,
+          "sc": 94.0,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "58992",
+          "name": "Á. Djaló",
+          "pos": "FW",
+          "cost": 232000.0,
+          "sc": 53.8,
+          "lp": 10,
+          "src": "market",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "squad": [
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "56925",
+          "name": "J. Aramburu",
+          "pos": "DF",
+          "cost": 1897000.0,
+          "sc": 55.0,
+          "lp": 80,
+          "src": "market",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "29163",
+          "name": "Omar El Hilali",
+          "pos": "DF",
+          "cost": 920000.0,
+          "sc": 54.1,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "58954",
+          "name": "Kylian Mbappé",
+          "pos": "FW",
+          "cost": 24670000.0,
+          "sc": 94.0,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "58992",
+          "name": "Á. Djaló",
+          "pos": "FW",
+          "cost": 232000.0,
+          "sc": 53.8,
+          "lp": 10,
+          "src": "market",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "59581",
+          "name": "L. Júnior",
+          "pos": "GK",
+          "cost": 0.0,
+          "sc": 12.8,
+          "lp": 85,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "15342",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 68.4,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "55057",
+          "name": "Djibril Sow",
+          "pos": "MF",
+          "cost": 1184000.0,
+          "sc": 60.5,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "56628",
+          "name": "Lucien Agoumé",
+          "pos": "MF",
+          "cost": 904000.0,
+          "sc": 59.1,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "52117",
+          "name": "Jon Ander Olasagasti",
+          "pos": "MF",
+          "cost": 1064000.0,
+          "sc": 58.0,
+          "lp": 90,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "5916",
+          "name": "J. Guridi",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 30.9,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "moves": [
+        {
+          "action": "Vender",
+          "name": "T. Almada",
+          "pos": "MF",
+          "cost_m": 0.82,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Gorosabel",
+          "pos": "DF",
+          "cost_m": 0.55,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Egiluz",
+          "pos": "DF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Padilla",
+          "pos": "GK",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "C. Macia",
+          "pos": "MF",
+          "cost_m": 0.21,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Vencedor",
+          "pos": "MF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "K. Sánchez",
+          "pos": "FW",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "O. Óskarsson",
+          "pos": "FW",
+          "cost_m": 2.5,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Kylian Mbappé",
+          "pos": "FW",
+          "cost_m": 24.67,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Clausula",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost_m": 1.0,
+          "detail": "clausula · Jony",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost_m": 0.43,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "J. Aramburu",
+          "pos": "DF",
+          "cost_m": 1.9,
+          "detail": "mercado",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Omar El Hilali",
+          "pos": "DF",
+          "cost_m": 0.92,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Djibril Sow",
+          "pos": "MF",
+          "cost_m": 1.18,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Lucien Agoumé",
+          "pos": "MF",
+          "cost_m": 0.9,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Jon Ander Olasagasti",
+          "pos": "MF",
+          "cost_m": 1.06,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Á. Djaló",
+          "pos": "FW",
+          "cost_m": 0.23,
+          "detail": "cupo",
+          "top": false
+        }
+      ]
+    },
+    {
+      "name": "4 - Valor / ROI (TOP baratos + clausulas 1M)",
+      "tag": "Mas puntos por millon",
+      "tone": "neutral",
+      "thesis": "Ignora Mbappe/Yamal y caza produccion barata: Uche + Mikautadze + MF titular del pool, mas clausulas ~1 M€. Conservas flexibilidad para el mercado diario.",
+      "why": "Menos techo absoluto, mas profundidad y caja para reaccionar.",
+      "budget_m": 29.8,
+      "spent_m": 29.69,
+      "cash_after_m": 0.11,
+      "sell_cash_m": 2.22,
+      "sells": [
+        "T. Almada",
+        "A. Gorosabel",
+        "U. Egiluz",
+        "A. Padilla",
+        "C. Macia",
+        "U. Vencedor",
+        "K. Sánchez"
+      ],
+      "tops": 2,
+      "starters70": 9,
+      "xi_score": 715.0,
+      "counts": {
+        "GK": 2,
+        "DF": 5,
+        "MF": 4,
+        "FW": 4
+      },
+      "xi": [
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "68248",
+          "name": "Oso",
+          "pos": "DF",
+          "cost": 2600000.0,
+          "sc": 69.0,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "56925",
+          "name": "J. Aramburu",
+          "pos": "DF",
+          "cost": 1897000.0,
+          "sc": 55.0,
+          "lp": 80,
+          "src": "market",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15342",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 68.4,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "55057",
+          "name": "Djibril Sow",
+          "pos": "MF",
+          "cost": 1184000.0,
+          "sc": 60.5,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "58125",
+          "name": "Mario Martín",
+          "pos": "MF",
+          "cost": 1047000.0,
+          "sc": 45.9,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jesus Rodriguez Crespo",
+          "top": false
+        },
+        {
+          "id": "58383",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost": 7318000.0,
+          "sc": 81.9,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "65704",
+          "name": "Georges Mikautadze",
+          "pos": "FW",
+          "cost": 13536000.0,
+          "sc": 77.3,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "59789",
+          "name": "O. Óskarsson",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 60.0,
+          "lp": 20,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "squad": [
+        {
+          "id": "68248",
+          "name": "Oso",
+          "pos": "DF",
+          "cost": 2600000.0,
+          "sc": 69.0,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "15756",
+          "name": "A. Catena",
+          "pos": "DF",
+          "cost": 0.0,
+          "sc": 62.4,
+          "lp": 80,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "20131",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost": 427000.0,
+          "sc": 61.2,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "56925",
+          "name": "J. Aramburu",
+          "pos": "DF",
+          "cost": 1897000.0,
+          "sc": 55.0,
+          "lp": 80,
+          "src": "market",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "64200",
+          "name": "Jeremy Toljan",
+          "pos": "DF",
+          "cost": 684000.0,
+          "sc": 53.7,
+          "lp": 80,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "58383",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost": 7318000.0,
+          "sc": 81.9,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "65704",
+          "name": "Georges Mikautadze",
+          "pos": "FW",
+          "cost": 13536000.0,
+          "sc": 77.3,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": true
+        },
+        {
+          "id": "59789",
+          "name": "O. Óskarsson",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 60.0,
+          "lp": 20,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "36410",
+          "name": "P. Aubameyang",
+          "pos": "FW",
+          "cost": 0.0,
+          "sc": 9.0,
+          "lp": 60,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "58",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost": 1000000.0,
+          "sc": 73.4,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jony",
+          "top": false
+        },
+        {
+          "id": "59581",
+          "name": "L. Júnior",
+          "pos": "GK",
+          "cost": 0.0,
+          "sc": 12.8,
+          "lp": 85,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "15342",
+          "name": "A. Barrenetxea",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 68.4,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        },
+        {
+          "id": "55057",
+          "name": "Djibril Sow",
+          "pos": "MF",
+          "cost": 1184000.0,
+          "sc": 60.5,
+          "lp": 85,
+          "src": "free",
+          "owner": null,
+          "top": false
+        },
+        {
+          "id": "58125",
+          "name": "Mario Martín",
+          "pos": "MF",
+          "cost": 1047000.0,
+          "sc": 45.9,
+          "lp": 50,
+          "src": "rival",
+          "owner": "Jesus Rodriguez Crespo",
+          "top": false
+        },
+        {
+          "id": "5916",
+          "name": "J. Guridi",
+          "pos": "MF",
+          "cost": 0.0,
+          "sc": 30.9,
+          "lp": 50,
+          "src": "keep",
+          "owner": "yo",
+          "top": false
+        }
+      ],
+      "moves": [
+        {
+          "action": "Vender",
+          "name": "T. Almada",
+          "pos": "MF",
+          "cost_m": 0.82,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Gorosabel",
+          "pos": "DF",
+          "cost_m": 0.55,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Egiluz",
+          "pos": "DF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "A. Padilla",
+          "pos": "GK",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "C. Macia",
+          "pos": "MF",
+          "cost_m": 0.21,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "U. Vencedor",
+          "pos": "MF",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Vender",
+          "name": "K. Sánchez",
+          "pos": "FW",
+          "cost_m": 0.16,
+          "detail": "libera caja",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Christantus Uche",
+          "pos": "FW",
+          "cost_m": 7.32,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Fichar",
+          "name": "Georges Mikautadze",
+          "pos": "FW",
+          "cost_m": 13.54,
+          "detail": "libre",
+          "top": true
+        },
+        {
+          "action": "Clausula",
+          "name": "Ter Stegen",
+          "pos": "GK",
+          "cost_m": 1.0,
+          "detail": "clausula · Jony",
+          "top": false
+        },
+        {
+          "action": "Clausula",
+          "name": "Mario Martín",
+          "pos": "MF",
+          "cost_m": 1.05,
+          "detail": "clausula · Jesus Rodriguez Crespo",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Manu Sánchez",
+          "pos": "DF",
+          "cost_m": 0.43,
+          "detail": "libre",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "J. Aramburu",
+          "pos": "DF",
+          "cost_m": 1.9,
+          "detail": "mercado",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Oso",
+          "pos": "DF",
+          "cost_m": 2.6,
+          "detail": "relleno titular",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Djibril Sow",
+          "pos": "MF",
+          "cost_m": 1.18,
+          "detail": "relleno titular",
+          "top": false
+        },
+        {
+          "action": "Fichar",
+          "name": "Jeremy Toljan",
+          "pos": "DF",
+          "cost_m": 0.68,
+          "detail": "relleno titular",
+          "top": false
+        }
+      ]
+    }
+  ]
+}

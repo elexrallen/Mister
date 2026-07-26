@@ -70,6 +70,28 @@
   </header>
 
   <main class="relative max-w-6xl mx-auto px-4 space-y-5 md:space-y-8 pb-8">
+    <section id="campaign-banner" class="campaign-banner" aria-label="Campeonato" hidden>
+      <div class="campaign-main">
+        <p class="campaign-kicker">Pretemporada · objetivo plantilla 15</p>
+        <p id="campaign-countdown" class="campaign-countdown">J1 en — días</p>
+        <p id="campaign-phase" class="campaign-phase">—</p>
+      </div>
+      <div class="campaign-stats">
+        <div>
+          <span class="campaign-stat-label">Líneas OK</span>
+          <span id="campaign-lines" class="campaign-stat-value">—</span>
+        </div>
+        <div>
+          <span class="campaign-stat-label">Huecos profundidad</span>
+          <span id="campaign-gaps" class="campaign-stat-value">—</span>
+        </div>
+        <div>
+          <span class="campaign-stat-label">Mercado hoy</span>
+          <span id="campaign-market" class="campaign-stat-value">—</span>
+        </div>
+      </div>
+    </section>
+
     <section aria-label="Indicadores clave" class="kpi-strip">
       <article class="kpi-card">
         <p class="kpi-label">Saldo</p>
@@ -92,7 +114,7 @@
     <section aria-labelledby="actions-title" class="panel panel-flush">
       <div class="panel-head">
         <h2 id="actions-title" class="section-title">Cola del día</h2>
-        <p class="section-hint">Prioridad de arriba a abajo · empieza por el nº 1</p>
+        <p class="section-hint">Prioridad de arriba a abajo · pujar si cubre hueco · no insistir si ya cubierto</p>
       </div>
       <div id="action-queue" class="action-queue-list" aria-live="polite">
         <p class="text-slate-500 text-sm px-4 py-6">Cargando…</p>
@@ -184,7 +206,7 @@
           <div class="health-head">
             <div>
               <h3 id="health-title" class="font-display text-base md:text-lg text-white">Salud y estructura del equipo</h3>
-              <p class="section-hint">Diagnóstico táctico y financiero según buenas prácticas Fantasy</p>
+              <p class="section-hint">Titulares + alternativas por línea · objetivo 15 (2/5/5/3) para el 15 ago</p>
             </div>
             <div class="health-score" id="health-score" title="Salud de plantilla">—</div>
           </div>

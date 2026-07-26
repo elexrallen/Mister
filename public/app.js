@@ -394,6 +394,8 @@
     } else if (p.fills_need) {
       chips.push(`<span class="badge badge-duda">Carencia</span>`);
     }
+    const cov = coverageChips(p);
+    if (cov) chips.push(cov);
     if (p.affordable === false) chips.push(`<span class="badge badge-baja">Sin saldo</span>`);
     return chips.length ? chips.join(" ") : `<span class="text-slate-600 text-xs">—</span>`;
   };
@@ -496,6 +498,71 @@
   }
 
   // ---- Render ----
+  function coverageChips(p) {
+    if (!p) return "";
+    const chips = [];
+    if (p.fills_coverage_gap) {
+      chips.push(`<span class="badge badge-alta">Cubre hueco</span>`);
+    } else if (p.is_upgrade) {
+      chips.push(`<span class="badge badge-mint">Upgrade</span>`);
+    } else if (p.line_already_covered) {
+      chips.push(`<span class="badge badge-duda">Ya cubierto</span>`);
+    }
+    if (p.on_daily_market) {
+      chips.push(`<span class="badge badge-titular">Mercado hoy</span>`);
+    }
+    return chips.join(" ");
+  }
+
+  function phaseLabel(phase) {
+    const map = {
+      preseason: "Pretemporada",
+      ramp: "Recta final a J1",
+      active: "Liga en curso",
+    };
+    return map[phase] || phase || "—";
+  }
+
+  function renderCampaign(data) {
+    const banner = document.getElementById("campaign-banner");
+    if (!banner) return;
+    const k = data.kpis || {};
+    const meta = data.meta || {};
+    const days = k.days_to_kickoff ?? meta.days_to_kickoff;
+    const phase = k.competition_phase || meta.competition_phase || "preseason";
+    const season = k.season_start || meta.season_start || "2026-08-15";
+    const linesOk = k.lines_ok;
+    const gaps = k.depth_gaps;
+    const daily = k.daily_market_count;
+    const slots = k.market_day_slots;
+
+    banner.hidden = false;
+    const cd = document.getElementById("campaign-countdown");
+    if (cd) {
+      if (days == null) cd.textContent = `J1 ${season}`;
+      else if (Number(days) > 0) cd.textContent = `J1 en ${days} días (15 ago)`;
+      else if (Number(days) === 0) cd.textContent = `J1 hoy · ${season}`;
+      else cd.textContent = `Liga en curso · arranque ${season}`;
+    }
+    const ph = document.getElementById("campaign-phase");
+    if (ph) {
+      const copy =
+        phase === "active"
+          ? "Prioriza puntos y formaciones de jornada."
+          : "Prepara plantilla para el 15 ago · dobla líneas, no derroches en posiciones ya cubiertas.";
+      ph.textContent = `${phaseLabel(phase)} · ${copy}`;
+    }
+    const linesEl = document.getElementById("campaign-lines");
+    if (linesEl) linesEl.textContent = linesOk != null ? `${linesOk}/4` : "—";
+    const gapsEl = document.getElementById("campaign-gaps");
+    if (gapsEl) gapsEl.textContent = gaps != null ? String(gaps) : "—";
+    const mkt = document.getElementById("campaign-market");
+    if (mkt) {
+      mkt.textContent =
+        daily != null ? (slots != null ? `${daily}/${slots}` : String(daily)) : "—";
+    }
+  }
+
   function renderKpis(data) {
     const k = data.kpis || {};
     document.getElementById("kpi-balance").textContent = formatMoney(k.balance);
@@ -503,6 +570,7 @@
     document.getElementById("kpi-rank").textContent = k.rank != null ? `${k.rank}º` : "—";
     document.getElementById("kpi-free").textContent =
       k.top_free_remaining != null ? String(k.top_free_remaining) : "—";
+    renderCampaign(data);
   }
 
   function renderMeta(data) {
@@ -624,6 +692,7 @@
           riskBadge(a.wait_risk || a.sell_risk),
           budgetBadge(a.budget_fit),
           fundingChip(a),
+          coverageChips(a),
           a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
         ]
           .filter(Boolean)
@@ -649,13 +718,17 @@
         ]
           .filter(Boolean)
           .join("");
+        const muted =
+          a.line_already_covered && !a.is_upgrade && (a.action === "wait" || a.action === "scout");
         const hidden = !expanded && idx >= QUEUE_PREVIEW;
         const topCls = idx < 3 ? " is-top" : "";
         return `<button type="button" class="queue-item ${meta.cls}${topCls}${
-          hidden ? " is-collapsed-extra" : ""
-        }" role="listitem" data-focus-id="${escapeHtml(a.player_id)}" data-focus-tab="${tab}" ${
-          hidden ? "hidden" : ""
-        } aria-label="${escapeHtml(meta.title)} ${escapeHtml(a.name || "")}, prioridad ${idx + 1}">
+          muted ? " is-covered" : ""
+        }${hidden ? " is-collapsed-extra" : ""}" role="listitem" data-focus-id="${escapeHtml(
+          a.player_id
+        )}" data-focus-tab="${tab}" ${hidden ? "hidden" : ""} aria-label="${escapeHtml(
+          meta.title
+        )} ${escapeHtml(a.name || "")}, prioridad ${idx + 1}">
           <span class="queue-rank" aria-hidden="true">${idx + 1}</span>
           <div class="queue-body">
             <div class="queue-primary">
@@ -884,16 +957,45 @@
 
     const lineas = diag.lineas || {};
     const labels = { GK: "Portería", DF: "Defensa", MF: "Medio", FW: "Delantera" };
+    const covBadge = (cov) => {
+      if (cov === "critical") return ["badge-alta", "critical"];
+      if (cov === "thin") return ["badge-media", "thin"];
+      return ["badge-mint", "ok"];
+    };
     linesEl.innerHTML = ["GK", "DF", "MF", "FW"]
       .map((pos) => {
         const L = lineas[pos] || {};
-        const st = L.status || "ok";
-        return `<div class="line-chip status-${st}">
+        const cov = L.coverage || (L.status === "critical" ? "critical" : L.status === "warning" ? "thin" : "ok");
+        const [badgeCls, covKey] = covBadge(cov);
+        const starters = L.starters_real ?? L.starters ?? 0;
+        const starterTgt = L.starters_target ?? { GK: 1, DF: 3, MF: 3, FW: 2 }[pos];
+        const alts = L.alternates || [];
+        const ideal = L.ideal_count ?? { GK: 2, DF: 5, MF: 5, FW: 3 }[pos];
+        const usable = L.usable_count ?? starters + (L.alternates_count || alts.length);
+        const altHtml = alts.length
+          ? `<ul class="line-alts">${alts
+              .slice(0, 3)
+              .map((a) => {
+                const pct =
+                  a.lineup_pct != null
+                    ? `${Math.round(Number(a.lineup_pct))}%`
+                    : a.lineup_prob != null
+                      ? `${Math.round(Number(a.lineup_prob) * 100)}%`
+                      : "—";
+                return `<li><span>${escapeHtml(a.name || "")}</span><span>${pct} · ${formatMoney(
+                  a.price
+                )}</span></li>`;
+              })
+              .join("")}</ul>`
+          : `<p class="line-depth">Sin alternativas usables</p>`;
+        return `<div class="line-chip status-${covKey}">
           <div class="line-chip-top">
             <span>${labels[pos]}</span>
-            <span class="badge ${st === "critical" ? "badge-alta" : st === "warning" ? "badge-media" : "badge-mint"}">${st}</span>
+            <span class="badge ${badgeCls}">${cov}</span>
           </div>
           <p>${escapeHtml(L.message || "—")}</p>
+          <p class="line-depth">Titulares ${starters}/${starterTgt} · usable ${usable}/${ideal}</p>
+          ${altHtml}
         </div>`;
       })
       .join("");
@@ -954,15 +1056,24 @@
     const posBox = document.getElementById("squad-positions");
     const byPos = diagnosis.by_position || {};
     const order = ["GK", "DF", "MF", "FW"];
+    const idealMap = (DATA.kpis || {}).ideal_squad || { GK: 2, DF: 5, MF: 5, FW: 3 };
     posBox.innerHTML = order
       .map((pos) => {
         const info = byPos[pos] || { count: 0, healthy: 0, starters: 0, status: "ok" };
+        const cov = info.coverage || (info.status === "critical" ? "critical" : info.status === "warning" ? "thin" : "ok");
+        const starters = info.starters_real ?? info.starters ?? 0;
+        const altsN = info.alternates_count;
+        const ideal = info.ideal_count ?? idealMap[pos];
         return `<div class="pos-block ${info.status}">
           <div class="flex justify-between items-center mb-2">
             <span class="font-semibold text-white">${pos}</span>
-            <span class="badge ${info.status === "critical" ? "badge-alta" : info.status === "warning" ? "badge-media" : "badge-mint"}">${info.status}</span>
+            <span class="badge ${
+              cov === "critical" ? "badge-alta" : cov === "thin" ? "badge-media" : "badge-mint"
+            }">${cov}</span>
           </div>
-          <p class="text-sm text-slate-400">${info.count} jugadores · ${info.healthy} sanos · ${info.starters} titulares reales</p>
+          <p class="text-sm text-slate-400">${info.count} jugadores · ${starters} titulares reales${
+            altsN != null ? ` · ${altsN} alternativas` : ""
+          } · objetivo ${ideal}</p>
         </div>`;
       })
       .join("");

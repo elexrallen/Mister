@@ -31,6 +31,7 @@ from competitive_actions import (
     budget_fit,
     build_rival_upgrade_targets,
     build_sell_opportunities,
+    detect_competition_phase,
     detect_points_phase,
     estimate_gap_funding,
     finalize_action_plan,
@@ -40,6 +41,7 @@ from competitive_actions import (
 )
 from squad_analyzer import (
     analyze_squad,
+    assess_market_coverage,
     merge_structural_into_diagnosis,
     structural_market_boost,
 )
@@ -397,11 +399,13 @@ def classify_market_opportunities(
     *,
     allow_synthetic: bool = True,
     structural_needs: list[dict[str, Any]] | None = None,
+    diagnostico_plantilla: dict[str, Any] | None = None,
+    squad: list[dict[str, Any]] | None = None,
+    competition_phase: str = "preseason",
 ) -> list[dict[str, Any]]:
     """
-    Clasifica oportunidades usando señales disponibles.
-    En modo live: prioriza carencias, precio relativo, forma Mister y flecha de valor
-    (sin inventar % ni PPG histórico). Boost extra si cubre necesidades estructurales.
+    Clasifica oportunidades: carencias, titularidad, cobertura por posición.
+    Insiste si falta profundidad; demota si la línea ya está cubierta.
     """
     pos_prices: dict[str, list[float]] = {}
     for p in market:
@@ -411,22 +415,29 @@ def classify_market_opportunities(
     needy = {
         pos for pos, info in diagnosis.get("by_position", {}).items()
         if info.get("status") in ("critical", "warning")
+        or info.get("coverage") in ("critical", "thin")
     }
     needs = structural_needs or []
+    preseasonish = competition_phase in ("preseason", "ramp")
 
     opportunities: list[dict[str, Any]] = []
     for raw in market:
         p = enrich_player(raw, perf_idx, allow_synthetic=allow_synthetic)
         price = float(p.get("price") or 0)
         delta = compute_delta_from_history(p["id"], price, price_series)
-        # Solo usamos delta numérico si viene de snapshots reales o campo explícito
         if delta is None and p.get("price_delta_5d") is not None and allow_synthetic:
             delta = float(p.get("price_delta_5d") or 0)
-        trend = p.get("trend")  # up/down/None desde HTML Mister
+        trend = p.get("trend")
         form = p.get("form")
         avg_ppg = p.get("avg_ppg")
         reliability = p.get("reliability")
         rel_price = price / max(pos_avg.get(p["position"], price) or 1, 1)
+        on_daily = bool(p.get("on_daily_market") or (p.get("seller") == "market"))
+
+        cov = assess_market_coverage(p, diagnostico_plantilla, squad=squad)
+        fills_coverage_gap = bool(cov.get("fills_coverage_gap"))
+        line_covered = bool(cov.get("line_already_covered"))
+        is_upgrade = bool(cov.get("is_upgrade"))
 
         categories: list[str] = []
         if delta is not None and delta >= config.CHOLLO_DELTA_MIN and rel_price <= 1.15:
@@ -442,7 +453,7 @@ def classify_market_opportunities(
         elif trend == "up" and (form is None or float(form) < 4.0):
             categories.append("especulacion_trading")
         if not categories:
-            if p["position"] in needy:
+            if p["position"] in needy or fills_coverage_gap:
                 categories.append("titular_garantizado")
             elif rel_price < 0.85:
                 categories.append("chollo_economico")
@@ -451,10 +462,14 @@ def classify_market_opportunities(
 
         min_bid = money(p.get("min_bid") or price)
         premium = 0.03
-        if p["position"] in needy:
-            premium += 0.04
+        if p["position"] in needy or fills_coverage_gap:
+            premium += 0.05 if preseasonish else 0.04
+        if fills_coverage_gap and on_daily:
+            premium += 0.02
         if trend == "up":
             premium += 0.01
+        if line_covered and not is_upgrade:
+            premium = min(premium, 0.03)
         recommended = money(min_bid * (1 + premium))
 
         score = 0.0
@@ -470,10 +485,17 @@ def classify_market_opportunities(
             score += (float(avg_ppg) / 8.0) * 15
         if p["position"] in needy:
             score += 15
+        if fills_coverage_gap:
+            score += 22 if preseasonish else 16
+        if on_daily and fills_coverage_gap:
+            score += 10
+        if line_covered and not is_upgrade:
+            score -= 28
+        elif is_upgrade:
+            score += 12
         if recommended > my_balance:
             score -= 20
 
-        # Producción Fútbol Fantasy (Mister Mixto) — eje de calidad Fantasy
         prod = p.get("production_score")
         ff_avg = p.get("ff_mister_avg")
         if ff_avg is None:
@@ -482,25 +504,23 @@ def classify_market_opportunities(
             prod = (p.get("external") or {}).get("production_score")
         try:
             if prod is not None:
-                score += (float(prod) / 100.0) * 28
+                score += (float(prod) / 100.0) * (18 if preseasonish else 28)
             elif ff_avg is not None:
-                score += (float(ff_avg) / 8.0) * 22
+                score += (float(ff_avg) / 8.0) * (14 if preseasonish else 22)
         except (TypeError, ValueError):
             pass
-        # ROI: buena producción a precio razonable
         try:
             if ff_avg is not None and price > 0:
                 roi = float(ff_avg) / max(price / 1_000_000, 0.4)
                 if roi >= 1.2:
                     score += 8
                 elif roi < 0.45 and price >= 5_000_000:
-                    score -= 12  # caro con poca producción
+                    score -= 12
         except (TypeError, ValueError):
             pass
         if p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff"):
             score += 6
 
-        # Señales externas (FF/JP/Comuniate)
         ext = p.get("external") or {}
         avail = ext.get("availability") or ("injured" if p.get("injury") else "unknown")
         if avail in ("injured", "suspended"):
@@ -519,7 +539,6 @@ def classify_market_opportunities(
         if sofa is not None:
             try:
                 sv = float(sofa)
-                # Escala Sofascore típica 5–9.5; medias Comuniate fantasy pueden ser >10
                 if sv > 10:
                     sv = min(9.5, 5.0 + (sv - 5.0) * 0.35)
                 if sv >= 7.0:
@@ -533,13 +552,16 @@ def classify_market_opportunities(
         score += struct_bonus
         if fills_structural and struct_label:
             categories.insert(0, "ajuste_estructural")
+        coverage_label = cov.get("coverage_label") or struct_label
 
         if avail in ("injured", "suspended"):
             priority = "Baja"
-        elif fills_structural or score >= 35:
+        elif line_covered and not is_upgrade:
+            priority = "Baja"
+        elif fills_coverage_gap or fills_structural or score >= 35:
             priority = "Alta"
         elif (p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff")) and (
-            p["position"] in needy or fills_structural
+            p["position"] in needy or fills_structural or fills_coverage_gap
         ):
             priority = "Alta"
         elif score >= 18:
@@ -560,7 +582,7 @@ def classify_market_opportunities(
                 "titular_garantizado": "Encaje / forma",
                 "especulacion_trading": "Especulación (flecha/Δ)",
                 "alerta_baja": "Alerta lesión/sanción",
-                "ajuste_estructural": struct_label or "Ajuste estructural",
+                "ajuste_estructural": coverage_label or "Ajuste estructural",
             }.get(primary, primary),
             "puja_minima": min_bid,
             "puja_recomendada": recommended,
@@ -568,13 +590,24 @@ def classify_market_opportunities(
             "priority": priority,
             "score": round(score, 1),
             "affordable": recommended <= my_balance,
-            "fills_need": p["position"] in needy or fills_structural,
+            "fills_need": p["position"] in needy or fills_structural or fills_coverage_gap,
             "fills_structural": fills_structural,
-            "structural_label": struct_label,
+            "structural_label": coverage_label or struct_label,
+            "fills_coverage_gap": fills_coverage_gap,
+            "line_already_covered": line_covered,
+            "is_upgrade": is_upgrade,
+            "position_coverage": cov.get("position_coverage"),
+            "on_daily_market": on_daily,
             "signal_basis": "mister_live" if not allow_synthetic else "mixed",
         })
 
-    opportunities.sort(key=lambda x: (-{"Alta": 3, "Media": 2, "Baja": 1}[x["priority"]], -x["score"]))
+    opportunities.sort(
+        key=lambda x: (
+            -{"Alta": 3, "Media": 2, "Baja": 1}[x["priority"]],
+            -int(bool(x.get("fills_coverage_gap") and x.get("on_daily_market"))),
+            -x["score"],
+        )
+    )
     return opportunities
 
 
@@ -922,33 +955,52 @@ def build_action_plan(
         why_parts: list[str] = []
         structural_gap = pos in need_pos_alta
         real_starter_cand = lineup is not None and float(lineup) >= 70
+        fills_cov = bool(o.get("fills_coverage_gap"))
+        line_covered = bool(o.get("line_already_covered"))
+        is_upgrade = bool(o.get("is_upgrade"))
+        on_daily = bool(o.get("on_daily_market"))
 
-        if fills and (pos in critical_pos) and (lineup is None or float(lineup) >= 70):
-            buy_now = True
-            why_parts.append("cubre carencia crítica")
-        if fills and structural_gap and real_starter_cand:
-            buy_now = True
-            why_parts.append("cubre necesidad estructural (titularidad real)")
-        if fills and risk == "high" and (lineup is None or float(lineup) >= 80):
-            buy_now = True
-            why_parts.append(f"demanda rival alta ({len(demand)} con gap {pos})")
-        if (
-            o.get("priority") == "Alta"
-            and bf in ("comfortable", "tight")
-            and real_starter_cand
-            and (fills or structural_gap)
-            and risk in ("medium", "high")
-        ):
-            buy_now = True
-            why_parts.append("titular real probable y prioridad alta")
-        elif (
-            o.get("priority") == "Alta"
-            and bf in ("comfortable", "tight")
-            and (lineup is not None and float(lineup) >= 80)
-            and risk in ("medium", "high")
-        ):
-            buy_now = True
-            why_parts.append("titular probable y prioridad alta")
+        # Línea ya cubierta → no insistir salvo upgrade claro
+        if line_covered and not is_upgrade:
+            buy_now = False
+            why_parts.append("línea ya cubierta — no insistir en la puja")
+        else:
+            if fills and (pos in critical_pos) and (lineup is None or float(lineup) >= 70):
+                buy_now = True
+                why_parts.append("cubre carencia crítica")
+            if fills_cov and real_starter_cand:
+                buy_now = True
+                why_parts.append(
+                    "cubre hueco de profundidad/titularidad"
+                    + (" (mercado de hoy)" if on_daily else "")
+                )
+            if fills and structural_gap and real_starter_cand:
+                buy_now = True
+                why_parts.append("cubre necesidad estructural (titularidad real)")
+            if fills and risk == "high" and (lineup is None or float(lineup) >= 80):
+                buy_now = True
+                why_parts.append(f"demanda rival alta ({len(demand)} con gap {pos})")
+            if (
+                o.get("priority") == "Alta"
+                and bf in ("comfortable", "tight")
+                and real_starter_cand
+                and (fills or structural_gap or fills_cov)
+                and risk in ("medium", "high")
+            ):
+                buy_now = True
+                why_parts.append("titular real probable y prioridad alta")
+            elif (
+                o.get("priority") == "Alta"
+                and bf in ("comfortable", "tight")
+                and (lineup is not None and float(lineup) >= 80)
+                and risk in ("medium", "high")
+                and (fills or fills_cov or is_upgrade)
+            ):
+                buy_now = True
+                why_parts.append("titular probable y prioridad alta")
+            if is_upgrade and bf in ("comfortable", "tight") and real_starter_cand:
+                buy_now = True
+                why_parts.append("upgrade claro vs lo que tienes en la línea")
 
         # Sin caja → no buy_now (stretch por crowding también queda fuera de buy_now agresivo)
         if buy_now and bf not in ("comfortable", "tight"):
@@ -978,6 +1030,14 @@ def build_action_plan(
                 prio_i -= 35
             elif leaves_budget:
                 prio_i += 12
+            if fills_cov:
+                prio_i += 18
+            if on_daily and fills_cov:
+                prio_i += 8
+            if line_covered and not is_upgrade:
+                prio_i -= 40
+            elif is_upgrade:
+                prio_i += 10
 
         common = {
             "crowds_out_gaps": crowds_out,
@@ -987,6 +1047,11 @@ def build_action_plan(
             "funding_target": funding.get("funding_target"),
             "funding_shortfall": funding.get("funding_shortfall"),
             "cost": cost,
+            "fills_coverage_gap": fills_cov,
+            "line_already_covered": line_covered,
+            "is_upgrade": is_upgrade,
+            "position_coverage": o.get("position_coverage"),
+            "on_daily_market": on_daily,
         }
 
         if buy_now:
@@ -998,7 +1063,11 @@ def build_action_plan(
                 "bid": o.get("puja_recomendada"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
-                "urgency": "high" if pos in critical_pos or structural_gap or risk == "high" else "medium",
+                "urgency": (
+                    "high"
+                    if pos in critical_pos or structural_gap or fills_cov or risk == "high"
+                    else "medium"
+                ),
                 "why": "; ".join(dict.fromkeys(why_parts)) or "Encaje inmediato recomendado",
                 "rival_demand": len(demand),
                 "affordable": True,
@@ -1021,8 +1090,12 @@ def build_action_plan(
                 wait_bits.append(f"titularidad {int(float(lineup))}%")
             if delta is not None and float(delta) < 0:
                 wait_bits.append(f"Δprecio {float(delta)*100:.1f}%")
-            if fills or structural_gap:
+            if fills_cov:
+                wait_bits.append("cubre hueco pero conviene esperar señales")
+            elif fills or structural_gap:
                 wait_bits.append("cubre carencia de titularidad real" if structural_gap else "cubre carencia")
+            elif line_covered and not is_upgrade:
+                wait_bits.append("línea ya cubierta")
             elif not fills:
                 wait_bits.append("no cubre carencia urgente")
             if sofa is not None and float(sofa) < 6.2:
@@ -1042,7 +1115,7 @@ def build_action_plan(
                 "bid": o.get("puja_recomendada"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
-                "urgency": "medium" if fills or structural_gap or risk != "low" else "low",
+                "urgency": "medium" if fills or structural_gap or fills_cov or risk != "low" else "low",
                 "why": ("; ".join(dict.fromkeys(wait_bits)) or "Sin urgencia") + f" · riesgo de perderlo: {risk}",
                 "rival_demand": len(demand),
                 "affordable": bf in ("comfortable", "tight"),
@@ -1099,6 +1172,9 @@ def build_action_plan(
 def build_payload() -> dict[str, Any]:
     league, mister_source = fetch_mister_league()
     live_meta = league.pop("_live_meta", {}) if isinstance(league, dict) else {}
+    # Catálogo completo solo se usa para libres/ownership en mister_client; no va al JSON
+    if isinstance(league, dict):
+        league.pop("pool_all", None)
     honest_live = mister_source == "api" or bool(live_meta.get("honest_mode"))
 
     seed = load_performance_seed()
@@ -1125,9 +1201,40 @@ def build_payload() -> dict[str, Any]:
         enrich_player(p, perf_idx, allow_synthetic=not honest_live)
         for p in me_raw.get("squad", [])
     ]
+    # Mercado del día + libres del pool completo (dedupe) → universo de fichaje
+    market_seen: set[str] = {str(p.get("id")) for p in me_raw.get("squad", []) if p.get("id")}
+    market_combined: list[dict[str, Any]] = []
+    for src in (league.get("market") or []):
+        pid = str(src.get("id") or "")
+        if not pid or pid in market_seen:
+            continue
+        market_seen.add(pid)
+        row = dict(src)
+        row["on_daily_market"] = True
+        row.setdefault("seller", "market")
+        market_combined.append(row)
+    n_market_day = len(market_combined)
+    for src in (league.get("pool_top") or []):
+        pid = str(src.get("id") or "")
+        if not pid or pid in market_seen:
+            continue
+        market_seen.add(pid)
+        row = dict(src)
+        row.setdefault("seller", "free")
+        row["on_daily_market"] = False
+        if row.get("min_bid") is None and row.get("price"):
+            row["min_bid"] = row["price"]
+        market_combined.append(row)
+    log.info(
+        "Mercado+libres: day=%s free_added=%s total=%s (pool_size=%s)",
+        n_market_day,
+        len(market_combined) - n_market_day,
+        len(market_combined),
+        live_meta.get("pool_size") or 0,
+    )
     market_raw = [
         enrich_player(p, perf_idx, allow_synthetic=not honest_live)
-        for p in league.get("market", [])
+        for p in market_combined
     ]
 
     # Enriquecimiento externo (FF/JP/Comuniate) — fail-soft
@@ -1181,11 +1288,21 @@ def build_payload() -> dict[str, Any]:
         market_universe=market_ext,
     )
     diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
+    comp = detect_competition_phase(
+        season_start=getattr(config, "SEASON_START_DATE", "2026-08-15"),
+        points_phase=points_phase,
+    )
+    competition_phase = str(comp.get("competition_phase") or "preseason")
+    diagnostico_plantilla["competition_phase"] = competition_phase
+    diagnostico_plantilla["days_to_kickoff"] = comp.get("days_to_kickoff")
+    diagnostico_plantilla["season_start"] = comp.get("season_start")
     log.info(
-        "Diagnóstico estructural salud=%s needs=%s consejos=%s",
+        "Diagnóstico estructural salud=%s needs=%s consejos=%s phase=%s days_to_j1=%s",
         diagnostico_plantilla.get("salud_score"),
         len(diagnostico_plantilla.get("structural_needs") or []),
         len(diagnostico_plantilla.get("consejos") or []),
+        competition_phase,
+        comp.get("days_to_kickoff"),
     )
 
     opportunities = classify_market_opportunities(
@@ -1196,6 +1313,9 @@ def build_payload() -> dict[str, Any]:
         diagnosis,
         allow_synthetic=not honest_live,
         structural_needs=diagnostico_plantilla.get("structural_needs") or [],
+        diagnostico_plantilla=diagnostico_plantilla,
+        squad=squad,
+        competition_phase=competition_phase,
     )
     rivals = [estimate_rival_liquidity(r) for r in league.get("rivals", [])]
 
@@ -1255,7 +1375,15 @@ def build_payload() -> dict[str, Any]:
         phase_universe.extend(r.get("squad") or [])
     # Refinar fase con rivales (puede matizar active vs preseason)
     points_phase = detect_points_phase(phase_universe)
+    comp = detect_competition_phase(
+        season_start=getattr(config, "SEASON_START_DATE", "2026-08-15"),
+        points_phase=points_phase,
+    )
+    competition_phase = str(comp.get("competition_phase") or "preseason")
     diagnostico_plantilla["points_phase"] = points_phase
+    diagnostico_plantilla["competition_phase"] = competition_phase
+    diagnostico_plantilla["days_to_kickoff"] = comp.get("days_to_kickoff")
+    diagnostico_plantilla["season_start"] = comp.get("season_start")
 
     opportunities = annotate_market_budget_risk(
         opportunities,
@@ -1341,9 +1469,15 @@ def build_payload() -> dict[str, Any]:
             f"(known={clause_meta.get('known')}/{clause_meta.get('lookups')})."
         ),
     ]
+    if live_meta.get("pool_size"):
+        external_notes.append(
+            f"Pool Mister completo: {live_meta.get('pool_size')} "
+            f"(libres={live_meta.get('pool_free_count')}, "
+            f"owned={live_meta.get('pool_owned_count')})."
+        )
     if not free_agents:
         external_notes.append(
-            "Libres TOP: no disponibles de forma fiable — el KPI no inventa cracks."
+            "Libres: no disponibles de forma fiable — el KPI no inventa cracks."
         )
     base_notes = live_meta.get("notes") if honest_live else [
         "Modo demo/mock: parte de PPG y libres TOP son seed local.",
@@ -1372,7 +1506,14 @@ def build_payload() -> dict[str, Any]:
             "clauses": clause_meta.get("clauses", "skip"),
             "clauses_known": clause_meta.get("known", 0),
             "points_phase": points_phase,
+            "competition_phase": competition_phase,
+            "season_start": comp.get("season_start") or getattr(config, "SEASON_START_DATE", "2026-08-15"),
             "free_agents": free_note,
+            "pool_size": live_meta.get("pool_size") or 0,
+            "pool_free": live_meta.get("pool_free_count") or len(free_agents),
+            "pool_owned": live_meta.get("pool_owned_count") or 0,
+            "daily_market_count": n_market_day,
+            "market_day_slots": int(getattr(config, "MARKET_DAY_SLOTS", 16)),
         },
         "league": league.get("league", {}),
         "me": {
@@ -1391,6 +1532,7 @@ def build_payload() -> dict[str, Any]:
             "squad_value": me.get("squad_value"),
             "rank": me.get("rank"),
             "top_free_remaining": len(free_agents),
+            "pool_size": live_meta.get("pool_size") or 0,
             "critical_alerts": sum(1 for a in diagnosis["alerts"] if a["level"] == "critical"),
             "market_count": len(opportunities),
             "rivals_count": len(rivals),
@@ -1402,6 +1544,15 @@ def build_payload() -> dict[str, Any]:
             "funding_target": funding_info.get("funding_target"),
             "funding_shortfall": funding_info.get("funding_shortfall"),
             "points_phase": points_phase,
+            "competition_phase": competition_phase,
+            "season_start": comp.get("season_start"),
+            "days_to_kickoff": comp.get("days_to_kickoff"),
+            "lines_ok": diagnostico_plantilla.get("lines_ok"),
+            "depth_gaps": diagnostico_plantilla.get("depth_gaps"),
+            "daily_market_count": n_market_day,
+            "market_day_slots": int(getattr(config, "MARKET_DAY_SLOTS", 16)),
+            "ideal_squad": diagnostico_plantilla.get("ideal_squad")
+            or getattr(config, "IDEAL_SQUAD", {"GK": 2, "DF": 5, "MF": 5, "FW": 3}),
         },
         "funding_plan": {
             "target": funding_info.get("funding_target"),
@@ -1435,11 +1586,31 @@ def build_payload() -> dict[str, Any]:
             "history_retention_days": config.HISTORY_RETENTION_DAYS,
             "live_meta": live_meta,
             "free_agents_note": (
-                None
+                (
+                    f"Libres del pool Mister: {len(free_agents)} "
+                    f"(universo={live_meta.get('pool_size') or len(free_agents)})."
+                )
                 if free_agents
                 else "Sin pool de libres fiable hoy (modo honesto: no inventamos TOP)."
             ),
-            "data_notes": list(base_notes or []) + external_notes,
+            "pool_size": live_meta.get("pool_size") or 0,
+            "season_start": comp.get("season_start"),
+            "days_to_kickoff": comp.get("days_to_kickoff"),
+            "competition_phase": competition_phase,
+            "data_notes": list(base_notes or []) + external_notes + [
+                (
+                    f"Campeonato: J1 {comp.get('season_start')} "
+                    f"(faltan {comp.get('days_to_kickoff')} días) · fase {competition_phase}."
+                ),
+                (
+                    "Objetivo plantilla 15 (GK2/DF5/MF5/FW3): pujar si falta cobertura; "
+                    "si la línea ya está cubierta, no insistir salvo upgrade."
+                ),
+                (
+                    f"Mercado de hoy: {n_market_day} jugadores "
+                    f"(referencia {getattr(config, 'MARKET_DAY_SLOTS', 16)} plazas/día)."
+                ),
+            ],
         },
     }
     return payload

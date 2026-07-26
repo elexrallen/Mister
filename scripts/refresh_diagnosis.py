@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import config  # noqa: E402
-from competitive_actions import estimate_gap_funding  # noqa: E402
+from competitive_actions import detect_competition_phase, estimate_gap_funding  # noqa: E402
 from data_engine import (  # noqa: E402
     build_action_plan,
     classify_market_opportunities,
@@ -28,7 +28,12 @@ def main() -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     me = data["me"]
     squad = list(me.get("squad") or [])
-    points_phase = data.get("points_phase") or (data.get("kpis") or {}).get("points_phase") or "preseason"
+    points_phase = (
+        data.get("points_phase")
+        or (data.get("kpis") or {}).get("points_phase")
+        or (data.get("sources") or {}).get("points_phase")
+        or "preseason"
+    )
     balance = float(me.get("balance") or 0)
 
     diagnosis = diagnose_squad(squad)
@@ -41,7 +46,22 @@ def main() -> None:
     )
     diagnosis = merge_structural_into_diagnosis(diagnosis, plant)
 
+    comp = detect_competition_phase(
+        season_start=getattr(config, "SEASON_START_DATE", "2026-08-15"),
+        points_phase=points_phase,
+    )
+    competition_phase = str(comp.get("competition_phase") or "preseason")
+    plant["competition_phase"] = competition_phase
+    plant["days_to_kickoff"] = comp.get("days_to_kickoff")
+    plant["season_start"] = comp.get("season_start")
+    plant["points_phase"] = points_phase
+
     market_raw = data.get("market_opportunities") or []
+    # Preservar flag de mercado del día si ya venía marcado
+    for row in market_raw:
+        if "on_daily_market" not in row:
+            row["on_daily_market"] = row.get("seller") == "market"
+
     opportunities = classify_market_opportunities(
         market_raw,
         {},
@@ -50,6 +70,9 @@ def main() -> None:
         diagnosis,
         allow_synthetic=False,
         structural_needs=plant.get("structural_needs") or [],
+        diagnostico_plantilla=plant,
+        squad=squad,
+        competition_phase=competition_phase,
     )
 
     funding = estimate_gap_funding(
@@ -70,6 +93,8 @@ def main() -> None:
         diagnostico_plantilla=plant,
     )
 
+    n_daily = sum(1 for o in opportunities if o.get("on_daily_market"))
+
     data["squad_diagnosis"] = diagnosis
     data["diagnostico_plantilla"] = plant
     data["market_opportunities"] = opportunities
@@ -85,6 +110,37 @@ def main() -> None:
     data["squad_notes"] = []
     data["generated_at"] = datetime.now(timezone.utc).isoformat()
 
+    sources = data.get("sources") or {}
+    sources["points_phase"] = points_phase
+    sources["competition_phase"] = competition_phase
+    sources["season_start"] = comp.get("season_start")
+    sources["daily_market_count"] = n_daily
+    sources["market_day_slots"] = int(getattr(config, "MARKET_DAY_SLOTS", 16))
+    data["sources"] = sources
+
+    meta = data.get("meta") or {}
+    meta["season_start"] = comp.get("season_start")
+    meta["days_to_kickoff"] = comp.get("days_to_kickoff")
+    meta["competition_phase"] = competition_phase
+    notes = list(meta.get("data_notes") or [])
+    kick_note = (
+        f"Campeonato: J1 {comp.get('season_start')} "
+        f"(faltan {comp.get('days_to_kickoff')} días) · fase {competition_phase}."
+    )
+    depth_note = (
+        "Objetivo plantilla 15 (GK2/DF5/MF5/FW3): pujar si falta cobertura; "
+        "si la línea ya está cubierta, no insistir salvo upgrade."
+    )
+    mkt_note = (
+        f"Mercado de hoy: {n_daily} jugadores "
+        f"(referencia {getattr(config, 'MARKET_DAY_SLOTS', 16)} plazas/día)."
+    )
+    for n in (kick_note, depth_note, mkt_note):
+        if n not in notes:
+            notes.append(n)
+    meta["data_notes"] = notes
+    data["meta"] = meta
+
     kpis = data.get("kpis") or {}
     kpis["critical_alerts"] = sum(1 for a in diagnosis["alerts"] if a["level"] == "critical")
     kpis["market_count"] = len(opportunities)
@@ -94,6 +150,17 @@ def main() -> None:
     kpis["clause_bid_count"] = sum(1 for a in action_plan if a["action"] == "clause_bid")
     kpis["funding_target"] = funding.get("funding_target")
     kpis["funding_shortfall"] = funding.get("funding_shortfall")
+    kpis["points_phase"] = points_phase
+    kpis["competition_phase"] = competition_phase
+    kpis["season_start"] = comp.get("season_start")
+    kpis["days_to_kickoff"] = comp.get("days_to_kickoff")
+    kpis["lines_ok"] = plant.get("lines_ok")
+    kpis["depth_gaps"] = plant.get("depth_gaps")
+    kpis["daily_market_count"] = n_daily
+    kpis["market_day_slots"] = int(getattr(config, "MARKET_DAY_SLOTS", 16))
+    kpis["ideal_squad"] = plant.get("ideal_squad") or getattr(
+        config, "IDEAL_SQUAD", {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
+    )
     shortfall = float(funding.get("funding_shortfall") or 0)
     target = float(funding.get("funding_target") or 0)
     if shortfall > 0 and target > 0 and shortfall >= target * 0.35:
@@ -111,19 +178,32 @@ def main() -> None:
 
     fw = diagnosis["by_position"]["FW"]
     buys = [a for a in action_plan if a.get("action") == "buy_now"]
+    waits = [a for a in action_plan if a.get("action") == "wait"]
     sells = [a for a in action_plan if a.get("action") == "sell"]
+    covered_waits = [a for a in waits if a.get("line_already_covered")]
+    gap_buys = [a for a in buys if a.get("fills_coverage_gap")]
     print(
-        f"OK funding_target={funding.get('funding_target'):,.0f} "
+        f"OK phase={competition_phase} days_to_j1={comp.get('days_to_kickoff')} "
+        f"lines_ok={plant.get('lines_ok')} depth_gaps={plant.get('depth_gaps')} "
+        f"funding_target={funding.get('funding_target'):,.0f} "
         f"shortfall={funding.get('funding_shortfall'):,.0f} "
-        f"buys={len(buys)} sells={len(sells)} FW_starters={fw['starters']}"
+        f"buys={len(buys)} gap_buys={len(gap_buys)} waits={len(waits)} "
+        f"covered_waits={len(covered_waits)} sells={len(sells)} "
+        f"FW_starters={fw.get('starters_real', fw.get('starters'))}"
     )
-    for a in buys:
+    for a in buys[:12]:
         print(
             f"  buy {a.get('name')} [{a.get('position')}] "
-            f"crowds={a.get('crowds_out_gaps')} leaves={a.get('leaves_gap_budget')} "
-            f"cost={a.get('cost') or a.get('bid')} residual={a.get('residual_budget')}"
+            f"cov={a.get('position_coverage')} gap={a.get('fills_coverage_gap')} "
+            f"upg={a.get('is_upgrade')} daily={a.get('on_daily_market')} "
+            f"urg={a.get('urgency')} cost={a.get('cost') or a.get('bid')}"
         )
-    for s in sells:
+    for a in covered_waits[:8]:
+        print(
+            f"  wait-covered {a.get('name')} [{a.get('position')}] "
+            f"{(a.get('why') or '')[:90]}"
+        )
+    for s in sells[:6]:
         print(f"  sell {s.get('name')} [{s.get('sell_reason')}] {s.get('why', '')[:100]}")
 
 

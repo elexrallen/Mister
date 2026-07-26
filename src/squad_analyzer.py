@@ -25,9 +25,13 @@ BENCH_SHARE_ALERT = 0.15
 PATCH_MAX_PRICE = 2_000_000
 PATCH_MIN_COUNT = 2
 PATCH_IDEAL_COUNT = 3
-DF_STARTERS_MIN = 3
-MF_STARTERS_MIN = 4
-FW_TOP_MIN = 2
+DF_STARTERS_MIN = int((getattr(config, "STARTERS_TARGET", None) or {}).get("DF", 3))
+MF_STARTERS_MIN = int((getattr(config, "STARTERS_TARGET", None) or {}).get("MF", 3))
+FW_TOP_MIN = int((getattr(config, "STARTERS_TARGET", None) or {}).get("FW", 2))
+IDEAL_SQUAD = dict(getattr(config, "IDEAL_SQUAD", None) or {"GK": 2, "DF": 5, "MF": 5, "FW": 3})
+STARTERS_TARGET = dict(
+    getattr(config, "STARTERS_TARGET", None) or {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
+)
 LINEUP_STARTER = getattr(config, "LINEUP_PROB_TITULAR", 0.70)
 LINEUP_REGULAR = getattr(config, "LINEUP_PROB_REGULAR", 0.45)
 LINEUP_LOW = getattr(config, "LINEUP_PROB_LOW", 0.40)
@@ -193,6 +197,171 @@ def _slim(p: dict[str, Any]) -> dict[str, Any]:
         "production_score": _prod(p) or None,
         "is_top_ff": _is_top_player(p),
         "top_reason": p.get("top_reason") or (p.get("external") or {}).get("top_reason"),
+    }
+
+
+def _alternate_entry(p: dict[str, Any]) -> dict[str, Any]:
+    lp = _lineup_frac(p)
+    return {
+        "id": p.get("id"),
+        "name": p.get("name"),
+        "price": _money(_player_value(p)),
+        "lineup_pct": round((lp or 0) * 100) if lp is not None else None,
+        "is_real_starter": _is_starter(p),
+        "is_regular": _is_regular(p),
+    }
+
+
+def _enrich_line_depth(
+    line: dict[str, Any],
+    players: list[dict[str, Any]],
+    *,
+    position: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]], list[dict[str, Any]]]:
+    """
+    Añade cobertura ~15: starters_real, alternates, depth_ok, coverage.
+    Emite needs depth_* si faltan alternativas aunque los titulares estén OK.
+    """
+    tips: list[dict] = []
+    needs: list[dict] = []
+    healthy = [p for p in players if not _is_injured(p)]
+    starters = [p for p in healthy if _is_starter(p)]
+    alternates = [p for p in healthy if _is_regular(p) and not _is_starter(p)]
+    usable = starters + alternates
+    ideal_n = int(IDEAL_SQUAD.get(position, 3))
+    starter_tgt = int(STARTERS_TARGET.get(position, 1))
+    # Banquillo usable objetivo = ideal - starters target (mín. 1 salvo FW con 1)
+    depth_tgt = max(0, ideal_n - starter_tgt)
+
+    starters_ok = len(starters) >= starter_tgt
+    depth_ok = len(usable) >= ideal_n or (
+        starters_ok and len(alternates) >= max(1, depth_tgt) if depth_tgt else starters_ok
+    )
+    # Si ideal es 2 (GK) y hay 1 starter + 1 alternate → depth_ok
+    if position == "GK":
+        depth_ok = len(usable) >= 2 and starters_ok
+
+    if not starters_ok:
+        coverage = "critical" if len(starters) == 0 else "thin"
+    elif not depth_ok:
+        coverage = "thin"
+    else:
+        coverage = "ok"
+
+    # No bajar status estructural si ya es critical; sí elevar warning por depth
+    status = line.get("status") or "ok"
+    if coverage == "critical" and status == "ok":
+        status = "critical"
+    elif coverage == "thin" and status == "ok":
+        status = "warning"
+
+    if starters_ok and not depth_ok:
+        tips.append(
+            _advice(
+                "suggestion",
+                f"depth_{position.lower()}",
+                f"Falta alternativa en {position}",
+                (
+                    f"Titulares OK ({len(starters)}/{starter_tgt}), pero solo "
+                    f"{len(usable)}/{ideal_n} jugadores útiles en {position}. "
+                    "Necesitas banquillo ante sanciones/lesiones/malos rivales."
+                ),
+                position=position,
+            )
+        )
+        needs.append(
+            {
+                "need": f"depth_{position.lower()}",
+                "position": position,
+                "priority": "Media",
+                "max_price": PATCH_MAX_PRICE * 2 if position != "FW" else None,
+                "reason": f"Profundidad {position}: falta alternativa usable",
+            }
+        )
+
+    out = {
+        **line,
+        "status": status,
+        "starters_real": len(starters),
+        "starters_target": starter_tgt,
+        "alternates_count": len(alternates),
+        "usable_count": len(usable),
+        "ideal_count": ideal_n,
+        "depth_ok": depth_ok,
+        "coverage": coverage,
+        "alternates": [_alternate_entry(p) for p in alternates[:4]],
+        "starters_list": [_alternate_entry(p) for p in starters[:5]],
+    }
+    return out, tips, needs
+
+
+def position_coverage_map(diagnostico: dict[str, Any] | None) -> dict[str, str]:
+    """pos → critical|thin|ok desde diagnostico_plantilla.lineas."""
+    out: dict[str, str] = {}
+    lineas = (diagnostico or {}).get("lineas") or {}
+    for pos in ("GK", "DF", "MF", "FW"):
+        info = lineas.get(pos) or {}
+        cov = info.get("coverage")
+        if cov in ("critical", "thin", "ok"):
+            out[pos] = cov
+        else:
+            st = info.get("status") or "ok"
+            out[pos] = "critical" if st == "critical" else ("thin" if st == "warning" else "ok")
+    return out
+
+
+def assess_market_coverage(
+    player: dict[str, Any],
+    diagnostico: dict[str, Any] | None,
+    *,
+    squad: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """
+    ¿El fichaje cubre un hueco de cobertura o la línea ya está OK?
+    is_upgrade: mejora clara vs el peor usable de la línea.
+    """
+    pos = player.get("position") or "MF"
+    cov_map = position_coverage_map(diagnostico)
+    coverage = cov_map.get(pos, "ok")
+    fills_gap = coverage in ("critical", "thin")
+    line_covered = coverage == "ok"
+
+    lp = _lineup_frac(player)
+    is_upgrade = False
+    if line_covered and squad:
+        same = [
+            p
+            for p in squad
+            if p.get("position") == pos and not _is_injured(p) and _is_regular(p)
+        ]
+        if same:
+            worst_lp = min((_lineup_frac(p) or 0.0) for p in same)
+            player_lp = lp or 0.0
+            player_top = _is_top_player(player)
+            worst_top = any(_is_top_player(p) for p in same)
+            if player_lp >= LINEUP_STARTER and player_lp >= worst_lp + 0.15:
+                is_upgrade = True
+            elif player_top and not worst_top:
+                is_upgrade = True
+            elif _prod(player) >= 65 and max(_prod(p) for p in same) < 50:
+                is_upgrade = True
+        elif lp is not None and lp >= LINEUP_STARTER and _is_top_player(player):
+            is_upgrade = True
+
+    label = None
+    if fills_gap:
+        label = "Cubre hueco"
+    elif is_upgrade:
+        label = "Upgrade"
+    elif line_covered:
+        label = "Ya cubierto"
+
+    return {
+        "position_coverage": coverage,
+        "fills_coverage_gap": fills_gap,
+        "line_already_covered": line_covered and not is_upgrade,
+        "is_upgrade": is_upgrade,
+        "coverage_label": label,
     }
 
 
@@ -843,24 +1012,36 @@ def analyze_squad(
     lineas: dict[str, Any] = {}
 
     gk, t, n = _analyze_gk(by_pos["GK"])
+    gk, t2, n2 = _enrich_line_depth(gk, by_pos["GK"], position="GK")
     lineas["GK"] = gk
     tips.extend(t)
+    tips.extend(t2)
     needs.extend(n)
+    needs.extend(n2)
 
     df, t, n = _analyze_df(by_pos["DF"])
+    df, t2, n2 = _enrich_line_depth(df, by_pos["DF"], position="DF")
     lineas["DF"] = df
     tips.extend(t)
+    tips.extend(t2)
     needs.extend(n)
+    needs.extend(n2)
 
     mf, t, n = _analyze_mf(by_pos["MF"], points_phase=points_phase)
+    mf, t2, n2 = _enrich_line_depth(mf, by_pos["MF"], position="MF")
     lineas["MF"] = mf
     tips.extend(t)
+    tips.extend(t2)
     needs.extend(n)
+    needs.extend(n2)
 
     fw, t, n = _analyze_fw(by_pos["FW"], finance, float(balance or 0))
+    fw, t2, n2 = _enrich_line_depth(fw, by_pos["FW"], position="FW")
     lineas["FW"] = fw
     tips.extend(t)
+    tips.extend(t2)
     needs.extend(n)
+    needs.extend(n2)
 
     # Tips financieros
     tc = finance["top_check"]
@@ -924,6 +1105,14 @@ def analyze_squad(
         "structural_needs": needs,
         "salud_score": _salud_score(finance, lineas, parches),
         "points_phase": points_phase,
+        "ideal_squad": dict(IDEAL_SQUAD),
+        "starters_target": dict(STARTERS_TARGET),
+        "lines_ok": sum(1 for pos in ("GK", "DF", "MF", "FW") if (lineas.get(pos) or {}).get("coverage") == "ok"),
+        "depth_gaps": sum(
+            1
+            for pos in ("GK", "DF", "MF", "FW")
+            if (lineas.get(pos) or {}).get("coverage") in ("critical", "thin")
+        ),
     }
 
 
@@ -953,6 +1142,11 @@ def merge_structural_into_diagnosis(
         if rank.get(new_status, 0) > rank.get(cur.get("status"), 0):
             cur = {**cur, "status": new_status}
         cur["structural_message"] = info.get("message")
+        cur["coverage"] = info.get("coverage") or new_status
+        cur["starters_real"] = info.get("starters_real", info.get("starters"))
+        cur["depth_ok"] = info.get("depth_ok")
+        cur["alternates_count"] = info.get("alternates_count")
+        cur["ideal_count"] = info.get("ideal_count")
         by_pos[pos] = cur
         if new_status in ("warning", "critical"):
             level = "critical" if new_status == "critical" else "warning"
@@ -1007,7 +1201,16 @@ def structural_market_boost(
         bonus = 0.0
         this_label = None
 
-        if ntype in ("gk_backup", "df_starter", "mf_starter", "fw_top") and npos and pos != npos:
+        if ntype in (
+            "gk_backup",
+            "df_starter",
+            "mf_starter",
+            "fw_top",
+            "depth_gk",
+            "depth_df",
+            "depth_mf",
+            "depth_fw",
+        ) and npos and pos != npos:
             continue
         if ntype == "gk_tandem" and pos != "GK":
             continue
@@ -1024,6 +1227,14 @@ def structural_market_boost(
             if lp is not None and lp >= LINEUP_REGULAR:
                 bonus += 10.0
             this_label = "Parche estructural"
+        elif ntype.startswith("depth_") and npos and pos == npos:
+            lp = _lineup_frac(player)
+            if lp is not None and lp < LINEUP_REGULAR:
+                continue
+            bonus = 18.0
+            if lp is not None and lp >= LINEUP_STARTER:
+                bonus += 6.0
+            this_label = f"Profundidad {pos}"
         elif ntype == "gk_tandem":
             want_team = (need.get("same_team_as") or "").lower()
             want_id = str(need.get("same_team_id") or "")

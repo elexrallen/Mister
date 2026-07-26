@@ -6,6 +6,7 @@ y objetivos en plantillas rivales (cláusulas).
 from __future__ import annotations
 
 import math
+from datetime import date, datetime, timezone
 from typing import Any
 
 import config
@@ -158,6 +159,47 @@ def detect_points_phase(players: list[dict[str, Any]]) -> str:
     if n > 0 and (hit / n) >= 0.30:
         return "active"
     return "preseason"
+
+
+def detect_competition_phase(
+    *,
+    now: datetime | date | None = None,
+    season_start: str | None = None,
+    points_phase: str | None = None,
+) -> dict[str, Any]:
+    """
+    Fase de campeonato por calendario + heurística de puntos.
+    preseason (>RAMP días) | ramp (≤RAMP hasta J1) | active (desde J1 o puntos).
+    """
+    start_raw = (season_start or getattr(config, "SEASON_START_DATE", "2026-08-15")).strip()
+    try:
+        y, m, d = (int(x) for x in start_raw.split("-")[:3])
+        kickoff = date(y, m, d)
+    except (TypeError, ValueError):
+        kickoff = date(2026, 8, 15)
+
+    if now is None:
+        today = datetime.now(timezone.utc).date()
+    elif isinstance(now, datetime):
+        today = now.date()
+    else:
+        today = now
+
+    days = (kickoff - today).days
+    ramp_n = int(getattr(config, "RAMP_DAYS_BEFORE_KICKOFF", 7))
+    if points_phase == "active" or days <= 0:
+        phase = "active"
+    elif days <= ramp_n:
+        phase = "ramp"
+    else:
+        phase = "preseason"
+
+    return {
+        "competition_phase": phase,
+        "season_start": kickoff.isoformat(),
+        "days_to_kickoff": days,
+        "points_phase_heuristic": points_phase or "preseason",
+    }
 
 
 def _is_top_ff(p: dict[str, Any]) -> bool:
@@ -494,6 +536,14 @@ def priority_score_buy(item: dict[str, Any]) -> int:
         score += 35
     if item.get("fills_structural"):
         score += 20
+    if item.get("fills_coverage_gap"):
+        score += 22
+    if item.get("on_daily_market") and item.get("fills_coverage_gap"):
+        score += 10
+    if item.get("line_already_covered") and not item.get("is_upgrade"):
+        score -= 40
+    elif item.get("is_upgrade"):
+        score += 15
     risk = item.get("wait_risk") or item.get("risk") or "low"
     score += {"high": 25, "medium": 15, "low": 5}.get(str(risk), 5)
     bf = item.get("budget_fit") or "blocked"

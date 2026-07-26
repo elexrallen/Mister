@@ -1080,6 +1080,175 @@ def fetch_free_agents_best_effort() -> tuple[list[dict[str, Any]], str]:
     return [], "unavailable"
 
 
+def _sw_players_form(offset: int = 0) -> dict[str, Any]:
+    """
+    Payload real de search-players.js → POST /ajax/sw/players.
+    value_to/clause_to deben ser altos: 0 filtra el catálogo entero.
+    """
+    ceiling = int(getattr(config, "MISTER_POOL_VALUE_CEILING", 100_000_000))
+    return {
+        "post": "players",
+        "offset": int(offset),
+        "order": 0,
+        "name": "",
+        "filters[position]": 0,
+        "filters[value_from]": 0,
+        "filters[value_to]": ceiling,
+        "filters[clause_from]": 0,
+        "filters[clause_to]": ceiling,
+        "filters[team]": 0,
+        "filters[injured]": 0,
+        "filters[favs]": 0,
+        "filters[owner]": 0,
+        "filters[benched]": 0,
+        "filters[stealable]": 0,
+    }
+
+
+def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
+    """Normaliza un item de /ajax/sw/players al schema interno."""
+    if not isinstance(raw, dict):
+        return None
+    pid = str(raw.get("id") or "").strip()
+    name = clean_player_name(str(raw.get("name") or ""))
+    if not pid or not name:
+        return None
+    team_id = str(raw.get("id_team") or "").strip()
+    value = int(raw.get("value") or 0)
+    id_uc = raw.get("id_uc")
+    owner_id = None
+    if id_uc not in (None, "", 0, "0", False):
+        owner_id = str(id_uc)
+    avg_raw = raw.get("avg")
+    form: float | None
+    try:
+        form = float(avg_raw) if avg_raw is not None and avg_raw != "" else None
+    except (TypeError, ValueError):
+        form = None
+    status = str(raw.get("status") or "").lower()
+    injury = status in ("injured", "injured_out", "out", "doubtful") or "injur" in status
+    clause_raw = raw.get("clause")
+    try:
+        clause = int(clause_raw) if clause_raw is not None else None
+    except (TypeError, ValueError):
+        clause = None
+    is_free = owner_id is None
+    return {
+        "id": pid,
+        "name": name,
+        "position": _pos(raw.get("position")),
+        "team": team_label(team_id) if team_id else "—",
+        "team_id": team_id or None,
+        "price": value,
+        "points": int(raw.get("points") or 0),
+        "form": form,
+        "mister_avg": form,
+        "injury": injury,
+        "trend": None,
+        "price_delta_5d": None,
+        "seller": "free" if is_free else "owned",
+        "owner_id": owner_id,
+        "owner_name": (str(raw.get("uc_name")).strip() if raw.get("uc_name") else None),
+        "clause": clause,
+        "clause_known": clause is not None,
+        "is_mine": bool(raw.get("is_mine")),
+        "id_market": raw.get("id_market"),
+        "min_bid": value if is_free else None,
+        "data_quality": {
+            "price": "mister",
+            "ownership": "mister_sw_players",
+            "clause": "mister" if clause is not None else "missing",
+        },
+    }
+
+
+def fetch_full_player_pool() -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """
+    Catálogo completo de la competición vía /ajax/sw/players (paginado de a 50).
+    Devuelve (jugadores normalizados, meta).
+    """
+    page_size = int(getattr(config, "MISTER_POOL_PAGE_SIZE", 50))
+    max_offset = int(getattr(config, "MISTER_POOL_MAX_OFFSET", 2000))
+    by_id: dict[str, dict[str, Any]] = {}
+    offset = 0
+    pages = 0
+    last_batch = 0
+    try:
+        while offset <= max_offset:
+            raw = ajax_post("/ajax/sw/players", _sw_players_form(offset))
+            data = raw.get("data") if isinstance(raw, dict) else None
+            batch = (data or {}).get("players") if isinstance(data, dict) else None
+            if not isinstance(batch, list) or not batch:
+                break
+            pages += 1
+            last_batch = len(batch)
+            for item in batch:
+                norm = normalize_sw_player(item)
+                if norm:
+                    by_id[norm["id"]] = norm
+            if len(batch) < page_size:
+                break
+            offset += page_size
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Pool /ajax/sw/players falló en offset=%s: %s", offset, exc)
+        if not by_id:
+            return [], {"source": "unavailable", "error": str(exc)}
+
+    players = list(by_id.values())
+    free_n = sum(1 for p in players if not p.get("owner_id"))
+    owned_n = len(players) - free_n
+    meta = {
+        "source": "mister_sw_players",
+        "pool_size": len(players),
+        "free_count": free_n,
+        "owned_count": owned_n,
+        "pages": pages,
+        "last_batch": last_batch,
+    }
+    log.info(
+        "Pool Mister sw/players: %s jugadores (libres=%s owned=%s pages=%s)",
+        len(players),
+        free_n,
+        owned_n,
+        pages,
+    )
+    return players, meta
+
+
+def apply_pool_squads_to_rivals(
+    rivals: list[dict[str, Any]],
+    pool: list[dict[str, Any]],
+    my_uc: str | None,
+) -> list[dict[str, Any]]:
+    """Rellena plantillas rivales desde el pool (ownership id_uc), más completo que HTML."""
+    if not pool or not rivals:
+        return rivals
+    by_owner: dict[str, list[dict[str, Any]]] = {}
+    my = str(my_uc or "")
+    for p in pool:
+        oid = p.get("owner_id")
+        if not oid or str(oid) == my:
+            continue
+        row = dict(p)
+        row["seller"] = "rival"
+        by_owner.setdefault(str(oid), []).append(row)
+
+    out: list[dict[str, Any]] = []
+    for r in rivals:
+        row = dict(r)
+        uc = str(row.get("team_id") or "")
+        pool_squad = by_owner.get(uc) or []
+        html_squad = list(row.get("squad") or [])
+        if pool_squad and len(pool_squad) >= max(1, len(html_squad)):
+            row["squad"] = pool_squad
+            row["squad_size"] = len(pool_squad)
+            dq = dict(row.get("data_quality") or {})
+            dq["squad"] = "mister_sw_players"
+            row["data_quality"] = dq
+        out.append(row)
+    return out
+
+
 def fetch_balance() -> dict[str, Any]:
     try:
         data = ajax_post("/ajax/balance")
@@ -1170,7 +1339,17 @@ def fetch_live_league() -> dict[str, Any] | None:
     rivals, me_row = parse_standings(standings_html, my_uc) if standings_html else ([], None)
     if rivals:
         rivals = enrich_rivals_with_squads(rivals)
-    free_pool, free_note = fetch_free_agents_best_effort()
+
+    # Catálogo completo (~500): libres + ownership real por id_uc
+    full_pool, pool_meta = fetch_full_player_pool()
+    free_pool: list[dict[str, Any]] = []
+    free_note = "unavailable"
+    if full_pool:
+        free_pool = [p for p in full_pool if not p.get("owner_id")]
+        free_note = str(pool_meta.get("source") or "mister_sw_players")
+        rivals = apply_pool_squads_to_rivals(rivals, full_pool, my_uc)
+    else:
+        free_pool, free_note = fetch_free_agents_best_effort()
 
     squad_value = sum(int(p.get("price") or 0) for p in squad)
     # Mister muestra en /standings el valor oficial de plantilla; la suma HTML
@@ -1178,7 +1357,9 @@ def fetch_live_league() -> dict[str, Any] | None:
     if me_row and me_row.get("squad_value"):
         squad_value = int(me_row["squad_value"])
 
-    owned = {p["id"] for p in squad} | {p["id"] for p in market}
+    owned: set[str] = {p["id"] for p in squad} | {p["id"] for p in market}
+    if full_pool:
+        owned |= {p["id"] for p in full_pool if p.get("owner_id")}
     for r in rivals:
         for p in r.get("squad") or []:
             if p.get("id"):
@@ -1192,13 +1373,18 @@ def fetch_live_league() -> dict[str, Any] | None:
         "Plantilla: HTML /team",
         "Mercado: HTML /market",
         "Clasificación/rivales: HTML /standings (valor plantilla, no liquidez)",
-        "Plantillas rivales: HTML /users/{id}/… (best-effort)",
+        "Plantillas rivales: HTML /users/{id}/… + pool /ajax/sw/players",
         "Sin PPG multi-temporada inventado",
     ]
-    if free_pool:
+    if full_pool:
+        notes.append(
+            f"Pool completo Mister (/ajax/sw/players): {pool_meta.get('pool_size')} "
+            f"(libres={pool_meta.get('free_count')}, owned={pool_meta.get('owned_count')})"
+        )
+    elif free_pool:
         notes.append(f"Libres detectados vía {free_note}: {len(free_pool)}")
     else:
-        notes.append("Sin lista fiable de libres TOP (Mister no expone pool global claro)")
+        notes.append("Sin lista fiable de libres / pool global")
 
     return {
         "league": {
@@ -1221,6 +1407,7 @@ def fetch_live_league() -> dict[str, Any] | None:
         "rivals": rivals,
         "owned_across_league": sorted(owned),
         "pool_top": free_pool,
+        "pool_all": full_pool,
         "_live_meta": {
             "balance_ok": bool(balance_data or bal),
             "team_ok": bool(squad),
@@ -1228,7 +1415,11 @@ def fetch_live_league() -> dict[str, Any] | None:
             "standings_ok": bool(rivals or me_row),
             "rivals_squads_ok": any(bool(r.get("squad")) for r in rivals),
             "free_agents_source": free_note,
-            "source": "mister_html+ajax_balance",
+            "pool_source": pool_meta.get("source") if full_pool else free_note,
+            "pool_size": int(pool_meta.get("pool_size") or 0) if full_pool else 0,
+            "pool_free_count": int(pool_meta.get("free_count") or len(free_pool)),
+            "pool_owned_count": int(pool_meta.get("owned_count") or 0) if full_pool else 0,
+            "source": "mister_html+ajax_balance+sw_players",
             "honest_mode": True,
             "notes": notes,
         },
