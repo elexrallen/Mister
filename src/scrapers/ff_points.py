@@ -29,6 +29,8 @@ CACHE_TTL_HOURS = 36
 DEFAULT_SEASONS = [2026, 2025]
 
 MIN_APPS_TOP = 15
+RELIABLE_APPS = 20  # muestra decente ≈ media temporada para confiar en la media
+THIN_APPS = 8  # por debajo: muestra corta (sin bonus de volumen)
 TOP_PERCENTILE = 0.85
 TOP_AVG_FLOOR = 5.5  # LaLiga Mister Mixto
 
@@ -249,10 +251,10 @@ def is_top_production(
     *,
     top_floor: float | None = None,
 ) -> bool:
-    floor = float(top_floor if top_floor is not None else TOP_AVG_FLOOR)
+    """Élite FF solo con muestra suficiente (≥ MIN_APPS_TOP)."""
     if avg is None:
         return False
-    if apps < MIN_APPS_TOP and avg < floor + 0.5:
+    if int(apps or 0) < MIN_APPS_TOP:
         return False
     return float(avg) >= threshold
 
@@ -271,8 +273,13 @@ def production_score(
     Score 0–100 para gestión diaria.
     Pretemporada: FF (+ prior). Active: mezcla Mister vivo + FF.
     avg_scale: media “buena” de referencia (Mister Mixto ~8, Fantasy RPG ~16).
+
+    La media se pondera por volumen (shrinkage hacia media de liga) para que
+    7 pts en 4 PJ no brille como 7 pts en 30 PJ.
     """
     scale = float(avg_scale) if avg_scale and avg_scale > 0 else 8.0
+    league_avg = 0.55 * scale
+    n_apps = max(0, int(apps or 0))
     score = 0.0
     primary = avg
     if points_phase == "active" and mister_avg is not None and float(mister_avg) > 0:
@@ -281,19 +288,27 @@ def production_score(
         primary = prior_avg
 
     if primary is not None:
-        score += max(0.0, min(70.0, (float(primary) / scale) * 70.0))
+        weight = min(1.0, n_apps / float(RELIABLE_APPS))
+        effective = weight * float(primary) + (1.0 - weight) * league_avg
+        score += max(0.0, min(70.0, (effective / scale) * 70.0))
     if prior_avg is not None and avg is not None and points_phase != "active":
         delta = float(avg) - float(prior_avg)
-        score += max(-5.0, min(5.0, delta * 3))
+        # Delta solo confiable con muestra mínima
+        if n_apps >= THIN_APPS:
+            score += max(-5.0, min(5.0, delta * 3))
     elif prior_avg is not None and avg is None:
-        score += max(0.0, min(55.0, (float(prior_avg) / scale) * 55.0))
+        # Solo temporada previa: shrinkage suave (asume ~mitad de muestra fiable)
+        prior_w = 0.5
+        effective_prior = prior_w * float(prior_avg) + (1.0 - prior_w) * league_avg
+        score += max(0.0, min(55.0, (effective_prior / scale) * 55.0))
 
-    if apps >= 30:
+    if n_apps >= 30:
         score += 15
-    elif apps >= 15:
+    elif n_apps >= 15:
         score += 10
-    elif apps >= 8:
+    elif n_apps >= THIN_APPS:
         score += 5
+    # < THIN_APPS → sin bonus de volumen
 
     if lineup_prob is not None:
         lp = float(lineup_prob)

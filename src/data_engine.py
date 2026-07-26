@@ -41,6 +41,7 @@ from competitive_actions import (
 )
 from squad_analyzer import (
     analyze_squad,
+    apply_realistic_need_caps,
     assess_market_coverage,
     merge_structural_into_diagnosis,
     structural_market_boost,
@@ -535,8 +536,21 @@ def classify_market_opportunities(
             score -= 28
         elif is_upgrade:
             score += 12
-        if recommended > my_balance:
-            score -= 20
+
+        blocked = recommended > my_balance
+        if blocked:
+            score -= 40  # aspiracional: no empujar el plan del día
+        elif recommended > my_balance * 0.85 and my_balance > 0:
+            score -= 12
+
+        ff_apps_raw = p.get("ff_apps")
+        if ff_apps_raw is None:
+            ff_apps_raw = (p.get("external") or {}).get("ff_apps")
+        try:
+            ff_apps = int(ff_apps_raw) if ff_apps_raw is not None else None
+        except (TypeError, ValueError):
+            ff_apps = None
+        sample_thin = ff_apps is not None and ff_apps < 8
 
         prod = p.get("production_score")
         ff_avg = p.get("ff_mister_avg")
@@ -551,8 +565,10 @@ def classify_market_opportunities(
                 score += (float(ff_avg) / 8.0) * (14 if preseasonish else 22)
         except (TypeError, ValueError):
             pass
+        if sample_thin:
+            score -= 8
         try:
-            if ff_avg is not None and price > 0:
+            if ff_avg is not None and price > 0 and not sample_thin:
                 roi = float(ff_avg) / max(price / 1_000_000, 0.4)
                 if roi >= 1.2:
                     score += 8
@@ -560,7 +576,8 @@ def classify_market_opportunities(
                     score -= 12
         except (TypeError, ValueError):
             pass
-        if p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff"):
+        is_top = bool(p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff"))
+        if is_top and not sample_thin:
             score += 6
 
         ext = p.get("external") or {}
@@ -598,11 +615,14 @@ def classify_market_opportunities(
 
         if avail in ("injured", "suspended"):
             priority = "Baja"
+        elif blocked:
+            # Nunca Alta solo por producción/estructura si no hay caja
+            priority = "Media" if score >= 25 else "Baja"
         elif line_covered and not is_upgrade:
             priority = "Baja"
         elif fills_coverage_gap or fills_structural or score >= 35:
             priority = "Alta"
-        elif (p.get("is_top_ff") or (p.get("external") or {}).get("is_top_ff")) and (
+        elif is_top and not sample_thin and (
             p["position"] in needy or fills_structural or fills_coverage_gap
         ):
             priority = "Alta"
@@ -630,7 +650,9 @@ def classify_market_opportunities(
             "puja_techo": bid_ceiling,
             "priority": priority,
             "score": round(score, 1),
-            "affordable": recommended <= my_balance,
+            "affordable": not blocked,
+            "ff_apps": ff_apps,
+            "sample_thin": sample_thin,
             "fills_need": p["position"] in needy or fills_structural or fills_coverage_gap,
             "fills_structural": fills_structural,
             "structural_label": coverage_label or struct_label,
@@ -683,10 +705,12 @@ def find_free_agents_top(
     perf_idx: dict[str, dict[str, Any]],
     *,
     allow_synthetic: bool = True,
+    balance: float | None = None,
 ) -> list[dict[str, Any]]:
     """Cracks del pool TOP no fichados. Lista vacía si no hay pool real."""
     if not pool_top:
         return []
+    bal = float(balance) if balance is not None else None
     free: list[dict[str, Any]] = []
     for raw in pool_top:
         if raw["id"] in owned_ids:
@@ -695,12 +719,41 @@ def find_free_agents_top(
         price = float(p.get("price") or 1)
         ppg = float(p.get("avg_ppg") or 0)
         roi = ppg / (price / 1_000_000) if price else 0
-        free.append({
+        ff_apps_raw = p.get("ff_apps")
+        if ff_apps_raw is None:
+            ff_apps_raw = (p.get("external") or {}).get("ff_apps")
+        try:
+            ff_apps = int(ff_apps_raw) if ff_apps_raw is not None else None
+        except (TypeError, ValueError):
+            ff_apps = None
+        sample_thin = ff_apps is not None and ff_apps < 8
+        row: dict[str, Any] = {
             **p,
             "roi_ppg_per_million": round(roi, 3),
             "why_free": "Aún no ha salido / nadie lo ha fichado en la liga",
-        })
-    free.sort(key=lambda x: (-float(x.get("avg_ppg") or 0), -float(x.get("reliability") or 0)))
+            "ff_apps": ff_apps,
+            "sample_thin": sample_thin,
+        }
+        if bal is not None:
+            bf = budget_fit(price, bal, min_cost=price)
+            row["budget_fit"] = bf
+            row["affordable"] = bf in ("comfortable", "tight")
+            if bf in ("comfortable", "tight"):
+                row["target_tier"] = "realistic"
+            elif bf == "stretch":
+                row["target_tier"] = "stretch"
+            else:
+                row["target_tier"] = "aspirational"
+        free.append(row)
+    # Preferir asequibles y muestra fiable; PPG como desempate
+    free.sort(
+        key=lambda x: (
+            0 if x.get("target_tier") == "realistic" else (1 if x.get("target_tier") == "stretch" else 2),
+            1 if x.get("sample_thin") else 0,
+            -float(x.get("production_score") or x.get("avg_ppg") or 0),
+            -float(x.get("reliability") or 0),
+        )
+    )
     return free
 
 
@@ -1020,11 +1073,19 @@ def build_action_plan(
         on_daily = bool(o.get("on_daily_market") or o.get("seller") == "market")
         prod_ok = False
         try:
-            prod_ok = float(o.get("production_score") or 0) >= 35 or bool(o.get("is_top_ff"))
+            prod_ok = float(o.get("production_score") or 0) >= 35 or (
+                bool(o.get("is_top_ff")) and not o.get("sample_thin")
+            )
         except (TypeError, ValueError):
-            prod_ok = bool(o.get("is_top_ff"))
+            prod_ok = bool(o.get("is_top_ff")) and not o.get("sample_thin")
 
-        # Cola del día = mercado del día. Libres del pool no entran como buy_now.
+        if o.get("sample_thin") and (o.get("ff_mister_avg") is not None or o.get("production_score")):
+            apps_n = o.get("ff_apps")
+            why_parts.append(
+                f"Media alta pero pocos partidos ({apps_n} PJ) — poco fiable"
+                if apps_n is not None
+                else "Media con muestra corta — poco fiable"
+            )
         if not on_daily:
             # Pipeline breve: solo vigilantes claros (no saturar la cola)
             if not (
@@ -1147,6 +1208,9 @@ def build_action_plan(
             "position_coverage": o.get("position_coverage"),
             "on_daily_market": on_daily,
             "market_mode": "fixed" if fixed else "auction",
+            "ff_apps": o.get("ff_apps"),
+            "sample_thin": bool(o.get("sample_thin")),
+            "target_tier": o.get("target_tier"),
         }
 
         if buy_now:
@@ -1468,6 +1532,17 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         points_phase=points_phase,
         market_universe=market_ext,
     )
+    # Techos de need según caja real (antes de clasificar mercado)
+    capped_needs = apply_realistic_need_caps(
+        diagnostico_plantilla.get("structural_needs") or [],
+        float(me.get("balance") or 0),
+    )
+    diagnostico_plantilla["structural_needs"] = capped_needs
+    diagnostico_plantilla["realistic_price_cap"] = (
+        int(capped_needs[0]["realistic_cap"]) if capped_needs else int(
+            max(0.0, float(me.get("balance") or 0) - float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)))
+        )
+    )
     diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
     comp = detect_competition_phase(
         season_start=season_start,
@@ -1615,6 +1690,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         owned,
         perf_idx,
         allow_synthetic=not honest_live,
+        balance=float(me.get("balance") or 0),
     )
 
     recommendations: list[dict[str, Any]] = []

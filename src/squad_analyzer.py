@@ -365,6 +365,48 @@ def assess_market_coverage(
     }
 
 
+def realistic_price_cap(balance: float) -> float:
+    """Techo de gasto realista: saldo menos colchón del paquete diario."""
+    reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+    return max(0.0, float(balance or 0) - reserve)
+
+
+def apply_realistic_need_caps(
+    needs: list[dict[str, Any]] | None,
+    balance: float,
+) -> list[dict[str, Any]]:
+    """
+    Ancla max_price de needs a la caja real (balance − reserva).
+    Needs sin techo (starters) heredan el cap; depth/parche se limitan más.
+    """
+    cap = realistic_price_cap(balance)
+    depth_cap = min(4_000_000.0, cap) if cap > 0 else 0.0
+    out: list[dict[str, Any]] = []
+    for raw in needs or []:
+        n = dict(raw)
+        ntype = str(n.get("need") or "")
+        prio = str(n.get("priority") or "Media")
+        current = n.get("max_price")
+        try:
+            current_f = float(current) if current is not None else None
+        except (TypeError, ValueError):
+            current_f = None
+
+        if ntype == "patch_cheap" or ntype.startswith("depth_"):
+            target = depth_cap if depth_cap > 0 else float(PATCH_MAX_PRICE)
+            if current_f is not None:
+                target = min(current_f, target) if target > 0 else min(current_f, float(PATCH_MAX_PRICE))
+            n["max_price"] = int(target)
+        elif current_f is None:
+            # Starters / fw_top / gk_*: techo = cap completo (Alta) o depth_cap
+            n["max_price"] = int(cap if prio == "Alta" else depth_cap)
+        else:
+            n["max_price"] = int(min(current_f, cap) if cap > 0 else current_f)
+
+        n["realistic_cap"] = int(cap)
+        out.append(n)
+    return out
+
 
 def _advice(
     level: str,
@@ -1201,6 +1243,15 @@ def structural_market_boost(
         bonus = 0.0
         this_label = None
 
+        # Precio por encima del techo realista del need → no cubre hueco prioritario
+        max_p_need = need.get("max_price")
+        try:
+            max_p_f = float(max_p_need) if max_p_need is not None else None
+        except (TypeError, ValueError):
+            max_p_f = None
+        if max_p_f is not None and price > 0 and price > max_p_f:
+            continue
+
         if ntype in (
             "gk_backup",
             "df_starter",
@@ -1216,7 +1267,7 @@ def structural_market_boost(
             continue
 
         if ntype == "patch_cheap":
-            max_p = need.get("max_price") or PATCH_MAX_PRICE
+            max_p = max_p_f if max_p_f is not None else float(PATCH_MAX_PRICE)
             if price <= 0 or price > max_p:
                 continue
             # Parche: barato; aún mejor si parece titular/regular real

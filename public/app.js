@@ -379,17 +379,30 @@
     return `<div class="leading-tight"><span>${Number(rating).toFixed(1)}</span>${extra}</div>`;
   };
 
-  /** Forma Mister; en pretemporada (0) cae a media FF Mister Mixto. */
+  /** Forma Mister; en pretemporada (0) cae a media FF. Incluye PJ si hay muestra. */
   const formCell = (p) => {
     const mister = p.form != null ? Number(p.form) : p.mister_avg != null ? Number(p.mister_avg) : null;
     const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+    const apps = p.ff_apps ?? (p.external || {}).ff_apps;
+    const appsBit =
+      apps != null && !Number.isNaN(Number(apps))
+        ? ` <span class="text-[10px] text-slate-500">· ${Number(apps)} PJ</span>`
+        : "";
     if (mister != null && !Number.isNaN(mister) && mister > 0) {
-      return Number(mister).toFixed(1);
+      return `<span>${Number(mister).toFixed(1)}${appsBit}</span>`;
     }
     if (ff != null && !Number.isNaN(Number(ff))) {
-      return `<span title="Media FF Mister Mixto (pretemporada)">${Number(ff).toFixed(1)} <span class="text-[10px] text-slate-500">FF</span></span>`;
+      return `<span title="Media FF (ponderada por partidos)">${Number(ff).toFixed(1)} <span class="text-[10px] text-slate-500">FF</span>${appsBit}</span>`;
     }
     return "—";
+  };
+
+  const ffAvgAppsBadge = (p) => {
+    const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+    if (ff == null) return "";
+    const apps = p.ff_apps ?? (p.external || {}).ff_apps;
+    const appsTxt = apps != null ? ` · ${Number(apps)} PJ` : "";
+    return `<span class="badge badge-duda" title="Media FF y partidos">FF ${Number(ff).toFixed(1)}${appsTxt}</span>`;
   };
 
   const signalChips = (p) => {
@@ -397,7 +410,17 @@
     const chips = [];
     if (ext.is_chollo_ext) chips.push(`<span class="badge badge-mint">Chollo</span>`);
     if (ext.is_recommendation_ext) chips.push(`<span class="badge badge-titular">Reco</span>`);
-    if (p.is_top_ff || ext.is_top_ff) chips.push(`<span class="badge badge-mint">TOP Mister</span>`);
+    if ((p.is_top_ff || ext.is_top_ff) && !p.sample_thin) {
+      chips.push(`<span class="badge badge-mint">TOP Mister</span>`);
+    }
+    if (p.sample_thin || (p.ff_apps != null && Number(p.ff_apps) < 8)) {
+      chips.push(`<span class="badge badge-baja-ext" title="Pocos partidos FF">Muestra corta</span>`);
+    }
+    if (p.target_tier === "aspirational" || p.budget_fit === "blocked") {
+      chips.push(`<span class="badge badge-baja">Fuera de caja</span>`);
+    } else if (p.target_tier === "stretch") {
+      chips.push(`<span class="badge badge-duda">Al límite</span>`);
+    }
     if (ext.points_streak === "up") chips.push(`<span class="badge badge-mint">Racha ↑</span>`);
     if (ext.points_streak === "down") chips.push(`<span class="badge badge-baja-ext">Racha ↓</span>`);
     if (p.fills_structural && p.structural_label) {
@@ -732,6 +755,7 @@
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Plan B</span>`;
       if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
       if (role === "do_not_stack") return `<span class="badge badge-baja">No acumular</span>`;
+      if (role === "out_of_budget") return `<span class="badge badge-baja">Fuera de caja</span>`;
       return "";
     };
 
@@ -770,9 +794,17 @@
     const doToday = plan.filter((a) => a.queue_role === "primary" || a.queue_role === "secondary");
     const planB = plan.filter((a) => a.queue_role === "alt_if_lost" || a.queue_role === "also_good");
     const noStack = plan.filter((a) => a.queue_role === "do_not_stack");
+    const outOfBudget = plan.filter((a) => a.queue_role === "out_of_budget");
     const other = plan.filter(
       (a) =>
-        !["primary", "secondary", "alt_if_lost", "also_good", "do_not_stack"].includes(a.queue_role)
+        ![
+          "primary",
+          "secondary",
+          "alt_if_lost",
+          "also_good",
+          "do_not_stack",
+          "out_of_budget",
+        ].includes(a.queue_role)
     );
 
     const renderItem = (a, rankLabel, opts = {}) => {
@@ -814,8 +846,12 @@
             ? `<span class="badge badge-duda">Titular ${Math.round(Number(a.lineup_pct))}%</span>`
             : "",
         a.mister_avg != null || a.points != null ? scoringLine(a) : "",
-        a.ff_mister_avg != null
-          ? `<span class="badge badge-duda">Mister ${Number(a.ff_mister_avg).toFixed(1)}</span>`
+        ffAvgAppsBadge(a),
+        a.sample_thin
+          ? `<span class="badge badge-baja-ext">Muestra corta</span>`
+          : "",
+        a.target_tier === "aspirational" || a.budget_fit === "blocked"
+          ? `<span class="badge badge-baja">Fuera de caja</span>`
           : "",
         pointsTrendBadge(a.points_trend),
       ]
@@ -912,6 +948,7 @@
       section("Plan de hoy", doToday, "numbered") +
       section(fixed ? "También válidos" : "Si se van / plan B", planB, "muted") +
       section("No acumular con el paquete", noStack, "muted") +
+      section("Fuera de caja / vigilar", outOfBudget, "muted") +
       section("Otras acciones", otherVisible, "muted") +
       otherHidden.map((a) => renderItem(a, null, { muted: true, hidden: true })).join("") +
       toggleHtml;

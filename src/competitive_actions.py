@@ -36,6 +36,15 @@ def budget_fit(cost: float | None, balance: float, *, min_cost: float | None = N
     return "tight"
 
 
+def target_tier_from_budget_fit(bf: str | None) -> str:
+    """realistic | stretch | aspirational."""
+    if bf in ("comfortable", "tight"):
+        return "realistic"
+    if bf == "stretch":
+        return "stretch"
+    return "aspirational"
+
+
 def _ext_avail(p: dict[str, Any]) -> str:
     ext = p.get("external") or {}
     return ext.get("availability") or ("injured" if p.get("injury") else "unknown")
@@ -376,6 +385,7 @@ def estimate_gap_funding(
 ) -> dict[str, Any]:
     """
     Estima coste mínimo para cubrir needs Alta (multi-carencia).
+    Prefiere candidatos asequibles (realistic) del pool; si no hay, marca shortfall.
     funding_target = suma de hasta top_n gaps; shortfall vs saldo.
     """
     needs = [n for n in (structural_needs or []) if n.get("priority") == "Alta"]
@@ -403,7 +413,8 @@ def estimate_gap_funding(
         except (TypeError, ValueError):
             ceil = None
 
-        candidates: list[float] = []
+        affordable_costs: list[float] = []
+        any_costs: list[float] = []
         for o in market:
             opos = o.get("position")
             if pos and opos != pos:
@@ -429,6 +440,9 @@ def estimate_gap_funding(
                 fills = bool(o.get("fills_structural") or o.get("fills_need"))
                 if not fills and lp is not None and lp < 45:
                     continue
+                # Muestra corta: no anclar funding a medias poco fiables
+                if o.get("sample_thin"):
+                    continue
                 price = _money(o.get("puja_recomendada") or o.get("price"))
                 if price <= 0:
                     continue
@@ -438,16 +452,30 @@ def estimate_gap_funding(
                     continue
             else:
                 continue
-            candidates.append(_money(o.get("puja_recomendada") or o.get("price")))
+            price = _money(o.get("puja_recomendada") or o.get("price"))
+            any_costs.append(price)
+            tier = o.get("target_tier") or target_tier_from_budget_fit(
+                o.get("budget_fit") or budget_fit(price, bal, min_cost=price)
+            )
+            if tier == "realistic" or price <= bal:
+                affordable_costs.append(price)
 
-        if candidates:
-            cost = min(candidates)
+        no_affordable = False
+        if affordable_costs:
+            cost = min(affordable_costs)
+        elif any_costs:
+            # Hay candidatos pero todos fuera de caja → shortfall explícito
+            cost = min(any_costs)
+            no_affordable = True
         elif floor is not None:
             cost = floor
+            no_affordable = floor > bal
         elif ceil is not None:
             cost = min(ceil, _GAP_FALLBACK_COST.get(str(pos or ""), 2_000_000.0))
+            no_affordable = cost > bal
         else:
             cost = _GAP_FALLBACK_COST.get(str(pos or ""), 2_000_000.0)
+            no_affordable = cost > bal
 
         gap_rows.append(
             {
@@ -455,6 +483,7 @@ def estimate_gap_funding(
                 "need": need.get("need"),
                 "cost": cost,
                 "label": need.get("reason") or need.get("need") or (pos or "gap"),
+                "no_affordable_candidate": no_affordable,
             }
         )
 
@@ -465,6 +494,8 @@ def estimate_gap_funding(
     funding_shortfall = max(0.0, funding_target - bal)
     cheapest = min((float(g["cost"]) for g in gap_rows), default=None)
     cash_tight = funding_shortfall > 0 or (cheapest is not None and bal < cheapest)
+    if any(g.get("no_affordable_candidate") for g in selected):
+        cash_tight = True
 
     return {
         "funding_target": funding_target,
@@ -557,7 +588,12 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     risk = item.get("wait_risk") or item.get("risk") or "low"
     score += {"high": 25, "medium": 15, "low": 5}.get(str(risk), 5)
     bf = item.get("budget_fit") or "blocked"
-    score += {"comfortable": 20, "tight": 10, "stretch": 0, "blocked": -25, "funding": 8}.get(str(bf), 0)
+    score += {"comfortable": 20, "tight": 10, "stretch": 0, "blocked": -40, "funding": 8}.get(str(bf), 0)
+    tier = item.get("target_tier") or target_tier_from_budget_fit(str(bf))
+    if tier == "aspirational":
+        score -= 15
+    elif tier == "stretch":
+        score -= 5
     if item.get("crowds_out_gaps"):
         score -= 55
         cost = _money(item.get("cost") or item.get("bid") or item.get("price"))
@@ -568,23 +604,26 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     score += min(15, int(item.get("rival_demand") or 0) * 5)
     if item.get("improves_owned"):
         score += 20
-    # Producción FF / Mister
+    # Producción FF / Mister (castiga muestra corta)
+    sample_thin = bool(item.get("sample_thin"))
+    if sample_thin:
+        score -= 8
     prod = _production_score(item)
     if prod is not None:
         score += int(min(25, prod / 4))
         if prod < 35:
             score -= 10
     ff = _ff_avg(item)
-    if ff is not None:
+    if ff is not None and not sample_thin:
         score += int(min(12, ff * 1.5))
         if ff < 3.5 and _money(item.get("price") or item.get("market_value")) >= 5_000_000:
             score -= 12
-    if item.get("is_top_ff") or (item.get("external") or {}).get("is_top_ff"):
+    if (item.get("is_top_ff") or (item.get("external") or {}).get("is_top_ff")) and not sample_thin:
         score += 8
     # Capa puntos adicional cuando discrimina
     avg = item.get("mister_avg")
     try:
-        if avg is not None and float(avg) > 0:
+        if avg is not None and float(avg) > 0 and not sample_thin:
             score += min(15, int(float(avg) * 2))
     except (TypeError, ValueError):
         pass
@@ -1484,7 +1523,7 @@ def annotate_market_budget_risk(
     points_phase: str = "preseason",
     market_mode: str = "auction",
 ) -> list[dict[str, Any]]:
-    """Añade budget_fit, wait_risk, priority_score y reordena mercado."""
+    """Añade budget_fit, target_tier, wait_risk, priority_score y reordena mercado."""
     out: list[dict[str, Any]] = []
     bal = _money(balance)
     mode = market_mode or "auction"
@@ -1495,8 +1534,21 @@ def annotate_market_budget_risk(
         cost = _money(row.get("puja_recomendada") or row.get("price"))
         min_c = _money(row.get("puja_minima") or row.get("price"))
         bf = budget_fit(cost, bal, min_cost=min_c)
+        tier = target_tier_from_budget_fit(bf)
+        # Muestra corta desde ff_apps si no vino ya
+        if row.get("sample_thin") is None:
+            apps = row.get("ff_apps")
+            if apps is None:
+                apps = (row.get("external") or {}).get("ff_apps")
+            try:
+                row["sample_thin"] = apps is not None and int(apps) < 8
+                if row.get("ff_apps") is None and apps is not None:
+                    row["ff_apps"] = int(apps)
+            except (TypeError, ValueError):
+                row["sample_thin"] = False
         row["wait_risk"] = risk
         row["budget_fit"] = bf
+        row["target_tier"] = tier
         row["rival_demand"] = len(
             rival_demand_for_position(rivals, row.get("position") or "", market_mode=mode)
         )
@@ -1508,8 +1560,12 @@ def annotate_market_budget_risk(
             **row,
             "risk": risk,
             "budget_fit": bf,
+            "target_tier": tier,
         })
         row["affordable"] = bf in ("comfortable", "tight")
+        # Nunca Alta si aspiracional (refuerzo tras annotate)
+        if tier == "aspirational" and row.get("priority") == "Alta":
+            row["priority"] = "Media"
         out.append(row)
     out.sort(key=lambda x: (-int(x.get("priority_score") or 0), -float(x.get("score") or 0)))
     return out
@@ -1601,7 +1657,10 @@ def finalize_action_plan(
     daily_buys = [
         i
         for i in plan
-        if i.get("action") == "buy_now" and _is_daily_market_item(i)
+        if i.get("action") == "buy_now"
+        and _is_daily_market_item(i)
+        and (i.get("target_tier") or target_tier_from_budget_fit(i.get("budget_fit"))) == "realistic"
+        and (i.get("budget_fit") in ("comfortable", "tight", None))
     ]
 
     def _primary_sort_key(item: dict[str, Any]) -> tuple:
@@ -1710,6 +1769,29 @@ def finalize_action_plan(
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         demoted.append(item)
 
+    # Aspiracionales / fuera de caja → no mezclar con plan de hoy
+    for item in plan:
+        tier = item.get("target_tier") or target_tier_from_budget_fit(item.get("budget_fit"))
+        if tier != "aspirational" and item.get("budget_fit") != "blocked":
+            continue
+        if item.get("queue_role") in ("primary", "secondary"):
+            continue
+        if item.get("action") in ("buy_now", "clause_bid"):
+            # No debería llegar: buy_now exige caja; por seguridad
+            item["action"] = "wait"
+        if not item.get("queue_role") or item.get("queue_role") in (
+            "alt_if_lost",
+            "also_good",
+            "do_not_stack",
+        ):
+            item["queue_role"] = "out_of_budget"
+            note = "Fuera de caja — vigilar / vender antes"
+            item["package_note"] = note
+            item["urgency"] = "low"
+            why_prev = (item.get("why") or "").strip()
+            if "Fuera de caja" not in why_prev:
+                item["why"] = f"{note}; {why_prev}" if why_prev else note
+
     # Re-rank tras demote
     for item in plan:
         role = item.get("queue_role")
@@ -1721,6 +1803,8 @@ def finalize_action_plan(
             item["_queue_rank"] = 700 + int(item.get("priority_score") or 0)
         elif role == "do_not_stack":
             item["_queue_rank"] = 550 + int(item.get("priority_score") or 0) // 2
+        elif role == "out_of_budget":
+            item["_queue_rank"] = 300 + int(item.get("priority_score") or 0) // 3
 
     plan.sort(
         key=lambda x: (
@@ -1742,15 +1826,17 @@ def finalize_action_plan(
     max_pipeline_waits = 2
     max_alt_waits = 3
     max_stack_waits = 2
+    max_oob_waits = 2
     pipeline_waits = 0
     alt_waits = 0
     stack_waits = 0
+    oob_waits = 0
     max_total = sum(limits.values())
     used_ids: set[str] = set()
     sim_balance = float(balance) if balance is not None else None
 
     def _append(item: dict[str, Any]) -> bool:
-        nonlocal sim_balance, pipeline_waits, alt_waits, stack_waits
+        nonlocal sim_balance, pipeline_waits, alt_waits, stack_waits, oob_waits
         a = item.get("action") or ""
         pid = str(item.get("player_id") or "")
         role = item.get("queue_role")
@@ -1773,6 +1859,10 @@ def finalize_action_plan(
                 if stack_waits >= max_stack_waits:
                     return False
                 stack_waits += 1
+            elif role == "out_of_budget":
+                if oob_waits >= max_oob_waits:
+                    return False
+                oob_waits += 1
             elif not _is_daily_market_item(item):
                 if pipeline_waits >= max_pipeline_waits:
                     return False
@@ -1788,7 +1878,7 @@ def finalize_action_plan(
         capped.append(clean)
         return True
 
-    # Paquete → also_good / plan B / no acumular → resto
+    # Paquete → also_good / plan B / no acumular → fuera de caja → resto
     for item in plan:
         if item.get("queue_role") in ("primary", "secondary"):
             _append(item)
@@ -1796,7 +1886,17 @@ def finalize_action_plan(
         if item.get("queue_role") in ("alt_if_lost", "also_good", "do_not_stack"):
             _append(item)
     for item in plan:
-        if item.get("queue_role") in ("primary", "secondary", "alt_if_lost", "also_good", "do_not_stack"):
+        if item.get("queue_role") == "out_of_budget":
+            _append(item)
+    for item in plan:
+        if item.get("queue_role") in (
+            "primary",
+            "secondary",
+            "alt_if_lost",
+            "also_good",
+            "do_not_stack",
+            "out_of_budget",
+        ):
             continue
         if len(capped) >= max_total:
             break
