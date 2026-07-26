@@ -168,6 +168,44 @@ footer,
   }
 }
 
+.market-scope {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.scope-chip {
+  border: 1px solid var(--stroke);
+  background: rgba(7, 11, 20, 0.55);
+  color: #94a3b8;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.scope-chip:hover,
+.scope-chip:focus-visible {
+  border-color: rgba(45, 212, 191, 0.4);
+  color: #e2e8f0;
+  outline: none;
+}
+
+.scope-chip.active {
+  border-color: rgba(45, 212, 191, 0.55);
+  background: rgba(45, 212, 191, 0.12);
+  color: #5eead4;
+}
+
+.market-scope-hint {
+  margin: 0;
+  flex: 1 1 10rem;
+}
+
 /* Cabecera campaña J1 */
 .campaign-banner {
   display: flex;

@@ -634,6 +634,38 @@
 
   let queueExpanded = false;
   const QUEUE_PREVIEW = 6;
+  let marketScope = "today"; // today | all
+
+  function isDailyMarketPlayer(p) {
+    return Boolean(p && (p.on_daily_market || p.seller === "market"));
+  }
+
+  function marketUniverse() {
+    const all = DATA.market_opportunities || [];
+    if (marketScope === "all") return all;
+    return all.filter(isDailyMarketPlayer);
+  }
+
+  function updateMarketScopeUi() {
+    document.querySelectorAll("[data-market-scope]").forEach((btn) => {
+      const on = btn.getAttribute("data-market-scope") === marketScope;
+      btn.classList.toggle("active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    const hint = document.getElementById("market-scope-hint");
+    if (!hint || !DATA) return;
+    const daily = (DATA.market_opportunities || []).filter(isDailyMarketPlayer).length;
+    const total = (DATA.market_opportunities || []).length;
+    const slots = (DATA.kpis || {}).market_day_slots;
+    if (marketScope === "today") {
+      hint.textContent =
+        daily > 0
+          ? `Solo pujables ahora · ${daily}${slots != null ? ` (ref. ${slots} plazas)` : ""}`
+          : "Sin mercado del día en los datos — prueba «Todos los libres»";
+    } else {
+      hint.textContent = `Pool de libres enriquecido · ${total} jugadores`;
+    }
+  }
 
   function renderActionQueue(data) {
     const box = document.getElementById("action-queue");
@@ -797,16 +829,18 @@
   }
 
   function renderMarket() {
+    updateMarketScopeUi();
     const tbody = document.querySelector("#table-market tbody");
     const cards = document.getElementById("market-cards");
     const f = getFilters();
-    const rows = sortRows(
-      "market",
-      (DATA.market_opportunities || []).filter((p) => matchPlayer(p, f))
-    );
+    const rows = sortRows("market", marketUniverse().filter((p) => matchPlayer(p, f)));
+    const emptyMsg =
+      marketScope === "today"
+        ? "Sin jugadores en el mercado de hoy con estos filtros."
+        : "Sin resultados con estos filtros.";
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="11" class="text-slate-500">Sin resultados con estos filtros.</td></tr>`;
-      if (cards) cards.innerHTML = `<p class="empty-state">Sin resultados con estos filtros.</p>`;
+      tbody.innerHTML = `<tr><td colspan="11" class="text-slate-500">${emptyMsg}</td></tr>`;
+      if (cards) cards.innerHTML = `<p class="empty-state">${emptyMsg}</p>`;
       return;
     }
     tbody.innerHTML = rows
@@ -1478,6 +1512,14 @@
         applyFilters();
       });
     }
+    document.querySelectorAll("[data-market-scope]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const scope = btn.getAttribute("data-market-scope");
+        if (!scope || scope === marketScope) return;
+        marketScope = scope;
+        renderMarket();
+      });
+    });
     updateFiltersSummary();
   }
 

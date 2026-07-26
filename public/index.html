@@ -177,6 +177,15 @@
       </div>
 
       <div id="tab-market" class="tab-panel active p-3 md:p-6" role="tabpanel">
+        <div class="market-scope" role="group" aria-label="Ámbito del mercado">
+          <button type="button" class="scope-chip active" data-market-scope="today" aria-pressed="true">
+            Mercado de hoy
+          </button>
+          <button type="button" class="scope-chip" data-market-scope="all" aria-pressed="false">
+            Todos los libres
+          </button>
+          <p id="market-scope-hint" class="section-hint market-scope-hint">Solo jugadores pujables ahora</p>
+        </div>
         <div class="list-sort" data-list="market" aria-label="Ordenar mercado"></div>
         <div id="market-cards" class="card-list" aria-live="polite"></div>
         <div class="table-wrap desktop-only">
