@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T16:21:39.423957+00:00",
+  "generated_at": "2026-07-27T16:56:23.078580+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "balance": 31429000.0,
@@ -16,25 +16,6 @@
       "slot": "GK1",
       "position": "GK",
       "role": "starter",
-      "player_id": "22783",
-      "name": "M. Gillespie",
-      "team": "Club 177",
-      "ep_score": 0.0,
-      "price": 176000.0,
-      "status": "buy",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 0.0,
-      "lineup_prob": null,
-      "on_daily_market": true,
-      "owned": false,
-      "why": "EP 0 · 176,000 € · buy",
-      "added_at": "2026-07-27T16:15:20.449724+00:00"
-    },
-    {
-      "slot": "GK2",
-      "position": "GK",
-      "role": "bench",
       "player_id": "3055",
       "name": "C. Kelleher",
       "team": "Brentford",
@@ -49,6 +30,25 @@
       "owned": false,
       "why": "EP 68 · 10,395,150 € · buy",
       "added_at": "2026-07-27T15:32:46.268967+00:00"
+    },
+    {
+      "slot": "GK2",
+      "position": "GK",
+      "role": "bench",
+      "player_id": "22783",
+      "name": "M. Gillespie",
+      "team": "Club 177",
+      "ep_score": 0.0,
+      "price": 176000.0,
+      "status": "buy",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 0.0,
+      "lineup_prob": null,
+      "on_daily_market": true,
+      "owned": false,
+      "why": "EP 0 · 176,000 € · buy",
+      "added_at": "2026-07-27T16:55:20.605887+00:00"
     },
     {
       "slot": "DF1",
@@ -149,44 +149,6 @@
       "slot": "MF2",
       "position": "MF",
       "role": "starter",
-      "player_id": "13054",
-      "name": "M. Gibbs-White",
-      "team": "Nott. Forest",
-      "ep_score": 81.0,
-      "price": 15218000.0,
-      "status": "keep",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 5.32,
-      "lineup_prob": null,
-      "on_daily_market": false,
-      "owned": true,
-      "why": "EP 81 · 15,218,000 € · keep",
-      "added_at": "2026-07-27T15:58:22.371191+00:00"
-    },
-    {
-      "slot": "MF3",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "48638",
-      "name": "K. Lewis-Potter",
-      "team": "Club 619",
-      "ep_score": 0.0,
-      "price": 773000.0,
-      "status": "buy",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 0.0,
-      "lineup_prob": null,
-      "on_daily_market": false,
-      "owned": false,
-      "why": "EP 0 · 773,000 € · buy",
-      "added_at": "2026-07-27T16:18:49.186976+00:00"
-    },
-    {
-      "slot": "MF4",
-      "position": "MF",
-      "role": "bench",
       "player_id": "17728",
       "name": "E. Buendía",
       "team": "Aston Villa",
@@ -203,9 +165,9 @@
       "added_at": "2026-07-27T15:32:46.269010+00:00"
     },
     {
-      "slot": "MF5",
+      "slot": "MF3",
       "position": "MF",
-      "role": "bench",
+      "role": "starter",
       "player_id": "4870",
       "name": "H. Barnes",
       "team": "Newcastle",
@@ -222,7 +184,64 @@
       "added_at": "2026-07-27T15:32:46.269036+00:00"
     },
     {
+      "slot": "MF4",
+      "position": "MF",
+      "role": "bench",
+      "player_id": "48638",
+      "name": "K. Lewis-Potter",
+      "team": "Club 619",
+      "ep_score": 0.0,
+      "price": 773000.0,
+      "status": "buy",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 0.0,
+      "lineup_prob": null,
+      "on_daily_market": false,
+      "owned": false,
+      "why": "EP 0 · 773,000 € · buy",
+      "added_at": "2026-07-27T16:55:20.606043+00:00"
+    },
+    {
+      "slot": "MF5",
+      "position": "MF",
+      "role": "bench",
+      "player_id": "7886",
+      "name": "J. Murphy",
+      "team": "Club 177",
+      "ep_score": 0.0,
+      "price": 844000.0,
+      "status": "buy",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 0.0,
+      "lineup_prob": null,
+      "on_daily_market": false,
+      "owned": false,
+      "why": "EP 0 · 844,000 € · buy",
+      "added_at": "2026-07-27T16:56:23.078455+00:00"
+    },
+    {
       "slot": "FW1",
+      "position": "FW",
+      "role": "starter",
+      "player_id": "53412",
+      "name": "N. Jackson",
+      "team": "Club 54",
+      "ep_score": 59.5,
+      "price": 7519600.0,
+      "status": "buy",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 7.91,
+      "lineup_prob": null,
+      "on_daily_market": true,
+      "owned": false,
+      "why": "EP 60 · 7,519,600 € · buy",
+      "added_at": "2026-07-27T16:56:23.078357+00:00"
+    },
+    {
+      "slot": "FW2",
       "position": "FW",
       "role": "starter",
       "player_id": "58959",
@@ -239,25 +258,6 @@
       "owned": true,
       "why": "EP 37 · 602,000 € · keep",
       "added_at": "2026-07-27T15:58:22.371209+00:00"
-    },
-    {
-      "slot": "FW2",
-      "position": "FW",
-      "role": "starter",
-      "player_id": "63671",
-      "name": "J. Piroe",
-      "team": "Club 502",
-      "ep_score": 0.0,
-      "price": 160000.0,
-      "status": "buy",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 0.0,
-      "lineup_prob": null,
-      "on_daily_market": false,
-      "owned": false,
-      "why": "EP 0 · 160,000 € · buy",
-      "added_at": "2026-07-27T16:18:49.186994+00:00"
     },
     {
       "slot": "FW3",
@@ -320,26 +320,7 @@
         "added_at": "2026-07-27T15:58:22.371186+00:00"
       },
       {
-        "slot": "MF2",
-        "position": "MF",
-        "role": "starter",
-        "player_id": "13054",
-        "name": "M. Gibbs-White",
-        "team": "Nott. Forest",
-        "ep_score": 81.0,
-        "price": 15218000.0,
-        "status": "keep",
-        "delta_5d": null,
-        "value_note": "stable",
-        "value_ratio": 5.32,
-        "lineup_prob": null,
-        "on_daily_market": false,
-        "owned": true,
-        "why": "EP 81 · 15,218,000 € · keep",
-        "added_at": "2026-07-27T15:58:22.371191+00:00"
-      },
-      {
-        "slot": "FW1",
+        "slot": "FW2",
         "position": "FW",
         "role": "starter",
         "player_id": "58959",
@@ -363,25 +344,6 @@
         "slot": "GK1",
         "position": "GK",
         "role": "starter",
-        "player_id": "22783",
-        "name": "M. Gillespie",
-        "team": "Club 177",
-        "ep_score": 0.0,
-        "price": 176000.0,
-        "status": "buy",
-        "delta_5d": null,
-        "value_note": "stable",
-        "value_ratio": 0.0,
-        "lineup_prob": null,
-        "on_daily_market": true,
-        "owned": false,
-        "why": "EP 0 · 176,000 € · buy",
-        "added_at": "2026-07-27T16:15:20.449724+00:00"
-      },
-      {
-        "slot": "GK2",
-        "position": "GK",
-        "role": "bench",
         "player_id": "3055",
         "name": "C. Kelleher",
         "team": "Brentford",
@@ -396,6 +358,25 @@
         "owned": false,
         "why": "EP 68 · 10,395,150 € · buy",
         "added_at": "2026-07-27T15:32:46.268967+00:00"
+      },
+      {
+        "slot": "GK2",
+        "position": "GK",
+        "role": "bench",
+        "player_id": "22783",
+        "name": "M. Gillespie",
+        "team": "Club 177",
+        "ep_score": 0.0,
+        "price": 176000.0,
+        "status": "buy",
+        "delta_5d": null,
+        "value_note": "stable",
+        "value_ratio": 0.0,
+        "lineup_prob": null,
+        "on_daily_market": true,
+        "owned": false,
+        "why": "EP 0 · 176,000 € · buy",
+        "added_at": "2026-07-27T16:55:20.605887+00:00"
       },
       {
         "slot": "DF2",
@@ -455,28 +436,9 @@
         "added_at": "2026-07-27T16:18:49.186965+00:00"
       },
       {
-        "slot": "MF3",
+        "slot": "MF2",
         "position": "MF",
         "role": "starter",
-        "player_id": "48638",
-        "name": "K. Lewis-Potter",
-        "team": "Club 619",
-        "ep_score": 0.0,
-        "price": 773000.0,
-        "status": "buy",
-        "delta_5d": null,
-        "value_note": "stable",
-        "value_ratio": 0.0,
-        "lineup_prob": null,
-        "on_daily_market": false,
-        "owned": false,
-        "why": "EP 0 · 773,000 € · buy",
-        "added_at": "2026-07-27T16:18:49.186976+00:00"
-      },
-      {
-        "slot": "MF4",
-        "position": "MF",
-        "role": "bench",
         "player_id": "17728",
         "name": "E. Buendía",
         "team": "Aston Villa",
@@ -493,9 +455,9 @@
         "added_at": "2026-07-27T15:32:46.269010+00:00"
       },
       {
-        "slot": "MF5",
+        "slot": "MF3",
         "position": "MF",
-        "role": "bench",
+        "role": "starter",
         "player_id": "4870",
         "name": "H. Barnes",
         "team": "Newcastle",
@@ -512,14 +474,14 @@
         "added_at": "2026-07-27T15:32:46.269036+00:00"
       },
       {
-        "slot": "FW2",
-        "position": "FW",
-        "role": "starter",
-        "player_id": "63671",
-        "name": "J. Piroe",
-        "team": "Club 502",
+        "slot": "MF4",
+        "position": "MF",
+        "role": "bench",
+        "player_id": "48638",
+        "name": "K. Lewis-Potter",
+        "team": "Club 619",
         "ep_score": 0.0,
-        "price": 160000.0,
+        "price": 773000.0,
         "status": "buy",
         "delta_5d": null,
         "value_note": "stable",
@@ -527,8 +489,46 @@
         "lineup_prob": null,
         "on_daily_market": false,
         "owned": false,
-        "why": "EP 0 · 160,000 € · buy",
-        "added_at": "2026-07-27T16:18:49.186994+00:00"
+        "why": "EP 0 · 773,000 € · buy",
+        "added_at": "2026-07-27T16:55:20.606043+00:00"
+      },
+      {
+        "slot": "MF5",
+        "position": "MF",
+        "role": "bench",
+        "player_id": "7886",
+        "name": "J. Murphy",
+        "team": "Club 177",
+        "ep_score": 0.0,
+        "price": 844000.0,
+        "status": "buy",
+        "delta_5d": null,
+        "value_note": "stable",
+        "value_ratio": 0.0,
+        "lineup_prob": null,
+        "on_daily_market": false,
+        "owned": false,
+        "why": "EP 0 · 844,000 € · buy",
+        "added_at": "2026-07-27T16:56:23.078455+00:00"
+      },
+      {
+        "slot": "FW1",
+        "position": "FW",
+        "role": "starter",
+        "player_id": "53412",
+        "name": "N. Jackson",
+        "team": "Club 54",
+        "ep_score": 59.5,
+        "price": 7519600.0,
+        "status": "buy",
+        "delta_5d": null,
+        "value_note": "stable",
+        "value_ratio": 7.91,
+        "lineup_prob": null,
+        "on_daily_market": true,
+        "owned": false,
+        "why": "EP 60 · 7,519,600 € · buy",
+        "added_at": "2026-07-27T16:56:23.078357+00:00"
       },
       {
         "slot": "FW3",
@@ -550,54 +550,32 @@
         "added_at": "2026-07-27T16:18:49.186999+00:00"
       }
     ],
-    "sell": []
+    "sell": [
+      {
+        "player_id": "13054",
+        "name": "M. Gibbs-White",
+        "position": "MF",
+        "ep_score": 81.0,
+        "price": 15218000.0,
+        "delta_5d": null,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 81 · libera 15,218,000 €"
+      }
+    ]
   },
   "totals": {
-    "ep_sum": 518.8,
-    "cost_sum": 42105200.0,
-    "net_buys": 23453200.0,
-    "sell_to_fund": 0,
+    "ep_sum": 497.3,
+    "cost_sum": 35090800.0,
+    "net_buys": 31656800.0,
+    "sell_to_fund": 15218000.0,
     "funded": true,
     "slots_filled": 14,
     "slots_target": 15
   },
-  "daily_patches": [
-    {
-      "need": "df_starter",
-      "position": "DF",
-      "priority": "Alta",
-      "player_id": "64560",
-      "name": "J. Hato",
-      "price": 689310.0,
-      "ep_score": 25.7,
-      "max_spend": 2500000.0,
-      "why": "Parche DF hoy · EP 26 · 689,310 € (reserva ideal intacta: 23,453,200 €)"
-    },
-    {
-      "need": "fw_top",
-      "position": "FW",
-      "priority": "Alta",
-      "player_id": "51892",
-      "name": "B. Doak",
-      "price": 189200.0,
-      "ep_score": 25.7,
-      "max_spend": 2500000.0,
-      "why": "Parche FW hoy · EP 26 · 189,200 € (reserva ideal intacta: 23,453,200 €)"
-    }
-  ],
-  "cash_reserved": 23453200.0,
-  "residual_after_reserve": 7975800.0,
+  "daily_patches": [],
+  "cash_reserved": 31656800.0,
+  "residual_after_reserve": 0.0,
   "primary_targets": [
-    {
-      "player_id": "22783",
-      "name": "M. Gillespie",
-      "need": "perfect_squad",
-      "position": "GK",
-      "price": 176000.0,
-      "ep_score": 0.0,
-      "status": "on_daily",
-      "role": "starter"
-    },
     {
       "player_id": "3055",
       "name": "C. Kelleher",
@@ -605,6 +583,16 @@
       "position": "GK",
       "price": 10395150.0,
       "ep_score": 68.1,
+      "status": "on_daily",
+      "role": "starter"
+    },
+    {
+      "player_id": "22783",
+      "name": "M. Gillespie",
+      "need": "perfect_squad",
+      "position": "GK",
+      "price": 176000.0,
+      "ep_score": 0.0,
       "status": "on_daily",
       "role": "bench"
     },
@@ -639,16 +627,6 @@
       "role": "bench"
     },
     {
-      "player_id": "48638",
-      "name": "K. Lewis-Potter",
-      "need": "perfect_squad",
-      "position": "MF",
-      "price": 773000.0,
-      "ep_score": 0.0,
-      "status": "watching",
-      "role": "starter"
-    },
-    {
       "player_id": "17728",
       "name": "E. Buendía",
       "need": "perfect_squad",
@@ -656,7 +634,7 @@
       "price": 4537680.0,
       "ep_score": 65.1,
       "status": "on_daily",
-      "role": "bench"
+      "role": "starter"
     },
     {
       "player_id": "4870",
@@ -666,16 +644,36 @@
       "price": 3303360.0,
       "ep_score": 58.4,
       "status": "on_daily",
+      "role": "starter"
+    },
+    {
+      "player_id": "48638",
+      "name": "K. Lewis-Potter",
+      "need": "perfect_squad",
+      "position": "MF",
+      "price": 773000.0,
+      "ep_score": 0.0,
+      "status": "watching",
       "role": "bench"
     },
     {
-      "player_id": "63671",
-      "name": "J. Piroe",
+      "player_id": "7886",
+      "name": "J. Murphy",
       "need": "perfect_squad",
-      "position": "FW",
-      "price": 160000.0,
+      "position": "MF",
+      "price": 844000.0,
       "ep_score": 0.0,
       "status": "watching",
+      "role": "bench"
+    },
+    {
+      "player_id": "53412",
+      "name": "N. Jackson",
+      "need": "perfect_squad",
+      "position": "FW",
+      "price": 7519600.0,
+      "ep_score": 59.5,
+      "status": "on_daily",
       "role": "starter"
     },
     {
@@ -689,75 +687,41 @@
       "role": "bench"
     }
   ],
-  "slots": [
+  "slots": [],
+  "dropped": [
     {
-      "need": "df_starter",
-      "position": "DF",
-      "priority": "Alta",
-      "reason": "Parche DF hoy · EP 26 · 689,310 € (reserva ideal intacta: 23,453,200 €)",
-      "primary_target": {
-        "player_id": "64560",
-        "name": "J. Hato",
-        "price": 689310.0,
-        "ep_score": 25.7,
-        "status": "on_daily",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche DF hoy · EP 26 · 689,310 € (reserva ideal intacta: 23,453,200 €)"
-      },
-      "targets": [],
-      "patch_policy": {
-        "allow": true,
-        "max_spend": 2500000.0,
-        "note": "Parche diario sin romper reserva del ideal"
-      },
-      "budget_envelope": {
-        "cash_reserve_for_slot": 0,
-        "min_price": null,
-        "max_price": 2500000.0
-      }
-    },
-    {
-      "need": "fw_top",
+      "slot": "FW3",
       "position": "FW",
-      "priority": "Alta",
-      "reason": "Parche FW hoy · EP 26 · 189,200 € (reserva ideal intacta: 23,453,200 €)",
-      "primary_target": {
-        "player_id": "51892",
-        "name": "B. Doak",
-        "price": 189200.0,
-        "ep_score": 25.7,
-        "status": "on_daily",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche FW hoy · EP 26 · 189,200 € (reserva ideal intacta: 23,453,200 €)"
-      },
-      "targets": [],
-      "patch_policy": {
-        "allow": true,
-        "max_spend": 2500000.0,
-        "note": "Parche diario sin romper reserva del ideal"
-      },
-      "budget_envelope": {
-        "cash_reserve_for_slot": 0,
-        "min_price": null,
-        "max_price": 2500000.0
-      }
+      "role": "bench",
+      "player_id": "63671",
+      "name": "J. Piroe",
+      "team": "Club 502",
+      "ep_score": 0.0,
+      "price": 160000.0,
+      "status": "dropped",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 0.0,
+      "lineup_prob": null,
+      "on_daily_market": false,
+      "owned": false,
+      "why": "EP 0 · 160,000 € · buy",
+      "added_at": "2026-07-27T16:55:20.606082+00:00",
+      "miss_days": 1
     }
   ],
-  "dropped": [],
   "patch_policy": {
-    "allow": true,
-    "max_spend": 2500000.0
+    "allow": false,
+    "max_spend": 0.0
   },
   "summary": {
     "slots": 14,
-    "keep": 4,
-    "buy": 10,
-    "sell": 0,
-    "patches": 2,
-    "on_daily": 7,
-    "cash_reserved": 23453200.0,
-    "ep_sum": 518.8
+    "keep": 3,
+    "buy": 11,
+    "sell": 1,
+    "patches": 0,
+    "on_daily": 8,
+    "cash_reserved": 31656800.0,
+    "ep_sum": 497.3
   }
 }

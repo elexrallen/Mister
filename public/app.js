@@ -828,6 +828,7 @@
       else if (st === "buy") bits.push(`<span class="badge badge-alta">Fichar</span>`);
       else bits.push(`<span class="badge badge-duda">${escapeHtml(st || "")}</span>`);
       if (role === "starter") bits.push(`<span class="badge badge-titular">Titular</span>`);
+      else if (role === "bench") bits.push(`<span class="badge badge-banca">Banquillo</span>`);
       return bits.join(" ");
     };
 

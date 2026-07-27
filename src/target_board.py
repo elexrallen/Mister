@@ -18,7 +18,7 @@ from competitive_actions import budget_fit, target_tier_from_budget_fit
 
 log = logging.getLogger("target_board")
 
-KEEP_EP_RATIO = 0.90  # owned se mantiene si EP >= 90% del mejor del cupo
+KEEP_EP_RATIO = 0.90  # legacy; ya no se usa para preferir owned en la selección
 MAX_DROPPED_DAYS = 5
 PATCH_MAX_FRACTION_OF_RESERVE = 0.15
 
@@ -197,14 +197,19 @@ def _normalize_player(
         return None
     if not _avail_ok(p):
         return None
-    price = _market_price(p) if owned else _buy_price(p)
-    if price <= 0 and not owned:
-        return None
-    if price <= 0 and owned:
-        price = 100_000.0  # suelo para owned sin precio
+    market = _market_price(p)
+    buy = _buy_price(p)
+    if owned:
+        # Keep: el slot consume wealth a valor de mercado
+        slot_cost = market if market > 0 else 100_000.0
+        buy = slot_cost
+    else:
+        slot_cost = buy if buy > 0 else market
+        if slot_cost <= 0:
+            return None
     ep = ep_score(p)
     delta = _delta_5d(p, price_series)
-    price_m = max(price / 1_000_000.0, 0.4)
+    price_m = max(slot_cost / 1_000_000.0, 0.4)
     return {
         "raw": p,
         "player_id": pid,
@@ -213,8 +218,9 @@ def _normalize_player(
         "team": p.get("team"),
         "owned": owned,
         "ep_score": ep,
-        "price": round(price, 0),
-        "buy_price": round(_buy_price(p) if not owned else price, 0),
+        "price": round(slot_cost, 0),
+        "buy_price": round(buy if buy > 0 else slot_cost, 0),
+        "market_value": round(market, 0) if market > 0 else round(slot_cost, 0),
         "value_ratio": round(ep / price_m, 2),
         "delta_5d": round(delta, 4) if delta is not None else None,
         "value_note": _value_note(delta),
@@ -224,6 +230,7 @@ def _normalize_player(
         "on_daily_market": bool(p.get("on_daily_market") or p.get("seller") == "market"),
         "clause": p.get("clause") if p.get("clause_known") else None,
         "sample_thin": bool(p.get("sample_thin")),
+        "seller": p.get("seller"),
     }
 
 
@@ -382,8 +389,8 @@ def build_target_board(
     market_mode: str = "auction",
 ) -> dict[str, Any]:
     """
-    Plantilla perfecta IDEAL_SQUAD bajo wealth = balance + squad_value,
-    más parches diarios que no rompen la reserva de buys.
+    Plantilla perfecta IDEAL_SQUAD (15) desde el universo de liga bajo
+    wealth = balance + squad_value. Ownership solo etiqueta keep/buy al final.
     """
     bal = max(0.0, float(balance or 0))
     squad = list(squad or [])
@@ -418,19 +425,41 @@ def build_target_board(
     starters_n = _starter_counts()
     perfect: list[dict[str, Any]] = []
     picked_ids: set[str] = set()
-    # Keeps no consumen caja: la reserva solo limita buys.
-    # room_buys = wealth - liquidity_floor - value_kept - cost_buys
-    value_kept = 0.0
-    cost_buys = 0.0
+    # Selección por EP bajo wealth — ownership solo se etiqueta al final
+    spent = 0.0
 
-    def _buy_room() -> float:
-        return max(0.0, float(budget_cap) - value_kept - cost_buys)
+    def _slot_cost(u: dict[str, Any]) -> float:
+        return float(u.get("buy_price") or u.get("price") or 0)
 
-    def _append_pick(u: dict[str, Any], *, pos: str, status: str) -> None:
-        nonlocal value_kept, cost_buys
-        slot_i = len([r for r in perfect if r.get("position") == pos]) + 1
+    def _count_pos(pos: str) -> int:
+        return len([r for r in perfect if r.get("position") == pos])
+
+    def _cheapest_fill_cost(needs: dict[str, int], exclude: set[str]) -> float:
+        """Coste mínimo para completar los cupos restantes (cualquier ownership)."""
+        total = 0.0
+        used = set(exclude)
+        for pos, n in needs.items():
+            if n <= 0:
+                continue
+            pool = sorted(
+                [
+                    u
+                    for u in universe
+                    if u["position"] == pos and u["player_id"] not in used
+                ],
+                key=_slot_cost,
+            )
+            for u in pool[:n]:
+                total += _slot_cost(u)
+                used.add(u["player_id"])
+        return total
+
+    def _append_pick(u: dict[str, Any], *, pos: str) -> None:
+        nonlocal spent
+        slot_i = _count_pos(pos) + 1
         starter_slots = int(starters_n.get(pos, 1))
         role = "starter" if slot_i <= starter_slots else "bench"
+        status = "keep" if u.get("owned") else "buy"
         perfect.append(
             _row_from_norm(
                 u,
@@ -441,171 +470,169 @@ def build_target_board(
             )
         )
         picked_ids.add(u["player_id"])
-        if status == "keep":
-            value_kept += float(u["price"])
-        else:
-            cost_buys += float(u.get("buy_price") or u["price"])
+        spent += _slot_cost(u)
 
-    # Pass 1: keeps de calidad (EP cerca del top) — aún no rellenar con owned flojos
-    for pos in ("GK", "DF", "MF", "FW"):
+    # Pass 1: densidad EP/€ bajo wealth (completa 15 de toda la liga, sin preferir owned)
+    # Desempate por EP puro; upgrades posteriores suben EP si el delta cabe.
+    picks_target = sum(int(ideal.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
+    density = sorted(
+        [u for u in universe],
+        key=lambda x: (
+            -float(x.get("value_ratio") or 0),
+            -float(x.get("ep_score") or 0),
+            _slot_cost(x),
+        ),
+    )
+    for u in density:
+        if len(perfect) >= picks_target:
+            break
+        pos = u["position"]
         need_n = int(ideal.get(pos, 0))
-        if need_n <= 0:
+        if _count_pos(pos) >= need_n:
             continue
-        pool = [u for u in universe if u["position"] == pos and u["player_id"] not in picked_ids]
-        pool.sort(
-            key=lambda x: (
-                -float(x.get("ep_score") or 0),
-                -float(x.get("value_ratio") or 0),
-                float(x.get("buy_price") or x["price"]),
-            )
-        )
-        best_ep = float(pool[0]["ep_score"]) if pool else 0.0
-        owned_pool = sorted(
-            [u for u in pool if u["owned"]],
-            key=lambda x: -float(x.get("ep_score") or 0),
-        )
-        filled = 0
-        for u in owned_pool:
-            if filled >= need_n:
-                break
-            if best_ep > 0 and float(u["ep_score"]) < best_ep * KEEP_EP_RATIO:
-                continue
-            _append_pick(u, pos=pos, status="keep")
-            filled += 1
+        if u["player_id"] in picked_ids:
+            continue
+        remaining = {
+            p: int(ideal.get(p, 0)) - _count_pos(p) for p in ("GK", "DF", "MF", "FW")
+        }
+        remaining[pos] = max(0, remaining[pos] - 1)
+        reserve = _cheapest_fill_cost(remaining, picked_ids | {u["player_id"]})
+        room = max(0.0, float(budget_cap) - spent - reserve)
+        if _slot_cost(u) > room + 1e-6:
+            continue
+        _append_pick(u, pos=pos)
 
-    # Pass 2: rellenar huecos con owned (completa cupos sin gastar caja)
+    # Completar huecos restantes por EP con margen de relleno
     for pos in ("GK", "DF", "MF", "FW"):
         need_n = int(ideal.get(pos, 0))
-        owned_pool = sorted(
-            [
-                u
-                for u in universe
-                if u["position"] == pos and u["owned"] and u["player_id"] not in picked_ids
-            ],
-            key=lambda x: -float(x.get("ep_score") or 0),
-        )
-        for u in owned_pool:
-            have = len([r for r in perfect if r.get("position") == pos])
-            if have >= need_n:
-                break
-            _append_pick(u, pos=pos, status="keep")
-
-    # Pass 3: completar 15 con lo más barato disponible (prioridad cupos > estrellas)
-    for pos in ("GK", "DF", "MF", "FW"):
-        need_n = int(ideal.get(pos, 0))
-        cheap = sorted(
-            [
+        while _count_pos(pos) < need_n:
+            remaining = {
+                p: int(ideal.get(p, 0)) - _count_pos(p) for p in ("GK", "DF", "MF", "FW")
+            }
+            remaining[pos] = max(0, remaining[pos] - 1)
+            reserve = _cheapest_fill_cost(remaining, picked_ids)
+            room = max(0.0, float(budget_cap) - spent - reserve)
+            cands = [
                 u
                 for u in universe
                 if u["position"] == pos
-                and (not u["owned"])
                 and u["player_id"] not in picked_ids
-            ],
-            key=lambda x: (
-                float(x.get("buy_price") or x["price"]),
-                -float(x.get("ep_score") or 0),
-            ),
-        )
-        for u in cheap:
-            have = len([r for r in perfect if r.get("position") == pos])
-            if have >= need_n:
+                and _slot_cost(u) <= room + 1e-6
+            ]
+            if not cands:
+                room2 = max(0.0, float(budget_cap) - spent)
+                cands = [
+                    u
+                    for u in universe
+                    if u["position"] == pos
+                    and u["player_id"] not in picked_ids
+                    and _slot_cost(u) <= room2 + 1e-6
+                ]
+            if not cands:
                 break
-            cost = float(u.get("buy_price") or u["price"])
-            if cost > _buy_room():
-                continue
-            _append_pick(u, pos=pos, status="buy")
-
-    def _trim_buys_to_room() -> None:
-        nonlocal cost_buys, perfect, picked_ids
-        while cost_buys > max(0.0, float(budget_cap) - value_kept) and any(
-            r.get("status") == "buy" for r in perfect
-        ):
-            buy_rows_sorted = sorted(
-                [r for r in perfect if r.get("status") == "buy"],
-                key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
+            cands.sort(
+                key=lambda x: (
+                    -float(x.get("ep_score") or 0),
+                    -float(x.get("value_ratio") or 0),
+                    _slot_cost(x),
+                )
             )
-            victim = buy_rows_sorted[0]
-            pid = str(victim.get("player_id") or "")
-            cost = float(victim.get("price") or 0)
-            perfect = [x for x in perfect if str(x.get("player_id")) != pid]
-            picked_ids.discard(pid)
-            cost_buys = max(0.0, cost_buys - cost)
+            _append_pick(cands[0], pos=pos)
 
-    _trim_buys_to_room()
+    def _drop_lowest_ep() -> bool:
+        nonlocal spent, perfect, picked_ids
+        if not perfect:
+            return False
+        victim = min(
+            perfect,
+            key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
+        )
+        pid = str(victim.get("player_id") or "")
+        cost = float(victim.get("price") or 0)
+        perfect = [x for x in perfect if str(x.get("player_id")) != pid]
+        picked_ids.discard(pid)
+        spent = max(0.0, spent - cost)
+        return True
 
-    # Pass 4: upgrades — sustituir buys (y huecos) por mejor EP si el delta cabe
-    def _row_cost(r: dict[str, Any]) -> float:
-        return float(r.get("price") or 0)
+    while spent > budget_cap + 1e-6 and _drop_lowest_ep():
+        pass
 
+    # Pass 2: upgrades — sustituir por mejor EP si el delta cabe
     upgraded = True
     guard = 0
-    while upgraded and guard < 40:
+    while upgraded and guard < 60:
         upgraded = False
         guard += 1
-        # Candidatos no picked, mejores EP primero
-        avail = [
-            u
-            for u in universe
-            if (not u["owned"]) and u["player_id"] not in picked_ids
-        ]
+        avail = [u for u in universe if u["player_id"] not in picked_ids]
         avail.sort(
             key=lambda x: (
                 -float(x.get("ep_score") or 0),
                 -float(x.get("value_ratio") or 0),
-                float(x.get("buy_price") or x["price"]),
+                _slot_cost(x),
             )
         )
         for u in avail:
             pos = u["position"]
             need_n = int(ideal.get(pos, 0))
-            cost_new = float(u.get("buy_price") or u["price"])
+            cost_new = _slot_cost(u)
             rows_pos = [r for r in perfect if r.get("position") == pos]
-            # Hueco libre: fichar si cabe
+            room = max(0.0, float(budget_cap) - spent)
             if len(rows_pos) < need_n:
-                if cost_new <= _buy_room():
-                    _append_pick(u, pos=pos, status="buy")
+                if cost_new <= room + 1e-6:
+                    _append_pick(u, pos=pos)
                     upgraded = True
                     break
                 continue
-            # Sustituir el buy de menor EP de la línea si mejora y el delta cabe
-            buy_victims = sorted(
-                [r for r in rows_pos if r.get("status") == "buy"],
-                key=lambda r: (float(r.get("ep_score") or 0), -_row_cost(r)),
+            victim = min(
+                rows_pos,
+                key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
             )
-            if not buy_victims:
-                continue
-            victim = buy_victims[0]
             if float(u.get("ep_score") or 0) <= float(victim.get("ep_score") or 0) + 0.5:
                 continue
-            delta = cost_new - _row_cost(victim)
-            if delta > _buy_room() + 1e-6:
+            delta = cost_new - float(victim.get("price") or 0)
+            if delta > room + 1e-6:
                 continue
-            # swap
             pid = str(victim.get("player_id") or "")
             perfect = [x for x in perfect if str(x.get("player_id")) != pid]
             picked_ids.discard(pid)
-            cost_buys = max(0.0, cost_buys - _row_cost(victim))
-            _append_pick(u, pos=pos, status="buy")
+            spent = max(0.0, spent - float(victim.get("price") or 0))
+            _append_pick(u, pos=pos)
             upgraded = True
             break
 
-    _trim_buys_to_room()
+    while spent > budget_cap + 1e-6 and _drop_lowest_ep():
+        pass
 
-    # Reasignar slots/roles
+    # Relabel keep/buy según ownership real (post-selección)
+    for r in perfect:
+        pid = str(r.get("player_id") or "")
+        is_keep = pid in owned_ids
+        r["status"] = "keep" if is_keep else "buy"
+        r["owned"] = is_keep
+        ep = float(r.get("ep_score") or 0)
+        price = float(r.get("price") or 0)
+        delta = r.get("delta_5d")
+        r["why"] = (
+            f"EP {ep:.0f} · {price:,.0f} € · {r['status']}"
+            + (f" · Δ {delta * 100:.0f}%" if delta is not None else "")
+        )
+
+    # Reasignar slots/roles por EP
     perfect_sorted: list[dict[str, Any]] = []
     for pos in ("GK", "DF", "MF", "FW"):
         rows_pos = [r for r in perfect if r.get("position") == pos]
-        rows_pos.sort(
-            key=lambda r: (0 if r.get("role") == "starter" else 1, -float(r.get("ep_score") or 0))
-        )
+        rows_pos.sort(key=lambda r: -float(r.get("ep_score") or 0))
         starter_slots = int(starters_n.get(pos, 1))
         for i, r in enumerate(rows_pos, start=1):
             r["slot"] = f"{pos}{i}"
             r["role"] = "starter" if i <= starter_slots else "bench"
             perfect_sorted.append(r)
     perfect = perfect_sorted
+
     keep_rows = [r for r in perfect if r.get("status") == "keep"]
     buy_rows = [r for r in perfect if r.get("status") == "buy"]
+    value_kept = sum(float(r.get("price") or 0) for r in keep_rows)
+    cost_buys = sum(float(r.get("price") or 0) for r in buy_rows)
     net_buys = max(0.0, cost_buys)
     spent = value_kept + cost_buys
 

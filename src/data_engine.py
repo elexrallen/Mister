@@ -1481,9 +1481,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         community_id=str(league_cfg.get("id_community") or "") or None
     )
     live_meta = league.pop("_live_meta", {}) if isinstance(league, dict) else {}
-    # Catálogo completo solo se usa para libres/ownership en mister_client; no va al JSON
+    # Catálogo completo para plantilla ideal; no se persiste en latest_data.json
+    full_pool: list[dict[str, Any]] = []
     if isinstance(league, dict):
-        league.pop("pool_all", None)
+        full_pool = list(league.pop("pool_all", None) or [])
     honest_live = mister_source == "api" or bool(live_meta.get("honest_mode"))
 
     # Preferir competición real de la sesión si vino en live_meta
@@ -1502,6 +1503,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         relevant_ids.append(p["id"])
     for p in league.get("pool_top", []):
         relevant_ids.append(p["id"])
+    for p in full_pool:
+        if p.get("id"):
+            relevant_ids.append(p["id"])
 
     # En live no mezclamos seed de demo como si fuera histórico real del jugador
     if honest_live:
@@ -1811,11 +1815,81 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     recommendations: list[dict[str, Any]] = []
     squad_notes: list[dict[str, Any]] = []
 
-    # Tablero de objetivos (huecos + EP/€) antes del plan de acción
-    board_candidates: list[dict[str, Any]] = list(opportunities)
+    # Tablero: plantilla perfecta desde TODO el pool de la liga
+    my_uc = str(live_meta.get("id_uc") or me.get("team_id") or "")
+    enriched_by_id: dict[str, dict[str, Any]] = {}
+    for src in (squad, market_ext, opportunities):
+        for p in src or []:
+            pid = str(p.get("id") or p.get("player_id") or "")
+            if pid:
+                enriched_by_id[pid] = p
+
+    board_candidates: list[dict[str, Any]] = []
+    board_seen: set[str] = set()
+
+    def _append_board_cand(raw: dict[str, Any], *, seller_hint: str | None = None) -> None:
+        pid = str(raw.get("id") or raw.get("player_id") or "")
+        if not pid or pid in board_seen:
+            return
+        board_seen.add(pid)
+        base = dict(enriched_by_id.get(pid) or raw)
+        # Overlay identidad / ownership del catálogo completo
+        for k in (
+            "id",
+            "name",
+            "position",
+            "team",
+            "team_id",
+            "price",
+            "market_value",
+            "owner_id",
+            "owner_name",
+            "clause",
+            "clause_known",
+            "injury",
+            "mister_avg",
+            "form",
+            "points",
+        ):
+            if raw.get(k) is not None:
+                base[k] = raw[k]
+        owner_id = base.get("owner_id")
+        is_mine = pid in owned or bool(raw.get("is_mine")) or (
+            my_uc and str(owner_id or "") == my_uc
+        )
+        is_free = not owner_id or str(owner_id) in ("", "0")
+        if is_mine:
+            base["seller"] = "owned"
+            base["on_daily_market"] = False
+        elif is_free:
+            base.setdefault("seller", seller_hint or "free")
+            if base.get("on_daily_market") is None:
+                base["on_daily_market"] = base.get("seller") == "market"
+            if base.get("min_bid") is None and base.get("price"):
+                base["min_bid"] = base["price"]
+            base["puja_recomendada"] = (
+                base.get("puja_recomendada")
+                or base.get("min_bid")
+                or base.get("price")
+            )
+        else:
+            base["seller"] = "rival"
+            base["on_daily_market"] = False
+            clause = base.get("clause") if base.get("clause_known", base.get("clause") is not None) else None
+            base["puja_recomendada"] = clause or base.get("price") or base.get("market_value")
+            if clause is not None:
+                base["clause"] = clause
+                base["clause_known"] = True
+        board_candidates.append(base)
+
+    # Primario: catálogo completo Mister
+    for p in full_pool:
+        _append_board_cand(p)
+    # Fallback / extras: mercado clasificado, upgrades, rivales HTML, libres
+    for p in opportunities or []:
+        _append_board_cand(p, seller_hint="market" if p.get("on_daily_market") else None)
     for u in rival_upgrades or []:
-        # Normalizar cláusula rival como candidato
-        board_candidates.append(
+        _append_board_cand(
             {
                 "id": u.get("player_id"),
                 "name": u.get("name"),
@@ -1826,33 +1900,52 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "clause": u.get("clause"),
                 "clause_known": u.get("clause_known", True),
                 "owner_name": u.get("owner_name") or u.get("owner_team"),
+                "owner_id": u.get("owner_id") or "rival",
                 "on_daily_market": False,
                 "seller": "rival",
                 "production_score": u.get("production_score"),
                 "ff_mister_avg": u.get("ff_mister_avg"),
                 "external": u.get("external") or {},
                 "lineup_prob": u.get("lineup_prob"),
-                "fills_need": True,
-                "fills_structural": True,
                 "sample_thin": u.get("sample_thin"),
-                "target_tier": u.get("target_tier"),
-                "budget_fit": u.get("budget_fit"),
             }
         )
-    # Ampliar universo ideal con plantillas rivales (cláusulas / precios)
     for riv in rivals or []:
         for p in riv.get("squad") or []:
-            board_candidates.append(
-                {
-                    **p,
-                    "puja_recomendada": p.get("clause") or p.get("puja_recomendada") or p.get("price"),
-                    "on_daily_market": False,
-                    "seller": "rival",
-                    "owner_name": riv.get("name") or riv.get("team"),
-                }
-            )
+            row = dict(p)
+            row.setdefault("owner_id", riv.get("team_id") or "rival")
+            row.setdefault("owner_name", riv.get("name") or riv.get("team"))
+            _append_board_cand(row, seller_hint="rival")
     for p in league.get("pool_top") or []:
-        board_candidates.append(p)
+        _append_board_cand(p, seller_hint="free")
+
+    # EP para jugadores del pool que no pasaron por el enrich de mercado
+    missing_ff = [
+        c
+        for c in board_candidates
+        if c.get("production_score") is None and not (c.get("external") or {}).get("production_score")
+    ]
+    if missing_ff and external_key:
+        try:
+            filled_ff, _ = enrich_players_with_ff_production(
+                missing_ff,
+                competition=external_key,
+                market_universe=board_candidates,
+            )
+            by_ff = {str(p.get("id") or ""): p for p in filled_ff if p.get("id")}
+            for i, c in enumerate(board_candidates):
+                pid = str(c.get("id") or "")
+                if pid in by_ff:
+                    board_candidates[i] = by_ff[pid]
+        except Exception as exc:  # noqa: BLE001
+            log.warning("FF enrich board pool falló: %s", exc)
+
+    log.info(
+        "Board universe [%s]: pool_all=%s candidates=%s",
+        slug,
+        len(full_pool),
+        len(board_candidates),
+    )
     target_board = build_target_board(
         slug=slug,
         structural_needs=diagnostico_plantilla.get("structural_needs") or [],
