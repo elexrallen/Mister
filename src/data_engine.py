@@ -30,14 +30,17 @@ from competitive_actions import (
     annotate_market_budget_risk,
     budget_fit,
     build_gw_xi_advice,
+    build_recommended_gw_xi,
     build_rival_upgrade_targets,
     build_sell_opportunities,
     detect_competition_phase,
     detect_points_phase,
     estimate_gap_funding,
     finalize_action_plan,
+    is_key_market_candidate,
     other_gaps_min_cost,
     rival_demand_for_position,
+    trade_asset_score,
     wait_risk,
 )
 from target_board import (
@@ -1204,6 +1207,16 @@ def build_action_plan(
         pid = str(o.get("id") or "")
         is_objective = pid in objective_ids
         is_primary_obj = pid in primary_ids
+        fills_gap_any = bool(fills or fills_cov or structural_gap)
+        is_key = is_key_market_candidate(
+            o,
+            is_primary_obj=is_primary_obj,
+            is_objective=is_objective,
+            on_daily=on_daily,
+            gw_out=gw_out,
+            real_starter=real_starter_cand,
+            fills_gap=fills_gap_any or is_objective,
+        )
         # Objetivo del board en mercado del día → priorizar buy_now
         if is_objective and on_daily and bf in ("comfortable", "tight") and not gw_out:
             buy_now = True
@@ -1211,20 +1224,38 @@ def build_action_plan(
                 why_parts.insert(0, "objetivo primary del tablero — fichar si sale hoy")
             elif not any("objetivo" in w for w in why_parts):
                 why_parts.append("objetivo del tablero (hueco estructural)")
+        # Jugador clave en mercado (crack / top / ideal) → máxima prioridad
+        if is_key and on_daily and bf in ("comfortable", "tight") and not gw_out:
+            buy_now = True
+            if not any("clave" in w for w in why_parts):
+                why_parts.insert(0, "jugador clave en mercado de hoy — prioridad")
 
-        # Parche barato: no romper reserva de buys del ideal
-        is_patchish = buy_now and on_daily and not is_primary_obj and (
+        # Parche barato: no romper reserva de buys del ideal (clave/primary sí pueden usarla)
+        is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
             cost <= patch_cap
             or (not real_starter_cand and cost < 2_500_000)
             or (o.get("categories") and "chollo_economico" in (o.get("categories") or []) and cost < 1_500_000)
         )
-        if buy_now and not is_primary_obj:
-            # Si gastar esto deja balance < cash_reserved → demote (los buy del ideal SÍ pueden usar la reserva)
-            if cash_reserved > 0 and (balance - cost) < cash_reserved:
+        if buy_now and not is_primary_obj and not is_key:
+            # Reserva de objetivos: solo si aún podemos preservarla (caja ≥ reserva)
+            if cash_reserved > 0 and balance >= cash_reserved and (balance - cost) < cash_reserved:
                 buy_now = False
                 why_parts.append(
                     f"protege reserva {cash_reserved:,.0f} € para plantilla ideal"
                 )
+            elif cash_reserved > balance:
+                # Shortfall: no hay clave asequible → carencias con colchón operativo
+                soft_floor = max(1_000_000.0, min(balance * 0.25, 4_000_000.0))
+                if (balance - cost) < soft_floor:
+                    buy_now = False
+                    why_parts.append(
+                        f"deja colchón ~{soft_floor:,.0f} € para siguientes claves/carencias"
+                    )
+                elif is_patchish and cost > max(patch_cap, float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))):
+                    buy_now = False
+                    why_parts.append(
+                        f"parche caro vs techo operativo ({max(patch_cap, 2_500_000):,.0f} €)"
+                    )
             elif is_patchish and not allow_patches:
                 buy_now = False
                 why_parts.append("parche bloqueado: reserva de objetivos sin margen")
@@ -1285,7 +1316,13 @@ def build_action_plan(
                 prio_i += 80
             elif is_objective and on_daily:
                 prio_i += 40
+            if is_key and on_daily:
+                prio_i += 90
+            # Sin clave: premiar puntaje + capacidad de trueque en carencias
+            if fills_gap_any and not is_key:
+                prio_i += min(25, int(trade_asset_score(o)))
 
+        asset_score = trade_asset_score(o)
         common = {
             "crowds_out_gaps": crowds_out,
             "leaves_gap_budget": leaves_budget,
@@ -1305,6 +1342,10 @@ def build_action_plan(
             "target_tier": o.get("target_tier"),
             "is_board_objective": is_objective,
             "is_primary_target": is_primary_obj,
+            "is_key_market": is_key,
+            "trade_asset_score": asset_score,
+            "delta_5d": delta,
+            "categories": list(o.get("categories") or []),
             "cash_reserved": cash_reserved,
         }
 
@@ -1979,6 +2020,11 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 
     matchday_meta = external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None
     gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
+    recommended_xi = build_recommended_gw_xi(
+        squad,
+        formation=me.get("formation"),
+        matchday=matchday_meta or {},
+    )
 
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
     bal = float(me.get("balance") or 0)
@@ -2157,6 +2203,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "squad_notes": squad_notes,
         "matchday": matchday_meta,
         "gw_xi_advice": gw_xi_advice,
+        "recommended_xi": recommended_xi,
         "meta": {
             "filters_hint": {
                 "positions": ["GK", "DF", "MF", "FW"],

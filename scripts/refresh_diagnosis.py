@@ -13,7 +13,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 import config  # noqa: E402
-from competitive_actions import detect_competition_phase, estimate_gap_funding  # noqa: E402
+from competitive_actions import (  # noqa: E402
+    build_recommended_gw_xi,
+    detect_competition_phase,
+    estimate_gap_funding,
+)
 from data_engine import (  # noqa: E402
     build_action_plan,
     classify_market_opportunities,
@@ -195,6 +199,11 @@ def main(argv: list[str] | None = None) -> None:
     }
     data["recommendations"] = []
     data["squad_notes"] = []
+    data["recommended_xi"] = build_recommended_gw_xi(
+        squad,
+        formation=me.get("formation"),
+        matchday=data.get("matchday") if isinstance(data.get("matchday"), dict) else {},
+    )
     data["generated_at"] = datetime.now(timezone.utc).isoformat()
 
     sources = data.get("sources") or {}

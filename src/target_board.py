@@ -451,12 +451,24 @@ def _is_starter_eligible(u: dict[str, Any]) -> bool:
 
 
 def _is_bench_eligible(u: dict[str, Any]) -> bool:
-    """Banquillo del ideal: historial Mister ≥ IDEAL_BENCH_MIN_POINTS."""
+    """Banquillo del ideal (DF/MF/FW): historial Mister ≥ IDEAL_BENCH_MIN_POINTS.
+
+    El GK suplente del tándem es excepción: no usa este filtro.
+    """
+    if (u.get("position") or "") == "GK":
+        return True  # elegibilidad real del GK2 se resuelve por tándem / club
     pts = u.get("ff_mister_points")
     try:
         return pts is not None and float(pts) >= _bench_min_points()
     except (TypeError, ValueError):
         return False
+
+
+def _is_outfield_bench_eligible(u: dict[str, Any]) -> bool:
+    """Banquillo de campo: ≥ IDEAL_BENCH_MIN_POINTS (nunca GK)."""
+    if (u.get("position") or "") == "GK":
+        return False
+    return _is_bench_eligible(u)
 
 
 def _bench_slot_needs(ideal: dict[str, int], xi: dict[str, int]) -> dict[str, int]:
@@ -697,7 +709,9 @@ def build_target_board(
 ) -> dict[str, Any]:
     """
     Plantilla perfecta IDEAL_SQUAD (15) desde el universo de liga bajo
-    wealth = balance + squad_value. Ownership solo etiqueta keep/buy al final.
+    wealth = balance + squad_value. El once (IDEAL_XI) maximiza Σ EP entre
+    titulares reales (≥70%) asumible con budget_cap; banquillo después.
+    Ownership solo etiqueta keep/buy al final.
     """
     bal = max(0.0, float(balance or 0))
     squad = list(squad or [])
@@ -785,16 +799,59 @@ def build_target_board(
         picked_ids.add(u["player_id"])
         spent += _slot_cost(u)
 
-    def _sort_key(u: dict[str, Any]) -> tuple:
+    def _starter_sort_key(u: dict[str, Any]) -> tuple:
+        """Once: maximizar puntaje (EP); el precio solo desempata."""
+        return (
+            -float(u.get("ep_score") or 0),
+            _slot_cost(u),
+            -float(u.get("value_ratio") or 0),
+        )
+
+    def _bench_sort_key(u: dict[str, Any]) -> tuple:
         return (
             -float(u.get("value_ratio") or 0),
             -float(u.get("ep_score") or 0),
             _slot_cost(u),
         )
 
-    # --- Pass A: 11 titulares (IDEAL_XI), reservando 4 banquillos pts>=100 ---
+    def _sort_key(u: dict[str, Any]) -> tuple:
+        return _bench_sort_key(u)
+
+    # --- Pass A: 11 titulares = máx Σ EP asumible (wealth/presupuesto), todos titulares reales
     starter_pool = [u for u in universe if _is_starter_eligible(u)]
-    bench_pool = [u for u in universe if _is_bench_eligible(u)]
+    bench_pool = [u for u in universe if _is_outfield_bench_eligible(u)]
+
+    def _reserve_bench_cost(needs: dict[str, int], exclude: set[str]) -> float:
+        """Reserva banquillo: GK cualquiera (tándem); resto pts≥100."""
+        total = 0.0
+        used = set(exclude)
+        for pos, n in needs.items():
+            if n <= 0:
+                continue
+            if pos == "GK":
+                pool = sorted(
+                    [
+                        u
+                        for u in universe
+                        if u["position"] == "GK" and u["player_id"] not in used
+                    ],
+                    key=_slot_cost,
+                )
+            else:
+                pool = sorted(
+                    [
+                        u
+                        for u in universe
+                        if u["position"] == pos
+                        and u["player_id"] not in used
+                        and _is_outfield_bench_eligible(u)
+                    ],
+                    key=_slot_cost,
+                )
+            for u in pool[:n]:
+                total += _slot_cost(u)
+                used.add(u["player_id"])
+        return total
 
     gk_xi = int(starters_n.get("GK", 1))
     gk_bench_need = int(bench_n.get("GK", 0))
@@ -804,9 +861,7 @@ def build_target_board(
         reserve_xi = _cheapest_eligible_cost(
             remaining_xi, picked_ids, eligible=_is_starter_eligible
         )
-        reserve_bench = _cheapest_eligible_cost(
-            bench_n, picked_ids, eligible=_is_bench_eligible
-        )
+        reserve_bench = _reserve_bench_cost(bench_n, picked_ids)
         gk_room = max(0.0, float(budget_cap) - spent - reserve_xi - reserve_bench)
 
         by_team: dict[str, list[dict[str, Any]]] = {}
@@ -821,17 +876,18 @@ def build_target_board(
         best_pair: tuple[dict[str, Any], dict[str, Any]] | None = None
         for _key, members in by_team.items():
             starters = [m for m in members if _is_starter_eligible(m)]
-            benches = [m for m in members if _is_bench_eligible(m)]
+            # Suplente tándem: cualquier otro GK del club (no exige ≥100 pts)
             for a in starters:
-                for b in benches:
+                for b in members:
                     if a["player_id"] == b["player_id"]:
                         continue
                     cost = _slot_cost(a) + (_slot_cost(b) if gk_bench_need else 0)
                     if cost > gk_room + 1e-6:
                         continue
                     score = (
-                        float(a.get("ep_score") or 0) + float(b.get("ep_score") or 0),
                         float(a.get("ep_score") or 0),
+                        -_slot_cost(b),
+                        float(b.get("ep_score") or 0),
                         -cost,
                     )
                     if best is None or score > best:
@@ -854,7 +910,7 @@ def build_target_board(
                     for u in starter_pool
                     if u["position"] == "GK" and u["player_id"] not in picked_ids
                 ],
-                key=_sort_key,
+                key=_starter_sort_key,
             )
             for u in cands:
                 rem_xi = {
@@ -873,14 +929,13 @@ def build_target_board(
                     - _cheapest_eligible_cost(
                         rem_xi, picked_ids | {u["player_id"]}, eligible=_is_starter_eligible
                     )
-                    - _cheapest_eligible_cost(
-                        rem_bench, picked_ids | {u["player_id"]}, eligible=_is_bench_eligible
-                    ),
+                    - _reserve_bench_cost(rem_bench, picked_ids | {u["player_id"]}),
                 )
                 if _slot_cost(u) <= room + 1e-6:
                     _append_pick(u, pos="GK", role="starter")
                     break
 
+    # Relleno barato del once (deja caja); luego upgrade maximiza Σ EP
     for pos in ("GK", "DF", "MF", "FW"):
         need = int(starters_n.get(pos, 0))
         while _count_pos(pos, role="starter") < need:
@@ -895,7 +950,7 @@ def build_target_board(
             }
             reserve = _cheapest_eligible_cost(
                 rem_xi, picked_ids, eligible=_is_starter_eligible
-            ) + _cheapest_eligible_cost(rem_bench, picked_ids, eligible=_is_bench_eligible)
+            ) + _reserve_bench_cost(rem_bench, picked_ids)
             room = max(0.0, float(budget_cap) - spent - reserve)
             cands = sorted(
                 [
@@ -905,7 +960,7 @@ def build_target_board(
                     and u["player_id"] not in picked_ids
                     and _slot_cost(u) <= room + 1e-6
                 ],
-                key=_sort_key,
+                key=_slot_cost,
             )
             if not cands:
                 room2 = max(
@@ -922,74 +977,24 @@ def build_target_board(
                         and u["player_id"] not in picked_ids
                         and _slot_cost(u) <= room2 + 1e-6
                     ],
-                    key=_sort_key,
+                    key=_slot_cost,
                 )
             if not cands:
                 break
             _append_pick(cands[0], pos=pos, role="starter")
 
-    # --- Pass B: 4 banquillo pts>=100 ---
-    for pos in ("GK", "DF", "MF", "FW"):
-        need = int(bench_n.get(pos, 0))
-        prefer_team = None
-        if pos == "GK":
-            for r in perfect:
-                if r.get("position") == "GK" and r.get("role") == "starter":
-                    prefer_team = _gk_team_key(
-                        {"team_id": r.get("team_id"), "team": r.get("team")}
-                    )
-                    break
-        while _count_pos(pos, role="bench") < need:
-            rem_bench = {
-                p: int(bench_n.get(p, 0)) - _count_pos(p, role="bench")
-                for p in ("GK", "DF", "MF", "FW")
-            }
-            rem_bench[pos] = max(0, rem_bench[pos] - 1)
-            reserve = _cheapest_eligible_cost(rem_bench, picked_ids, eligible=_is_bench_eligible)
-            room = max(0.0, float(budget_cap) - spent - reserve)
-            cands = [
-                u
-                for u in bench_pool
-                if u["position"] == pos
-                and u["player_id"] not in picked_ids
-                and _slot_cost(u) <= room + 1e-6
-            ]
-            if not cands:
-                room2 = max(0.0, float(budget_cap) - spent)
-                cands = [
-                    u
-                    for u in bench_pool
-                    if u["position"] == pos
-                    and u["player_id"] not in picked_ids
-                    and _slot_cost(u) <= room2 + 1e-6
-                ]
-            if not cands:
-                break
-            cands.sort(
-                key=lambda x: (
-                    0 if (prefer_team and _gk_team_key(x) == prefer_team) else 1,
-                    *_sort_key(x),
-                )
-            )
-            pick = dict(cands[0])
-            if pos == "GK" and prefer_team and _gk_team_key(pick) == prefer_team:
-                pick["gk_tandem"] = True
-                for r in perfect:
-                    if r.get("position") == "GK":
-                        r["gk_tandem"] = True
-            _append_pick(pick, pos=pos, role="bench")
-
-    def _upgrade(role: str, eligible) -> None:
+    def _upgrade(role: str, eligible, *, reserve_bench: bool = False) -> None:
         nonlocal spent, perfect, picked_ids
         need_map = starters_n if role == "starter" else bench_n
+        sort_fn = _starter_sort_key if role == "starter" else _bench_sort_key
         upgraded = True
         guard = 0
-        while upgraded and guard < 40:
+        while upgraded and guard < 80:
             upgraded = False
             guard += 1
             avail = sorted(
                 [u for u in universe if u["player_id"] not in picked_ids and eligible(u)],
-                key=_sort_key,
+                key=sort_fn,
             )
             for u in avail:
                 pos = u["position"]
@@ -1000,9 +1005,29 @@ def build_target_board(
                     if r.get("position") == pos and r.get("role") == role
                 ]
                 cost_new = _slot_cost(u)
-                room = max(0.0, float(budget_cap) - spent)
+                rem_bench = {
+                    p: int(bench_n.get(p, 0)) - _count_pos(p, role="bench")
+                    for p in ("GK", "DF", "MF", "FW")
+                }
+                hold = (
+                    _reserve_bench_cost(rem_bench, picked_ids | {u["player_id"]})
+                    if reserve_bench
+                    else 0.0
+                )
+                room = max(0.0, float(budget_cap) - spent - hold)
                 if len(rows) < need:
                     if cost_new <= room + 1e-6:
+                        if pos == "GK":
+                            other = [r for r in perfect if r.get("position") == "GK"]
+                            if other:
+                                okey = _gk_team_key(
+                                    {
+                                        "team_id": other[0].get("team_id"),
+                                        "team": other[0].get("team"),
+                                    }
+                                )
+                                if okey and _gk_team_key(u) != okey:
+                                    continue
                         _append_pick(u, pos=pos, role=role)
                         upgraded = True
                         break
@@ -1015,7 +1040,7 @@ def build_target_board(
                 )
                 if float(u.get("ep_score") or 0) <= float(victim.get("ep_score") or 0) + 0.5:
                     continue
-                if pos == "GK" and role == "starter":
+                if pos == "GK":
                     other = [
                         r
                         for r in perfect
@@ -1039,12 +1064,103 @@ def build_target_board(
                 upgraded = True
                 break
 
-    _upgrade("starter", _is_starter_eligible)
+    # Maximizar Σ EP del once bajo presupuesto (reserva mínimo banquillo)
+    _upgrade("starter", _is_starter_eligible, reserve_bench=True)
+
+    # --- Pass B: banquillo campo ≥100 pts; GK2 = tándem mismo club (sin exigir 100 pts) ---
+    for pos in ("GK", "DF", "MF", "FW"):
+        need = int(bench_n.get(pos, 0))
+        prefer_team = None
+        if pos == "GK":
+            for r in perfect:
+                if r.get("position") == "GK" and r.get("role") == "starter":
+                    prefer_team = _gk_team_key(
+                        {"team_id": r.get("team_id"), "team": r.get("team")}
+                    )
+                    break
+        while _count_pos(pos, role="bench") < need:
+            rem_bench = {
+                p: int(bench_n.get(p, 0)) - _count_pos(p, role="bench")
+                for p in ("GK", "DF", "MF", "FW")
+            }
+            rem_bench[pos] = max(0, rem_bench[pos] - 1)
+            reserve = _reserve_bench_cost(rem_bench, picked_ids)
+            room = max(0.0, float(budget_cap) - spent - reserve)
+            if pos == "GK":
+                # 1) mismo club que el titular (tándem), aunque tenga pocos pts
+                cands = [
+                    u
+                    for u in universe
+                    if u["position"] == "GK"
+                    and u["player_id"] not in picked_ids
+                    and _slot_cost(u) <= room + 1e-6
+                    and (not prefer_team or _gk_team_key(u) == prefer_team)
+                ]
+                if not cands and prefer_team:
+                    room2 = max(0.0, float(budget_cap) - spent)
+                    cands = [
+                        u
+                        for u in universe
+                        if u["position"] == "GK"
+                        and u["player_id"] not in picked_ids
+                        and _slot_cost(u) <= room2 + 1e-6
+                        and _gk_team_key(u) == prefer_team
+                    ]
+                # 2) sin tándem posible: cualquier GK barato (sigue sin exigir 100 pts)
+                if not cands:
+                    room2 = max(0.0, float(budget_cap) - spent)
+                    cands = [
+                        u
+                        for u in universe
+                        if u["position"] == "GK"
+                        and u["player_id"] not in picked_ids
+                        and _slot_cost(u) <= room2 + 1e-6
+                    ]
+            else:
+                cands = [
+                    u
+                    for u in bench_pool
+                    if u["position"] == pos
+                    and u["player_id"] not in picked_ids
+                    and _slot_cost(u) <= room + 1e-6
+                ]
+                if not cands:
+                    room2 = max(0.0, float(budget_cap) - spent)
+                    cands = [
+                        u
+                        for u in bench_pool
+                        if u["position"] == pos
+                        and u["player_id"] not in picked_ids
+                        and _slot_cost(u) <= room2 + 1e-6
+                    ]
+            if not cands:
+                break
+            cands.sort(
+                key=lambda x: (
+                    0 if (prefer_team and _gk_team_key(x) == prefer_team) else 1,
+                    *_sort_key(x),
+                )
+            )
+            pick = dict(cands[0])
+            if pos == "GK" and prefer_team and _gk_team_key(pick) == prefer_team:
+                pick["gk_tandem"] = True
+                for r in perfect:
+                    if r.get("position") == "GK":
+                        r["gk_tandem"] = True
+            _append_pick(pick, pos=pos, role="bench")
+
     _upgrade("bench", _is_bench_eligible)
+    # Remanente de caja → último retoque del once
+    _upgrade("starter", _is_starter_eligible, reserve_bench=False)
 
     while spent > budget_cap + 1e-6:
-        bench_rows = [r for r in perfect if r.get("role") == "bench"]
-        pool = bench_rows or perfect
+        # Preferir recortar campo; preservar tándem GK si es posible
+        bench_rows = [
+            r
+            for r in perfect
+            if r.get("role") == "bench" and r.get("position") != "GK"
+        ]
+        pool = bench_rows or [r for r in perfect if r.get("role") == "bench"] or perfect
         if not pool:
             break
         victim = min(
@@ -1055,6 +1171,16 @@ def build_target_board(
         spent = max(0.0, spent - float(victim.get("price") or 0))
         perfect = [x for x in perfect if str(x.get("player_id")) != pid]
         picked_ids.discard(pid)
+
+    # Sincronizar flag tándem con la realidad (mismo club)
+    gk_rows = [r for r in perfect if r.get("position") == "GK"]
+    tandem_ok = False
+    if len(gk_rows) >= 2:
+        keys = {_gk_team_key(r) for r in gk_rows}
+        keys.discard(None)
+        tandem_ok = len(keys) == 1 and len(gk_rows) >= 2
+    for r in gk_rows:
+        r["gk_tandem"] = tandem_ok
 
     for r in perfect:
         pid = str(r.get("player_id") or "")
@@ -1230,6 +1356,10 @@ def build_target_board(
         },
         "totals": {
             "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
+            "ep_sum_starters": round(
+                sum(float(r.get("ep_score") or 0) for r in perfect if r.get("role") == "starter"),
+                1,
+            ),
             "cost_sum": round(spent, 0),
             "net_buys": round(net_buys, 0),
             "sell_to_fund": round(freed if shortfall > 0 else sum(float(s.get("price") or 0) for s in sell_rows[:3]), 0),
@@ -1268,6 +1398,10 @@ def build_target_board(
             "on_daily": sum(1 for r in buy_rows if r.get("on_daily_market")),
             "cash_reserved": cash_reserved,
             "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
+            "ep_sum_starters": round(
+                sum(float(r.get("ep_score") or 0) for r in perfect if r.get("role") == "starter"),
+                1,
+            ),
             "bench_min_points": int(_bench_min_points()),
         },
     }

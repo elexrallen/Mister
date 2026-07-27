@@ -367,6 +367,254 @@ def build_gw_xi_advice(
     return out[: max(1, limit)]
 
 
+def _parse_formation(formation: str | None) -> dict[str, int]:
+    """'1-4-4-2' / '4-3-3' → cupos por posición. Fallback IDEAL_XI."""
+    default = dict(getattr(config, "IDEAL_XI", None) or {"GK": 1, "DF": 4, "MF": 3, "FW": 3})
+    if not formation:
+        return default
+    parts = [p.strip() for p in str(formation).replace("–", "-").split("-") if p.strip()]
+    nums: list[int] = []
+    for p in parts:
+        try:
+            nums.append(int(p))
+        except ValueError:
+            return default
+    if len(nums) == 4 and sum(nums) == 11:
+        return {"GK": nums[0], "DF": nums[1], "MF": nums[2], "FW": nums[3]}
+    if len(nums) == 3 and sum(nums) == 10:
+        return {"GK": 1, "DF": nums[0], "MF": nums[1], "FW": nums[2]}
+    return default
+
+
+def _gw_prob_pct(p: dict[str, Any]) -> float | None:
+    """Probabilidad de jugar esta jornada (0–100), si hay señal FF."""
+    ext = p.get("external") or {}
+    raw = p.get("gw_lineup_prob")
+    if raw is None:
+        raw = ext.get("gw_lineup_prob")
+    if raw is None:
+        return None
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        return None
+    # Algunos payloads traen 0–1
+    if 0.0 <= v <= 1.0:
+        v *= 100.0
+    return max(0.0, min(100.0, v))
+
+
+def _xi_play_score(p: dict[str, Any]) -> tuple:
+    """
+    Ranking para el once de jornada desde plantilla propia.
+    Prioriza señal GW; si no hay, titularidad habitual + producción.
+    """
+    gw = _gw_prob_pct(p)
+    lp = _lineup_pct(p)
+    avail = _ext_avail(p)
+    injured = avail in ("injured", "suspended") or bool(p.get("injury"))
+    gw_out = bool(p.get("gw_out") or (p.get("external") or {}).get("gw_out"))
+
+    if injured or gw_out:
+        play = -50.0
+        signal = "out"
+    elif gw is not None:
+        play = float(gw)
+        if gw >= 70:
+            signal = "start"
+        elif gw >= 40:
+            signal = "doubt"
+        else:
+            signal = "sit"
+            play = gw - 25.0  # castigo fuerte si FF dice fuera
+    elif lp is not None:
+        play = float(lp) * 0.85  # sin señal jornada: un poco menos peso
+        signal = "start" if lp >= 70 else ("doubt" if lp >= 40 else "sit")
+    else:
+        play = 25.0  # desconocido: relleno solo si hace falta
+        signal = "unknown"
+
+    avg = _mister_avg(p) or 0.0
+    pts = 0.0
+    try:
+        pts = float(p.get("ff_mister_points") or p.get("points") or 0)
+    except (TypeError, ValueError):
+        pts = 0.0
+    rating = _fotmob_rating(p) or 0.0
+    # Score: probabilidad efectiva + desempates de calidad
+    score = play + min(12.0, avg * 1.2) + min(8.0, pts / 40.0) + min(5.0, rating)
+    return (score, play, signal, gw, lp, injured)
+
+
+def build_recommended_gw_xi(
+    squad: list[dict[str, Any]] | None,
+    *,
+    formation: str | None = None,
+    matchday: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Once recomendado (11) para la siguiente jornada usando SOLO la plantilla actual.
+    Formación Mister (p.ej. 1-4-4-2) o IDEAL_XI. Ranking por % jornada FF + fallback titularidad.
+    """
+    shape = _parse_formation(formation)
+    jornada = (matchday or {}).get("jornada")
+    fixtures = (matchday or {}).get("fixtures_count")
+
+    scored: list[dict[str, Any]] = []
+    for p in squad or []:
+        pos = str(p.get("position") or "").upper()
+        if pos not in ("GK", "DF", "MF", "FW"):
+            continue
+        score, play, signal, gw, lp, injured = _xi_play_score(p)
+        scored.append(
+            {
+                "player": p,
+                "position": pos,
+                "score": score,
+                "play": play,
+                "signal": signal,
+                "gw": gw,
+                "lp": lp,
+                "injured": injured,
+            }
+        )
+
+    by_pos: dict[str, list[dict[str, Any]]] = {"GK": [], "DF": [], "MF": [], "FW": []}
+    for row in scored:
+        by_pos[row["position"]].append(row)
+    for pos in by_pos:
+        by_pos[pos].sort(key=lambda x: (-x["score"], -float(x["gw"] or x["lp"] or 0)))
+
+    picked_ids: set[str] = set()
+    xi: list[dict[str, Any]] = []
+
+    def _row_out(item: dict[str, Any], *, slot: str, role: str = "xi") -> dict[str, Any]:
+        p = item["player"]
+        gw = item["gw"]
+        lp = item["lp"]
+        signal = item["signal"]
+        opponent = p.get("gw_opponent") or (p.get("external") or {}).get("gw_opponent")
+        if item["injured"]:
+            why = "Lesionado/sancionado — solo si no hay alternativa"
+        elif gw is not None:
+            why = f"FF jornada {gw:.0f}%"
+            if opponent:
+                why = f"{why} vs {opponent}"
+        elif lp is not None:
+            why = f"Titularidad habitual {lp:.0f}% (sin previa FF)"
+        else:
+            why = "Sin % — mejor disponible en plantilla"
+        if signal == "doubt" and role == "xi":
+            why = f"Duda · {why}"
+        elif signal == "sit" and role == "xi":
+            why = f"Riesgo bajo % · {why}"
+        return {
+            "slot": slot,
+            "player_id": p.get("id"),
+            "name": p.get("name"),
+            "position": item["position"],
+            "team": p.get("team"),
+            "role": role,
+            "signal": signal,
+            "prob": round(gw, 0) if gw is not None else (round(lp, 0) if lp is not None else None),
+            "prob_source": "gw" if gw is not None else ("season" if lp is not None else None),
+            "opponent": opponent,
+            "in_lineup": bool(p.get("in_lineup")),
+            "injured": bool(item["injured"]),
+            "score": round(item["score"], 1),
+            "why": why,
+            "jornada": jornada,
+        }
+
+    # 1) Cubrir cupos con mejores por posición (evitar out/lesión si hay alternativa)
+    for pos in ("GK", "DF", "MF", "FW"):
+        need = int(shape.get(pos, 0))
+        pool = by_pos.get(pos) or []
+        preferred = [x for x in pool if not x["injured"] and x["signal"] != "out"]
+        fallback = [x for x in pool if x not in preferred]
+        ordered = preferred + fallback
+        n = 0
+        for item in ordered:
+            if n >= need:
+                break
+            pid = str(item["player"].get("id") or "")
+            if not pid or pid in picked_ids:
+                continue
+            n += 1
+            picked_ids.add(pid)
+            xi.append(_row_out(item, slot=f"{pos}{n}", role="xi"))
+
+    # 2) Si faltan plazas (plantilla corta en una línea), rellenar con cualquier campo sobrante
+    total_need = sum(int(shape.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
+    if len(xi) < total_need:
+        leftovers = [
+            x
+            for x in scored
+            if str(x["player"].get("id") or "") not in picked_ids and not x["injured"]
+        ]
+        leftovers.sort(key=lambda x: (-x["score"], 0 if x["position"] != "GK" else 1))
+        while len(xi) < total_need and leftovers:
+            item = leftovers.pop(0)
+            pid = str(item["player"].get("id") or "")
+            if pid in picked_ids:
+                continue
+            picked_ids.add(pid)
+            pos = item["position"]
+            n = sum(1 for r in xi if r["position"] == pos) + 1
+            xi.append(_row_out(item, slot=f"{pos}{n}", role="xi"))
+
+    # Orden visual GK→DF→MF→FW
+    order_pos = {"GK": 0, "DF": 1, "MF": 2, "FW": 3}
+    xi.sort(key=lambda r: (order_pos.get(str(r.get("position")), 9), str(r.get("slot") or "")))
+
+    bench: list[dict[str, Any]] = []
+    for item in scored:
+        pid = str(item["player"].get("id") or "")
+        if pid in picked_ids:
+            continue
+        if item["injured"] and item["signal"] == "out":
+            continue
+        bench.append(_row_out(item, slot=item["position"], role="bench"))
+    bench.sort(key=lambda r: -float(r.get("score") or 0))
+    bench = bench[:6]
+
+    signals = {"start": 0, "doubt": 0, "sit": 0, "unknown": 0, "out": 0}
+    gw_n = 0
+    for r in xi:
+        sig = str(r.get("signal") or "unknown")
+        if sig in signals:
+            signals[sig] += 1
+        else:
+            signals["unknown"] += 1
+        if r.get("prob_source") == "gw":
+            gw_n += 1
+
+    form_label = formation or "-".join(
+        str(shape[p]) for p in ("GK", "DF", "MF", "FW") if shape.get(p) is not None
+    )
+    # Etiqueta tipo fútbol: sin el 1 de GK si formation era 4-4-2
+    if formation and str(formation).count("-") == 2:
+        form_label = str(formation)
+    elif formation:
+        form_label = str(formation)
+
+    return {
+        "jornada": jornada,
+        "fixtures_count": fixtures,
+        "formation": form_label,
+        "shape": shape,
+        "xi": xi,
+        "bench": bench,
+        "summary": {
+            "xi_count": len(xi),
+            "xi_target": total_need,
+            "complete": len(xi) >= total_need,
+            "with_gw_signal": gw_n,
+            "signals": signals,
+        },
+    }
+
+
 def _is_useful_patch(p: dict[str, Any]) -> bool:
     """Parche barato que juega de verdad: no vender salvo emergencia."""
     if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
@@ -667,6 +915,13 @@ def wait_risk(
 
 def priority_score_buy(item: dict[str, Any]) -> int:
     score = 0
+    # Jugador clave en mercado del día: por encima de cualquier parche
+    if item.get("is_key_market") and _is_daily_market_item(item):
+        score += 140
+    elif item.get("is_primary_target") and _is_daily_market_item(item):
+        score += 100
+    elif item.get("is_board_objective") and _is_daily_market_item(item):
+        score += 55
     if item.get("fills_need"):
         score += 35
     if item.get("fills_structural"):
@@ -726,7 +981,89 @@ def priority_score_buy(item: dict[str, Any]) -> int:
         score += 8
     elif trend == "down":
         score -= 6
+    # Capacidad de trueque / activo revendible
+    score += int(min(20, trade_asset_score(item) / 2.5))
     return score
+
+
+def trade_asset_score(item: dict[str, Any]) -> float:
+    """
+    Valor como activo de trueque/mejora futura:
+    producción por millón (acotada) + flecha de precio + categorías chollo/trading.
+    """
+    cost = _money(item.get("cost") or item.get("bid") or item.get("price") or item.get("market_value"))
+    # Suelo 0.8M para no inflar chollos de 200k por encima de cracks
+    price_m = max(cost / 1_000_000.0, 0.8)
+    prod = _production_score(item) or 0.0
+    ff = _ff_avg(item) or 0.0
+    score = min(36.0, float(prod) / price_m) + (float(ff) * 2.0)
+    delta = item.get("delta_5d")
+    try:
+        if delta is not None:
+            d = float(delta)
+            if d >= 0.05:
+                score += 10.0
+            elif d >= 0.02:
+                score += 5.0
+            elif d <= -0.06:
+                score -= 8.0
+            elif d < 0:
+                score -= 3.0
+    except (TypeError, ValueError):
+        pass
+    cats = item.get("categories") or []
+    if isinstance(cats, list):
+        if "chollo_economico" in cats:
+            score += 6.0
+        if "especulacion_trading" in cats:
+            score += 5.0
+        if "titular_garantizado" in cats:
+            score += 3.0
+    if item.get("is_upgrade"):
+        score += 4.0
+    if item.get("sample_thin"):
+        score -= 6.0
+    return round(score, 1)
+
+
+def is_key_market_candidate(
+    o: dict[str, Any],
+    *,
+    is_primary_obj: bool,
+    is_objective: bool,
+    on_daily: bool,
+    gw_out: bool,
+    real_starter: bool,
+    fills_gap: bool,
+) -> bool:
+    """
+    Jugador clave del mercado de hoy: objetivo del ideal, o crack/top que cubre hueco.
+    """
+    if not on_daily or gw_out:
+        return False
+    if is_primary_obj:
+        return True
+    if is_objective and (real_starter or bool(o.get("is_top_ff"))):
+        return True
+    if not fills_gap:
+        return False
+    if not real_starter and not o.get("is_top_ff"):
+        return False
+    prod = _production_score(o)
+    ff = _ff_avg(o)
+    try:
+        pts = float(o.get("ff_mister_points") or 0)
+    except (TypeError, ValueError):
+        pts = 0.0
+    if o.get("is_top_ff") and not o.get("sample_thin"):
+        return True
+    if prod is not None and float(prod) >= 65 and not o.get("sample_thin"):
+        return True
+    if ff is not None and float(ff) >= 6.0 and not o.get("sample_thin"):
+        return True
+    if pts >= 120 and real_starter:
+        return True
+    return False
 
 
 def priority_score_sell(item: dict[str, Any]) -> int:
@@ -1821,9 +2158,20 @@ def finalize_action_plan(
         if item.get("action") in ("buy_now", "wait", "avoid"):
             if _is_daily_market_item(item):
                 daily_boost = 120
+                if item.get("is_key_market"):
+                    daily_boost += 180  # clave del día por encima de parches
+                elif item.get("is_primary_target"):
+                    daily_boost += 100
             elif item.get("action") == "wait":
                 daily_boost = -80
         rival_boost = 0 if fixed else min(20, int(item.get("rival_demand") or 0) * 4)
+        # Sin clave: carencia + puntaje/trueque
+        asset_boost = 0
+        if not item.get("is_key_market") and item.get("action") == "buy_now":
+            try:
+                asset_boost = min(40, int(float(item.get("trade_asset_score") or 0)))
+            except (TypeError, ValueError):
+                asset_boost = 0
         item["_queue_rank"] = (
             base
             + int(item.get("priority_score") or 0)
@@ -1831,6 +2179,7 @@ def finalize_action_plan(
             + rival_boost
             + need_boost
             + daily_boost
+            + asset_boost
         )
 
     plan.sort(
@@ -1861,32 +2210,58 @@ def finalize_action_plan(
         )
         pid = str(item.get("player_id") or "")
         is_prim = bool(item.get("is_primary_target")) or pid in primary_ids
+        is_key = bool(item.get("is_key_market")) or is_prim
         is_obj = bool(item.get("is_board_objective")) or is_prim
+        try:
+            asset = float(item.get("trade_asset_score") or 0)
+        except (TypeError, ValueError):
+            asset = 0.0
+        prod = 0.0
+        try:
+            prod = float(item.get("production_score") or 0)
+        except (TypeError, ValueError):
+            prod = 0.0
         return (
+            1 if is_key else 0,
             1 if is_prim else 0,
             1 if is_obj else 0,
+            1 if fills else 0,
+            # Sin clave: maximizar puntaje, luego trueque (caja es filtro, no empate principal)
+            int(prod),
+            int(asset * 10),
             0 if crowds else 1,
             1 if leaves else 0,
-            1 if fills else 0,
-            int(item.get("_queue_rank") or 0),
             int(item.get("priority_score") or 0),
-            -cost,  # a igualdad, preferir más barato
+            int(item.get("_queue_rank") or 0),
+            -cost,
         )
 
     primary: dict[str, Any] | None = None
     if daily_buys:
-        # Preferir primary del board si está en daily buys
-        board_hit = [
+        # 1) Clave / primary del board en mercado de hoy
+        key_hit = [
             i
             for i in daily_buys
-            if str(i.get("player_id") or "") in primary_ids or i.get("is_primary_target")
+            if i.get("is_key_market")
+            or str(i.get("player_id") or "") in primary_ids
+            or i.get("is_primary_target")
+        ]
+        # 2) Carencias del mercado de hoy (todas; no filtrar antes por “deja reserva”
+        #    — eso excluía cracks asequibles frente a chollos que “dejan caja”)
+        gap_pool = [
+            i
+            for i in daily_buys
+            if i.get("fills_coverage_gap")
+            or i.get("fills_structural")
+            or i.get("fills_need")
+            or i.get("is_board_objective")
         ]
         preferred = [
             i
             for i in daily_buys
             if (bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget")
         ]
-        pool = board_hit or preferred or daily_buys
+        pool = key_hit or gap_pool or preferred or daily_buys
         primary = max(pool, key=_primary_sort_key)
 
     secondary: dict[str, Any] | None = None
@@ -1899,6 +2274,11 @@ def finalize_action_plan(
                 continue
             if cand.get("position") == primary_pos:
                 continue
+            # Tras un clave, el secundario es parche de carencia con buen trueque
+            if primary.get("is_key_market") and cand.get("is_key_market"):
+                # dos claves solo si el 2º cabe barato
+                if _item_buy_cost(cand) > secondary_max:
+                    continue
             cost = _item_buy_cost(cand)
             if cost <= 0 or cost > secondary_max:
                 continue
@@ -1908,6 +2288,7 @@ def finalize_action_plan(
                 cand.get("fills_coverage_gap")
                 or cand.get("fills_structural")
                 or cand.get("fills_need")
+                or cand.get("is_key_market")
             ):
                 continue
             # No vaciar el colchón con el secundario
@@ -1927,23 +2308,25 @@ def finalize_action_plan(
         pid = str(item.get("player_id") or "")
         item["package_id"] = package_id
         if primary and pid == primary_id:
-            item["queue_role"] = "primary_target" if (
-                item.get("is_primary_target") or pid in primary_ids
-            ) else "primary"
-            item["package_note"] = (
-                "Objetivo del día — fichar al precio"
-                if fixed and item["queue_role"] == "primary_target"
-                else (
-                    "Objetivo del día — pujar"
-                    if item["queue_role"] == "primary_target"
-                    else ("Foco del día — fichar al precio" if fixed else "Foco del día — pujar")
+            if item.get("is_key_market") or item.get("is_primary_target") or pid in primary_ids:
+                item["queue_role"] = "primary_target"
+                item["package_note"] = (
+                    "Clave del mercado — fichar al precio"
+                    if fixed
+                    else "Clave del mercado — pujar ya"
                 )
-            )
+            else:
+                item["queue_role"] = "primary"
+                item["package_note"] = (
+                    "Carencia prioritaria — fichar al precio"
+                    if fixed
+                    else "Carencia prioritaria — pujar (máx. puntaje/trueque)"
+                )
             item["alt_for"] = None
             continue
         if secondary and pid == secondary_id:
             item["queue_role"] = "secondary"
-            item["package_note"] = "También si cabe — parche barato (sin romper reserva)"
+            item["package_note"] = "También si cabe — carencia con buen trueque"
             item["alt_for"] = None
             continue
 
@@ -1979,7 +2362,7 @@ def finalize_action_plan(
         tier = item.get("target_tier") or target_tier_from_budget_fit(item.get("budget_fit"))
         if tier != "aspirational" and item.get("budget_fit") != "blocked":
             continue
-        if item.get("queue_role") in ("primary", "secondary"):
+        if item.get("queue_role") in ("primary", "primary_target", "secondary"):
             continue
         if item.get("action") in ("buy_now", "clause_bid"):
             # No debería llegar: buy_now exige caja; por seguridad
@@ -2085,7 +2468,7 @@ def finalize_action_plan(
 
     # Paquete → also_good / plan B / no acumular → fuera de caja → resto
     for item in plan:
-        if item.get("queue_role") in ("primary", "secondary"):
+        if item.get("queue_role") in ("primary", "primary_target", "secondary"):
             _append(item)
     for item in plan:
         if item.get("queue_role") in ("alt_if_lost", "also_good", "do_not_stack"):
@@ -2096,6 +2479,7 @@ def finalize_action_plan(
     for item in plan:
         if item.get("queue_role") in (
             "primary",
+            "primary_target",
             "secondary",
             "alt_if_lost",
             "also_good",
@@ -2115,13 +2499,20 @@ def finalize_action_plan(
     residual_after = max(0.0, bal - spend)
 
     if primary:
-        note = (
-            "Hasta 2 fichajes prioritarios al precio de mercado; el resto sin prisa."
-            if fixed
-            else "Hasta 2 pujas compatibles hoy; el resto es plan B o no acumular."
-        )
+        if primary.get("is_key_market") or primary.get("is_primary_target"):
+            note = (
+                "Prioridad: jugador clave en mercado. Luego carencias con buen puntaje/trueque."
+                if fixed
+                else "Prioridad: clave en mercado (pujar). Si no hay, carencias con máx. puntaje/trueque."
+            )
+        else:
+            note = (
+                "Sin clave hoy: prioriza carencias con más puntaje y valor de trueque."
+                if fixed
+                else "Sin clave hoy: pujas a carencias con más puntaje y valor de trueque."
+            )
     else:
-        note = "Sin compra clara en el mercado de hoy."
+        note = "Sin compra clara en el mercado de hoy — vigila claves y carencias."
 
     daily_package: dict[str, Any] = {
         "package_id": package_id,
@@ -2132,6 +2523,8 @@ def finalize_action_plan(
                 "name": primary.get("name"),
                 "position": primary.get("position"),
                 "bid": primary.get("bid") or primary.get("cost"),
+                "is_key_market": bool(primary.get("is_key_market")),
+                "trade_asset_score": primary.get("trade_asset_score"),
             }
             if primary
             else None
@@ -2142,6 +2535,7 @@ def finalize_action_plan(
                 "name": secondary.get("name"),
                 "position": secondary.get("position"),
                 "bid": secondary.get("bid") or secondary.get("cost"),
+                "trade_asset_score": secondary.get("trade_asset_score"),
             }
             if secondary
             else None
@@ -2165,9 +2559,11 @@ def finalize_action_plan(
             primary
             and (
                 primary.get("is_primary_target")
+                or primary.get("is_key_market")
                 or str(primary.get("player_id") or "") in primary_ids
             )
         ),
+        "policy": "key_market_first_then_gap_score_trade",
     }
 
     return capped, daily_package

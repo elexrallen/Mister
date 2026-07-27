@@ -711,71 +711,126 @@
   function renderMatchday(data) {
     const panel = document.getElementById("matchday-panel");
     if (!panel) return;
-    const md = data.matchday;
-    const advice = Array.isArray(data.gw_xi_advice) ? data.gw_xi_advice : [];
-    const srcOk =
-      data.sources &&
-      data.sources.external &&
-      ["ok", "partial", "cache"].includes(String(data.sources.external.ff_matchday || ""));
-    if (!md || !srcOk) {
+    const md = data.matchday || {};
+    const rec = data.recommended_xi || {};
+    const xi = Array.isArray(rec.xi) ? rec.xi : [];
+    const bench = Array.isArray(rec.bench) ? rec.bench : [];
+    const squad = (data.me && data.me.squad) || [];
+    if (!xi.length && !squad.length) {
       panel.hidden = true;
       return;
     }
     panel.hidden = false;
-    const j = md.jornada != null ? `Jornada ${md.jornada}` : "Jornada";
+    const jNum = rec.jornada != null ? rec.jornada : md.jornada;
+    const j = jNum != null ? `Jornada ${jNum}` : "Próxima jornada";
+    const form = rec.formation || (data.me && data.me.formation) || "1-4-3-3";
     const title = document.getElementById("matchday-title");
-    if (title) title.textContent = `${j} · FF`;
-    const fx = md.fixtures_count != null ? `${md.fixtures_count} partidos` : "";
+    if (title) title.textContent = `${j} · ${form}`;
     const summary = document.getElementById("matchday-summary");
     if (summary) {
-      summary.textContent = fx
-        ? `${fx} · posibles alineaciones Fútbol Fantasy`
-        : "Posibles alineaciones Fútbol Fantasy";
+      const n = xi.length;
+      const gw = (rec.summary && rec.summary.with_gw_signal) || 0;
+      const bits = [`Once recomendado desde tu plantilla (${n}/11)`];
+      if (gw) bits.push(`${gw} con previa FF`);
+      else bits.push("sin previa FF completa — usa titularidad habitual");
+      summary.textContent = bits.join(" · ");
     }
-    const counts = { start: 0, doubt: 0, sit: 0 };
-    for (const a of advice) {
-      const k = a && a.advice;
-      if (k && counts[k] != null) counts[k] += 1;
-    }
+    const sig = (rec.summary && rec.summary.signals) || {};
+    const elForm = document.getElementById("matchday-formation");
     const elStart = document.getElementById("matchday-start");
     const elDoubt = document.getElementById("matchday-doubt");
     const elSit = document.getElementById("matchday-sit");
-    if (elStart) elStart.textContent = String(counts.start);
-    if (elDoubt) elDoubt.textContent = String(counts.doubt);
-    if (elSit) elSit.textContent = String(counts.sit);
-    const list = document.getElementById("matchday-advice");
-    if (list) {
-      const rows = advice.slice(0, 8).map((a) => {
-        const badge =
-          a.advice === "start"
-            ? "badge-mint"
-            : a.advice === "sit"
-              ? "badge-baja-ext"
-              : "badge-duda";
-        const label =
-          a.advice === "start" ? "Alinear" : a.advice === "sit" ? "No alinear" : "Duda";
-        const prob = a.prob != null ? `${Math.round(Number(a.prob))}%` : "—";
-        const why = a.why ? escapeHtml(a.why) : "";
-        return `<li class="matchday-advice-item">
-          <span class="badge ${badge}">${label}</span>
-          <button type="button" class="player-link" data-player-id="${escapeHtml(
-            String(a.player_id || "")
-          )}">${escapeHtml(a.name || "—")}</button>
-          <span class="matchday-prob">${prob}</span>
-          <span class="matchday-why text-xs text-slate-400">${why}</span>
-        </li>`;
-      });
-      list.innerHTML = rows.length
-        ? rows.join("")
-        : `<li class="matchday-advice-item text-slate-500">Sin señal GW en tu plantilla aún.</li>`;
-      list.querySelectorAll("[data-player-id]").forEach((btn) => {
+    if (elForm) elForm.textContent = String(form);
+    if (elStart) elStart.textContent = String(xi.length);
+    if (elDoubt) elDoubt.textContent = String(sig.doubt || 0);
+    if (elSit) elSit.textContent = String((rec.summary && rec.summary.with_gw_signal) || 0);
+
+    const signalBadge = (sigName) => {
+      if (sigName === "start") return `<span class="badge badge-mint">Titular</span>`;
+      if (sigName === "doubt") return `<span class="badge badge-duda">Duda</span>`;
+      if (sigName === "sit") return `<span class="badge badge-baja-ext">Bajo %</span>`;
+      if (sigName === "out") return `<span class="badge badge-baja-ext">Fuera</span>`;
+      return `<span class="badge badge-duda">Sin dato</span>`;
+    };
+
+    const bindPlayerClicks = (root) => {
+      root.querySelectorAll("[data-player-id]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-player-id");
-          const squad = (data.me && data.me.squad) || [];
           const p = squad.find((x) => String(x.id) === String(id));
           if (p && typeof openPlayerSource === "function") openPlayerSource(p);
         });
       });
+    };
+
+    const xiEl = document.getElementById("matchday-xi");
+    if (xiEl) {
+      const byPos = { GK: [], DF: [], MF: [], FW: [] };
+      for (const r of xi) {
+        const pos = r.position || "MF";
+        if (!byPos[pos]) byPos[pos] = [];
+        byPos[pos].push(r);
+      }
+      const labels = { GK: "POR", DF: "DEF", MF: "MED", FW: "DEL" };
+      xiEl.innerHTML = ["GK", "DF", "MF", "FW"]
+        .map((pos) => {
+          const rows = byPos[pos] || [];
+          if (!rows.length) return "";
+          const cards = rows
+            .map((r) => {
+              const prob =
+                r.prob != null ? `${Math.round(Number(r.prob))}%` : "—";
+              const src =
+                r.prob_source === "gw" ? "FF" : r.prob_source === "season" ? "hab." : "";
+              return `<div class="matchday-xi-card">
+                ${signalBadge(r.signal)}
+                <button type="button" class="player-link" data-player-id="${escapeHtml(
+                  String(r.player_id || "")
+                )}">${escapeHtml(r.name || "—")}</button>
+                <span class="matchday-prob">${prob}${src ? ` · ${src}` : ""}</span>
+                <span class="matchday-why text-xs text-slate-400">${escapeHtml(
+                  r.why || ""
+                )}</span>
+              </div>`;
+            })
+            .join("");
+          return `<div class="matchday-xi-line">
+            <p class="matchday-xi-pos">${labels[pos] || pos}</p>
+            <div class="matchday-xi-rows">${cards}</div>
+          </div>`;
+        })
+        .join("");
+      if (!xi.length) {
+        xiEl.innerHTML = `<p class="text-slate-500 text-sm">No hay once disponible con la plantilla actual.</p>`;
+      }
+      bindPlayerClicks(xiEl);
+    }
+
+    const benchEl = document.getElementById("matchday-bench");
+    if (benchEl) {
+      if (!bench.length) {
+        benchEl.innerHTML = "";
+      } else {
+        benchEl.innerHTML =
+          `<li class="matchday-bench-label">Alternativas</li>` +
+          bench
+            .slice(0, 5)
+            .map((r) => {
+              const prob = r.prob != null ? `${Math.round(Number(r.prob))}%` : "—";
+              return `<li class="matchday-advice-item">
+                <span class="badge badge-banca">${escapeHtml(r.position || "")}</span>
+                <button type="button" class="player-link" data-player-id="${escapeHtml(
+                  String(r.player_id || "")
+                )}">${escapeHtml(r.name || "—")}</button>
+                <span class="matchday-prob">${prob}</span>
+                <span class="matchday-why text-xs text-slate-400">${escapeHtml(
+                  r.why || ""
+                )}</span>
+              </li>`;
+            })
+            .join("");
+        bindPlayerClicks(benchEl);
+      }
     }
   }
 
@@ -820,9 +875,9 @@
           : squad.filter((r) => r.role === "bench").length;
       const funded = totals.funded ? "financiable" : "faltan ventas/caja";
       const incomplete = summary.incomplete
-        ? " · incompleta (faltan titulares o banquillo ≥100 pts)"
+        ? " · incompleta (faltan titulares o banquillo de campo ≥100 pts)"
         : "";
-      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (≥70%) · ${bench} banquillo (≥100 pts) · ${keep} keep · ${buy} fichar · ${funded}${incomplete}`;
+      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (máx EP · ≥70%) · ${bench} banquillo (campo ≥100 pts; GK2 = tándem) · ${keep} keep · ${buy} fichar · ${funded}${incomplete}`;
     }
     const elW = document.getElementById("objectives-wealth");
     const elC = document.getElementById("objectives-cost");
@@ -830,7 +885,11 @@
     const elR = document.getElementById("objectives-reserve");
     if (elW) elW.textContent = formatMoney(wealth.total != null ? wealth.total : (board.balance || 0) + (board.squad_value || 0));
     if (elC) elC.textContent = formatMoney(totals.cost_sum);
-    if (elEp) elEp.textContent = totals.ep_sum != null ? String(Math.round(Number(totals.ep_sum))) : "—";
+    if (elEp) {
+      const xi = totals.ep_sum_starters != null ? Math.round(Number(totals.ep_sum_starters)) : null;
+      const all = totals.ep_sum != null ? Math.round(Number(totals.ep_sum)) : null;
+      elEp.textContent = xi != null ? `${xi}${all != null ? ` (${all})` : ""}` : all != null ? String(all) : "—";
+    }
     if (elR) elR.textContent = formatMoney(board.cash_reserved);
 
     const statusBadge = (st, role, extra) => {
@@ -1083,9 +1142,10 @@
       wait: { title: "Esperar", cls: "act-wait" },
       scout: { title: "Vigilar", cls: "act-scout" },
     };
-    const roleChip = (role) => {
-      if (role === "primary_target") return `<span class="badge badge-mint">Objetivo</span>`;
-      if (role === "primary") return `<span class="badge badge-mint">Hacer</span>`;
+    const roleChip = (role, a) => {
+      if (role === "primary_target" || (a && a.is_key_market))
+        return `<span class="badge badge-mint">Clave</span>`;
+      if (role === "primary") return `<span class="badge badge-mint">Carencia</span>`;
       if (role === "secondary") return `<span class="badge badge-titular">También si cabe</span>`;
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Plan B</span>`;
       if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
@@ -1131,7 +1191,9 @@
           }</p>`
         : "";
 
-    const doToday = plan.filter((a) => a.queue_role === "primary" || a.queue_role === "secondary");
+    const doToday = plan.filter(
+      (a) => a.queue_role === "primary" || a.queue_role === "primary_target" || a.queue_role === "secondary"
+    );
     const planB = plan.filter((a) => a.queue_role === "alt_if_lost" || a.queue_role === "also_good");
     const noStack = plan.filter((a) => a.queue_role === "do_not_stack");
     const outOfBudget = plan.filter((a) => a.queue_role === "out_of_budget");
@@ -1139,6 +1201,7 @@
       (a) =>
         ![
           "primary",
+          "primary_target",
           "secondary",
           "alt_if_lost",
           "also_good",
@@ -1163,12 +1226,16 @@
             ? formatMoney(a.bid)
             : "";
       const primaryChips = [
-        roleChip(a.queue_role),
+        roleChip(a.queue_role, a),
         riskBadge(a.wait_risk || a.sell_risk),
         budgetBadge(a.budget_fit),
         fundingChip(a),
         coverageChips(a),
         a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
+        a.is_key_market ? `<span class="badge badge-alta">Mercado clave</span>` : "",
+        a.trade_asset_score != null && Number(a.trade_asset_score) >= 12
+          ? `<span class="badge badge-titular">Trueque</span>`
+          : "",
       ]
         .filter(Boolean)
         .join("");

@@ -108,27 +108,32 @@
       </div>
     </section>
 
-    <section id="matchday-panel" class="matchday-panel" aria-label="Jornada FF" hidden>
+    <section id="matchday-panel" class="matchday-panel" aria-label="Once de jornada" hidden>
       <div class="matchday-main">
-        <p class="matchday-kicker">Alineaciones FF</p>
+        <p class="matchday-kicker">Once de la jornada</p>
         <p id="matchday-title" class="matchday-title">Jornada —</p>
         <p id="matchday-summary" class="matchday-summary">—</p>
       </div>
       <div class="matchday-stats">
         <div>
-          <span class="matchday-stat-label">Titular</span>
+          <span class="matchday-stat-label">Formación</span>
+          <span id="matchday-formation" class="matchday-stat-value">—</span>
+        </div>
+        <div>
+          <span class="matchday-stat-label">En once</span>
           <span id="matchday-start" class="matchday-stat-value">—</span>
         </div>
         <div>
-          <span class="matchday-stat-label">Duda</span>
+          <span class="matchday-stat-label">Dudas</span>
           <span id="matchday-doubt" class="matchday-stat-value">—</span>
         </div>
         <div>
-          <span class="matchday-stat-label">Fuera</span>
+          <span class="matchday-stat-label">Señal FF</span>
           <span id="matchday-sit" class="matchday-stat-value">—</span>
         </div>
       </div>
-      <ul id="matchday-advice" class="matchday-advice" aria-label="Consejos de once"></ul>
+      <div id="matchday-xi" class="matchday-xi" aria-label="Once recomendado"></div>
+      <ul id="matchday-bench" class="matchday-bench" aria-label="Alternativas banquillo"></ul>
     </section>
 
     <section id="objectives-panel" class="objectives-panel" aria-label="Plantilla perfecta" hidden>
@@ -147,7 +152,7 @@
           <span id="objectives-cost" class="objectives-stat-value">—</span>
         </div>
         <div>
-          <span class="objectives-stat-label">EP total</span>
+          <span class="objectives-stat-label">EP once (total)</span>
           <span id="objectives-ep" class="objectives-stat-value">—</span>
         </div>
         <div>
@@ -185,7 +190,7 @@
     <section aria-labelledby="actions-title" class="panel panel-flush">
       <div class="panel-head">
         <h2 id="actions-title" class="section-title">Cola del día</h2>
-        <p id="actions-hint" class="section-hint">Plan de hoy: hasta 2 pujas compatibles · el resto es plan B</p>
+        <p id="actions-hint" class="section-hint">Prioridad: clave en mercado · si no, carencias con máx. puntaje y trueque</p>
       </div>
       <div id="action-queue" class="action-queue-list" aria-live="polite">
         <p class="text-slate-500 text-sm px-4 py-6">Cargando…</p>
