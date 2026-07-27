@@ -213,6 +213,11 @@ def _hist_quality(p: dict[str, Any]) -> tuple[float | None, bool]:
         and float(avg) >= avg_floor * 0.98
         and apps >= 15
     )
+    # 1–7 PJ: media engañosa (p.ej. 8.0 en 1 partido)
+    if apps < 8:
+        hist *= 0.40
+    elif apps < 15:
+        hist *= 0.70
     return round(max(0.0, min(100.0, hist)), 1), reliable
 
 
@@ -254,23 +259,50 @@ def ep_score(p: dict[str, Any]) -> float:
 
 
 def _starter_fitness(row: dict[str, Any]) -> tuple:
-    """Prioridad para badge Titular: primero quien juega, luego EP."""
+    """Prioridad para badge Titular: solo cuenta quien tiene % alto."""
     lp = row.get("lineup_prob")
     try:
-        lp_f = float(lp) if lp is not None else -1.0
+        lp_f = float(lp) if lp is not None else None
     except (TypeError, ValueError):
-        lp_f = -1.0
-    if lp_f >= 70:
+        lp_f = None
+    # band: 3 titular claro · 2 regular · 1 flojo · 0 sin dato / no juega
+    if lp_f is None:
+        band = 0
+    elif lp_f >= 70:
         band = 3
     elif lp_f >= 55:
         band = 2
     elif lp_f >= 40:
         band = 1
-    elif lp_f >= 0:
-        band = 0
     else:
-        band = 1
+        band = 0
     return (band, float(row.get("ep_score") or 0))
+
+
+def _assign_roles(rows_pos: list[dict[str, Any]], starter_slots: int) -> None:
+    """Titular solo si % alineación ≥ 70. Si no hay dato o es bajo → banquillo."""
+    min_lp = float(getattr(config, "LINEUP_PROB_TITULAR", 0.70)) * 100.0
+    ordered = sorted(rows_pos, key=_starter_fitness, reverse=True)
+    starters_left = int(starter_slots)
+    for i, r in enumerate(ordered, start=1):
+        r["slot"] = f"{r.get('position')}{i}"  # provisional; caller reescribe por pos
+        lp = r.get("lineup_prob")
+        try:
+            lp_f = float(lp) if lp is not None else None
+        except (TypeError, ValueError):
+            lp_f = None
+        if starters_left > 0 and lp_f is not None and lp_f >= min_lp:
+            r["role"] = "starter"
+            starters_left -= 1
+        else:
+            r["role"] = "bench"
+    # Reordenar: titulares primero, luego por fitness
+    ordered.sort(
+        key=lambda r: (0 if r.get("role") == "starter" else 1, -_starter_fitness(r)[0], -_starter_fitness(r)[1])
+    )
+    for i, r in enumerate(ordered, start=1):
+        r["slot"] = f"{r.get('position')}{i}"
+    rows_pos[:] = ordered
 
 
 def _market_price(p: dict[str, Any]) -> float:
@@ -743,6 +775,7 @@ def build_target_board(
         [u for u in universe if u["position"] != "GK"],
         key=lambda x: (
             0 if x.get("hist_ok") else (1 if (x.get("hist_quality") or 0) >= 55 else 2),
+            0 if (x.get("lineup_prob") or 0) >= 70 else (1 if (x.get("lineup_prob") or 0) >= 55 else 2),
             -float(x.get("value_ratio") or 0),
             -float(x.get("ep_score") or 0),
             _slot_cost(x),
@@ -760,6 +793,10 @@ def build_target_board(
         # Exigir histórico Mister decente (o desconocido no: eso va al relleno final)
         hq = u.get("hist_quality")
         if hq is None or float(hq) < 55:
+            continue
+        # No fichar para el ideal a quien casi seguro no juega
+        lp_u = u.get("lineup_prob")
+        if lp_u is not None and float(lp_u) < 40:
             continue
         remaining = {
             p: int(ideal.get(p, 0)) - _count_pos(p) for p in ("GK", "DF", "MF", "FW")
@@ -941,16 +978,13 @@ def build_target_board(
             + (f" · Δ {delta * 100:.0f}%" if delta is not None else "")
         )
 
-    # Reasignar slots/roles: titulares = quienes más juegan (no solo EP barato)
+    # Reasignar slots/roles: Titular solo con % alineación ≥ 70
     perfect_sorted: list[dict[str, Any]] = []
     for pos in ("GK", "DF", "MF", "FW"):
         rows_pos = [r for r in perfect if r.get("position") == pos]
-        rows_pos.sort(key=lambda r: _starter_fitness(r), reverse=True)
         starter_slots = int(starters_n.get(pos, 1))
-        for i, r in enumerate(rows_pos, start=1):
-            r["slot"] = f"{pos}{i}"
-            r["role"] = "starter" if i <= starter_slots else "bench"
-            perfect_sorted.append(r)
+        _assign_roles(rows_pos, starter_slots)
+        perfect_sorted.extend(rows_pos)
     perfect = perfect_sorted
 
     keep_rows = [r for r in perfect if r.get("status") == "keep"]

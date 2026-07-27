@@ -810,8 +810,9 @@
     if (sumEl) {
       const keep = summary.keep != null ? summary.keep : (board.moves && board.moves.keep || []).length;
       const buy = summary.buy != null ? summary.buy : (board.moves && board.moves.buy || []).length;
+      const starters = squad.filter((r) => r.role === "starter").length;
       const funded = totals.funded ? "financiable" : "faltan ventas/caja";
-      sumEl.textContent = `${squad.length} plazas · ${keep} keep · ${buy} fichar · ${funded}`;
+      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (≥70% alin.) · ${keep} keep · ${buy} fichar · ${funded}`;
     }
     const elW = document.getElementById("objectives-wealth");
     const elC = document.getElementById("objectives-cost");
