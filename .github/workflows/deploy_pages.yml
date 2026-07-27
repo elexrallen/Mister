@@ -1,4 +1,6 @@
 # Publica la carpeta public/ en GitHub Pages (la API legacy solo admite / o /docs).
+#
+# Nota: los commits del bot (daily_update) NO disparan el trigger push → workflow_run.
 
 name: Deploy GitHub Pages
 
@@ -9,6 +11,10 @@ on:
       - "public/**"
       - ".github/workflows/deploy_pages.yml"
   workflow_dispatch:
+  workflow_run:
+    workflows: ["Daily data update"]
+    types: [completed]
+    branches: [main]
 
 permissions:
   contents: read
@@ -21,6 +27,9 @@ concurrency:
 
 jobs:
   deploy:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -28,6 +37,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+
+      - name: Inject refresh-config (optional secret)
+        env:
+          REFRESH_CONFIG_JSON: ${{ secrets.REFRESH_CONFIG_JSON }}
+        run: |
+          if [ -n "$REFRESH_CONFIG_JSON" ]; then
+            printf '%s\n' "$REFRESH_CONFIG_JSON" > public/refresh-config.json
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

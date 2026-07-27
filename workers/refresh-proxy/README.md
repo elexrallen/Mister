@@ -29,7 +29,7 @@ Anota la URL que imprime Wrangler (`https://mister-refresh.<cuenta>.workers.dev`
 cp public/refresh-config.example.json public/refresh-config.json
 ```
 
-Edita `public/refresh-config.json`:
+Edita `public/refresh-config.json` (solo local; está en `.gitignore`):
 
 ```json
 {
@@ -38,8 +38,12 @@ Edita `public/refresh-config.json`:
 }
 ```
 
-Haz commit y push de `refresh-config.json` (el `key` no es el token de Mister ni el PAT;
-solo autoriza disparar CI; el Worker limita a 1 req / 2 min).
+Para que el botón funcione en **GitHub Pages** sin commitear la key, crea un secret
+`REFRESH_CONFIG_JSON` en el repo con ese JSON en una sola línea. El workflow
+`deploy_pages` lo inyecta al publicar.
+
+El `key` no es el token de Mister ni el PAT; solo autoriza disparar CI
+(el Worker limita a 1 req / 2 min).
 
 ## 4. Secrets de Mister en Actions
 

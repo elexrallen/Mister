@@ -13,6 +13,8 @@ on:
   schedule:
     # 06:00 UTC ≈ 08:00 CEST (mañana antes del mercado)
     - cron: "0 6 * * *"
+    # Respaldo: GitHub a veces retrasa o salta el cron de las 06:00
+    - cron: "30 7 * * *"
   repository_dispatch:
     types: [refresh-data]
   workflow_dispatch:

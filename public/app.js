@@ -1859,7 +1859,7 @@
     }
   }
 
-  async function loadData(slugOverride) {
+  async function loadData(slugOverride, { bustCache = false } = {}) {
     const errEl = document.getElementById("load-error");
     try {
       if (!LEAGUES_INDEX) LEAGUES_INDEX = await loadLeaguesIndex();
@@ -1875,9 +1875,10 @@
       currentLeagueSlug = slug;
       fillLeagueSelect(LEAGUES_INDEX, slug);
 
-      let res = await fetch(dataUrlForSlug(slug), { cache: "no-cache" });
+      const bust = bustCache ? `?t=${Date.now()}` : "";
+      let res = await fetch(`${dataUrlForSlug(slug)}${bust}`, { cache: "no-store" });
       if (!res.ok && slug) {
-        res = await fetch("./data/latest_data.json", { cache: "no-cache" });
+        res = await fetch(`./data/latest_data.json${bust}`, { cache: "no-store" });
       }
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       DATA = await res.json();
@@ -1936,7 +1937,7 @@
     const started = Date.now();
     while (Date.now() - started < timeoutMs) {
       await new Promise((r) => setTimeout(r, intervalMs));
-      const data = await loadData(currentLeagueSlug);
+      const data = await loadData(currentLeagueSlug, { bustCache: true });
       const next = data && data.generated_at;
       if (next && String(next) !== String(prevGeneratedAt || "")) {
         return true;
