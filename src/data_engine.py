@@ -1212,18 +1212,18 @@ def build_action_plan(
             elif not any("objetivo" in w for w in why_parts):
                 why_parts.append("objetivo del tablero (hueco estructural)")
 
-        # Parche barato: no romper reserva de primaries Alta
+        # Parche barato: no romper reserva de buys del ideal
         is_patchish = buy_now and on_daily and not is_primary_obj and (
             cost <= patch_cap
             or (not real_starter_cand and cost < 2_500_000)
             or (o.get("categories") and "chollo_economico" in (o.get("categories") or []) and cost < 1_500_000)
         )
-        if buy_now and not is_primary_obj and not is_objective:
-            # Si gastar esto deja balance < cash_reserved → demote
+        if buy_now and not is_primary_obj:
+            # Si gastar esto deja balance < cash_reserved → demote (los buy del ideal SÍ pueden usar la reserva)
             if cash_reserved > 0 and (balance - cost) < cash_reserved:
                 buy_now = False
                 why_parts.append(
-                    f"protege reserva {cash_reserved:,.0f} € para objetivos Alta"
+                    f"protege reserva {cash_reserved:,.0f} € para plantilla ideal"
                 )
             elif is_patchish and not allow_patches:
                 buy_now = False
@@ -1839,6 +1839,20 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "budget_fit": u.get("budget_fit"),
             }
         )
+    # Ampliar universo ideal con plantillas rivales (cláusulas / precios)
+    for riv in rivals or []:
+        for p in riv.get("squad") or []:
+            board_candidates.append(
+                {
+                    **p,
+                    "puja_recomendada": p.get("clause") or p.get("puja_recomendada") or p.get("price"),
+                    "on_daily_market": False,
+                    "seller": "rival",
+                    "owner_name": riv.get("name") or riv.get("team"),
+                }
+            )
+    for p in league.get("pool_top") or []:
+        board_candidates.append(p)
     target_board = build_target_board(
         slug=slug,
         structural_needs=diagnostico_plantilla.get("structural_needs") or [],
@@ -2034,6 +2048,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "positions": funding_info.get("positions") or [],
             "primary_targets": funding_info.get("primary_targets") or [],
             "from_target_board": bool(funding_info.get("from_target_board")),
+            "wealth": funding_info.get("wealth"),
+            "totals": funding_info.get("totals"),
         },
         "target_board": target_board,
         "daily_package": daily_package,

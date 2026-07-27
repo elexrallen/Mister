@@ -131,27 +131,36 @@
       <ul id="matchday-advice" class="matchday-advice" aria-label="Consejos de once"></ul>
     </section>
 
-    <section id="objectives-panel" class="objectives-panel" aria-label="Objetivos del día" hidden>
+    <section id="objectives-panel" class="objectives-panel" aria-label="Plantilla perfecta" hidden>
       <div class="objectives-main">
-        <p class="objectives-kicker">Plantilla objetivo</p>
-        <p id="objectives-title" class="objectives-title">Objetivos del día</p>
+        <p class="objectives-kicker">Presupuesto total = saldo + valor plantilla</p>
+        <p id="objectives-title" class="objectives-title">Plantilla perfecta</p>
         <p id="objectives-summary" class="objectives-summary">—</p>
       </div>
       <div class="objectives-stats">
         <div>
-          <span class="objectives-stat-label">Reserva caja</span>
+          <span class="objectives-stat-label">Wealth</span>
+          <span id="objectives-wealth" class="objectives-stat-value">—</span>
+        </div>
+        <div>
+          <span class="objectives-stat-label">Coste ideal</span>
+          <span id="objectives-cost" class="objectives-stat-value">—</span>
+        </div>
+        <div>
+          <span class="objectives-stat-label">EP total</span>
+          <span id="objectives-ep" class="objectives-stat-value">—</span>
+        </div>
+        <div>
+          <span class="objectives-stat-label">Reserva fichajes</span>
           <span id="objectives-reserve" class="objectives-stat-value">—</span>
         </div>
-        <div>
-          <span class="objectives-stat-label">Tras reserva</span>
-          <span id="objectives-residual" class="objectives-stat-value">—</span>
-        </div>
-        <div>
-          <span class="objectives-stat-label">En mercado</span>
-          <span id="objectives-ondaily" class="objectives-stat-value">—</span>
-        </div>
       </div>
-      <ul id="objectives-list" class="objectives-list" aria-label="Jugadores objetivo"></ul>
+      <div id="objectives-grid" class="objectives-grid" aria-label="Plantilla por líneas"></div>
+      <div id="objectives-patches-wrap" class="objectives-patches-wrap" hidden>
+        <p class="objectives-patches-title">Parches hoy</p>
+        <ul id="objectives-patches" class="objectives-patches"></ul>
+      </div>
+      <p id="objectives-sells" class="objectives-sells text-xs text-slate-400" hidden></p>
     </section>
 
     <section aria-label="Indicadores clave" class="kpi-strip">

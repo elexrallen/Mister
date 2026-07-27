@@ -795,91 +795,136 @@
     const panel = document.getElementById("objectives-panel");
     if (!panel) return;
     const board = data.target_board;
-    const slots = (board && board.slots) || [];
-    if (!board || !slots.length) {
+    const squad = (board && board.perfect_squad) || [];
+    if (!board || !squad.length) {
       panel.hidden = true;
       return;
     }
     panel.hidden = false;
+    const wealth = board.wealth || {};
+    const totals = board.totals || {};
+    const summary = board.summary || {};
     const title = document.getElementById("objectives-title");
-    if (title) title.textContent = "Objetivos del día";
-    const summary = document.getElementById("objectives-summary");
-    const nOn = (board.summary && board.summary.on_daily) || 0;
-    if (summary) {
-      summary.textContent = `${slots.length} hueco(s) · reserva para primaries · ${nOn} en mercado hoy`;
+    if (title) title.textContent = "Plantilla perfecta";
+    const sumEl = document.getElementById("objectives-summary");
+    if (sumEl) {
+      const keep = summary.keep != null ? summary.keep : (board.moves && board.moves.keep || []).length;
+      const buy = summary.buy != null ? summary.buy : (board.moves && board.moves.buy || []).length;
+      const funded = totals.funded ? "financiable" : "faltan ventas/caja";
+      sumEl.textContent = `${squad.length} plazas · ${keep} keep · ${buy} fichar · ${funded}`;
     }
+    const elW = document.getElementById("objectives-wealth");
+    const elC = document.getElementById("objectives-cost");
+    const elEp = document.getElementById("objectives-ep");
     const elR = document.getElementById("objectives-reserve");
-    const elRes = document.getElementById("objectives-residual");
-    const elOn = document.getElementById("objectives-ondaily");
+    if (elW) elW.textContent = formatMoney(wealth.total != null ? wealth.total : (board.balance || 0) + (board.squad_value || 0));
+    if (elC) elC.textContent = formatMoney(totals.cost_sum);
+    if (elEp) elEp.textContent = totals.ep_sum != null ? String(Math.round(Number(totals.ep_sum))) : "—";
     if (elR) elR.textContent = formatMoney(board.cash_reserved);
-    if (elRes) elRes.textContent = formatMoney(board.residual_after_reserve);
-    if (elOn) elOn.textContent = String(nOn);
 
-    const list = document.getElementById("objectives-list");
-    if (!list) return;
-    const statusBadge = (st) => {
-      if (st === "on_daily") return `<span class="badge badge-mint">Hoy</span>`;
-      if (st === "clause") return `<span class="badge badge-duda">Cláusula</span>`;
-      if (st === "acquired") return `<span class="badge badge-titular">Fichado</span>`;
-      if (st === "dropped") return `<span class="badge badge-baja">Fuera</span>`;
-      return `<span class="badge badge-duda">Vigilando</span>`;
+    const statusBadge = (st, role) => {
+      const bits = [];
+      if (st === "keep") bits.push(`<span class="badge badge-mint">Keep</span>`);
+      else if (st === "buy") bits.push(`<span class="badge badge-alta">Fichar</span>`);
+      else bits.push(`<span class="badge badge-duda">${escapeHtml(st || "")}</span>`);
+      if (role === "starter") bits.push(`<span class="badge badge-titular">Titular</span>`);
+      return bits.join(" ");
     };
-    const valueBadge = (note) => {
-      if (note === "rising") return `<span class="badge badge-mint">Δ↑</span>`;
-      if (note === "falling") return `<span class="badge badge-baja-ext">Δ↓</span>`;
-      return "";
-    };
-    const rows = [];
-    for (const slot of slots.slice(0, 4)) {
-      const prim = slot.primary_target;
-      if (!prim) continue;
-      const alts = (slot.targets || []).filter(
-        (t) => String(t.player_id) !== String(prim.player_id)
-      ).slice(0, 2);
-      const needLabel = slot.need || slot.position || "hueco";
-      const delta =
-        prim.delta_5d != null
-          ? `${(Number(prim.delta_5d) * 100).toFixed(0)}%`
-          : "—";
-      rows.push(`<li class="objectives-item">
-        <div class="objectives-item-head">
-          <span class="badge badge-alta">${escapeHtml(String(needLabel))}</span>
-          ${statusBadge(prim.status)}
-          ${valueBadge(prim.value_note)}
-          <span class="objectives-tier text-xs">${escapeHtml(prim.tier || "")}</span>
-        </div>
-        <button type="button" class="player-link" data-player-id="${escapeHtml(
-          String(prim.player_id || "")
-        )}">${escapeHtml(prim.name || "—")}</button>
-        <span class="objectives-meta">${formatMoney(prim.price)} · EP ${
-          prim.ep_score != null ? Math.round(Number(prim.ep_score)) : "—"
-        } · Δ ${delta}</span>
-        <span class="objectives-why text-xs text-slate-400">${escapeHtml(
-          prim.why || slot.reason || ""
-        )}</span>
-        ${
-          alts.length
-            ? `<span class="objectives-alts text-xs text-slate-500">Alts: ${alts
-                .map((a) => escapeHtml(a.name || ""))
-                .join(" · ")}</span>`
-            : ""
-        }
-      </li>`);
-    }
-    list.innerHTML = rows.length
-      ? rows.join("")
-      : `<li class="objectives-item text-slate-500">Sin objetivos claros hoy.</li>`;
-    list.querySelectorAll("[data-player-id]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const id = btn.getAttribute("data-player-id");
-        const all = [
-          ...((data.me && data.me.squad) || []),
-          ...(data.market_opportunities || []),
-        ];
-        const p = all.find((x) => String(x.id || x.player_id) === String(id));
-        if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+
+    const grid = document.getElementById("objectives-grid");
+    if (grid) {
+      const byPos = { GK: [], DF: [], MF: [], FW: [] };
+      for (const row of squad) {
+        const pos = row.position || "MF";
+        if (!byPos[pos]) byPos[pos] = [];
+        byPos[pos].push(row);
+      }
+      const cols = ["GK", "DF", "MF", "FW"].map((pos) => {
+        const rows = (byPos[pos] || [])
+          .map((r) => {
+            const delta =
+              r.delta_5d != null ? `${(Number(r.delta_5d) * 100).toFixed(0)}%` : "—";
+            return `<li class="objectives-player">
+              <div class="objectives-player-head">${statusBadge(r.status, r.role)}</div>
+              <button type="button" class="player-link" data-player-id="${escapeHtml(
+                String(r.player_id || "")
+              )}">${escapeHtml(r.name || "—")}</button>
+              <span class="objectives-meta">${formatMoney(r.price)} · EP ${
+                r.ep_score != null ? Math.round(Number(r.ep_score)) : "—"
+              } · Δ ${delta}</span>
+            </li>`;
+          })
+          .join("");
+        return `<div class="objectives-col">
+          <p class="objectives-col-title">${pos}</p>
+          <ul class="objectives-col-list">${rows || `<li class="text-slate-500 text-xs">—</li>`}</ul>
+        </div>`;
       });
-    });
+      grid.innerHTML = cols.join("");
+      grid.querySelectorAll("[data-player-id]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const id = btn.getAttribute("data-player-id");
+          const all = [
+            ...((data.me && data.me.squad) || []),
+            ...(data.market_opportunities || []),
+          ];
+          const p = all.find((x) => String(x.id || x.player_id) === String(id));
+          if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+        });
+      });
+    }
+
+    const patches = board.daily_patches || [];
+    const wrap = document.getElementById("objectives-patches-wrap");
+    const list = document.getElementById("objectives-patches");
+    if (wrap && list) {
+      if (!patches.length) {
+        wrap.hidden = true;
+        list.innerHTML = "";
+      } else {
+        wrap.hidden = false;
+        list.innerHTML = patches
+          .map(
+            (p) => `<li class="objectives-patch-item">
+            <span class="badge badge-duda">${escapeHtml(p.position || "parche")}</span>
+            <button type="button" class="player-link" data-player-id="${escapeHtml(
+              String(p.player_id || "")
+            )}">${escapeHtml(p.name || "—")}</button>
+            <span class="objectives-meta">${formatMoney(p.price)} · EP ${
+              p.ep_score != null ? Math.round(Number(p.ep_score)) : "—"
+            }</span>
+            <span class="objectives-why text-xs text-slate-400">${escapeHtml(p.why || "")}</span>
+          </li>`
+          )
+          .join("");
+        list.querySelectorAll("[data-player-id]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const id = btn.getAttribute("data-player-id");
+            const all = [
+              ...((data.me && data.me.squad) || []),
+              ...(data.market_opportunities || []),
+            ];
+            const p = all.find((x) => String(x.id || x.player_id) === String(id));
+            if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+          });
+        });
+      }
+    }
+
+    const sells = ((board.moves || {}).sell || []).slice(0, 4);
+    const sellEl = document.getElementById("objectives-sells");
+    if (sellEl) {
+      if (!sells.length) {
+        sellEl.hidden = true;
+        sellEl.textContent = "";
+      } else {
+        sellEl.hidden = false;
+        sellEl.textContent = `Vender para financiar: ${sells
+          .map((s) => s.name)
+          .filter(Boolean)
+          .join(" · ")}`;
+      }
+    }
   }
 
   function renderMeta(data) {

@@ -1,5 +1,5 @@
 """
-Tablero diario de jugadores objetivo por hueco estructural.
+Plantilla perfecta diaria bajo presupuesto total (saldo + valor de plantilla).
 
 Proxy de puntaje esperado: production_score + ff_mister_avg × titularidad.
 Persiste entre runs en public/data/leagues/<slug>/target_board.json.
@@ -18,9 +18,9 @@ from competitive_actions import budget_fit, target_tier_from_budget_fit
 
 log = logging.getLogger("target_board")
 
-TARGETS_PER_SLOT = 4
+KEEP_EP_RATIO = 0.90  # owned se mantiene si EP >= 90% del mejor del cupo
 MAX_DROPPED_DAYS = 5
-PATCH_MAX_FRACTION_OF_RESERVE = 0.15  # parche ≤ 15% de la reserva del primary Alta
+PATCH_MAX_FRACTION_OF_RESERVE = 0.15
 
 
 def _money(v: Any) -> float:
@@ -81,12 +81,11 @@ def _lineup_pct(p: dict[str, Any]) -> float | None:
 
 
 def _production(p: dict[str, Any]) -> float | None:
-    for key in ("production_score",):
-        if p.get(key) is not None:
-            try:
-                return float(p[key])
-            except (TypeError, ValueError):
-                pass
+    if p.get("production_score") is not None:
+        try:
+            return float(p["production_score"])
+        except (TypeError, ValueError):
+            pass
     ext = p.get("external") or {}
     if ext.get("production_score") is not None:
         try:
@@ -104,20 +103,16 @@ def _ff_avg(p: dict[str, Any]) -> float | None:
             except (TypeError, ValueError):
                 pass
     ext = p.get("external") or {}
-    for key in ("ff_mister_avg",):
-        if ext.get(key) is not None:
-            try:
-                return float(ext[key])
-            except (TypeError, ValueError):
-                return None
+    if ext.get("ff_mister_avg") is not None:
+        try:
+            return float(ext["ff_mister_avg"])
+        except (TypeError, ValueError):
+            return None
     return None
 
 
 def ep_score(p: dict[str, Any]) -> float:
-    """
-    Puntaje esperado 0–100 approx:
-    0.55*production + 0.25*(ff_avg/8*100) + 0.20*lineup_pct
-    """
+    """Puntaje esperado 0–100: producción + media FF + titularidad."""
     prod = _production(p)
     ff = _ff_avg(p)
     lp = _lineup_pct(p)
@@ -134,8 +129,16 @@ def ep_score(p: dict[str, Any]) -> float:
     return round(sum(w * v for w, v in parts) / wsum, 1)
 
 
+def _market_price(p: dict[str, Any]) -> float:
+    """Precio de mercado / valor (para wealth y keep)."""
+    return _money(p.get("price") or p.get("market_value") or p.get("puja_recomendada"))
+
+
 def _buy_price(p: dict[str, Any]) -> float:
-    return _money(p.get("puja_recomendada") or p.get("clause") or p.get("price") or p.get("market_value"))
+    """Coste de adquisición (puja / cláusula / precio)."""
+    return _money(
+        p.get("puja_recomendada") or p.get("clause") or p.get("price") or p.get("market_value")
+    )
 
 
 def _delta_5d(p: dict[str, Any], price_series: dict[str, list[float]] | None) -> float | None:
@@ -168,39 +171,11 @@ def _value_note(delta: float | None) -> str:
     return "stable"
 
 
-def _needs_for_board(structural_needs: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
-    """
-    Huecos Alta siempre; Media de profundidad solo si no hay Alta en esa posición.
-    """
-    needs = list(structural_needs or [])
-    alta_pos = {n.get("position") for n in needs if n.get("priority") == "Alta" and n.get("position")}
-    out: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for n in needs:
-        key = str(n.get("need") or n.get("position") or "")
-        if not key or key in seen:
-            continue
-        prio = str(n.get("priority") or "Media")
-        pos = n.get("position")
-        ntype = str(n.get("need") or "")
-        if prio == "Alta":
-            seen.add(key)
-            out.append(n)
-            continue
-        if prio == "Media" and (ntype.startswith("depth_") or ntype in ("gk_tandem",)):
-            if pos and pos in alta_pos:
-                continue
-            seen.add(key)
-            out.append(n)
-    return out
+def _pid(p: dict[str, Any]) -> str:
+    return str(p.get("id") or p.get("player_id") or "")
 
 
-def _candidate_ok(p: dict[str, Any], need: dict[str, Any]) -> bool:
-    pos = need.get("position")
-    if pos and p.get("position") != pos:
-        return False
-    if p.get("sample_thin") and (_production(p) or 0) < 50:
-        return False
+def _avail_ok(p: dict[str, Any]) -> bool:
     avail = (p.get("external") or {}).get("availability") or (
         "injured" if p.get("injury") else "unknown"
     )
@@ -208,63 +183,184 @@ def _candidate_ok(p: dict[str, Any], need: dict[str, Any]) -> bool:
         return False
     if p.get("gw_out") or (p.get("external") or {}).get("gw_out"):
         return False
-    price = _buy_price(p)
-    if price <= 0:
-        return False
-    floor = need.get("min_price")
-    ceil = need.get("max_price")
-    try:
-        floor_f = float(floor) if floor is not None else None
-    except (TypeError, ValueError):
-        floor_f = None
-    try:
-        ceil_f = float(ceil) if ceil is not None else None
-    except (TypeError, ValueError):
-        ceil_f = None
-    # Banda: [min*0.6, max] — fw_top exige suelo; depth más flexible
-    ntype = str(need.get("need") or "")
-    if floor_f is not None and ntype in ("fw_top", "mf_starter", "df_starter", "gk_starter"):
-        if price < floor_f * 0.6:
-            return False
-    if ceil_f is not None and price > ceil_f:
-        return False
-    lp = _lineup_pct(p)
-    fills = bool(p.get("fills_structural") or p.get("fills_need") or p.get("fills_coverage_gap"))
-    # Titularidad usable o sin señal pero con producción decente
-    if lp is not None and lp < 45 and not fills:
-        return False
-    if lp is None and (_production(p) or 0) < 35 and (_ff_avg(p) or 0) < 3.5:
-        return False
     return True
 
 
-def _status_for(
+def _normalize_player(
     p: dict[str, Any],
     *,
+    owned: bool,
+    price_series: dict[str, list[float]] | None,
+) -> dict[str, Any] | None:
+    pid = _pid(p)
+    if not pid:
+        return None
+    if not _avail_ok(p):
+        return None
+    price = _market_price(p) if owned else _buy_price(p)
+    if price <= 0 and not owned:
+        return None
+    if price <= 0 and owned:
+        price = 100_000.0  # suelo para owned sin precio
+    ep = ep_score(p)
+    delta = _delta_5d(p, price_series)
+    price_m = max(price / 1_000_000.0, 0.4)
+    return {
+        "raw": p,
+        "player_id": pid,
+        "name": p.get("name"),
+        "position": p.get("position") or "MF",
+        "team": p.get("team"),
+        "owned": owned,
+        "ep_score": ep,
+        "price": round(price, 0),
+        "buy_price": round(_buy_price(p) if not owned else price, 0),
+        "value_ratio": round(ep / price_m, 2),
+        "delta_5d": round(delta, 4) if delta is not None else None,
+        "value_note": _value_note(delta),
+        "lineup_prob": _lineup_pct(p),
+        "production_score": _production(p),
+        "ff_mister_avg": _ff_avg(p),
+        "on_daily_market": bool(p.get("on_daily_market") or p.get("seller") == "market"),
+        "clause": p.get("clause") if p.get("clause_known") else None,
+        "sample_thin": bool(p.get("sample_thin")),
+    }
+
+
+def _liquidity_floor(wealth: float, balance: float) -> float:
+    reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+    pct = max(0.05, min(0.10, wealth * 0.08 / max(wealth, 1))) * wealth
+    # No exigir más liquidez que el saldo actual
+    return min(balance, max(reserve * 0.25, min(reserve, pct)))
+
+
+def _ideal_counts() -> dict[str, int]:
+    ideal = getattr(config, "IDEAL_SQUAD", None) or {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
+    return {str(k): int(v) for k, v in ideal.items()}
+
+
+def _starter_counts() -> dict[str, int]:
+    st = getattr(config, "STARTERS_TARGET", None) or {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
+    return {str(k): int(v) for k, v in st.items()}
+
+
+def _row_from_norm(
+    n: dict[str, Any],
+    *,
+    slot: str,
+    role: str,
+    status: str,
+    added_at: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "slot": slot,
+        "position": n["position"],
+        "role": role,
+        "player_id": n["player_id"],
+        "name": n["name"],
+        "team": n.get("team"),
+        "ep_score": n["ep_score"],
+        "price": n["price"] if status == "keep" else n.get("buy_price") or n["price"],
+        "status": status,
+        "delta_5d": n.get("delta_5d"),
+        "value_note": n.get("value_note"),
+        "value_ratio": n.get("value_ratio"),
+        "lineup_prob": n.get("lineup_prob"),
+        "on_daily_market": n.get("on_daily_market"),
+        "owned": bool(n.get("owned")),
+        "why": (
+            f"EP {n['ep_score']:.0f} · {n['price']:,.0f} € · {status}"
+            + (f" · Δ {n['delta_5d']*100:.0f}%" if n.get("delta_5d") is not None else "")
+        ),
+        "added_at": added_at or _now_iso(),
+    }
+
+
+def _build_daily_patches(
+    structural_needs: list[dict[str, Any]] | None,
+    universe: list[dict[str, Any]],
+    *,
+    balance: float,
+    cash_reserved: float,
     owned_ids: set[str],
-) -> str:
-    pid = str(p.get("id") or "")
-    if pid and pid in owned_ids:
-        return "acquired"
-    if p.get("clause_known") and p.get("clause") is not None and not p.get("on_daily_market"):
-        # rival clause candidate
-        if p.get("owner_team") or p.get("owner_name") or p.get("seller") not in (None, "market", "free"):
-            return "clause"
-    if p.get("on_daily_market") or p.get("seller") == "market":
-        return "on_daily"
-    if p.get("clause_known") and _money(p.get("clause")) > 0:
-        return "clause"
-    return "watching"
+) -> list[dict[str, Any]]:
+    """Parches del mercado de hoy para carencias, sin romper reserva del ideal."""
+    residual = max(0.0, balance - cash_reserved)
+    if residual < 150_000:
+        return []
+    max_spend = min(
+        residual,
+        max(500_000.0, cash_reserved * PATCH_MAX_FRACTION_OF_RESERVE if cash_reserved else 2_000_000.0),
+        float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000)),
+    )
+    needs = [
+        n
+        for n in (structural_needs or [])
+        if n.get("priority") in ("Alta", "Media") and n.get("position")
+    ]
+    patches: list[dict[str, Any]] = []
+    used: set[str] = set()
+    for need in needs:
+        pos = need.get("position")
+        cands = [
+            u
+            for u in universe
+            if u["position"] == pos
+            and not u["owned"]
+            and u.get("on_daily_market")
+            and u["player_id"] not in owned_ids
+            and u["player_id"] not in used
+            and float(u.get("buy_price") or u["price"]) <= max_spend
+            and float(u.get("ep_score") or 0) >= 25
+        ]
+        cands.sort(
+            key=lambda x: (
+                -float(x.get("ep_score") or 0),
+                float(x.get("buy_price") or x["price"]),
+            )
+        )
+        if not cands:
+            continue
+        best = cands[0]
+        cost = float(best.get("buy_price") or best["price"])
+        used.add(best["player_id"])
+        patches.append(
+            {
+                "need": need.get("need"),
+                "position": pos,
+                "priority": need.get("priority"),
+                "player_id": best["player_id"],
+                "name": best["name"],
+                "price": cost,
+                "ep_score": best["ep_score"],
+                "max_spend": round(max_spend, 0),
+                "why": (
+                    f"Parche {pos} hoy · EP {best['ep_score']:.0f} · {cost:,.0f} € "
+                    f"(reserva ideal intacta: {cash_reserved:,.0f} €)"
+                ),
+            }
+        )
+    return patches[:4]
 
 
-def _prev_targets_index(prev: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
+def _prev_perfect_index(prev: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
     out: dict[str, dict[str, Any]] = {}
     if not prev:
         return out
+    for row in prev.get("perfect_squad") or []:
+        pid = str(row.get("player_id") or "")
+        if pid:
+            out[pid] = row
+    for bucket in ("keep", "buy", "sell"):
+        for row in ((prev.get("moves") or {}).get(bucket) or []):
+            pid = str(row.get("player_id") or "")
+            if pid and pid not in out:
+                out[pid] = row
+    # legacy slots
     for slot in prev.get("slots") or []:
         for t in slot.get("targets") or []:
             pid = str(t.get("player_id") or "")
-            if pid:
+            if pid and pid not in out:
                 out[pid] = t
         prim = slot.get("primary_target") or {}
         pid = str(prim.get("player_id") or "")
@@ -286,160 +382,340 @@ def build_target_board(
     market_mode: str = "auction",
 ) -> dict[str, Any]:
     """
-    Construye el tablero de objetivos del día y lo fusiona con el board previo.
+    Plantilla perfecta IDEAL_SQUAD bajo wealth = balance + squad_value,
+    más parches diarios que no rompen la reserva de buys.
     """
     bal = max(0.0, float(balance or 0))
-    sval = float(squad_value or 0) or sum(_money(p.get("price") or p.get("market_value")) for p in (squad or []))
-    owned_ids = {str(p.get("id")) for p in (squad or []) if p.get("id") is not None}
+    squad = list(squad or [])
+    sval = float(squad_value or 0) or sum(
+        _money(p.get("price") or p.get("market_value")) for p in squad
+    )
+    wealth_total = bal + sval
+    floor = _liquidity_floor(wealth_total, bal)
+    budget_cap = max(0.0, wealth_total - floor)
+
+    owned_ids = {_pid(p) for p in squad if _pid(p)}
     prev = previous if previous is not None else load_previous_board(slug)
-    prev_idx = _prev_targets_index(prev)
-    needs = _needs_for_board(structural_needs)
-    slots: list[dict[str, Any]] = []
-    cash_reserved = 0.0
-    primary_targets: list[dict[str, Any]] = []
+    prev_idx = _prev_perfect_index(prev)
 
-    for need in needs:
-        ntype = str(need.get("need") or "")
-        pos = need.get("position")
-        prio = str(need.get("priority") or "Media")
-        try:
-            min_p = float(need["min_price"]) if need.get("min_price") is not None else None
-        except (TypeError, ValueError):
-            min_p = None
-        try:
-            max_p = float(need["max_price"]) if need.get("max_price") is not None else None
-        except (TypeError, ValueError):
-            max_p = None
+    universe: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for p in squad:
+        n = _normalize_player(p, owned=True, price_series=price_series)
+        if not n or n["player_id"] in seen:
+            continue
+        seen.add(n["player_id"])
+        universe.append(n)
+    for p in candidates:
+        n = _normalize_player(p, owned=_pid(p) in owned_ids, price_series=price_series)
+        if not n or n["player_id"] in seen:
+            continue
+        # sample_thin extremo: aún sirve para rellenar cupos baratos; no filtrar aquí
+        seen.add(n["player_id"])
+        universe.append(n)
 
-        ranked: list[dict[str, Any]] = []
-        for p in candidates:
-            if not _candidate_ok(p, need):
-                continue
-            price = _buy_price(p)
-            ep = ep_score(p)
-            if ep < 20 and (_lineup_pct(p) or 0) < 70:
-                continue
-            price_m = max(price / 1_000_000.0, 0.4)
-            value_ratio = ep / price_m
-            delta = _delta_5d(p, price_series)
-            bf = budget_fit(price, bal, min_cost=_money(p.get("puja_minima") or p.get("price")))
-            tier = p.get("target_tier") or target_tier_from_budget_fit(bf)
-            status = _status_for(p, owned_ids=owned_ids)
-            pid = str(p.get("id") or "")
-            prev_t = prev_idx.get(pid) or {}
-            ranked.append(
-                {
-                    "player_id": pid,
-                    "name": p.get("name"),
-                    "position": p.get("position") or pos,
-                    "team": p.get("team"),
-                    "tier": tier,
-                    "ep_score": ep,
-                    "price": round(price, 0),
-                    "afford_now": bf in ("comfortable", "tight"),
-                    "budget_fit": bf,
-                    "delta_5d": round(delta, 4) if delta is not None else None,
-                    "value_note": _value_note(delta),
-                    "value_ratio": round(value_ratio, 2),
-                    "lineup_prob": _lineup_pct(p),
-                    "production_score": _production(p),
-                    "ff_mister_avg": _ff_avg(p),
-                    "on_daily_market": bool(p.get("on_daily_market") or p.get("seller") == "market"),
-                    "status": status,
-                    "why": (
-                        f"EP {ep:.0f} · {price:,.0f} € · "
-                        f"{'titular ' + str(int(_lineup_pct(p) or 0)) + '%' if _lineup_pct(p) is not None else 'sin %'} · "
-                        f"tier {tier}"
-                    ),
-                    "added_at": prev_t.get("added_at") or _now_iso(),
-                    "miss_days": 0 if status != "dropped" else int(prev_t.get("miss_days") or 0),
-                    "clause": p.get("clause") if p.get("clause_known") else None,
-                    "owner_name": p.get("owner_name") or p.get("owner_team"),
-                }
-            )
+    ideal = _ideal_counts()
+    starters_n = _starter_counts()
+    perfect: list[dict[str, Any]] = []
+    picked_ids: set[str] = set()
+    # Keeps no consumen caja: la reserva solo limita buys.
+    # room_buys = wealth - liquidity_floor - value_kept - cost_buys
+    value_kept = 0.0
+    cost_buys = 0.0
 
-        # Preferir realistic, luego EP/€, luego EP
-        ranked.sort(
-            key=lambda t: (
-                0 if t.get("tier") == "realistic" else (1 if t.get("tier") == "stretch" else 2),
-                0 if t.get("status") == "on_daily" else (1 if t.get("status") == "clause" else 2),
-                -float(t.get("value_ratio") or 0),
-                -float(t.get("ep_score") or 0),
+    def _buy_room() -> float:
+        return max(0.0, float(budget_cap) - value_kept - cost_buys)
+
+    def _append_pick(u: dict[str, Any], *, pos: str, status: str) -> None:
+        nonlocal value_kept, cost_buys
+        slot_i = len([r for r in perfect if r.get("position") == pos]) + 1
+        starter_slots = int(starters_n.get(pos, 1))
+        role = "starter" if slot_i <= starter_slots else "bench"
+        perfect.append(
+            _row_from_norm(
+                u,
+                slot=f"{pos}{slot_i}",
+                role=role,
+                status=status,
+                added_at=(prev_idx.get(u["player_id"]) or {}).get("added_at"),
             )
         )
-        targets = ranked[:TARGETS_PER_SLOT]
-
-        # Primary = mejor realistic asequible; si no, mejor stretch; si no, primero
-        primary = next((t for t in targets if t.get("tier") == "realistic" and t.get("afford_now")), None)
-        if primary is None:
-            primary = next((t for t in targets if t.get("tier") == "realistic"), None)
-        if primary is None and targets:
-            primary = targets[0]
-
-        reserve = float(primary["price"]) if primary and primary.get("tier") in ("realistic", "stretch") else 0.0
-        if primary and not primary.get("afford_now") and primary.get("tier") == "aspirational":
-            # No reservar aspirational completo; reservar min_price del need o 0
-            reserve = float(min_p or 0)
-
-        if prio == "Alta" and primary and primary.get("afford_now"):
-            cash_reserved += reserve
-            primary_targets.append(
-                {
-                    "player_id": primary.get("player_id"),
-                    "name": primary.get("name"),
-                    "need": ntype,
-                    "position": pos,
-                    "price": primary.get("price"),
-                    "ep_score": primary.get("ep_score"),
-                    "status": primary.get("status"),
-                }
-            )
-
-        # Patch policy: no gastar más del 15% de la reserva Alta de este slot (o 500k)
-        if prio == "Alta" and reserve > 0:
-            max_patch = max(500_000.0, reserve * PATCH_MAX_FRACTION_OF_RESERVE)
-            # También limitar para no bajar balance por debajo de cash_reserved acumulado
-            allow_patch = True
-        elif prio == "Media":
-            max_patch = min(2_000_000.0, bal * 0.1)
-            allow_patch = True
+        picked_ids.add(u["player_id"])
+        if status == "keep":
+            value_kept += float(u["price"])
         else:
-            max_patch = 0.0
-            allow_patch = False
+            cost_buys += float(u.get("buy_price") or u["price"])
 
+    # Pass 1: keeps de calidad (EP cerca del top) — aún no rellenar con owned flojos
+    for pos in ("GK", "DF", "MF", "FW"):
+        need_n = int(ideal.get(pos, 0))
+        if need_n <= 0:
+            continue
+        pool = [u for u in universe if u["position"] == pos and u["player_id"] not in picked_ids]
+        pool.sort(
+            key=lambda x: (
+                -float(x.get("ep_score") or 0),
+                -float(x.get("value_ratio") or 0),
+                float(x.get("buy_price") or x["price"]),
+            )
+        )
+        best_ep = float(pool[0]["ep_score"]) if pool else 0.0
+        owned_pool = sorted(
+            [u for u in pool if u["owned"]],
+            key=lambda x: -float(x.get("ep_score") or 0),
+        )
+        filled = 0
+        for u in owned_pool:
+            if filled >= need_n:
+                break
+            if best_ep > 0 and float(u["ep_score"]) < best_ep * KEEP_EP_RATIO:
+                continue
+            _append_pick(u, pos=pos, status="keep")
+            filled += 1
+
+    # Pass 2: rellenar huecos con owned (completa cupos sin gastar caja)
+    for pos in ("GK", "DF", "MF", "FW"):
+        need_n = int(ideal.get(pos, 0))
+        owned_pool = sorted(
+            [
+                u
+                for u in universe
+                if u["position"] == pos and u["owned"] and u["player_id"] not in picked_ids
+            ],
+            key=lambda x: -float(x.get("ep_score") or 0),
+        )
+        for u in owned_pool:
+            have = len([r for r in perfect if r.get("position") == pos])
+            if have >= need_n:
+                break
+            _append_pick(u, pos=pos, status="keep")
+
+    # Pass 3: completar 15 con lo más barato disponible (prioridad cupos > estrellas)
+    for pos in ("GK", "DF", "MF", "FW"):
+        need_n = int(ideal.get(pos, 0))
+        cheap = sorted(
+            [
+                u
+                for u in universe
+                if u["position"] == pos
+                and (not u["owned"])
+                and u["player_id"] not in picked_ids
+            ],
+            key=lambda x: (
+                float(x.get("buy_price") or x["price"]),
+                -float(x.get("ep_score") or 0),
+            ),
+        )
+        for u in cheap:
+            have = len([r for r in perfect if r.get("position") == pos])
+            if have >= need_n:
+                break
+            cost = float(u.get("buy_price") or u["price"])
+            if cost > _buy_room():
+                continue
+            _append_pick(u, pos=pos, status="buy")
+
+    def _trim_buys_to_room() -> None:
+        nonlocal cost_buys, perfect, picked_ids
+        while cost_buys > max(0.0, float(budget_cap) - value_kept) and any(
+            r.get("status") == "buy" for r in perfect
+        ):
+            buy_rows_sorted = sorted(
+                [r for r in perfect if r.get("status") == "buy"],
+                key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
+            )
+            victim = buy_rows_sorted[0]
+            pid = str(victim.get("player_id") or "")
+            cost = float(victim.get("price") or 0)
+            perfect = [x for x in perfect if str(x.get("player_id")) != pid]
+            picked_ids.discard(pid)
+            cost_buys = max(0.0, cost_buys - cost)
+
+    _trim_buys_to_room()
+
+    # Pass 4: upgrades — sustituir buys (y huecos) por mejor EP si el delta cabe
+    def _row_cost(r: dict[str, Any]) -> float:
+        return float(r.get("price") or 0)
+
+    upgraded = True
+    guard = 0
+    while upgraded and guard < 40:
+        upgraded = False
+        guard += 1
+        # Candidatos no picked, mejores EP primero
+        avail = [
+            u
+            for u in universe
+            if (not u["owned"]) and u["player_id"] not in picked_ids
+        ]
+        avail.sort(
+            key=lambda x: (
+                -float(x.get("ep_score") or 0),
+                -float(x.get("value_ratio") or 0),
+                float(x.get("buy_price") or x["price"]),
+            )
+        )
+        for u in avail:
+            pos = u["position"]
+            need_n = int(ideal.get(pos, 0))
+            cost_new = float(u.get("buy_price") or u["price"])
+            rows_pos = [r for r in perfect if r.get("position") == pos]
+            # Hueco libre: fichar si cabe
+            if len(rows_pos) < need_n:
+                if cost_new <= _buy_room():
+                    _append_pick(u, pos=pos, status="buy")
+                    upgraded = True
+                    break
+                continue
+            # Sustituir el buy de menor EP de la línea si mejora y el delta cabe
+            buy_victims = sorted(
+                [r for r in rows_pos if r.get("status") == "buy"],
+                key=lambda r: (float(r.get("ep_score") or 0), -_row_cost(r)),
+            )
+            if not buy_victims:
+                continue
+            victim = buy_victims[0]
+            if float(u.get("ep_score") or 0) <= float(victim.get("ep_score") or 0) + 0.5:
+                continue
+            delta = cost_new - _row_cost(victim)
+            if delta > _buy_room() + 1e-6:
+                continue
+            # swap
+            pid = str(victim.get("player_id") or "")
+            perfect = [x for x in perfect if str(x.get("player_id")) != pid]
+            picked_ids.discard(pid)
+            cost_buys = max(0.0, cost_buys - _row_cost(victim))
+            _append_pick(u, pos=pos, status="buy")
+            upgraded = True
+            break
+
+    _trim_buys_to_room()
+
+    # Reasignar slots/roles
+    perfect_sorted: list[dict[str, Any]] = []
+    for pos in ("GK", "DF", "MF", "FW"):
+        rows_pos = [r for r in perfect if r.get("position") == pos]
+        rows_pos.sort(
+            key=lambda r: (0 if r.get("role") == "starter" else 1, -float(r.get("ep_score") or 0))
+        )
+        starter_slots = int(starters_n.get(pos, 1))
+        for i, r in enumerate(rows_pos, start=1):
+            r["slot"] = f"{pos}{i}"
+            r["role"] = "starter" if i <= starter_slots else "bench"
+            perfect_sorted.append(r)
+    perfect = perfect_sorted
+    keep_rows = [r for r in perfect if r.get("status") == "keep"]
+    buy_rows = [r for r in perfect if r.get("status") == "buy"]
+    net_buys = max(0.0, cost_buys)
+    spent = value_kept + cost_buys
+
+    # Sells: owned fuera del ideal, priorizar bajo EP / Δ caida
+    sell_cands: list[dict[str, Any]] = []
+    for u in universe:
+        if not u["owned"] or u["player_id"] in picked_ids:
+            continue
+        delta = u.get("delta_5d")
+        sell_cands.append(
+            {
+                "player_id": u["player_id"],
+                "name": u["name"],
+                "position": u["position"],
+                "ep_score": u["ep_score"],
+                "price": u["price"],
+                "delta_5d": delta,
+                "value_note": u.get("value_note"),
+                "why": (
+                    f"Fuera del ideal · EP {u['ep_score']:.0f} · libera {u['price']:,.0f} €"
+                    + (f" · Δ {delta*100:.0f}%" if delta is not None else "")
+                ),
+            }
+        )
+    sell_cands.sort(
+        key=lambda x: (
+            0 if x.get("value_note") == "falling" else 1,
+            float(x.get("ep_score") or 0),
+            -float(x.get("price") or 0),
+        )
+    )
+    # Suficientes ventas para cubrir net_buys - balance (si hace falta)
+    shortfall = max(0.0, net_buys - bal)
+    sell_rows: list[dict[str, Any]] = []
+    freed = 0.0
+    for s in sell_cands:
+        if shortfall <= 0 and len(sell_rows) >= 3:
+            break
+        if shortfall > 0 and freed >= shortfall and len(sell_rows) >= 2:
+            break
+        sell_rows.append(s)
+        freed += float(s.get("price") or 0)
+        if shortfall <= 0 and len(sell_rows) >= 5:
+            break
+    if shortfall <= 0:
+        # Aun así sugerir hasta 3 ventas claras de bajo EP
+        sell_rows = sell_cands[:3]
+
+    cash_reserved = round(net_buys, 0)
+    residual_after = round(max(0.0, bal - cash_reserved), 0)
+    funded = bal + freed >= net_buys
+
+    daily_patches = _build_daily_patches(
+        structural_needs,
+        universe,
+        balance=bal,
+        cash_reserved=cash_reserved,
+        owned_ids=owned_ids,
+    )
+
+    # Compat: primary_targets = buys del ideal (para action plan)
+    primary_targets = [
+        {
+            "player_id": r.get("player_id"),
+            "name": r.get("name"),
+            "need": "perfect_squad",
+            "position": r.get("position"),
+            "price": r.get("price"),
+            "ep_score": r.get("ep_score"),
+            "status": "on_daily" if r.get("on_daily_market") else "watching",
+            "role": r.get("role"),
+        }
+        for r in buy_rows
+    ]
+
+    # Compat slots ligeros para parches / UI legacy
+    slots = []
+    for patch in daily_patches:
         slots.append(
             {
-                "need": ntype,
-                "position": pos,
-                "priority": prio,
-                "reason": need.get("reason"),
-                "budget_envelope": {
-                    "cash_reserve_for_slot": round(reserve, 0),
-                    "min_price": min_p,
-                    "max_price": max_p,
-                    "squad_value_share": round(reserve / sval, 4) if sval > 0 else None,
+                "need": patch.get("need") or f"patch_{patch.get('position')}",
+                "position": patch.get("position"),
+                "priority": patch.get("priority") or "Media",
+                "reason": patch.get("why"),
+                "primary_target": {
+                    "player_id": patch.get("player_id"),
+                    "name": patch.get("name"),
+                    "price": patch.get("price"),
+                    "ep_score": patch.get("ep_score"),
+                    "status": "on_daily",
+                    "tier": "realistic",
+                    "afford_now": True,
+                    "why": patch.get("why"),
                 },
-                "targets": targets,
-                "primary_target": primary,
+                "targets": [],
                 "patch_policy": {
-                    "allow": allow_patch,
-                    "max_spend": round(max_patch, 0),
-                    "note": (
-                        "Parche solo si no baja la reserva del primary"
-                        if prio == "Alta"
-                        else "Profundidad: parche barato OK"
-                    ),
+                    "allow": residual_after >= 200_000,
+                    "max_spend": patch.get("max_spend"),
+                    "note": "Parche diario sin romper reserva del ideal",
+                },
+                "budget_envelope": {
+                    "cash_reserve_for_slot": 0,
+                    "min_price": None,
+                    "max_price": patch.get("max_spend"),
                 },
             }
         )
 
-    # Marcar dropped del board previo que ya no están
-    current_ids = {
-        str(t.get("player_id"))
-        for s in slots
-        for t in (s.get("targets") or [])
-        if t.get("player_id")
-    }
+    # Dropped del ideal previo
+    current_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
     dropped: list[dict[str, Any]] = []
     for pid, old in prev_idx.items():
         if pid in current_ids or pid in owned_ids:
@@ -452,41 +728,57 @@ def build_target_board(
         row["miss_days"] = miss
         dropped.append(row)
 
-    # Reserva total: no superar balance (si supera, shortfall)
-    cash_reserved = min(cash_reserved, bal) if cash_reserved else 0.0
-    # Recalcular max_spend global de parches: balance - cash_reserved
-    residual_for_patches = max(0.0, bal - cash_reserved)
-    for s in slots:
-        pp = s.get("patch_policy") or {}
-        if pp.get("allow"):
-            pp["max_spend"] = round(min(float(pp.get("max_spend") or 0), residual_for_patches), 0)
-            # Si no queda margen, no permitir parche en needs Alta
-            if s.get("priority") == "Alta" and residual_for_patches < 200_000:
-                pp["allow"] = False
-                pp["max_spend"] = 0
-            s["patch_policy"] = pp
-
+    patch_allow = residual_after >= 200_000 and bool(daily_patches)
     board = {
         "generated_at": _now_iso(),
         "league_slug": slug,
         "market_mode": market_mode,
         "balance": bal,
         "squad_value": sval,
-        "cash_reserved": round(cash_reserved, 0),
-        "residual_after_reserve": round(max(0.0, bal - cash_reserved), 0),
-        "slots": slots,
+        "wealth": {
+            "balance": bal,
+            "squad_value": sval,
+            "total": round(wealth_total, 0),
+            "liquidity_floor": round(floor, 0),
+            "budget_cap": round(budget_cap, 0),
+        },
+        "perfect_squad": perfect,
+        "moves": {
+            "keep": keep_rows,
+            "buy": buy_rows,
+            "sell": sell_rows,
+        },
+        "totals": {
+            "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
+            "cost_sum": round(spent, 0),
+            "net_buys": round(net_buys, 0),
+            "sell_to_fund": round(freed if shortfall > 0 else sum(float(s.get("price") or 0) for s in sell_rows[:3]), 0),
+            "funded": funded,
+            "slots_filled": len(perfect),
+            "slots_target": sum(ideal.values()),
+        },
+        "daily_patches": daily_patches,
+        "cash_reserved": cash_reserved,
+        "residual_after_reserve": residual_after,
         "primary_targets": primary_targets,
+        "slots": slots,
         "dropped": dropped[:12],
-        "summary": {
-            "slots": len(slots),
-            "targets": sum(len(s.get("targets") or []) for s in slots),
-            "on_daily": sum(
-                1
-                for s in slots
-                for t in (s.get("targets") or [])
-                if t.get("status") == "on_daily"
+        "patch_policy": {
+            "allow": patch_allow,
+            "max_spend": round(
+                min(residual_after, float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))),
+                0,
             ),
-            "cash_reserved": round(cash_reserved, 0),
+        },
+        "summary": {
+            "slots": len(perfect),
+            "keep": len(keep_rows),
+            "buy": len(buy_rows),
+            "sell": len(sell_rows),
+            "patches": len(daily_patches),
+            "on_daily": sum(1 for r in buy_rows if r.get("on_daily_market")),
+            "cash_reserved": cash_reserved,
+            "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
         },
     }
     return board
@@ -497,37 +789,44 @@ def funding_plan_from_board(
     *,
     balance: float | None = None,
 ) -> dict[str, Any]:
-    """Funding anclado a primaries realistic del board (no mínimo genérico del pool)."""
+    """Funding = coste de buys del ideal (cash_reserved)."""
     bal = max(0.0, float(balance if balance is not None else (board or {}).get("balance") or 0))
+    buys = list(((board or {}).get("moves") or {}).get("buy") or [])
+    if not buys:
+        buys = [
+            {
+                "position": t.get("position"),
+                "price": t.get("price"),
+                "player_id": t.get("player_id"),
+                "name": t.get("name"),
+                "ep_score": t.get("ep_score"),
+            }
+            for t in (board or {}).get("primary_targets") or []
+        ]
     gaps: list[dict[str, Any]] = []
-    for slot in (board or {}).get("slots") or []:
-        if slot.get("priority") != "Alta":
-            continue
-        primary = slot.get("primary_target") or {}
-        cost = _money(primary.get("price") or (slot.get("budget_envelope") or {}).get("cash_reserve_for_slot"))
+    for b in buys:
+        cost = _money(b.get("price"))
         if cost <= 0:
             continue
         gaps.append(
             {
-                "position": slot.get("position"),
-                "need": slot.get("need"),
+                "position": b.get("position"),
+                "need": "perfect_buy",
                 "cost": cost,
-                "label": slot.get("reason") or slot.get("need") or slot.get("position"),
-                "no_affordable_candidate": not bool(primary.get("afford_now")),
-                "primary_player_id": primary.get("player_id"),
-                "primary_name": primary.get("name"),
-                "ep_score": primary.get("ep_score"),
-                "status": primary.get("status"),
+                "label": f"Ideal: {b.get('name') or b.get('position')}",
+                "no_affordable_candidate": cost > bal,
+                "primary_player_id": b.get("player_id"),
+                "primary_name": b.get("name"),
+                "ep_score": b.get("ep_score"),
+                "status": "buy",
             }
         )
     gaps.sort(key=lambda g: -float(g.get("cost") or 0))
-    selected = gaps[:3]
-    funding_target = sum(float(g["cost"]) for g in selected)
+    selected = gaps[:5]
+    funding_target = float((board or {}).get("cash_reserved") or sum(float(g["cost"]) for g in selected))
     funding_shortfall = max(0.0, funding_target - bal)
     cheapest = min((float(g["cost"]) for g in gaps), default=None)
-    cash_tight = funding_shortfall > 0 or (cheapest is not None and bal < cheapest)
-    if any(g.get("no_affordable_candidate") for g in selected):
-        cash_tight = True
+    cash_tight = funding_shortfall > 0
     return {
         "funding_target": funding_target,
         "funding_shortfall": funding_shortfall,
@@ -539,48 +838,55 @@ def funding_plan_from_board(
         "primary_targets": list((board or {}).get("primary_targets") or []),
         "cash_reserved": float((board or {}).get("cash_reserved") or funding_target),
         "from_target_board": True,
+        "wealth": (board or {}).get("wealth"),
+        "totals": (board or {}).get("totals"),
     }
 
 
 def board_objective_ids(board: dict[str, Any] | None) -> set[str]:
     ids: set[str] = set()
-    for s in (board or {}).get("slots") or []:
-        for t in s.get("targets") or []:
-            if t.get("player_id"):
-                ids.add(str(t["player_id"]))
-        prim = s.get("primary_target") or {}
-        if prim.get("player_id"):
-            ids.add(str(prim["player_id"]))
+    for r in (board or {}).get("perfect_squad") or []:
+        if r.get("player_id") and r.get("status") == "buy":
+            ids.add(str(r["player_id"]))
+    for p in (board or {}).get("daily_patches") or []:
+        if p.get("player_id"):
+            ids.add(str(p["player_id"]))
+    for t in (board or {}).get("primary_targets") or []:
+        if t.get("player_id"):
+            ids.add(str(t["player_id"]))
     return ids
 
 
 def board_primary_ids(board: dict[str, Any] | None) -> set[str]:
-    return {
+    """Buys del ideal (prioridad alta) + patches no."""
+    ids = {
         str(t["player_id"])
         for t in (board or {}).get("primary_targets") or []
         if t.get("player_id")
     }
+    for r in ((board or {}).get("moves") or {}).get("buy") or []:
+        if r.get("player_id"):
+            ids.add(str(r["player_id"]))
+    return ids
 
 
 def max_patch_spend(board: dict[str, Any] | None) -> float:
-    """Techo global de parche = residual tras reservas."""
     if not board:
         return float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
+    pp = board.get("patch_policy") or {}
+    if pp.get("max_spend") is not None:
+        return float(pp["max_spend"])
     residual = float(board.get("residual_after_reserve") or 0)
-    slot_caps = [
-        float((s.get("patch_policy") or {}).get("max_spend") or 0)
-        for s in (board.get("slots") or [])
-        if (s.get("patch_policy") or {}).get("allow")
-    ]
-    if not slot_caps:
-        return min(residual, 500_000.0)
-    return min(residual, max(slot_caps))
+    return min(residual, float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000)))
 
 
 def patches_allowed(board: dict[str, Any] | None) -> bool:
     if not board:
         return True
-    return any((s.get("patch_policy") or {}).get("allow") for s in (board.get("slots") or []))
+    pp = board.get("patch_policy") or {}
+    if "allow" in pp:
+        return bool(pp.get("allow"))
+    return float(board.get("residual_after_reserve") or 0) >= 200_000
 
 
 __all__ = [

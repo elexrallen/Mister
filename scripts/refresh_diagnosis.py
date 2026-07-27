@@ -21,6 +21,11 @@ from data_engine import (  # noqa: E402
     save_json,
 )
 from squad_analyzer import analyze_squad, merge_structural_into_diagnosis  # noqa: E402
+from target_board import (  # noqa: E402
+    build_target_board,
+    funding_plan_from_board,
+    save_target_board,
+)
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -90,12 +95,73 @@ def main(argv: list[str] | None = None) -> None:
         competition_phase=competition_phase,
     )
 
-    funding = estimate_gap_funding(
-        plant.get("structural_needs") or [],
-        opportunities,
-        balance,
-        top_n=3,
+    market_mode = str(
+        data.get("market_mode")
+        or (data.get("sources") or {}).get("market_mode")
+        or "auction"
     )
+    board_candidates: list = list(opportunities)
+    for u in data.get("rival_upgrades") or []:
+        board_candidates.append(
+            {
+                "id": u.get("player_id"),
+                "name": u.get("name"),
+                "position": u.get("position"),
+                "team": u.get("team"),
+                "price": u.get("price") or u.get("market_value"),
+                "puja_recomendada": u.get("clause") or u.get("bid"),
+                "clause": u.get("clause"),
+                "on_daily_market": False,
+                "seller": "rival",
+                "production_score": u.get("production_score"),
+                "ff_mister_avg": u.get("ff_mister_avg"),
+                "external": u.get("external") or {},
+                "lineup_prob": u.get("lineup_prob"),
+                "sample_thin": u.get("sample_thin"),
+            }
+        )
+    # Ampliar universo con pool / rivales para rellenar cupos IDEAL
+    for riv in data.get("rivals") or []:
+        for p in riv.get("squad") or []:
+            board_candidates.append(
+                {
+                    **p,
+                    "puja_recomendada": p.get("clause") or p.get("puja_recomendada") or p.get("price"),
+                    "on_daily_market": False,
+                    "seller": "rival",
+                }
+            )
+    for p in (data.get("pool_top") or data.get("free_agents") or [])[:400]:
+        board_candidates.append(p)
+
+    slug = str(
+        data.get("league_slug")
+        or (args.league and config.get_league(args.league)["slug"])
+        or config.DEFAULT_LEAGUE_SLUG
+    )
+    target_board = build_target_board(
+        slug=slug,
+        structural_needs=plant.get("structural_needs") or [],
+        candidates=board_candidates,
+        balance=balance,
+        squad=squad,
+        squad_value=float(me.get("squad_value") or 0) or None,
+        price_series={},
+        market_mode=market_mode,
+    )
+    try:
+        save_target_board(slug, target_board)
+    except Exception as exc:  # noqa: BLE001
+        print(f"warn: no se pudo guardar target_board: {exc}")
+
+    funding = funding_plan_from_board(target_board, balance=balance)
+    if not funding.get("funding_target"):
+        funding = estimate_gap_funding(
+            plant.get("structural_needs") or [],
+            opportunities,
+            balance,
+            top_n=3,
+        )
 
     action_plan, daily_package = build_action_plan(
         me,
@@ -106,6 +172,9 @@ def main(argv: list[str] | None = None) -> None:
         rival_upgrades=data.get("rival_upgrades") or [],
         points_phase=points_phase,
         diagnostico_plantilla=plant,
+        market_mode=market_mode,
+        target_board=target_board,
+        funding_info=funding,
     )
 
     n_daily = sum(1 for o in opportunities if o.get("on_daily_market"))
@@ -113,13 +182,15 @@ def main(argv: list[str] | None = None) -> None:
     data["squad_diagnosis"] = diagnosis
     data["diagnostico_plantilla"] = plant
     data["market_opportunities"] = opportunities
+    data["target_board"] = target_board
     data["action_plan"] = action_plan
     data["daily_package"] = daily_package
     data["funding_plan"] = {
         "target": funding.get("funding_target"),
         "shortfall": funding.get("funding_shortfall"),
         "cash_tight": funding.get("cash_tight"),
-        "gaps": funding.get("gap_costs") or [],
+        "cash_reserved": funding.get("cash_reserved"),
+        "gaps": funding.get("gap_costs") or funding.get("selected_buys") or [],
         "positions": funding.get("positions") or [],
     }
     data["recommendations"] = []
@@ -189,7 +260,6 @@ def main(argv: list[str] | None = None) -> None:
 
     save_json(path, data)
     # History por liga si aplica
-    slug = data.get("league_slug") or (args.league and config.get_league(args.league)["slug"])
     if slug:
         hist_dir = config.league_history_dir(str(slug))
         hist_dir.mkdir(parents=True, exist_ok=True)
@@ -209,6 +279,10 @@ def main(argv: list[str] | None = None) -> None:
     gap_buys = [a for a in buys if a.get("fills_coverage_gap")]
     prim = (daily_package or {}).get("primary") or {}
     sec = (daily_package or {}).get("secondary") or {}
+    tb = target_board or {}
+    w = tb.get("wealth") or {}
+    tot = tb.get("totals") or {}
+    ps = tb.get("perfect_squad") or []
     print(
         f"OK phase={competition_phase} days_to_j1={comp.get('days_to_kickoff')} "
         f"lines_ok={plant.get('lines_ok')} depth_gaps={plant.get('depth_gaps')} "
@@ -217,6 +291,14 @@ def main(argv: list[str] | None = None) -> None:
         f"buys={len(buys)} gap_buys={len(gap_buys)} waits={len(waits)} "
         f"covered_waits={len(covered_waits)} sells={len(sells)} "
         f"FW_starters={fw.get('starters_real', fw.get('starters'))}"
+    )
+    print(
+        f"  perfect_squad={len(ps)}/15 cost={tot.get('cost_sum')} "
+        f"cap={w.get('budget_cap')} wealth={w.get('total')} "
+        f"keep={len((tb.get('moves') or {}).get('keep') or [])} "
+        f"buy={len((tb.get('moves') or {}).get('buy') or [])} "
+        f"patches={len(tb.get('daily_patches') or [])} "
+        f"reserved={tb.get('cash_reserved')}"
     )
     print(
         f"  package primary={prim.get('name')} secondary={sec.get('name')} "

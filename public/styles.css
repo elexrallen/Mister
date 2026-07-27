@@ -482,10 +482,12 @@ footer,
 
 @media (min-width: 768px) {
   .objectives-panel {
-    grid-template-columns: minmax(0, 1.2fr) auto;
+    grid-template-columns: minmax(0, 1.4fr) auto;
     align-items: start;
   }
-  .objectives-list {
+  .objectives-grid,
+  .objectives-patches-wrap,
+  .objectives-sells {
     grid-column: 1 / -1;
   }
 }
@@ -539,6 +541,92 @@ footer,
   color: #e2e8f0;
 }
 
+.objectives-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1rem;
+}
+
+@media (min-width: 900px) {
+  .objectives-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.objectives-col-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5eead4;
+}
+
+.objectives-col-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.objectives-player {
+  display: grid;
+  gap: 0.15rem;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.objectives-player-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.objectives-meta {
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+
+.objectives-patches-wrap {
+  margin-top: 0.25rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.objectives-patches-title {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.objectives-patches {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.objectives-patch-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.2rem 0.5rem;
+  align-items: baseline;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.objectives-patch-item .objectives-why {
+  grid-column: 1 / -1;
+}
+
+.objectives-sells {
+  margin: 0;
+}
+
 .objectives-list {
   list-style: none;
   margin: 0;
@@ -552,32 +640,6 @@ footer,
   gap: 0.25rem;
   font-size: 0.82rem;
   color: #cbd5e1;
-  padding-bottom: 0.55rem;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.objectives-item:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.objectives-item-head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.objectives-meta {
-  font-variant-numeric: tabular-nums;
-  color: #94a3b8;
-  font-size: 0.78rem;
-}
-
-.objectives-tier {
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 button.player-link {
