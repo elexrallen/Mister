@@ -157,6 +157,10 @@ MIN_MF = 4
 MIN_FW = 2
 # Plantilla objetivo ~15 con alternativas por línea
 IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
+# Once fantasy (suma 11); el resto del IDEAL_SQUAD es banquillo
+IDEAL_XI = {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
+# Banquillo del ideal: mínimo puntos Mister (FF) por temporada
+IDEAL_BENCH_MIN_POINTS = 100
 # Umbrales Mister Mixto: producción histórica “fiable / titular top” por posición
 # (media pts/partido y pts totales/temporada). Premier RPG se escala × avg_scale/8.
 MISTER_HIST_AVG_FLOOR = {"GK": 4.5, "DF": 5.0, "MF": 6.0, "FW": 6.5}

@@ -810,9 +810,19 @@
     if (sumEl) {
       const keep = summary.keep != null ? summary.keep : (board.moves && board.moves.keep || []).length;
       const buy = summary.buy != null ? summary.buy : (board.moves && board.moves.buy || []).length;
-      const starters = squad.filter((r) => r.role === "starter").length;
+      const starters =
+        summary.starters != null
+          ? summary.starters
+          : squad.filter((r) => r.role === "starter").length;
+      const bench =
+        summary.bench != null
+          ? summary.bench
+          : squad.filter((r) => r.role === "bench").length;
       const funded = totals.funded ? "financiable" : "faltan ventas/caja";
-      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (≥70% alin.) · ${keep} keep · ${buy} fichar · ${funded}`;
+      const incomplete = summary.incomplete
+        ? " · incompleta (faltan titulares o banquillo ≥100 pts)"
+        : "";
+      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (≥70%) · ${bench} banquillo (≥100 pts) · ${keep} keep · ${buy} fichar · ${funded}${incomplete}`;
     }
     const elW = document.getElementById("objectives-wealth");
     const elC = document.getElementById("objectives-cost");
