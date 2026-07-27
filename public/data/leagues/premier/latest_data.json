@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-27T10:06:44.933993+00:00",
+  "generated_at": "2026-07-27T10:18:45.990216+00:00",
   "league_slug": "premier",
   "sources": {
     "mister": "api",
@@ -4913,10 +4913,10 @@
       "team_name": "Pichon18",
       "rank": 37,
       "points": 0,
-      "squad_size": 4,
-      "squad_value": 17489000,
+      "squad_size": 10,
+      "squad_value": 30848000,
       "liquidity_estimated": null,
-      "squad_value_shown": 17489000,
+      "squad_value_shown": 30848000,
       "profile_path": "users/6371058/pichon18",
       "recent_buys": [],
       "recent_sells": [],
@@ -5333,7 +5333,7 @@
     "competition": "premier",
     "fixtures_count": 12,
     "players_count": 0,
-    "fetched_at": "2026-07-27T10:05:58.395283+00:00",
+    "fetched_at": "2026-07-27T10:18:28.505106+00:00",
     "cache_used": false,
     "fixtures": [
       {
