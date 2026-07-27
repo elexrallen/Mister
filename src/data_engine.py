@@ -40,6 +40,15 @@ from competitive_actions import (
     rival_demand_for_position,
     wait_risk,
 )
+from target_board import (
+    board_objective_ids,
+    board_primary_ids,
+    build_target_board,
+    funding_plan_from_board,
+    max_patch_spend,
+    patches_allowed,
+    save_target_board,
+)
 from squad_analyzer import (
     analyze_squad,
     apply_realistic_need_caps,
@@ -1005,6 +1014,8 @@ def build_action_plan(
     points_phase: str = "preseason",
     diagnostico_plantilla: dict[str, Any] | None = None,
     market_mode: str = "auction",
+    target_board: dict[str, Any] | None = None,
+    funding_info: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Fuente de verdad diaria:
@@ -1026,8 +1037,17 @@ def build_action_plan(
         for n in structural_needs
         if n.get("priority") == "Alta" and n.get("position")
     }
-    funding = estimate_gap_funding(structural_needs, opportunities, balance, top_n=3)
+    funding = funding_info or (
+        funding_plan_from_board(target_board, balance=balance)
+        if target_board
+        else estimate_gap_funding(structural_needs, opportunities, balance, top_n=3)
+    )
     gap_pos_labels = ", ".join(str(p) for p in (funding.get("positions") or []) if p) or "otras carencias"
+    objective_ids = board_objective_ids(target_board)
+    primary_ids = board_primary_ids(target_board)
+    cash_reserved = float(funding.get("cash_reserved") or funding.get("funding_target") or 0)
+    patch_cap = max_patch_spend(target_board)
+    allow_patches = patches_allowed(target_board)
 
     for o in opportunities:
         ext = o.get("external") or {}
@@ -1181,6 +1201,39 @@ def build_action_plan(
                 if not any("FF jornada" in w for w in why_parts):
                     why_parts.append("FF jornada: titular probable esta semana")
 
+        pid = str(o.get("id") or "")
+        is_objective = pid in objective_ids
+        is_primary_obj = pid in primary_ids
+        # Objetivo del board en mercado del día → priorizar buy_now
+        if is_objective and on_daily and bf in ("comfortable", "tight") and not gw_out:
+            buy_now = True
+            if is_primary_obj:
+                why_parts.insert(0, "objetivo primary del tablero — fichar si sale hoy")
+            elif not any("objetivo" in w for w in why_parts):
+                why_parts.append("objetivo del tablero (hueco estructural)")
+
+        # Parche barato: no romper reserva de primaries Alta
+        is_patchish = buy_now and on_daily and not is_primary_obj and (
+            cost <= patch_cap
+            or (not real_starter_cand and cost < 2_500_000)
+            or (o.get("categories") and "chollo_economico" in (o.get("categories") or []) and cost < 1_500_000)
+        )
+        if buy_now and not is_primary_obj and not is_objective:
+            # Si gastar esto deja balance < cash_reserved → demote
+            if cash_reserved > 0 and (balance - cost) < cash_reserved:
+                buy_now = False
+                why_parts.append(
+                    f"protege reserva {cash_reserved:,.0f} € para objetivos Alta"
+                )
+            elif is_patchish and not allow_patches:
+                buy_now = False
+                why_parts.append("parche bloqueado: reserva de objetivos sin margen")
+            elif is_patchish and cost > patch_cap:
+                buy_now = False
+                why_parts.append(
+                    f"parche por encima del techo ({patch_cap:,.0f} €) vs reserva objetivos"
+                )
+
         # Defensa extra: nunca buy_now fuera del mercado del día
         if buy_now and not on_daily:
             buy_now = False
@@ -1228,6 +1281,10 @@ def build_action_plan(
                 prio_i -= 40
             elif is_upgrade:
                 prio_i += 10
+            if is_primary_obj and on_daily:
+                prio_i += 80
+            elif is_objective and on_daily:
+                prio_i += 40
 
         common = {
             "crowds_out_gaps": crowds_out,
@@ -1246,6 +1303,9 @@ def build_action_plan(
             "ff_apps": o.get("ff_apps"),
             "sample_thin": bool(o.get("sample_thin")),
             "target_tier": o.get("target_tier"),
+            "is_board_objective": is_objective,
+            "is_primary_target": is_primary_obj,
+            "cash_reserved": cash_reserved,
         }
 
         if buy_now:
@@ -1350,13 +1410,27 @@ def build_action_plan(
         market_opportunities=opportunities,
         points_phase=points_phase,
         diagnostico_plantilla=diagnostico_plantilla,
+        target_board=target_board,
+        funding_info=funding,
     )
     plan.extend(sells)
 
     # Cláusulas / scout rivales (solo auction)
     if not fixed:
         for u in rival_upgrades or []:
-            plan.append(dict(u))
+            item = dict(u)
+            pid = str(item.get("player_id") or "")
+            if pid in primary_ids:
+                item["is_primary_target"] = True
+                item["is_board_objective"] = True
+                item["priority_score"] = int(item.get("priority_score") or 0) + 50
+                why = (item.get("why") or "").strip()
+                item["why"] = (
+                    f"objetivo primary del tablero; {why}" if why else "objetivo primary del tablero"
+                )
+            elif pid in objective_ids:
+                item["is_board_objective"] = True
+            plan.append(item)
 
         # Amplificar wait_risk si rivales top tienen gap
         for o in opportunities:
@@ -1375,7 +1449,11 @@ def build_action_plan(
                 existing["urgency"] = "medium"
 
     return finalize_action_plan(
-        plan, balance=balance, funding_info=funding, market_mode=market_mode
+        plan,
+        balance=balance,
+        funding_info=funding,
+        market_mode=market_mode,
+        target_board=target_board,
     )
 
 
@@ -1733,6 +1811,51 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     recommendations: list[dict[str, Any]] = []
     squad_notes: list[dict[str, Any]] = []
 
+    # Tablero de objetivos (huecos + EP/€) antes del plan de acción
+    board_candidates: list[dict[str, Any]] = list(opportunities)
+    for u in rival_upgrades or []:
+        # Normalizar cláusula rival como candidato
+        board_candidates.append(
+            {
+                "id": u.get("player_id"),
+                "name": u.get("name"),
+                "position": u.get("position"),
+                "team": u.get("team"),
+                "price": u.get("price") or u.get("market_value"),
+                "puja_recomendada": u.get("clause") or u.get("bid"),
+                "clause": u.get("clause"),
+                "clause_known": u.get("clause_known", True),
+                "owner_name": u.get("owner_name") or u.get("owner_team"),
+                "on_daily_market": False,
+                "seller": "rival",
+                "production_score": u.get("production_score"),
+                "ff_mister_avg": u.get("ff_mister_avg"),
+                "external": u.get("external") or {},
+                "lineup_prob": u.get("lineup_prob"),
+                "fills_need": True,
+                "fills_structural": True,
+                "sample_thin": u.get("sample_thin"),
+                "target_tier": u.get("target_tier"),
+                "budget_fit": u.get("budget_fit"),
+            }
+        )
+    target_board = build_target_board(
+        slug=slug,
+        structural_needs=diagnostico_plantilla.get("structural_needs") or [],
+        candidates=board_candidates,
+        balance=float(me.get("balance") or 0),
+        squad=squad,
+        squad_value=float(me.get("squad_value") or 0) or None,
+        price_series=price_series,
+        market_mode=market_mode,
+    )
+    try:
+        save_target_board(slug, target_board)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("No se pudo guardar target_board: %s", exc)
+
+    funding_info = funding_plan_from_board(target_board, balance=float(me.get("balance") or 0))
+
     action_plan, daily_package = build_action_plan(
         me,
         diagnosis,
@@ -1743,6 +1866,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         points_phase=points_phase,
         diagnostico_plantilla=diagnostico_plantilla,
         market_mode=market_mode,
+        target_board=target_board,
+        funding_info=funding_info,
     )
 
     matchday_meta = external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None
@@ -1750,12 +1875,6 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
     bal = float(me.get("balance") or 0)
-    funding_info = estimate_gap_funding(
-        diagnostico_plantilla.get("structural_needs") or [],
-        opportunities,
-        bal,
-        top_n=3,
-    )
     budget_pressure = "low"
     shortfall = float(funding_info.get("funding_shortfall") or 0)
     target = float(funding_info.get("funding_target") or 0)
@@ -1910,9 +2029,13 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "target": funding_info.get("funding_target"),
             "shortfall": funding_info.get("funding_shortfall"),
             "cash_tight": funding_info.get("cash_tight"),
+            "cash_reserved": funding_info.get("cash_reserved"),
             "gaps": funding_info.get("gap_costs") or [],
             "positions": funding_info.get("positions") or [],
+            "primary_targets": funding_info.get("primary_targets") or [],
+            "from_target_board": bool(funding_info.get("from_target_board")),
         },
+        "target_board": target_board,
         "daily_package": daily_package,
         "action_plan": action_plan,
         "rival_upgrades": rival_upgrades,

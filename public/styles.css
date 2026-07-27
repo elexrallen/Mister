@@ -471,6 +471,115 @@ footer,
   font-size: 0.78rem;
 }
 
+.objectives-panel {
+  display: grid;
+  gap: 0.85rem 1.25rem;
+  padding: 0.95rem 1.1rem;
+  border-radius: 0.85rem;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(22, 48, 58, 0.88));
+  border: 1px solid rgba(45, 212, 191, 0.18);
+}
+
+@media (min-width: 768px) {
+  .objectives-panel {
+    grid-template-columns: minmax(0, 1.2fr) auto;
+    align-items: start;
+  }
+  .objectives-list {
+    grid-column: 1 / -1;
+  }
+}
+
+.objectives-kicker {
+  margin: 0;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #64748b;
+}
+
+.objectives-title {
+  margin: 0.2rem 0 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f8fafc;
+}
+
+.objectives-summary {
+  margin: 0.3rem 0 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.objectives-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.25rem;
+}
+
+.objectives-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 4rem;
+}
+
+.objectives-stat-label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.objectives-stat-value {
+  font-family: "Fraunces", Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.objectives-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.objectives-item {
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.objectives-item:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.objectives-item-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.objectives-meta {
+  font-variant-numeric: tabular-nums;
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.objectives-tier {
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 button.player-link {
   background: none;
   border: 0;

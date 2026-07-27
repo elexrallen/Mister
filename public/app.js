@@ -788,6 +788,98 @@
       k.top_free_remaining != null ? String(k.top_free_remaining) : "—";
     renderCampaign(data);
     renderMatchday(data);
+    renderObjectives(data);
+  }
+
+  function renderObjectives(data) {
+    const panel = document.getElementById("objectives-panel");
+    if (!panel) return;
+    const board = data.target_board;
+    const slots = (board && board.slots) || [];
+    if (!board || !slots.length) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    const title = document.getElementById("objectives-title");
+    if (title) title.textContent = "Objetivos del día";
+    const summary = document.getElementById("objectives-summary");
+    const nOn = (board.summary && board.summary.on_daily) || 0;
+    if (summary) {
+      summary.textContent = `${slots.length} hueco(s) · reserva para primaries · ${nOn} en mercado hoy`;
+    }
+    const elR = document.getElementById("objectives-reserve");
+    const elRes = document.getElementById("objectives-residual");
+    const elOn = document.getElementById("objectives-ondaily");
+    if (elR) elR.textContent = formatMoney(board.cash_reserved);
+    if (elRes) elRes.textContent = formatMoney(board.residual_after_reserve);
+    if (elOn) elOn.textContent = String(nOn);
+
+    const list = document.getElementById("objectives-list");
+    if (!list) return;
+    const statusBadge = (st) => {
+      if (st === "on_daily") return `<span class="badge badge-mint">Hoy</span>`;
+      if (st === "clause") return `<span class="badge badge-duda">Cláusula</span>`;
+      if (st === "acquired") return `<span class="badge badge-titular">Fichado</span>`;
+      if (st === "dropped") return `<span class="badge badge-baja">Fuera</span>`;
+      return `<span class="badge badge-duda">Vigilando</span>`;
+    };
+    const valueBadge = (note) => {
+      if (note === "rising") return `<span class="badge badge-mint">Δ↑</span>`;
+      if (note === "falling") return `<span class="badge badge-baja-ext">Δ↓</span>`;
+      return "";
+    };
+    const rows = [];
+    for (const slot of slots.slice(0, 4)) {
+      const prim = slot.primary_target;
+      if (!prim) continue;
+      const alts = (slot.targets || []).filter(
+        (t) => String(t.player_id) !== String(prim.player_id)
+      ).slice(0, 2);
+      const needLabel = slot.need || slot.position || "hueco";
+      const delta =
+        prim.delta_5d != null
+          ? `${(Number(prim.delta_5d) * 100).toFixed(0)}%`
+          : "—";
+      rows.push(`<li class="objectives-item">
+        <div class="objectives-item-head">
+          <span class="badge badge-alta">${escapeHtml(String(needLabel))}</span>
+          ${statusBadge(prim.status)}
+          ${valueBadge(prim.value_note)}
+          <span class="objectives-tier text-xs">${escapeHtml(prim.tier || "")}</span>
+        </div>
+        <button type="button" class="player-link" data-player-id="${escapeHtml(
+          String(prim.player_id || "")
+        )}">${escapeHtml(prim.name || "—")}</button>
+        <span class="objectives-meta">${formatMoney(prim.price)} · EP ${
+          prim.ep_score != null ? Math.round(Number(prim.ep_score)) : "—"
+        } · Δ ${delta}</span>
+        <span class="objectives-why text-xs text-slate-400">${escapeHtml(
+          prim.why || slot.reason || ""
+        )}</span>
+        ${
+          alts.length
+            ? `<span class="objectives-alts text-xs text-slate-500">Alts: ${alts
+                .map((a) => escapeHtml(a.name || ""))
+                .join(" · ")}</span>`
+            : ""
+        }
+      </li>`);
+    }
+    list.innerHTML = rows.length
+      ? rows.join("")
+      : `<li class="objectives-item text-slate-500">Sin objetivos claros hoy.</li>`;
+    list.querySelectorAll("[data-player-id]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-player-id");
+        const all = [
+          ...((data.me && data.me.squad) || []),
+          ...(data.market_opportunities || []),
+        ];
+        const p = all.find((x) => String(x.id || x.player_id) === String(id));
+        if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+      });
+    });
   }
 
   function renderMeta(data) {
@@ -823,8 +915,8 @@
 
   const fundingChip = (a) => {
     if (!a) return "";
-    if (a.action === "sell" && (a.sell_reason === "fund_buy" || a.budget_fit === "funding")) {
-      return `<span class="badge badge-mint">Libera caja</span>`;
+    if (a.action === "sell" && (a.sell_reason === "fund_buy" || a.sell_reason === "fund_target" || a.budget_fit === "funding")) {
+      return `<span class="badge badge-mint">${a.sell_reason === "fund_target" ? "Financia objetivo" : "Libera caja"}</span>`;
     }
     if (a.leaves_gap_budget) {
       return `<span class="badge badge-mint">Deja caja</span>`;
@@ -843,6 +935,7 @@
       low_production: "Baja prod.",
       surplus_to_demand: "Excedente",
       fund_buy: "Financiar carencias",
+      fund_target: "Financia objetivo",
       injured_covered: "Lesión",
       form_drop: "Forma",
     };
@@ -933,6 +1026,7 @@
       scout: { title: "Vigilar", cls: "act-scout" },
     };
     const roleChip = (role) => {
+      if (role === "primary_target") return `<span class="badge badge-mint">Objetivo</span>`;
       if (role === "primary") return `<span class="badge badge-mint">Hacer</span>`;
       if (role === "secondary") return `<span class="badge badge-titular">También si cabe</span>`;
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Plan B</span>`;
@@ -961,16 +1055,21 @@
         : "";
     const fundingHint =
       fp.target != null && Number(fp.target) > 0
-        ? `<p class="queue-funding-hint">Caja vs carencias Alta: objetivo ~${formatMoney(
-            fp.target
+        ? `<p class="queue-funding-hint">Reserva objetivos: ~${formatMoney(
+            fp.cash_reserved != null ? fp.cash_reserved : fp.target
           )}${
             fp.shortfall != null && Number(fp.shortfall) > 0
               ? ` · faltan ~${formatMoney(fp.shortfall)}`
               : " · cubierto"
           }${
-            (fp.positions || []).length
-              ? ` · ${escapeHtml((fp.positions || []).join(", "))}`
-              : ""
+            (fp.primary_targets || []).length
+              ? ` · ${(fp.primary_targets || [])
+                  .slice(0, 2)
+                  .map((t) => escapeHtml(t.name || ""))
+                  .join(", ")}`
+              : (fp.positions || []).length
+                ? ` · ${escapeHtml((fp.positions || []).join(", "))}`
+                : ""
           }</p>`
         : "";
 

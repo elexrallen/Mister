@@ -741,6 +741,7 @@ def priority_score_sell(item: dict[str, Any]) -> int:
         "low_minutes": 40,
         "low_production": 36,
         "fund_buy": 32,
+        "fund_target": 44,
         "injured_covered": 28,
         "surplus_to_demand": 22,
         "form_drop": 16,
@@ -838,6 +839,8 @@ def build_sell_opportunities(
     market_opportunities: list[dict[str, Any]] | None = None,
     points_phase: str = "preseason",
     diagnostico_plantilla: dict[str, Any] | None = None,
+    target_board: dict[str, Any] | None = None,
+    funding_info: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Ventas orientadas a estrategia Fantasy:
@@ -872,7 +875,7 @@ def build_sell_opportunities(
         pos for pos, info in diagnosis.get("by_position", {}).items()
         if info.get("status") in ("critical", "warning")
     }
-    funding = estimate_gap_funding(
+    funding = funding_info or estimate_gap_funding(
         diag.get("structural_needs") or [],
         market_opportunities,
         balance,
@@ -1216,6 +1219,49 @@ def build_sell_opportunities(
                     )
                     item["_pref"] = 35
                     add(item)
+
+        # 5b) Financiar primary del target board con mínima pérdida de valor
+        primary_targets = list(funding.get("primary_targets") or [])
+        if not primary_targets and target_board:
+            primary_targets = list(target_board.get("primary_targets") or [])
+        for pt in primary_targets:
+            need_price = _money(pt.get("price"))
+            if need_price <= 0:
+                continue
+            shortfall_pt = max(0.0, need_price - balance)
+            if shortfall_pt <= 0:
+                continue
+            if not covered_if_sold or keep_top or protect_xi or protect_patch:
+                continue
+            if is_star or (is_starter and (prod is not None and prod >= 55)):
+                continue
+            # Preferir bajo EP / banquillo / Δ negativo (menor pérdida)
+            low_ep = (prod is not None and prod < 45) or (ff is not None and ff < 3.8)
+            delta_ok = delta is None or float(delta) <= 0.02  # no vender si está subiendo fuerte
+            if not (low_ep or plays_little or not is_starter):
+                continue
+            if not delta_ok and price < 3_000_000:
+                continue
+            loss_note = (
+                f"Δ {float(delta)*100:.0f}%"
+                if delta is not None
+                else "sin serie Δ"
+            )
+            item = base_item(
+                p,
+                reason="fund_target",
+                why=(
+                    f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €); "
+                    f"faltan ~{shortfall_pt:,.0f} €; libera {price:,.0f} € ({loss_note})"
+                ),
+                urgency="high" if shortfall_pt >= need_price * 0.35 else "medium",
+                sell_risk="low" if not is_starter else "medium",
+            )
+            item["_pref"] = 42
+            item["funds_for"] = pt.get("player_id")
+            item["funds_for_name"] = pt.get("name")
+            add(item)
+            break  # una venta fund_target por jugador owned basta vía add()
 
         # 6) Forma / tendencia a la baja
         form_bad = (lineup is not None and lineup < 50) or (rating is not None and rating < 6.0)
@@ -1720,6 +1766,7 @@ def finalize_action_plan(
     balance: float | None = None,
     funding_info: dict[str, Any] | None = None,
     market_mode: str = "auction",
+    target_board: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Cola operativa = paquete del día (máx. 2 buy_now compatibles) + plan B / also_good.
@@ -1727,10 +1774,20 @@ def finalize_action_plan(
     Devuelve (action_plan, daily_package).
     """
     cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+    # Si hay board, la reserva operativa es la de objetivos (más precisa)
+    if funding_info and funding_info.get("cash_reserved") is not None:
+        board_reserve = float(funding_info.get("cash_reserved") or 0)
+        if board_reserve > 0:
+            cash_reserve = max(board_reserve, min(cash_reserve, float(balance or 0) * 0.5))
     secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
     package_id = datetime.now(timezone.utc).date().isoformat()
     bal = float(balance) if balance is not None else 0.0
     fixed = (market_mode or "auction") == "fixed"
+    primary_ids = {
+        str(t.get("player_id"))
+        for t in (target_board or {}).get("primary_targets") or []
+        if t.get("player_id")
+    }
 
     action_base = {
         "buy_now": 1000,
@@ -1802,7 +1859,12 @@ def finalize_action_plan(
             or item.get("fills_structural")
             or item.get("fills_need")
         )
+        pid = str(item.get("player_id") or "")
+        is_prim = bool(item.get("is_primary_target")) or pid in primary_ids
+        is_obj = bool(item.get("is_board_objective")) or is_prim
         return (
+            1 if is_prim else 0,
+            1 if is_obj else 0,
             0 if crowds else 1,
             1 if leaves else 0,
             1 if fills else 0,
@@ -1813,12 +1875,18 @@ def finalize_action_plan(
 
     primary: dict[str, Any] | None = None
     if daily_buys:
+        # Preferir primary del board si está en daily buys
+        board_hit = [
+            i
+            for i in daily_buys
+            if str(i.get("player_id") or "") in primary_ids or i.get("is_primary_target")
+        ]
         preferred = [
             i
             for i in daily_buys
             if (bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget")
         ]
-        pool = preferred or daily_buys
+        pool = board_hit or preferred or daily_buys
         primary = max(pool, key=_primary_sort_key)
 
     secondary: dict[str, Any] | None = None
@@ -1859,15 +1927,23 @@ def finalize_action_plan(
         pid = str(item.get("player_id") or "")
         item["package_id"] = package_id
         if primary and pid == primary_id:
-            item["queue_role"] = "primary"
+            item["queue_role"] = "primary_target" if (
+                item.get("is_primary_target") or pid in primary_ids
+            ) else "primary"
             item["package_note"] = (
-                "Foco del día — fichar al precio" if fixed else "Foco del día — pujar"
+                "Objetivo del día — fichar al precio"
+                if fixed and item["queue_role"] == "primary_target"
+                else (
+                    "Objetivo del día — pujar"
+                    if item["queue_role"] == "primary_target"
+                    else ("Foco del día — fichar al precio" if fixed else "Foco del día — pujar")
+                )
             )
             item["alt_for"] = None
             continue
         if secondary and pid == secondary_id:
             item["queue_role"] = "secondary"
-            item["package_note"] = "También si cabe — parche barato"
+            item["package_note"] = "También si cabe — parche barato (sin romper reserva)"
             item["alt_for"] = None
             continue
 
@@ -1924,7 +2000,7 @@ def finalize_action_plan(
     # Re-rank tras demote
     for item in plan:
         role = item.get("queue_role")
-        if role == "primary":
+        if role in ("primary", "primary_target"):
             item["_queue_rank"] = 10_000 + int(item.get("priority_score") or 0)
         elif role == "secondary":
             item["_queue_rank"] = 9_000 + int(item.get("priority_score") or 0)
@@ -1973,7 +2049,7 @@ def finalize_action_plan(
             return False
         if per_action.get(a, 0) >= limits.get(a, 3):
             return False
-        if a == "buy_now" and role not in ("primary", "secondary"):
+        if a == "buy_now" and role not in ("primary", "primary_target", "secondary"):
             return False
         if a == "buy_now" and sim_balance is not None:
             cost = _item_buy_cost(item)
@@ -2084,8 +2160,14 @@ def finalize_action_plan(
         "cash_reserve": cash_reserve,
         "residual_after": residual_after,
         "note": note,
+        "cash_reserved_targets": float((funding_info or {}).get("cash_reserved") or 0),
+        "primary_is_target": bool(
+            primary
+            and (
+                primary.get("is_primary_target")
+                or str(primary.get("player_id") or "") in primary_ids
+            )
+        ),
     }
-    # funding_info reservado por compatibilidad de firma
-    _ = funding_info
 
     return capped, daily_package
