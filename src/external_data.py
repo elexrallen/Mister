@@ -699,6 +699,8 @@ def enrich_players_with_ff_production(
                 ext["profile_url"] = ff_url
         new_p["external"] = ext
         new_p["ff_mister_avg"] = ext["ff_mister_avg"]
+        new_p["ff_mister_points"] = ext["ff_mister_points"]
+        new_p["ff_apps"] = ext["ff_apps"]
         new_p["ff_prior_avg"] = ext["ff_prior_avg"]
         new_p["production_score"] = prod
         new_p["is_top_ff"] = is_top

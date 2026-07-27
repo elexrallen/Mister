@@ -99,34 +99,178 @@ def _ff_avg(p: dict[str, Any]) -> float | None:
     for key in ("ff_mister_avg", "mister_avg", "form"):
         if p.get(key) is not None:
             try:
-                return float(p[key])
+                v = float(p[key])
+                if v > 0:
+                    return v
             except (TypeError, ValueError):
                 pass
     ext = p.get("external") or {}
     if ext.get("ff_mister_avg") is not None:
         try:
-            return float(ext["ff_mister_avg"])
+            v = float(ext["ff_mister_avg"])
+            return v if v > 0 else None
         except (TypeError, ValueError):
             return None
     return None
 
 
+def _ff_points(p: dict[str, Any]) -> float | None:
+    for key in ("ff_mister_points", "points"):
+        if p.get(key) is not None:
+            try:
+                v = float(p[key])
+                if v > 0:
+                    return v
+            except (TypeError, ValueError):
+                pass
+    ext = p.get("external") or {}
+    if ext.get("ff_mister_points") is not None:
+        try:
+            v = float(ext["ff_mister_points"])
+            return v if v > 0 else None
+        except (TypeError, ValueError):
+            return None
+    return None
+
+
+def _ff_apps(p: dict[str, Any]) -> int:
+    for key in ("ff_apps", "apps"):
+        if p.get(key) is not None:
+            try:
+                return max(0, int(p[key]))
+            except (TypeError, ValueError):
+                pass
+    ext = p.get("external") or {}
+    if ext.get("ff_apps") is not None:
+        try:
+            return max(0, int(ext["ff_apps"]))
+        except (TypeError, ValueError):
+            pass
+    return 0
+
+
+def _hist_floors(position: str, *, avg_scale: float = 8.0) -> tuple[float, float]:
+    """Umbrales Mister Mixto (media / pts temporada), escalados si RPG."""
+    pos = (position or "MF").upper()
+    avg_floor = float((getattr(config, "MISTER_HIST_AVG_FLOOR", None) or {}).get(pos, 5.5))
+    pts_floor = float((getattr(config, "MISTER_HIST_PTS_FLOOR", None) or {}).get(pos, 200))
+    scale = float(avg_scale) if avg_scale and avg_scale > 0 else 8.0
+    # Mister Mixto ~8; Fantasy RPG ~16
+    factor = scale / 8.0
+    return avg_floor * factor, pts_floor * factor
+
+
+def _hist_quality(p: dict[str, Any]) -> tuple[float | None, bool]:
+    """
+    Calidad histórica 0–100 vs umbrales Mister por posición.
+    Fiable (True) solo si media ≥ suelo posicional (con muestra mínima).
+    """
+    pos = str(p.get("position") or "MF")
+    avg = _ff_avg(p)
+    pts = _ff_points(p)
+    apps = _ff_apps(p)
+    # Detectar escala RPG vs Mixto: medias > 10 suelen ser RPG
+    avg_scale = 16.0 if (avg is not None and avg > 10) else 8.0
+    avg_floor, pts_floor = _hist_floors(pos, avg_scale=avg_scale)
+
+    if avg is None and pts is None:
+        return None, False
+
+    # Media es la señal principal; pts corrigen temporadas cortas/largas
+    avg_part = None
+    if avg is not None and avg_floor > 0:
+        # 0 en 0 pts/PJ · 50 en 70% del suelo · 70 en el suelo · 100 en 130%+
+        ratio = float(avg) / avg_floor
+        if ratio <= 0.7:
+            avg_part = (ratio / 0.7) * 50.0
+        elif ratio <= 1.0:
+            avg_part = 50.0 + ((ratio - 0.7) / 0.3) * 20.0
+        else:
+            avg_part = 70.0 + min(30.0, ((ratio - 1.0) / 0.3) * 30.0)
+
+    pts_part = None
+    if pts is not None and pts_floor > 0:
+        pr = float(pts) / pts_floor
+        if pr <= 0.7:
+            pts_part = (pr / 0.7) * 50.0
+        elif pr <= 1.0:
+            pts_part = 50.0 + ((pr - 0.7) / 0.3) * 20.0
+        else:
+            pts_part = 70.0 + min(30.0, ((pr - 1.0) / 0.3) * 30.0)
+
+    if avg_part is not None and pts_part is not None:
+        # Con pocos partidos, la media miente menos que el total
+        w_avg = 0.75 if apps < 20 else 0.60
+        hist = w_avg * avg_part + (1.0 - w_avg) * pts_part
+    elif avg_part is not None:
+        hist = avg_part
+    else:
+        hist = float(pts_part or 0.0)
+
+    # Muestra corta: no declarar “fiable” aunque la media pinte bien
+    reliable = bool(
+        avg is not None
+        and float(avg) >= avg_floor * 0.98
+        and apps >= 15
+    )
+    return round(max(0.0, min(100.0, hist)), 1), reliable
+
+
 def ep_score(p: dict[str, Any]) -> float:
-    """Puntaje esperado 0–100: producción + media FF + titularidad."""
-    prod = _production(p)
-    ff = _ff_avg(p)
+    """Puntaje esperado 0–100 para plantilla ideal.
+
+    Histórico = media/puntos Mister vs umbrales por posición (no el production_score 0–100).
+    Titularidad pesa; % bajo castiga. Chollos con media 3 no parecen cracks.
+    """
+    hist, _reliable = _hist_quality(p)
     lp = _lineup_pct(p)
     parts: list[tuple[float, float]] = []
-    if prod is not None:
-        parts.append((0.55, max(0.0, min(100.0, prod))))
-    if ff is not None:
-        parts.append((0.25, max(0.0, min(100.0, (ff / 8.0) * 100.0))))
+    if hist is not None:
+        parts.append((0.55, hist))
     if lp is not None:
-        parts.append((0.20, max(0.0, min(100.0, lp))))
+        # Sin histórico Mister, el % titular no basta para un EP alto
+        lp_w = 0.45 if hist is not None else 0.35
+        parts.append((lp_w, max(0.0, min(100.0, lp))))
     if not parts:
+        prod = _production(p)
+        if prod is not None:
+            return round(max(0.0, min(40.0, float(prod) * 0.35)), 1)
         return 0.0
     wsum = sum(w for w, _ in parts)
-    return round(sum(w * v for w, v in parts) / wsum, 1)
+    raw = sum(w * v for w, v in parts) / wsum
+    if hist is None:
+        # Desconocido en FF: techo bajo (no rellenar ideal solo con % alineación)
+        raw = min(raw, 38.0)
+    if lp is not None:
+        if lp < 40:
+            raw *= 0.50
+        elif lp < 55:
+            raw *= 0.72
+        elif lp < 70:
+            raw *= 0.88
+    if hist is not None and hist < 50:
+        raw = min(raw, 42.0)
+    return round(raw, 1)
+
+
+def _starter_fitness(row: dict[str, Any]) -> tuple:
+    """Prioridad para badge Titular: primero quien juega, luego EP."""
+    lp = row.get("lineup_prob")
+    try:
+        lp_f = float(lp) if lp is not None else -1.0
+    except (TypeError, ValueError):
+        lp_f = -1.0
+    if lp_f >= 70:
+        band = 3
+    elif lp_f >= 55:
+        band = 2
+    elif lp_f >= 40:
+        band = 1
+    elif lp_f >= 0:
+        band = 0
+    else:
+        band = 1
+    return (band, float(row.get("ep_score") or 0))
 
 
 def _market_price(p: dict[str, Any]) -> float:
@@ -208,6 +352,7 @@ def _normalize_player(
         if slot_cost <= 0:
             return None
     ep = ep_score(p)
+    hist, hist_ok = _hist_quality(p)
     delta = _delta_5d(p, price_series)
     price_m = max(slot_cost / 1_000_000.0, 0.4)
     return {
@@ -219,6 +364,10 @@ def _normalize_player(
         "team_id": str(p.get("team_id") or "") or None,
         "owned": owned,
         "ep_score": ep,
+        "hist_quality": hist,
+        "hist_ok": hist_ok,
+        "ff_mister_avg": _ff_avg(p),
+        "ff_mister_points": _ff_points(p),
         "price": round(slot_cost, 0),
         "buy_price": round(buy if buy > 0 else slot_cost, 0),
         "market_value": round(market, 0) if market > 0 else round(slot_cost, 0),
@@ -227,7 +376,6 @@ def _normalize_player(
         "value_note": _value_note(delta),
         "lineup_prob": _lineup_pct(p),
         "production_score": _production(p),
-        "ff_mister_avg": _ff_avg(p),
         "on_daily_market": bool(p.get("on_daily_market") or p.get("seller") == "market"),
         "clause": p.get("clause") if p.get("clause_known") else None,
         "sample_thin": bool(p.get("sample_thin")),
@@ -589,11 +737,12 @@ def build_target_board(
             u["gk_tandem"] = tandem_same
             _append_pick(u, pos="GK")
 
-    # Pass 1: densidad EP/€ bajo wealth (resto de líneas; GK ya cubiertos)
+    # Pass 1: densidad EP/€ priorizando histórico Mister fiable (media ≥ suelo posicional)
     picks_target = sum(int(ideal.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
     density = sorted(
         [u for u in universe if u["position"] != "GK"],
         key=lambda x: (
+            0 if x.get("hist_ok") else (1 if (x.get("hist_quality") or 0) >= 55 else 2),
             -float(x.get("value_ratio") or 0),
             -float(x.get("ep_score") or 0),
             _slot_cost(x),
@@ -607,6 +756,10 @@ def build_target_board(
         if _count_pos(pos) >= need_n:
             continue
         if u["player_id"] in picked_ids:
+            continue
+        # Exigir histórico Mister decente (o desconocido no: eso va al relleno final)
+        hq = u.get("hist_quality")
+        if hq is None or float(hq) < 55:
             continue
         remaining = {
             p: int(ideal.get(p, 0)) - _count_pos(p) for p in ("GK", "DF", "MF", "FW")
@@ -662,6 +815,7 @@ def build_target_board(
             cands.sort(
                 key=lambda x: (
                     0 if (prefer_team and _gk_team_key(x) == prefer_team) else 1,
+                    0 if x.get("hist_ok") else (1 if (x.get("hist_quality") or 0) >= 55 else 2),
                     -float(x.get("ep_score") or 0),
                     -float(x.get("value_ratio") or 0),
                     _slot_cost(x),
@@ -787,11 +941,11 @@ def build_target_board(
             + (f" · Δ {delta * 100:.0f}%" if delta is not None else "")
         )
 
-    # Reasignar slots/roles por EP
+    # Reasignar slots/roles: titulares = quienes más juegan (no solo EP barato)
     perfect_sorted: list[dict[str, Any]] = []
     for pos in ("GK", "DF", "MF", "FW"):
         rows_pos = [r for r in perfect if r.get("position") == pos]
-        rows_pos.sort(key=lambda r: -float(r.get("ep_score") or 0))
+        rows_pos.sort(key=lambda r: _starter_fitness(r), reverse=True)
         starter_slots = int(starters_n.get(pos, 1))
         for i, r in enumerate(rows_pos, start=1):
             r["slot"] = f"{pos}{i}"

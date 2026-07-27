@@ -157,8 +157,10 @@ MIN_MF = 4
 MIN_FW = 2
 # Plantilla objetivo ~15 con alternativas por línea
 IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
-# Once fantasy de la plantilla perfecta (debe sumar 11); resto = banquillo
-IDEAL_XI = {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
+# Umbrales Mister Mixto: producción histórica “fiable / titular top” por posición
+# (media pts/partido y pts totales/temporada). Premier RPG se escala × avg_scale/8.
+MISTER_HIST_AVG_FLOOR = {"GK": 4.5, "DF": 5.0, "MF": 6.0, "FW": 6.5}
+MISTER_HIST_PTS_FLOOR = {"GK": 160, "DF": 180, "MF": 220, "FW": 230}
 # Titulares reales mínimos por línea para diagnóstico de profundidad
 STARTERS_TARGET = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
 LINEUP_PROB_TITULAR = 0.70
