@@ -157,7 +157,9 @@ MIN_MF = 4
 MIN_FW = 2
 # Plantilla objetivo ~15 con alternativas por línea
 IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
-# Titulares reales mínimos por línea (resto = banquillo usable)
+# Once fantasy de la plantilla perfecta (debe sumar 11); resto = banquillo
+IDEAL_XI = {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
+# Titulares reales mínimos por línea para diagnóstico de profundidad
 STARTERS_TARGET = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
 LINEUP_PROB_TITULAR = 0.70
 LINEUP_PROB_REGULAR = 0.45

@@ -216,6 +216,7 @@ def _normalize_player(
         "name": p.get("name"),
         "position": p.get("position") or "MF",
         "team": p.get("team"),
+        "team_id": str(p.get("team_id") or "") or None,
         "owned": owned,
         "ep_score": ep,
         "price": round(slot_cost, 0),
@@ -247,8 +248,98 @@ def _ideal_counts() -> dict[str, int]:
 
 
 def _starter_counts() -> dict[str, int]:
-    st = getattr(config, "STARTERS_TARGET", None) or {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
+    """Once de la plantilla perfecta (11). No confundir con STARTERS_TARGET del diagnóstico."""
+    st = getattr(config, "IDEAL_XI", None) or {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
     return {str(k): int(v) for k, v in st.items()}
+
+
+def _gk_team_key(u: dict[str, Any]) -> str | None:
+    """Clave de club para tándem de porteros."""
+    tid = str(u.get("team_id") or "").strip()
+    if tid and tid not in ("0", "None"):
+        return f"id:{tid}"
+    team = str(u.get("team") or "").strip()
+    if team and team not in ("—", "-", "?"):
+        return f"name:{team.lower()}"
+    return None
+
+
+def _pick_gk_tandem(
+    gks: list[dict[str, Any]],
+    *,
+    need_n: int,
+    room: float,
+    slot_cost,
+) -> list[dict[str, Any]]:
+    """
+    Elige hasta need_n porteros prefiriendo tándem del mismo equipo
+    (titular + suplente rotables ante lesión). Si no hay par asequible, fallback.
+    """
+    if need_n <= 0 or not gks:
+        return []
+    if need_n == 1:
+        affordable = [u for u in gks if slot_cost(u) <= room + 1e-6]
+        if not affordable:
+            return []
+        affordable.sort(
+            key=lambda x: (-float(x.get("ep_score") or 0), -float(x.get("value_ratio") or 0), slot_cost(x))
+        )
+        return [affordable[0]]
+
+    by_team: dict[str, list[dict[str, Any]]] = {}
+    for u in gks:
+        key = _gk_team_key(u)
+        if not key:
+            continue
+        by_team.setdefault(key, []).append(u)
+
+    best_pair: list[dict[str, Any]] | None = None
+    best_score: tuple[float, float, float] | None = None
+    for _key, members in by_team.items():
+        if len(members) < 2:
+            continue
+        members = sorted(
+            members,
+            key=lambda x: (-float(x.get("ep_score") or 0), slot_cost(x)),
+        )
+        # Probar mejores combinaciones de 2 (top por EP)
+        top = members[:6]
+        for i, a in enumerate(top):
+            for b in top[i + 1 :]:
+                cost = slot_cost(a) + slot_cost(b)
+                if cost > room + 1e-6:
+                    continue
+                ep_sum = float(a.get("ep_score") or 0) + float(b.get("ep_score") or 0)
+                ep_main = max(float(a.get("ep_score") or 0), float(b.get("ep_score") or 0))
+                score = (ep_sum, ep_main, -cost)
+                if best_score is None or score > best_score:
+                    best_score = score
+                    # Titular = mayor EP
+                    ordered = sorted(
+                        [a, b],
+                        key=lambda x: (-float(x.get("ep_score") or 0), slot_cost(x)),
+                    )
+                    best_pair = ordered
+
+    if best_pair:
+        return best_pair[:need_n]
+
+    # Fallback: mejores GK individuales asequibles (equipos distintos)
+    picked: list[dict[str, Any]] = []
+    rem = room
+    pool = sorted(
+        gks,
+        key=lambda x: (-float(x.get("ep_score") or 0), -float(x.get("value_ratio") or 0), slot_cost(x)),
+    )
+    for u in pool:
+        if len(picked) >= need_n:
+            break
+        c = slot_cost(u)
+        if c > rem + 1e-6:
+            continue
+        picked.append(u)
+        rem -= c
+    return picked
 
 
 def _row_from_norm(
@@ -266,6 +357,7 @@ def _row_from_norm(
         "player_id": n["player_id"],
         "name": n["name"],
         "team": n.get("team"),
+        "team_id": n.get("team_id"),
         "ep_score": n["ep_score"],
         "price": n["price"] if status == "keep" else n.get("buy_price") or n["price"],
         "status": status,
@@ -275,8 +367,10 @@ def _row_from_norm(
         "lineup_prob": n.get("lineup_prob"),
         "on_daily_market": n.get("on_daily_market"),
         "owned": bool(n.get("owned")),
+        "gk_tandem": bool(n.get("gk_tandem")),
         "why": (
             f"EP {n['ep_score']:.0f} · {n['price']:,.0f} € · {status}"
+            + (" · tándem mismo club" if n.get("gk_tandem") else "")
             + (f" · Δ {n['delta_5d']*100:.0f}%" if n.get("delta_5d") is not None else "")
         ),
         "added_at": added_at or _now_iso(),
@@ -472,11 +566,33 @@ def build_target_board(
         picked_ids.add(u["player_id"])
         spent += _slot_cost(u)
 
-    # Pass 1: densidad EP/€ bajo wealth (completa 15 de toda la liga, sin preferir owned)
-    # Desempate por EP puro; upgrades posteriores suben EP si el delta cabe.
+    # Pass 0: porteros como tándem del mismo club (óptimo ante lesiones)
+    gk_need = int(ideal.get("GK", 0))
+    if gk_need > 0:
+        remaining_after_gk = {
+            p: int(ideal.get(p, 0)) - (gk_need if p == "GK" else 0)
+            for p in ("GK", "DF", "MF", "FW")
+        }
+        # Tras coger los GK, remaining GK = 0
+        remaining_after_gk["GK"] = 0
+        reserve_outfield = _cheapest_fill_cost(remaining_after_gk, picked_ids)
+        gk_room = max(0.0, float(budget_cap) - spent - reserve_outfield)
+        gk_pool = [u for u in universe if u["position"] == "GK" and u["player_id"] not in picked_ids]
+        tandem = _pick_gk_tandem(gk_pool, need_n=gk_need, room=gk_room, slot_cost=_slot_cost)
+        tandem_same = (
+            len(tandem) >= 2
+            and _gk_team_key(tandem[0]) is not None
+            and _gk_team_key(tandem[0]) == _gk_team_key(tandem[1])
+        )
+        for u in tandem:
+            u = dict(u)
+            u["gk_tandem"] = tandem_same
+            _append_pick(u, pos="GK")
+
+    # Pass 1: densidad EP/€ bajo wealth (resto de líneas; GK ya cubiertos)
     picks_target = sum(int(ideal.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
     density = sorted(
-        [u for u in universe],
+        [u for u in universe if u["position"] != "GK"],
         key=lambda x: (
             -float(x.get("value_ratio") or 0),
             -float(x.get("ep_score") or 0),
@@ -530,21 +646,48 @@ def build_target_board(
                 ]
             if not cands:
                 break
+            # GK: preferir mismo club que el portero ya elegido
+            prefer_team: str | None = None
+            if pos == "GK":
+                for r in perfect:
+                    if r.get("position") == "GK":
+                        prefer_team = _gk_team_key(
+                            {
+                                "team_id": r.get("team_id"),
+                                "team": r.get("team"),
+                            }
+                        )
+                        if prefer_team:
+                            break
             cands.sort(
                 key=lambda x: (
+                    0 if (prefer_team and _gk_team_key(x) == prefer_team) else 1,
                     -float(x.get("ep_score") or 0),
                     -float(x.get("value_ratio") or 0),
                     _slot_cost(x),
                 )
             )
-            _append_pick(cands[0], pos=pos)
+            pick = dict(cands[0])
+            if pos == "GK" and prefer_team and _gk_team_key(pick) == prefer_team:
+                pick["gk_tandem"] = True
+                # Marcar el GK ya presente como tándem
+                for r in perfect:
+                    if r.get("position") == "GK":
+                        r["gk_tandem"] = True
+                        why = str(r.get("why") or "")
+                        if "tándem mismo club" not in why:
+                            r["why"] = why + " · tándem mismo club"
+            _append_pick(pick, pos=pos)
 
     def _drop_lowest_ep() -> bool:
         nonlocal spent, perfect, picked_ids
         if not perfect:
             return False
+        # Evitar romper tándem GK si hay otros candidatos a recortar
+        non_gk = [r for r in perfect if r.get("position") != "GK"]
+        pool = non_gk if non_gk else perfect
         victim = min(
-            perfect,
+            pool,
             key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
         )
         pid = str(victim.get("player_id") or "")
@@ -557,7 +700,7 @@ def build_target_board(
     while spent > budget_cap + 1e-6 and _drop_lowest_ep():
         pass
 
-    # Pass 2: upgrades — sustituir por mejor EP si el delta cabe
+    # Pass 2: upgrades — sustituir por mejor EP si el delta cabe (GK solo dentro del mismo club)
     upgraded = True
     guard = 0
     while upgraded and guard < 60:
@@ -579,7 +722,18 @@ def build_target_board(
             room = max(0.0, float(budget_cap) - spent)
             if len(rows_pos) < need_n:
                 if cost_new <= room + 1e-6:
-                    _append_pick(u, pos=pos)
+                    pick = dict(u)
+                    if pos == "GK":
+                        existing_keys = {
+                            _gk_team_key({"team_id": r.get("team_id"), "team": r.get("team")})
+                            for r in rows_pos
+                        }
+                        existing_keys.discard(None)
+                        if existing_keys and _gk_team_key(u) not in existing_keys:
+                            continue
+                        if existing_keys and _gk_team_key(u) in existing_keys:
+                            pick["gk_tandem"] = True
+                    _append_pick(pick, pos=pos)
                     upgraded = True
                     break
                 continue
@@ -589,6 +743,19 @@ def build_target_board(
             )
             if float(u.get("ep_score") or 0) <= float(victim.get("ep_score") or 0) + 0.5:
                 continue
+            # GK: no romper tándem — solo upgrade dentro del mismo club
+            if pos == "GK":
+                vkey = _gk_team_key({"team_id": victim.get("team_id"), "team": victim.get("team")})
+                ukey = _gk_team_key(u)
+                other_gk = [r for r in rows_pos if str(r.get("player_id")) != str(victim.get("player_id"))]
+                if other_gk:
+                    okey = _gk_team_key(
+                        {"team_id": other_gk[0].get("team_id"), "team": other_gk[0].get("team")}
+                    )
+                    if okey and ukey != okey:
+                        continue
+                elif vkey and ukey != vkey:
+                    continue
             delta = cost_new - float(victim.get("price") or 0)
             if delta > room + 1e-6:
                 continue
@@ -596,7 +763,10 @@ def build_target_board(
             perfect = [x for x in perfect if str(x.get("player_id")) != pid]
             picked_ids.discard(pid)
             spent = max(0.0, spent - float(victim.get("price") or 0))
-            _append_pick(u, pos=pos)
+            pick = dict(u)
+            if pos == "GK":
+                pick["gk_tandem"] = True
+            _append_pick(pick, pos=pos)
             upgraded = True
             break
 

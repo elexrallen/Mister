@@ -822,13 +822,14 @@
     if (elEp) elEp.textContent = totals.ep_sum != null ? String(Math.round(Number(totals.ep_sum))) : "—";
     if (elR) elR.textContent = formatMoney(board.cash_reserved);
 
-    const statusBadge = (st, role) => {
+    const statusBadge = (st, role, extra) => {
       const bits = [];
       if (st === "keep") bits.push(`<span class="badge badge-mint">Keep</span>`);
       else if (st === "buy") bits.push(`<span class="badge badge-alta">Fichar</span>`);
       else bits.push(`<span class="badge badge-duda">${escapeHtml(st || "")}</span>`);
       if (role === "starter") bits.push(`<span class="badge badge-titular">Titular</span>`);
       else if (role === "bench") bits.push(`<span class="badge badge-banca">Banquillo</span>`);
+      if (extra && extra.gk_tandem) bits.push(`<span class="badge badge-once">Tándem</span>`);
       return bits.join(" ");
     };
 
@@ -846,7 +847,7 @@
             const delta =
               r.delta_5d != null ? `${(Number(r.delta_5d) * 100).toFixed(0)}%` : "—";
             return `<li class="objectives-player">
-              <div class="objectives-player-head">${statusBadge(r.status, r.role)}</div>
+              <div class="objectives-player-head">${statusBadge(r.status, r.role, r)}</div>
               <button type="button" class="player-link" data-player-id="${escapeHtml(
                 String(r.player_id || "")
               )}">${escapeHtml(r.name || "—")}</button>
