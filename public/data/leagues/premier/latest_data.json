@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-28T09:51:55.390836+00:00",
+  "generated_at": "2026-07-28T10:07:33.192316+00:00",
   "league_slug": "premier",
   "sources": {
     "mister": "api",
@@ -561,7 +561,7 @@
     }
   },
   "target_board": {
-    "generated_at": "2026-07-28T09:51:55.389553+00:00",
+    "generated_at": "2026-07-28T10:07:33.190682+00:00",
     "league_slug": "premier",
     "market_mode": "fixed",
     "balance": 31429000.0,
@@ -6956,7 +6956,7 @@
     "competition": "premier",
     "fixtures_count": 12,
     "players_count": 0,
-    "fetched_at": "2026-07-28T09:51:01.978087+00:00",
+    "fetched_at": "2026-07-28T10:06:56.360458+00:00",
     "cache_used": false,
     "fixtures": [
       {
