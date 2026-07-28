@@ -138,7 +138,10 @@ export default {
         ok: true,
         dispatched: true,
         league,
-        message: "Workflow refresh-data disparado. Espera 2–6 min.",
+        accepted_at: new Date(now).toISOString(),
+        recommended_poll_seconds: 15,
+        expected_duration_minutes: 12,
+        message: "Workflow encolado en GitHub Actions. La app comprobara cambios durante unos minutos.",
       },
       202,
       origin

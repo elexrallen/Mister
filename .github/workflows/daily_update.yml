@@ -1,6 +1,6 @@
 # Actualización del dataset Mister Fantasy Advisor.
-# Genera public/data/*.json + history/ y lo commitea.
-# GitHub Pages (rama main → /public) se regenera tras el push.
+# Genera public/data/*.json y publica GitHub Pages en el mismo run.
+# El commit histórico del snapshot pasa a ser best-effort y no bloquea el deploy.
 #
 # Disparos:
 #   - cron diario
@@ -31,13 +31,18 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
   group: daily-data-update
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   update-data:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -113,7 +118,29 @@ jobs:
           MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
           MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
 
-      - name: Commit updated JSON (if changed)
+      - name: Inject refresh-config (optional secret)
+        env:
+          REFRESH_CONFIG_JSON: ${{ secrets.REFRESH_CONFIG_JSON }}
+        run: |
+          rm -f public/refresh-config.json
+          if [ -n "$REFRESH_CONFIG_JSON" ]; then
+            printf '%s\n' "$REFRESH_CONFIG_JSON" > public/refresh-config.json
+          fi
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Persist snapshot history (best effort)
+        continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -122,7 +149,7 @@ jobs:
             echo "No data changes to commit."
           else
             git commit -m "chore: update fantasy data snapshot"
-            # main puede haber avanzado (otro commit / deploy) mientras corría el job
+            # La publicación ya ha terminado; este push solo conserva histórico.
             for i in 1 2 3; do
               git pull --rebase origin main
               if git push; then

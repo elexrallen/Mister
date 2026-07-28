@@ -163,7 +163,10 @@ Resumen:
 
 1. Despliega el Worker y configura `GITHUB_TOKEN` (PAT Actions write) + `REFRESH_KEY`.
 2. Copia `public/refresh-config.example.json` → `public/refresh-config.json` con la URL del Worker y la misma key.
-3. Commit/push del config. En la app, pulsa **Actualizar** y espera 2–6 min.
+3. Guarda ese archivo solo para pruebas locales. En producción crea el secret
+   `REFRESH_CONFIG_JSON` con ese JSON en una sola línea. En la app, pulsa
+   **Actualizar** y deja que compruebe durante varios minutos si aparece un
+   snapshot nuevo.
 
 También puedes lanzar el workflow a mano con input `league` (`all` / `laliga-patio` / `premier`), o vía `repository_dispatch` type `refresh-data`.
 
@@ -201,7 +204,7 @@ gh repo create Mister --source=. --remote=origin --push
 Luego en GitHub:
 
 1. **Settings → Pages → Build and deployment**
-   - Source: **GitHub Actions** (el workflow `deploy_pages.yml` despliega `public/`)
+   - Source: **GitHub Actions** (el workflow `daily_update.yml` genera y despliega `public/` en el mismo run)
 2. **Settings → Secrets and variables → Actions** → añade al menos:
    - `MISTER_TOKEN`
    - `MISTER_X_AUTH`
@@ -210,7 +213,7 @@ Luego en GitHub:
 3. **Actions → Daily data update → Run workflow** (primer snapshot live)
 4. URL: `https://<usuario>.github.io/Mister/`
 
-Cada mañana la Action de datos regenera el JSON y hace push; el workflow de Pages vuelve a publicar el sitio.
+Cada mañana la Action de datos regenera el JSON y publica Pages en ese mismo run. El commit del snapshot queda como histórico best-effort y ya no controla el despliegue.
 
 ## Operación diaria (automatizada)
 
@@ -249,7 +252,7 @@ Cuando falle el workflow o veas datos viejos/mock:
 4. Actualiza los Secrets en GitHub.
 5. **Actions → Daily data update → Run workflow**.
 
-No hace falta tocar código ni redesplegar Pages a mano: el push del JSON ya actualiza la web.
+No hace falta tocar código ni lanzar un segundo deploy: el propio workflow diario/manual publica la web al terminar la regeneración.
 
 ### Desarrollo local (cuando cambies UI o scrapers)
 
@@ -259,7 +262,7 @@ py -3 src/data_engine.py
 cd public; py -3 -m http.server 8080
 ```
 
-Sube cambios de código con `git push`. El JSON lo sigue generando la Action (o tú en local y lo commiteas si quieres forzar un snapshot).
+Sube cambios de código con `git push`. El JSON lo sigue generando la Action, y el workflow auxiliar `Deploy GitHub Pages` queda solo para redeploys manuales puntuales del contenido ya presente en el repo.
 
 ### Disparo manual
 

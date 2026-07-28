@@ -2157,7 +2157,7 @@
     }
   }
 
-  async function pollUntilUpdated(prevGeneratedAt, { timeoutMs = 8 * 60 * 1000, intervalMs = 12000 } = {}) {
+  async function pollUntilUpdated(prevGeneratedAt, { timeoutMs = 18 * 60 * 1000, intervalMs = 15000 } = {}) {
     const started = Date.now();
     while (Date.now() - started < timeoutMs) {
       await new Promise((r) => setTimeout(r, intervalMs));
@@ -2166,13 +2166,17 @@
       if (next && String(next) !== String(prevGeneratedAt || "")) {
         return true;
       }
-      const elapsedMin = Math.round((Date.now() - started) / 60000);
-      setRefreshUi(
-        "busy",
-        elapsedMin > 0
-          ? `Esperando snapshot… (~${elapsedMin} min)`
-          : "Workflow en marcha…"
-      );
+      const elapsedMs = Date.now() - started;
+      const elapsedMin = Math.floor(elapsedMs / 60000);
+      let message = "Workflow en marcha…";
+      if (elapsedMin >= 10) {
+        message = `Sigue sin publicarse. Puede seguir en cola o desplegando (${elapsedMin} min).`;
+      } else if (elapsedMin >= 5) {
+        message = `GitHub Actions sigue procesando o esperando turno (${elapsedMin} min).`;
+      } else if (elapsedMin >= 1) {
+        message = `Esperando snapshot nuevo… (~${elapsedMin} min)`;
+      }
+      setRefreshUi("busy", message);
     }
     return false;
   }
@@ -2189,7 +2193,7 @@
         await loadData(league);
         setRefreshUi(
           "error",
-          "Sin refresh-config.json. Copia el example y despliega el Worker (ver workers/refresh-proxy)."
+          "Actualizacion manual no configurada. Define REFRESH_CONFIG_JSON en Actions y despliega el Worker (ver workers/refresh-proxy)."
         );
         return;
       }
@@ -2220,7 +2224,10 @@
         return;
       }
 
-      setRefreshUi("busy", "Regenerando en la nube (2–6 min)…");
+      const refreshMessage =
+        (payload && payload.message) ||
+        "Workflow encolado. Esperando a que GitHub Actions publique el snapshot…";
+      setRefreshUi("busy", refreshMessage);
       const ok = await pollUntilUpdated(prev);
       if (ok) {
         setRefreshUi("ok", "Datos actualizados.");
@@ -2228,7 +2235,7 @@
       } else {
         setRefreshUi(
           "error",
-          "Timeout: revisa Actions. Puedes pulsar Actualizar más tarde."
+          "Aun no se ve el snapshot nuevo. Puede seguir en cola o desplegandose en Pages; revisa Actions y vuelve a probar en unos minutos."
         );
       }
     } catch (err) {

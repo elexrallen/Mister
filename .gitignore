@@ -30,3 +30,6 @@ htmlcov/
 # Scraper cache (regenerated locally / CI)
 src/cache/*
 !src/cache/.gitkeep
+
+# Refresh config injected at deploy time
+public/refresh-config.json

@@ -29,7 +29,8 @@ Anota la URL que imprime Wrangler (`https://mister-refresh.<cuenta>.workers.dev`
 cp public/refresh-config.example.json public/refresh-config.json
 ```
 
-Edita `public/refresh-config.json` (solo local; está en `.gitignore`):
+Edita `public/refresh-config.json` solo para pruebas locales. Ese archivo debe
+quedarse fuera de git; en producción GitHub Pages lo recibe desde un secret:
 
 ```json
 {
@@ -40,7 +41,8 @@ Edita `public/refresh-config.json` (solo local; está en `.gitignore`):
 
 Para que el botón funcione en **GitHub Pages** sin commitear la key, crea un secret
 `REFRESH_CONFIG_JSON` en el repo con ese JSON en una sola línea. El workflow
-`deploy_pages` lo inyecta al publicar.
+`daily_update` lo inyecta justo antes de publicar Pages. El workflow
+`deploy_pages` queda solo como redeploy manual de apoyo.
 
 El `key` no es el token de Mister ni el PAT; solo autoriza disparar CI
 (el Worker limita a 1 req / 2 min).
@@ -55,6 +57,8 @@ Repo → Settings → Secrets and variables → Actions.
 1. Abre la PWA en GitHub Pages.
 2. Pulsa **Actualizar** en el chip de la cabecera.
 3. En Actions debe aparecer un run disparado por `repository_dispatch` / `refresh-data`.
-4. En 2–6 min la hora «Actualizado» cambia sola.
+4. La app disparará el workflow y comprobará durante varios minutos si aparece
+   un `generated_at` nuevo. Si GitHub Actions está en cola o Pages tarda en
+   propagar, puede tardar más de 6 min sin que sea un fallo real.
 
 Si falta `refresh-config.json`, el botón solo relee el JSON ya publicado.
