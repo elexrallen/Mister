@@ -1688,24 +1688,36 @@ def build_target_board(
             -float(x.get("price") or 0),
         )
     )
-    # Rotación: todas las ventas fuera del ideal (financiar buys es normal)
-    shortfall = max(0.0, net_buys - bal)
+    # Rotación sugerida (ideal completo); shortfall de funding del DÍA más abajo
     sell_rows = list(sell_cands)
-    freed = 0.0
-    for s in sell_rows:
-        freed += float(s.get("price") or 0)
-        if shortfall > 0 and freed >= shortfall:
-            break
-    # Para funded: suma de ventas necesarias (no limitar artificialmente)
+    ideal_buy_cost = round(net_buys, 0)
+    funded_ideal = bal + sum(float(s.get("price") or 0) for s in sell_cands) >= net_buys
+
+    primary_targets = _select_daily_primary_targets(buy_rows, balance=bal)
+    # Enriquecer flags
+    primary_targets = [
+        {
+            "player_id": r.get("player_id"),
+            "name": r.get("name"),
+            "need": "perfect_squad_daily",
+            "position": r.get("position"),
+            "price": r.get("price"),
+            "ep_score": r.get("ep_score"),
+            "status": "on_daily" if r.get("on_daily_market") else "affordable",
+            "role": r.get("role"),
+            "on_daily_market": bool(r.get("on_daily_market")),
+        }
+        for r in primary_targets
+    ]
+    cash_reserved = round(sum(float(t.get("price") or 0) for t in primary_targets), 0)
+    residual_after = round(max(0.0, bal - cash_reserved), 0)
+    shortfall = max(0.0, cash_reserved - bal)
     freed_for_fund = 0.0
     for s in sell_cands:
-        freed_for_fund += float(s.get("price") or 0)
         if freed_for_fund >= shortfall:
             break
-    funded = bal + freed_for_fund >= net_buys
-
-    cash_reserved = round(net_buys, 0)
-    residual_after = round(max(0.0, bal - cash_reserved), 0)
+        freed_for_fund += float(s.get("price") or 0)
+    funded = bal + freed_for_fund >= cash_reserved
 
     daily_patches = _build_daily_patches(
         structural_needs,
@@ -1714,20 +1726,6 @@ def build_target_board(
         cash_reserved=cash_reserved,
         owned_ids=owned_ids,
     )
-
-    primary_targets = [
-        {
-            "player_id": r.get("player_id"),
-            "name": r.get("name"),
-            "need": "perfect_squad",
-            "position": r.get("position"),
-            "price": r.get("price"),
-            "ep_score": r.get("ep_score"),
-            "status": "on_daily" if r.get("on_daily_market") else "watching",
-            "role": r.get("role"),
-        }
-        for r in buy_rows
-    ]
 
     operable_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
     aspirational_only = [
@@ -1767,7 +1765,7 @@ def build_target_board(
                 "patch_policy": {
                     "allow": residual_after >= 200_000,
                     "max_spend": patch.get("max_spend"),
-                    "note": "Parche diario sin romper reserva del ideal",
+                    "note": "Parche diario sin romper reserva de objetivos de hoy",
                 },
                 "budget_envelope": {
                     "cash_reserve_for_slot": 0,
@@ -1819,6 +1817,7 @@ def build_target_board(
             "budget_cap": round(budget_cap, 0),
             "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)",
         },
+        "ideal_buy_cost": ideal_buy_cost,
         "perfect_squad": perfect,
         "perfect_squad_aspirational": perfect_asp,
         "moves": {
@@ -1831,11 +1830,12 @@ def build_target_board(
                 "ep_sum", "ep_sum_starters", "cost_sum", "net_buys",
                 "slots_filled", "slots_target",
             )},
-            "sell_to_fund": round(freed_for_fund if shortfall > 0 else sum(
-                float(s.get("price") or 0) for s in sell_rows[:3]
-            ), 0),
+            "sell_to_fund": round(freed_for_fund if shortfall > 0 else 0.0, 0),
             "funded": funded,
+            "funded_ideal": funded_ideal,
             "formation": form_op,
+            "ideal_buy_cost": ideal_buy_cost,
+            "daily_primary_count": len(primary_targets),
         },
         "totals_aspirational": {
             "ep_sum": asp_totals["ep_sum"],
@@ -1898,62 +1898,148 @@ def build_target_board(
     }
     return board
 
+def _select_daily_primary_targets(
+    buy_rows: list[dict[str, Any]],
+    *,
+    balance: float,
+) -> list[dict[str, Any]]:
+    """
+    Objetivos del día para cola/funding: mercado diario (máx 2) + buys asequibles
+    con el saldo actual (sin exigir vender casi toda la plantilla).
+    """
+    bal = max(0.0, float(balance or 0))
+
+    def _sort_key(r: dict[str, Any]) -> tuple:
+        return (
+            0 if r.get("role") == "starter" else 1,
+            -float(r.get("ep_score") or 0),
+            float(r.get("price") or 0),
+        )
+
+    on_daily = sorted(
+        [r for r in buy_rows if r.get("on_daily_market")],
+        key=_sort_key,
+    )
+    affordable = sorted(
+        [
+            r
+            for r in buy_rows
+            if not r.get("on_daily_market") and float(r.get("price") or 0) <= bal + 1e-6
+        ],
+        key=_sort_key,
+    )
+
+    selected: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    spent = 0.0
+
+    # Hasta 2 del mercado de hoy (pueden requerir ventas si superan saldo)
+    max_daily = int(getattr(config, "IDEAL_DAILY_MARKET_PRIMARIES", 2))
+    for r in on_daily[: max(0, max_daily)]:
+        pid = str(r.get("player_id") or "")
+        if not pid or pid in seen:
+            continue
+        selected.append(r)
+        seen.add(pid)
+        spent += float(r.get("price") or 0)
+
+    # Relleno con asequibles que quepan en el saldo restante
+    room = max(0.0, bal - min(spent, bal))
+    for r in affordable:
+        pid = str(r.get("player_id") or "")
+        if not pid or pid in seen:
+            continue
+        price = float(r.get("price") or 0)
+        if price <= room + 1e-6:
+            selected.append(r)
+            seen.add(pid)
+            room -= price
+
+    return selected
+
+
 def funding_plan_from_board(
     board: dict[str, Any] | None,
     *,
     balance: float | None = None,
 ) -> dict[str, Any]:
-    """Funding = coste de buys del ideal (cash_reserved)."""
+    """Funding del día = primary_targets operables (mercado/asequibles), no el rebuild completo."""
     bal = max(0.0, float(balance if balance is not None else (board or {}).get("balance") or 0))
-    buys = list(((board or {}).get("moves") or {}).get("buy") or [])
-    if not buys:
-        buys = [
-            {
-                "position": t.get("position"),
-                "price": t.get("price"),
-                "player_id": t.get("player_id"),
-                "name": t.get("name"),
-                "ep_score": t.get("ep_score"),
-            }
-            for t in (board or {}).get("primary_targets") or []
-        ]
+    daily = list((board or {}).get("primary_targets") or [])
+    if not daily:
+        # Compat: si el board antiguo no separó daily, derivar de moves.buy
+        buys = list(((board or {}).get("moves") or {}).get("buy") or [])
+        daily = _select_daily_primary_targets(buys, balance=bal)
+
     gaps: list[dict[str, Any]] = []
-    for b in buys:
+    for b in daily:
         cost = _money(b.get("price"))
         if cost <= 0:
             continue
         gaps.append(
             {
                 "position": b.get("position"),
-                "need": "perfect_buy",
+                "need": "perfect_buy_daily",
                 "cost": cost,
-                "label": f"Ideal: {b.get('name') or b.get('position')}",
+                "label": f"Hoy: {b.get('name') or b.get('position')}",
                 "no_affordable_candidate": cost > bal,
                 "primary_player_id": b.get("player_id"),
                 "primary_name": b.get("name"),
                 "ep_score": b.get("ep_score"),
-                "status": "buy",
+                "status": b.get("status") or "buy",
+                "on_daily_market": bool(b.get("on_daily_market")),
             }
         )
-    gaps.sort(key=lambda g: -float(g.get("cost") or 0))
-    selected = gaps[:5]
-    funding_target = float((board or {}).get("cash_reserved") or sum(float(g["cost"]) for g in selected))
+    gaps.sort(
+        key=lambda g: (
+            0 if g.get("on_daily_market") else 1,
+            -float(g.get("ep_score") or 0),
+            -float(g.get("cost") or 0),
+        )
+    )
+
+    # Ideal completo (info): no mueve cash_reserved del día
+    ideal_gaps: list[dict[str, Any]] = []
+    for b in ((board or {}).get("moves") or {}).get("buy") or []:
+        cost = _money(b.get("price"))
+        if cost <= 0:
+            continue
+        ideal_gaps.append(
+            {
+                "position": b.get("position"),
+                "need": "perfect_buy",
+                "cost": cost,
+                "label": f"Ideal: {b.get('name') or b.get('position')}",
+                "primary_player_id": b.get("player_id"),
+                "primary_name": b.get("name"),
+                "ep_score": b.get("ep_score"),
+            }
+        )
+    ideal_gaps.sort(key=lambda g: -float(g.get("cost") or 0))
+
+    funding_target = float(
+        (board or {}).get("cash_reserved")
+        if (board or {}).get("cash_reserved") is not None
+        else sum(float(g["cost"]) for g in gaps)
+    )
     funding_shortfall = max(0.0, funding_target - bal)
     cheapest = min((float(g["cost"]) for g in gaps), default=None)
-    cash_tight = funding_shortfall > 0
     return {
         "funding_target": funding_target,
         "funding_shortfall": funding_shortfall,
-        "cash_tight": cash_tight,
-        "gap_costs": selected,
+        "cash_tight": funding_shortfall > 0,
+        "gap_costs": gaps[:5],
         "all_gap_costs": gaps,
-        "positions": [g.get("position") for g in selected if g.get("position")],
+        "ideal_gap_costs": ideal_gaps[:8],
+        "ideal_buy_cost": float((board or {}).get("ideal_buy_cost") or sum(g["cost"] for g in ideal_gaps)),
+        "positions": [g.get("position") for g in gaps[:5] if g.get("position")],
         "cheapest_need": cheapest,
-        "primary_targets": list((board or {}).get("primary_targets") or []),
-        "cash_reserved": float((board or {}).get("cash_reserved") or funding_target),
+        "primary_targets": daily,
+        "cash_reserved": funding_target,
         "from_target_board": True,
         "wealth": (board or {}).get("wealth"),
         "totals": (board or {}).get("totals"),
+        "formation": (board or {}).get("formation"),
     }
 
 
@@ -1972,16 +2058,12 @@ def board_objective_ids(board: dict[str, Any] | None) -> set[str]:
 
 
 def board_primary_ids(board: dict[str, Any] | None) -> set[str]:
-    """Buys del ideal (prioridad alta) + patches no."""
-    ids = {
+    """Solo primary_targets del día (no todos los buys del ideal)."""
+    return {
         str(t["player_id"])
         for t in (board or {}).get("primary_targets") or []
         if t.get("player_id")
     }
-    for r in ((board or {}).get("moves") or {}).get("buy") or []:
-        if r.get("player_id"):
-            ids.add(str(r["player_id"]))
-    return ids
 
 
 def max_patch_spend(board: dict[str, Any] | None) -> float:

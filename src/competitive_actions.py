@@ -38,7 +38,8 @@ def budget_fit(cost: float | None, balance: float, *, min_cost: float | None = N
 
 def target_tier_from_budget_fit(bf: str | None) -> str:
     """realistic | stretch | aspirational."""
-    if bf in ("comfortable", "tight"):
+    if bf in ("comfortable", "tight", "funding"):
+        # funding = venta para liberar caja del día (no es objetivo aspiracional)
         return "realistic"
     if bf == "stretch":
         return "stretch"
@@ -2123,14 +2124,20 @@ def finalize_action_plan(
     Devuelve (action_plan, daily_package).
     """
     cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
-    # Si hay board, la reserva operativa es la de objetivos (más precisa)
+    # Reserva del paquete = objetivos operables de HOY (no reconstruir toda la plantilla)
+    bal = float(balance) if balance is not None else 0.0
     if funding_info and funding_info.get("cash_reserved") is not None:
-        board_reserve = float(funding_info.get("cash_reserved") or 0)
-        if board_reserve > 0:
-            cash_reserve = max(board_reserve, min(cash_reserve, float(balance or 0) * 0.5))
+        daily_reserve = float(funding_info.get("cash_reserved") or 0)
+        if daily_reserve > 0:
+            # Nunca hinchar por encima del saldo: si falta caja, se vende; la reserva del
+            # paquete es lo que hay que proteger hoy, acotada al balance.
+            cash_reserve = min(daily_reserve, bal) if bal > 0 else daily_reserve
+        else:
+            cash_reserve = min(cash_reserve, bal * 0.5) if bal > 0 else cash_reserve
+    else:
+        cash_reserve = min(cash_reserve, bal * 0.5) if bal > 0 else cash_reserve
     secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
     package_id = datetime.now(timezone.utc).date().isoformat()
-    bal = float(balance) if balance is not None else 0.0
     fixed = (market_mode or "auction") == "fixed"
     primary_ids = {
         str(t.get("player_id"))

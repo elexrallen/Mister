@@ -180,6 +180,8 @@ IDEAL_EP_TIE_BAND = 5.0
 IDEAL_CLAUSE_MIN_EP_PER_M = 3.0
 # Hist quality mínima (0–100) para titular sin hist_ok (evita techo EP 42 basura)
 IDEAL_STARTER_HIST_MIN = 35.0
+# Primaries del mercado diario que pueden exigir ventas (máx en cola/funding del día)
+IDEAL_DAILY_MARKET_PRIMARIES = 2
 # Umbrales Mister Mixto: producción histórica “fiable / titular top” por posición
 # (media pts/partido y pts totales/temporada). Premier RPG se escala × avg_scale/8.
 MISTER_HIST_AVG_FLOOR = {"GK": 4.5, "DF": 5.0, "MF": 6.0, "FW": 6.5}
