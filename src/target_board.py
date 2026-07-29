@@ -1,7 +1,8 @@
 """
 Plantilla perfecta diaria bajo presupuesto total (saldo + valor de plantilla).
 
-Proxy de puntaje esperado: production_score + ff_mister_avg × titularidad.
+Dos vistas: operable (oportunidad / EP€) y aspiracional (máx EP).
+El action plan / funding usan solo el ideal operable.
 Persiste entre runs en public/data/leagues/<slug>/target_board.json.
 """
 
@@ -375,18 +376,32 @@ def _normalize_player(
         return None
     market = _market_price(p)
     buy = _buy_price(p)
+    seller = p.get("seller")
+    clause_known = bool(p.get("clause_known"))
     if owned:
         # Keep: el slot consume wealth a valor de mercado
         slot_cost = market if market > 0 else 100_000.0
         buy = slot_cost
     else:
-        slot_cost = buy if buy > 0 else market
+        # Libre/mercado: coste = valor listado (no puja +8%); rival con cláusula = buy
+        is_opp = str(seller or "").lower() in ("free", "market") or bool(
+            p.get("on_daily_market")
+        )
+        if is_opp:
+            slot_cost = market if market > 0 else buy
+            buy = slot_cost
+        else:
+            slot_cost = buy if buy > 0 else market
         if slot_cost <= 0:
             return None
     ep = ep_score(p)
     hist, hist_ok = _hist_quality(p)
     delta = _delta_5d(p, price_series)
     price_m = max(slot_cost / 1_000_000.0, 0.4)
+    apps = _ff_apps(p)
+    sample_thin = bool(p.get("sample_thin")) or (0 < apps < 8)
+    ext = p.get("external") or {}
+    clause_val = p.get("clause") if clause_known else None
     return {
         "raw": p,
         "player_id": pid,
@@ -400,6 +415,7 @@ def _normalize_player(
         "hist_ok": hist_ok,
         "ff_mister_avg": _ff_avg(p),
         "ff_mister_points": _ff_points(p),
+        "ff_apps": apps,
         "price": round(slot_cost, 0),
         "buy_price": round(buy if buy > 0 else slot_cost, 0),
         "market_value": round(market, 0) if market > 0 else round(slot_cost, 0),
@@ -407,11 +423,14 @@ def _normalize_player(
         "delta_5d": round(delta, 4) if delta is not None else None,
         "value_note": _value_note(delta),
         "lineup_prob": _lineup_pct(p),
+        "gw_starter": bool(p.get("gw_starter") or ext.get("gw_starter")),
+        "gw_lineup_prob": p.get("gw_lineup_prob") if p.get("gw_lineup_prob") is not None else ext.get("gw_lineup_prob"),
         "production_score": _production(p),
-        "on_daily_market": bool(p.get("on_daily_market") or p.get("seller") == "market"),
-        "clause": p.get("clause") if p.get("clause_known") else None,
-        "sample_thin": bool(p.get("sample_thin")),
-        "seller": p.get("seller"),
+        "on_daily_market": bool(p.get("on_daily_market") or str(seller or "").lower() == "market"),
+        "clause": clause_val,
+        "clause_known": clause_known,
+        "sample_thin": sample_thin,
+        "seller": seller,
     }
 
 
@@ -433,21 +452,129 @@ def _starter_counts() -> dict[str, int]:
     return {str(k): int(v) for k, v in st.items()}
 
 
+def _parse_formation_label(formation: str | None) -> dict[str, int]:
+    """'4-3-3' / '1-4-4-2' / '4-2-3-1' → cupos GK/DF/MF/FW (suma 11)."""
+    default = _starter_counts()
+    if not formation:
+        return default
+    parts = [p.strip() for p in str(formation).replace("–", "-").split("-") if p.strip()]
+    nums: list[int] = []
+    for p in parts:
+        try:
+            nums.append(int(p))
+        except ValueError:
+            return default
+    if len(nums) == 4 and sum(nums) == 11:
+        return {"GK": nums[0], "DF": nums[1], "MF": nums[2], "FW": nums[3]}
+    if len(nums) == 3 and sum(nums) == 10:
+        return {"GK": 1, "DF": nums[0], "MF": nums[1], "FW": nums[2]}
+    # 4-2-3-1 estilo: DF-MF_def-MF_ata-FW → DF + (MF_def+MF_ata) + FW
+    if len(nums) == 4 and sum(nums) == 10:
+        return {"GK": 1, "DF": nums[0], "MF": nums[1] + nums[2], "FW": nums[3]}
+    return default
+
+
+def _formation_label(xi: dict[str, int]) -> str:
+    """Etiqueta tipo fútbol sin el 1 del GK: 4-3-3."""
+    return f"{int(xi.get('DF', 0))}-{int(xi.get('MF', 0))}-{int(xi.get('FW', 0))}"
+
+
+def _ideal_for_xi(xi: dict[str, int]) -> dict[str, int]:
+    """Plantilla 15: once + GK2 + 3 plazas de profundidad (prioriza DF/MF)."""
+    ideal = {p: int(xi.get(p, 0)) for p in ("GK", "DF", "MF", "FW")}
+    ideal["GK"] = max(int(ideal.get("GK", 1)), 1) + 1
+    remaining = max(0, 15 - sum(ideal.values()))
+    # Reparto de banquillo: DF, MF, FW (y otra vuelta si hace falta)
+    order = ("DF", "MF", "FW", "DF", "MF", "FW", "GK")
+    i = 0
+    while remaining > 0 and i < 40:
+        pos = order[i % len(order)]
+        ideal[pos] = int(ideal.get(pos, 0)) + 1
+        remaining -= 1
+        i += 1
+    return ideal
+
+
 def _bench_min_points() -> float:
     return float(getattr(config, "IDEAL_BENCH_MIN_POINTS", 100))
 
 
-def _is_starter_eligible(u: dict[str, Any]) -> bool:
-    """Titular del ideal: % ≥ 70, o sin % con historial Mister fiable."""
+def _clause_premium(u: dict[str, Any]) -> float:
+    """Ratio cláusula/mercado; 1.0 si no hay cláusula rival o es keep."""
+    if u.get("owned"):
+        return 1.0
+    market = float(u.get("market_value") or 0)
+    clause = u.get("clause")
+    buy = float(u.get("buy_price") or u.get("price") or 0)
+    try:
+        clause_f = float(clause) if clause is not None else None
+    except (TypeError, ValueError):
+        clause_f = None
+    if market <= 0:
+        return 1.0
+    if clause_f is not None and clause_f > 0:
+        return clause_f / market
+    if buy > market * 1.02:
+        return buy / market
+    return 1.0
+
+
+def _is_opportunity_buy(u: dict[str, Any]) -> bool:
+    """Libre, mercado diario o keep: oportunidad vs cláusula rival."""
+    if u.get("owned"):
+        return True
+    seller = str(u.get("seller") or "").lower()
+    if seller in ("free", "market") or u.get("on_daily_market"):
+        return True
+    # Sin dueño rival / sin cláusula conocida → trato oportunidad
+    if not u.get("clause_known") and seller in ("", "none", "null"):
+        return True
+    if u.get("clause") is None and seller in ("free", "market", ""):
+        return True
+    return seller in ("free", "market")
+
+
+def _has_lineup_signal(u: dict[str, Any]) -> bool:
+    """Señal de once: LP ≥ 70, gw_starter o gw_lineup_prob ≥ 70."""
     min_lp = float(getattr(config, "LINEUP_PROB_TITULAR", 0.70)) * 100.0
     lp = u.get("lineup_prob")
     try:
-        lp_f = float(lp) if lp is not None else None
+        if lp is not None and float(lp) >= min_lp:
+            return True
     except (TypeError, ValueError):
-        lp_f = None
-    if lp_f is not None:
-        return lp_f >= min_lp
-    return bool(u.get("hist_ok"))
+        pass
+    if u.get("gw_starter"):
+        return True
+    gw = u.get("gw_lineup_prob")
+    try:
+        if gw is not None and float(gw) >= min_lp:
+            return True
+    except (TypeError, ValueError):
+        pass
+    return False
+
+
+def _has_starter_quality(u: dict[str, Any]) -> bool:
+    """Histórico suficiente: hist_ok o hist_quality ≥ umbral (excluye techo EP basura / sin FF)."""
+    if u.get("hist_ok"):
+        return True
+    hist = u.get("hist_quality")
+    min_hist = float(getattr(config, "IDEAL_STARTER_HIST_MIN", 35.0))
+    try:
+        if hist is not None and float(hist) >= min_hist:
+            return True
+    except (TypeError, ValueError):
+        pass
+    return False
+
+
+def _is_starter_eligible(u: dict[str, Any]) -> bool:
+    """Titular del ideal: señal de once (≥70%) + calidad hist; nunca solo hist_ok ni sample_thin."""
+    if u.get("sample_thin"):
+        return False
+    if not _has_lineup_signal(u):
+        return False
+    return _has_starter_quality(u)
 
 
 def _is_bench_eligible(u: dict[str, Any]) -> bool:
@@ -695,62 +822,94 @@ def _prev_perfect_index(prev: dict[str, Any] | None) -> dict[str, dict[str, Any]
     return out
 
 
-def build_target_board(
+def _slot_cost_u(u: dict[str, Any]) -> float:
+    return float(u.get("buy_price") or u.get("price") or 0)
+
+
+def _best_opportunity_ep(
+    universe: list[dict[str, Any]],
     *,
-    slug: str,
-    structural_needs: list[dict[str, Any]] | None,
-    candidates: list[dict[str, Any]],
-    balance: float,
-    squad: list[dict[str, Any]] | None = None,
-    squad_value: float | None = None,
-    price_series: dict[str, list[float]] | None = None,
-    previous: dict[str, Any] | None = None,
-    market_mode: str = "auction",
-) -> dict[str, Any]:
-    """
-    Plantilla perfecta IDEAL_SQUAD (15) desde el universo de liga bajo
-    wealth = balance + squad_value. El once (IDEAL_XI) maximiza Σ EP entre
-    titulares reales (≥70%) asumible con budget_cap; banquillo después.
-    Ownership solo etiqueta keep/buy al final.
-    """
-    bal = max(0.0, float(balance or 0))
-    squad = list(squad or [])
-    sval = float(squad_value or 0) or sum(
-        _money(p.get("price") or p.get("market_value")) for p in squad
+    pos: str,
+    exclude: set[str],
+    eligible,
+) -> float:
+    best = 0.0
+    for u in universe:
+        if u["position"] != pos or u["player_id"] in exclude:
+            continue
+        if not eligible(u):
+            continue
+        if not _is_opportunity_buy(u):
+            continue
+        best = max(best, float(u.get("ep_score") or 0))
+    return best
+
+
+def _accept_operable_candidate(
+    u: dict[str, Any],
+    *,
+    universe: list[dict[str, Any]],
+    exclude: set[str],
+    eligible,
+) -> bool:
+    """Rechaza cláusulas caras si hay oportunidad con EP competitivo."""
+    if _is_opportunity_buy(u):
+        return True
+    soft = float(getattr(config, "IDEAL_CLAUSE_PREMIUM_SOFT", 1.25))
+    band = float(getattr(config, "IDEAL_EP_TIE_BAND", 5.0))
+    if _clause_premium(u) <= soft:
+        return True
+    best_opp = _best_opportunity_ep(
+        universe, pos=str(u.get("position") or "MF"), exclude=exclude, eligible=eligible
     )
-    wealth_total = bal + sval
-    floor = _liquidity_floor(wealth_total, bal)
-    budget_cap = max(0.0, wealth_total - floor)
+    if best_opp <= 0:
+        return True
+    ep = float(u.get("ep_score") or 0)
+    # Exigir superar claramente la mejor oportunidad
+    return ep > best_opp + band
 
-    owned_ids = {_pid(p) for p in squad if _pid(p)}
-    prev = previous if previous is not None else load_previous_board(slug)
-    prev_idx = _prev_perfect_index(prev)
 
-    universe: list[dict[str, Any]] = []
-    seen: set[str] = set()
-    for p in squad:
-        n = _normalize_player(p, owned=True, price_series=price_series)
-        if not n or n["player_id"] in seen:
-            continue
-        seen.add(n["player_id"])
-        universe.append(n)
-    for p in candidates:
-        n = _normalize_player(p, owned=_pid(p) in owned_ids, price_series=price_series)
-        if not n or n["player_id"] in seen:
-            continue
-        # sample_thin extremo: aún sirve para rellenar cupos baratos; no filtrar aquí
-        seen.add(n["player_id"])
-        universe.append(n)
+def _operable_upgrade_ok(u: dict[str, Any], victim: dict[str, Any]) -> bool:
+    """Upgrade operable: cláusula cara solo si ΔEP/M€ justifica la prima."""
+    if _is_opportunity_buy(u):
+        return True
+    soft = float(getattr(config, "IDEAL_CLAUSE_PREMIUM_SOFT", 1.25))
+    if _clause_premium(u) <= soft:
+        return True
+    delta_ep = float(u.get("ep_score") or 0) - float(victim.get("ep_score") or 0)
+    delta_cost = _slot_cost_u(u) - float(victim.get("price") or 0)
+    if delta_cost <= 0:
+        return True
+    min_ep_m = float(getattr(config, "IDEAL_CLAUSE_MIN_EP_PER_M", 3.0))
+    ep_per_m = delta_ep / (delta_cost / 1_000_000.0)
+    return ep_per_m >= min_ep_m
 
-    ideal = _ideal_counts()
-    starters_n = _starter_counts()
+
+def _assemble_perfect_squad(
+    universe: list[dict[str, Any]],
+    *,
+    budget_cap: float,
+    mode: str,
+    owned_ids: set[str],
+    prev_idx: dict[str, dict[str, Any]],
+    starters_n: dict[str, int] | None = None,
+    ideal: dict[str, int] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Ensambla IDEAL_SQUAD bajo budget_cap.
+    mode=operable → oportunidad / EP€; aspirational → máx EP.
+    """
+    operable = mode == "operable"
+    ideal = {str(k): int(v) for k, v in (ideal or _ideal_counts()).items()}
+    starters_n = {str(k): int(v) for k, v in (starters_n or _starter_counts()).items()}
     bench_n = _bench_slot_needs(ideal, starters_n)
     perfect: list[dict[str, Any]] = []
     picked_ids: set[str] = set()
     spent = 0.0
+    tie_band = float(getattr(config, "IDEAL_EP_TIE_BAND", 5.0))
 
     def _slot_cost(u: dict[str, Any]) -> float:
-        return float(u.get("buy_price") or u.get("price") or 0)
+        return _slot_cost_u(u)
 
     def _count_pos(pos: str, *, role: str | None = None) -> int:
         rows = [r for r in perfect if r.get("position") == pos]
@@ -758,12 +917,7 @@ def build_target_board(
             rows = [r for r in rows if r.get("role") == role]
         return len(rows)
 
-    def _cheapest_eligible_cost(
-        needs: dict[str, int],
-        exclude: set[str],
-        *,
-        eligible,
-    ) -> float:
+    def _cheapest_eligible_cost(needs: dict[str, int], exclude: set[str], *, eligible) -> float:
         total = 0.0
         used = set(exclude)
         for pos, n in needs.items():
@@ -773,9 +927,7 @@ def build_target_board(
                 [
                     u
                     for u in universe
-                    if u["position"] == pos
-                    and u["player_id"] not in used
-                    and eligible(u)
+                    if u["position"] == pos and u["player_id"] not in used and eligible(u)
                 ],
                 key=_slot_cost,
             )
@@ -800,12 +952,14 @@ def build_target_board(
         spent += _slot_cost(u)
 
     def _starter_sort_key(u: dict[str, Any]) -> tuple:
-        """Once: maximizar puntaje (EP); el precio solo desempata."""
-        return (
-            -float(u.get("ep_score") or 0),
-            _slot_cost(u),
-            -float(u.get("value_ratio") or 0),
-        )
+        ep = float(u.get("ep_score") or 0)
+        vr = float(u.get("value_ratio") or 0)
+        opp = 0 if _is_opportunity_buy(u) else 1
+        prem_bad = 1 if _clause_premium(u) > float(getattr(config, "IDEAL_CLAUSE_PREMIUM_SOFT", 1.25)) else 0
+        if operable:
+            # Oportunidad: EP + valor; preferir libre/mercado
+            return (-ep, opp, prem_bad, -vr, _slot_cost(u))
+        return (-ep, _slot_cost(u), -vr)
 
     def _bench_sort_key(u: dict[str, Any]) -> tuple:
         return (
@@ -817,12 +971,17 @@ def build_target_board(
     def _sort_key(u: dict[str, Any]) -> tuple:
         return _bench_sort_key(u)
 
-    # --- Pass A: 11 titulares = máx Σ EP asumible (wealth/presupuesto), todos titulares reales
+    def _passes_operable(u: dict[str, Any], eligible) -> bool:
+        if not operable:
+            return True
+        return _accept_operable_candidate(
+            u, universe=universe, exclude=picked_ids, eligible=eligible
+        )
+
     starter_pool = [u for u in universe if _is_starter_eligible(u)]
     bench_pool = [u for u in universe if _is_outfield_bench_eligible(u)]
 
     def _reserve_bench_cost(needs: dict[str, int], exclude: set[str]) -> float:
-        """Reserva banquillo: GK cualquiera (tándem); resto pts≥100."""
         total = 0.0
         used = set(exclude)
         for pos, n in needs.items():
@@ -875,8 +1034,11 @@ def build_target_board(
         best: tuple | None = None
         best_pair: tuple[dict[str, Any], dict[str, Any]] | None = None
         for _key, members in by_team.items():
-            starters = [m for m in members if _is_starter_eligible(m)]
-            # Suplente tándem: cualquier otro GK del club (no exige ≥100 pts)
+            starters = [
+                m
+                for m in members
+                if _is_starter_eligible(m) and _passes_operable(m, _is_starter_eligible)
+            ]
             for a in starters:
                 for b in members:
                     if a["player_id"] == b["player_id"]:
@@ -884,12 +1046,23 @@ def build_target_board(
                     cost = _slot_cost(a) + (_slot_cost(b) if gk_bench_need else 0)
                     if cost > gk_room + 1e-6:
                         continue
-                    score = (
-                        float(a.get("ep_score") or 0),
-                        -_slot_cost(b),
-                        float(b.get("ep_score") or 0),
-                        -cost,
-                    )
+                    if operable:
+                        score = (
+                            float(a.get("ep_score") or 0),
+                            0 if _is_opportunity_buy(a) else 1,
+                            -_clause_premium(a),
+                            float(a.get("value_ratio") or 0),
+                            -_slot_cost(b),
+                            float(b.get("ep_score") or 0),
+                            -cost,
+                        )
+                    else:
+                        score = (
+                            float(a.get("ep_score") or 0),
+                            -_slot_cost(b),
+                            float(b.get("ep_score") or 0),
+                            -cost,
+                        )
                     if best is None or score > best:
                         best = score
                         best_pair = (a, b)
@@ -908,7 +1081,9 @@ def build_target_board(
                 [
                     u
                     for u in starter_pool
-                    if u["position"] == "GK" and u["player_id"] not in picked_ids
+                    if u["position"] == "GK"
+                    and u["player_id"] not in picked_ids
+                    and _passes_operable(u, _is_starter_eligible)
                 ],
                 key=_starter_sort_key,
             )
@@ -935,7 +1110,6 @@ def build_target_board(
                     _append_pick(u, pos="GK", role="starter")
                     break
 
-    # Relleno barato del once (deja caja); luego upgrade maximiza Σ EP
     for pos in ("GK", "DF", "MF", "FW"):
         need = int(starters_n.get(pos, 0))
         while _count_pos(pos, role="starter") < need:
@@ -959,10 +1133,12 @@ def build_target_board(
                     if u["position"] == pos
                     and u["player_id"] not in picked_ids
                     and _slot_cost(u) <= room + 1e-6
+                    and _passes_operable(u, _is_starter_eligible)
                 ],
                 key=_slot_cost,
             )
             if not cands:
+                # Fallback: permitir cualquier elegible asequible (completar once)
                 room2 = max(
                     0.0,
                     float(budget_cap)
@@ -976,6 +1152,32 @@ def build_target_board(
                         if u["position"] == pos
                         and u["player_id"] not in picked_ids
                         and _slot_cost(u) <= room2 + 1e-6
+                        and _passes_operable(u, _is_starter_eligible)
+                    ],
+                    key=_slot_cost,
+                )
+            if not cands:
+                # Último recurso: sin filtro oportunidad (mejor incompleto que vacío)
+                cands = sorted(
+                    [
+                        u
+                        for u in starter_pool
+                        if u["position"] == pos
+                        and u["player_id"] not in picked_ids
+                        and _slot_cost(u) <= room + 1e-6
+                    ],
+                    key=_slot_cost,
+                )
+            if not cands:
+                # Completar once: solo presupuesto restante (reserva irreal si calidad es cara)
+                room3 = max(0.0, float(budget_cap) - spent)
+                cands = sorted(
+                    [
+                        u
+                        for u in starter_pool
+                        if u["position"] == pos
+                        and u["player_id"] not in picked_ids
+                        and _slot_cost(u) <= room3 + 1e-6
                     ],
                     key=_slot_cost,
                 )
@@ -993,7 +1195,13 @@ def build_target_board(
             upgraded = False
             guard += 1
             avail = sorted(
-                [u for u in universe if u["player_id"] not in picked_ids and eligible(u)],
+                [
+                    u
+                    for u in universe
+                    if u["player_id"] not in picked_ids
+                    and eligible(u)
+                    and (role != "starter" or _passes_operable(u, eligible))
+                ],
                 key=sort_fn,
             )
             for u in avail:
@@ -1034,12 +1242,44 @@ def build_target_board(
                     continue
                 if not rows:
                     continue
-                victim = min(
-                    rows,
-                    key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
-                )
-                if float(u.get("ep_score") or 0) <= float(victim.get("ep_score") or 0) + 0.5:
-                    continue
+                if operable and role == "starter":
+                    # Preferir víctima por peor valor/EP (no solo peor EP)
+                    victim = min(
+                        rows,
+                        key=lambda r: (
+                            float(r.get("ep_score") or 0),
+                            float(r.get("value_ratio") or 0),
+                            -float(r.get("price") or 0),
+                        ),
+                    )
+                else:
+                    victim = min(
+                        rows,
+                        key=lambda r: (float(r.get("ep_score") or 0), -float(r.get("price") or 0)),
+                    )
+                ep_u = float(u.get("ep_score") or 0)
+                ep_v = float(victim.get("ep_score") or 0)
+                if operable and role == "starter":
+                    # Empate cercano: solo upgrade si oportunidad mejor o EP claramente superior
+                    if ep_u <= ep_v + 0.5:
+                        continue
+                    if ep_u <= ep_v + tie_band and not _is_opportunity_buy(u):
+                        # No pagar cláusula por mejora marginal
+                        if _is_opportunity_buy(
+                            {
+                                **u,
+                                "owned": victim.get("owned"),
+                                "seller": "keep" if victim.get("owned") else victim.get("seller"),
+                            }
+                        ) or victim.get("owned"):
+                            # víctima keep/oportunidad: exigir más margen
+                            if ep_u <= ep_v + tie_band:
+                                continue
+                    if not _operable_upgrade_ok(u, victim):
+                        continue
+                else:
+                    if ep_u <= ep_v + 0.5:
+                        continue
                 if pos == "GK":
                     other = [
                         r
@@ -1056,6 +1296,26 @@ def build_target_board(
                 delta = cost_new - float(victim.get("price") or 0)
                 if delta > room + 1e-6:
                     continue
+                # Operable: tras el swap, el resto de cupos deben seguir rellenables
+                if operable and role == "starter":
+                    rem_xi = {
+                        p: int(starters_n.get(p, 0)) - _count_pos(p, role="starter")
+                        for p in ("GK", "DF", "MF", "FW")
+                    }
+                    # victim se quita, u se añade → cupos de pos se mantienen
+                    trial_spent = spent - float(victim.get("price") or 0) + cost_new
+                    trial_ids = (picked_ids | {u["player_id"]}) - {str(victim.get("player_id"))}
+                    rem_bench2 = {
+                        p: int(bench_n.get(p, 0)) - _count_pos(p, role="bench")
+                        for p in ("GK", "DF", "MF", "FW")
+                    }
+                    need_rest = _cheapest_eligible_cost(
+                        {k: v for k, v in rem_xi.items() if v > 0},
+                        trial_ids,
+                        eligible=_is_starter_eligible,
+                    ) + _reserve_bench_cost(rem_bench2, trial_ids)
+                    if trial_spent + need_rest > float(budget_cap) + 1e-6:
+                        continue
                 pid = str(victim.get("player_id") or "")
                 perfect = [x for x in perfect if str(x.get("player_id")) != pid]
                 picked_ids.discard(pid)
@@ -1064,10 +1324,8 @@ def build_target_board(
                 upgraded = True
                 break
 
-    # Maximizar Σ EP del once bajo presupuesto (reserva mínimo banquillo)
     _upgrade("starter", _is_starter_eligible, reserve_bench=True)
 
-    # --- Pass B: banquillo campo ≥100 pts; GK2 = tándem mismo club (sin exigir 100 pts) ---
     for pos in ("GK", "DF", "MF", "FW"):
         need = int(bench_n.get(pos, 0))
         prefer_team = None
@@ -1087,7 +1345,6 @@ def build_target_board(
             reserve = _reserve_bench_cost(rem_bench, picked_ids)
             room = max(0.0, float(budget_cap) - spent - reserve)
             if pos == "GK":
-                # 1) mismo club que el titular (tándem), aunque tenga pocos pts
                 cands = [
                     u
                     for u in universe
@@ -1106,7 +1363,6 @@ def build_target_board(
                         and _slot_cost(u) <= room2 + 1e-6
                         and _gk_team_key(u) == prefer_team
                     ]
-                # 2) sin tándem posible: cualquier GK barato (sigue sin exigir 100 pts)
                 if not cands:
                     room2 = max(0.0, float(budget_cap) - spent)
                     cands = [
@@ -1150,15 +1406,11 @@ def build_target_board(
             _append_pick(pick, pos=pos, role="bench")
 
     _upgrade("bench", _is_bench_eligible)
-    # Remanente de caja → último retoque del once
     _upgrade("starter", _is_starter_eligible, reserve_bench=False)
 
     while spent > budget_cap + 1e-6:
-        # Preferir recortar campo; preservar tándem GK si es posible
         bench_rows = [
-            r
-            for r in perfect
-            if r.get("role") == "bench" and r.get("position") != "GK"
+            r for r in perfect if r.get("role") == "bench" and r.get("position") != "GK"
         ]
         pool = bench_rows or [r for r in perfect if r.get("role") == "bench"] or perfect
         if not pool:
@@ -1172,7 +1424,6 @@ def build_target_board(
         perfect = [x for x in perfect if str(x.get("player_id")) != pid]
         picked_ids.discard(pid)
 
-    # Sincronizar flag tándem con la realidad (mismo club)
     gk_rows = [r for r in perfect if r.get("position") == "GK"]
     tandem_ok = False
     if len(gk_rows) >= 2:
@@ -1206,16 +1457,210 @@ def build_target_board(
         for i, r in enumerate(rows_pos, start=1):
             r["slot"] = f"{pos}{i}"
             perfect_sorted.append(r)
-    perfect = perfect_sorted
+    return perfect_sorted
 
+
+def _squad_totals(
+    perfect: list[dict[str, Any]],
+    *,
+    ideal: dict[str, int],
+    bal: float,
+    starters_n: dict[str, int] | None = None,
+) -> dict[str, Any]:
     keep_rows = [r for r in perfect if r.get("status") == "keep"]
     buy_rows = [r for r in perfect if r.get("status") == "buy"]
     value_kept = sum(float(r.get("price") or 0) for r in keep_rows)
     cost_buys = sum(float(r.get("price") or 0) for r in buy_rows)
+    spent = value_kept + cost_buys
+    st = {str(k): int(v) for k, v in (starters_n or _starter_counts()).items()}
+    bench_n = _bench_slot_needs(ideal, st)
+    return {
+        "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
+        "ep_sum_starters": round(
+            sum(float(r.get("ep_score") or 0) for r in perfect if r.get("role") == "starter"),
+            1,
+        ),
+        "cost_sum": round(spent, 0),
+        "net_buys": round(cost_buys, 0),
+        "slots_filled": len(perfect),
+        "slots_target": sum(ideal.values()),
+        "starters": sum(1 for r in perfect if r.get("role") == "starter"),
+        "bench": sum(1 for r in perfect if r.get("role") == "bench"),
+        "keep": len(keep_rows),
+        "buy": len(buy_rows),
+        "incomplete": (
+            len(perfect) < sum(ideal.values())
+            or sum(1 for r in perfect if r.get("role") == "starter") < sum(st.values())
+            or sum(1 for r in perfect if r.get("role") == "bench") < sum(bench_n.values())
+        ),
+    }
+
+
+def _pick_best_formation_squad(
+    universe: list[dict[str, Any]],
+    *,
+    budget_cap: float,
+    mode: str,
+    owned_ids: set[str],
+    prev_idx: dict[str, dict[str, Any]],
+) -> tuple[list[dict[str, Any]], str, dict[str, int], dict[str, int], list[dict[str, Any]]]:
+    """
+    Prueba IDEAL_FORMATIONS y elige la de mayor Σ EP del once (completo preferido).
+    Devuelve (perfect, label, starters_n, ideal, trials).
+    """
+    raw = getattr(config, "IDEAL_FORMATIONS", None) or ("4-3-3",)
+    labels = [str(x).strip() for x in raw if str(x).strip()]
+    if not labels:
+        labels = ["4-3-3"]
+
+    trials: list[dict[str, Any]] = []
+    best_squad: list[dict[str, Any]] | None = None
+    best_label = labels[0]
+    best_xi = _parse_formation_label(best_label)
+    best_ideal = _ideal_for_xi(best_xi)
+    best_key: tuple | None = None
+
+    seen_shapes: set[tuple[int, int, int, int]] = set()
+    for label in labels:
+        xi = _parse_formation_label(label)
+        shape_key = (
+            int(xi.get("GK", 1)),
+            int(xi.get("DF", 0)),
+            int(xi.get("MF", 0)),
+            int(xi.get("FW", 0)),
+        )
+        if shape_key in seen_shapes:
+            continue
+        seen_shapes.add(shape_key)
+        if sum(shape_key) != 11:
+            continue
+        ideal = _ideal_for_xi(xi)
+        display = _formation_label(xi)
+        squad = _assemble_perfect_squad(
+            universe,
+            budget_cap=budget_cap,
+            mode=mode,
+            owned_ids=owned_ids,
+            prev_idx=prev_idx,
+            starters_n=xi,
+            ideal=ideal,
+        )
+        starters = [r for r in squad if r.get("role") == "starter"]
+        ep_xi = sum(float(r.get("ep_score") or 0) for r in starters)
+        ep_all = sum(float(r.get("ep_score") or 0) for r in squad)
+        cost = sum(float(r.get("price") or 0) for r in squad)
+        n_st = len(starters)
+        target_st = sum(xi.values())
+        complete = n_st >= target_st
+        trial = {
+            "formation": display,
+            "formation_raw": label,
+            "shape": dict(xi),
+            "ep_sum_starters": round(ep_xi, 1),
+            "ep_sum": round(ep_all, 1),
+            "cost_sum": round(cost, 0),
+            "starters": n_st,
+            "starters_target": target_st,
+            "complete": complete,
+        }
+        trials.append(trial)
+        # Preferir once completo; luego máx EP titulares; luego EP total; luego menos coste
+        key = (
+            1 if complete else 0,
+            ep_xi,
+            ep_all,
+            -cost,
+        )
+        if best_key is None or key > best_key:
+            best_key = key
+            best_squad = squad
+            best_label = display
+            best_xi = xi
+            best_ideal = ideal
+
+    trials.sort(
+        key=lambda t: (
+            1 if t.get("complete") else 0,
+            float(t.get("ep_sum_starters") or 0),
+            float(t.get("ep_sum") or 0),
+        ),
+        reverse=True,
+    )
+    return best_squad or [], best_label, best_xi, best_ideal, trials
+
+
+def build_target_board(
+    *,
+    slug: str,
+    structural_needs: list[dict[str, Any]] | None,
+    candidates: list[dict[str, Any]],
+    balance: float,
+    squad: list[dict[str, Any]] | None = None,
+    squad_value: float | None = None,
+    price_series: dict[str, list[float]] | None = None,
+    previous: dict[str, Any] | None = None,
+    market_mode: str = "auction",
+) -> dict[str, Any]:
+    """
+    Plantilla perfecta dual: operable (oportunidad) + aspiracional (máx EP).
+    Funding / primary_targets salen solo del ideal operable.
+    """
+    bal = max(0.0, float(balance or 0))
+    squad = list(squad or [])
+    sval = float(squad_value or 0) or sum(
+        _money(p.get("price") or p.get("market_value")) for p in squad
+    )
+    wealth_total = bal + sval
+    floor = _liquidity_floor(wealth_total, bal)
+    budget_cap = max(0.0, wealth_total - floor)
+
+    owned_ids = {_pid(p) for p in squad if _pid(p)}
+    prev = previous if previous is not None else load_previous_board(slug)
+    prev_idx = _prev_perfect_index(prev)
+
+    universe: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for p in squad:
+        n = _normalize_player(p, owned=True, price_series=price_series)
+        if not n or n["player_id"] in seen:
+            continue
+        seen.add(n["player_id"])
+        universe.append(n)
+    for p in candidates:
+        n = _normalize_player(p, owned=_pid(p) in owned_ids, price_series=price_series)
+        if not n or n["player_id"] in seen:
+            continue
+        seen.add(n["player_id"])
+        universe.append(n)
+
+    ideal = _ideal_counts()
+    starters_n = _starter_counts()
+    bench_n = _bench_slot_needs(ideal, starters_n)
+
+    perfect, form_op, starters_n, ideal, trials_op = _pick_best_formation_squad(
+        universe,
+        budget_cap=budget_cap,
+        mode="operable",
+        owned_ids=owned_ids,
+        prev_idx=prev_idx,
+    )
+    perfect_asp, form_asp, starters_asp, ideal_asp, trials_asp = _pick_best_formation_squad(
+        universe,
+        budget_cap=budget_cap,
+        mode="aspirational",
+        owned_ids=owned_ids,
+        prev_idx=prev_idx,
+    )
+    bench_n = _bench_slot_needs(ideal, starters_n)
+
+    keep_rows = [r for r in perfect if r.get("status") == "keep"]
+    buy_rows = [r for r in perfect if r.get("status") == "buy"]
+    cost_buys = sum(float(r.get("price") or 0) for r in buy_rows)
     net_buys = max(0.0, cost_buys)
+    value_kept = sum(float(r.get("price") or 0) for r in keep_rows)
     spent = value_kept + cost_buys
 
-    # Sells: owned fuera del ideal, priorizar bajo EP / Δ caida
+    picked_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
     sell_cands: list[dict[str, Any]] = []
     for u in universe:
         if not u["owned"] or u["player_id"] in picked_ids:
@@ -1243,26 +1688,24 @@ def build_target_board(
             -float(x.get("price") or 0),
         )
     )
-    # Suficientes ventas para cubrir net_buys - balance (si hace falta)
+    # Rotación: todas las ventas fuera del ideal (financiar buys es normal)
     shortfall = max(0.0, net_buys - bal)
-    sell_rows: list[dict[str, Any]] = []
+    sell_rows = list(sell_cands)
     freed = 0.0
-    for s in sell_cands:
-        if shortfall <= 0 and len(sell_rows) >= 3:
-            break
-        if shortfall > 0 and freed >= shortfall and len(sell_rows) >= 2:
-            break
-        sell_rows.append(s)
+    for s in sell_rows:
         freed += float(s.get("price") or 0)
-        if shortfall <= 0 and len(sell_rows) >= 5:
+        if shortfall > 0 and freed >= shortfall:
             break
-    if shortfall <= 0:
-        # Aun así sugerir hasta 3 ventas claras de bajo EP
-        sell_rows = sell_cands[:3]
+    # Para funded: suma de ventas necesarias (no limitar artificialmente)
+    freed_for_fund = 0.0
+    for s in sell_cands:
+        freed_for_fund += float(s.get("price") or 0)
+        if freed_for_fund >= shortfall:
+            break
+    funded = bal + freed_for_fund >= net_buys
 
     cash_reserved = round(net_buys, 0)
     residual_after = round(max(0.0, bal - cash_reserved), 0)
-    funded = bal + freed >= net_buys
 
     daily_patches = _build_daily_patches(
         structural_needs,
@@ -1272,7 +1715,6 @@ def build_target_board(
         owned_ids=owned_ids,
     )
 
-    # Compat: primary_targets = buys del ideal (para action plan)
     primary_targets = [
         {
             "player_id": r.get("player_id"),
@@ -1287,7 +1729,22 @@ def build_target_board(
         for r in buy_rows
     ]
 
-    # Compat slots ligeros para parches / UI legacy
+    operable_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
+    aspirational_only = [
+        {
+            "player_id": r.get("player_id"),
+            "name": r.get("name"),
+            "position": r.get("position"),
+            "price": r.get("price"),
+            "ep_score": r.get("ep_score"),
+            "role": r.get("role"),
+            "status": r.get("status"),
+            "need": "perfect_squad_aspirational",
+        }
+        for r in perfect_asp
+        if r.get("status") == "buy" and str(r.get("player_id")) not in operable_ids
+    ]
+
     slots = []
     for patch in daily_patches:
         slots.append(
@@ -1320,7 +1777,6 @@ def build_target_board(
             }
         )
 
-    # Dropped del ideal previo
     current_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
     dropped: list[dict[str, Any]] = []
     for pid, old in prev_idx.items():
@@ -1335,10 +1791,21 @@ def build_target_board(
         dropped.append(row)
 
     patch_allow = residual_after >= 200_000 and bool(daily_patches)
+    op_totals = _squad_totals(perfect, ideal=ideal, bal=bal, starters_n=starters_n)
+    asp_totals = _squad_totals(perfect_asp, ideal=ideal_asp, bal=bal, starters_n=starters_asp)
+    asp_buy = [r for r in perfect_asp if r.get("status") == "buy"]
+    asp_keep = [r for r in perfect_asp if r.get("status") == "keep"]
+
     board = {
         "generated_at": _now_iso(),
         "league_slug": slug,
         "market_mode": market_mode,
+        "mode_default": "operable",
+        "formation": form_op,
+        "formation_aspirational": form_asp,
+        "formation_shape": dict(starters_n),
+        "formation_trials": trials_op[:8],
+        "formation_trials_aspirational": trials_asp[:8],
         "balance": bal,
         "squad_value": sval,
         "wealth": {
@@ -1348,29 +1815,43 @@ def build_target_board(
             "liquidity_floor": round(floor, 0),
             "budget_cap": round(budget_cap, 0),
         },
+        "budget_operable": {
+            "budget_cap": round(budget_cap, 0),
+            "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)",
+        },
         "perfect_squad": perfect,
+        "perfect_squad_aspirational": perfect_asp,
         "moves": {
             "keep": keep_rows,
             "buy": buy_rows,
             "sell": sell_rows,
         },
         "totals": {
-            "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
-            "ep_sum_starters": round(
-                sum(float(r.get("ep_score") or 0) for r in perfect if r.get("role") == "starter"),
-                1,
-            ),
-            "cost_sum": round(spent, 0),
-            "net_buys": round(net_buys, 0),
-            "sell_to_fund": round(freed if shortfall > 0 else sum(float(s.get("price") or 0) for s in sell_rows[:3]), 0),
+            **{k: op_totals[k] for k in (
+                "ep_sum", "ep_sum_starters", "cost_sum", "net_buys",
+                "slots_filled", "slots_target",
+            )},
+            "sell_to_fund": round(freed_for_fund if shortfall > 0 else sum(
+                float(s.get("price") or 0) for s in sell_rows[:3]
+            ), 0),
             "funded": funded,
-            "slots_filled": len(perfect),
-            "slots_target": sum(ideal.values()),
+            "formation": form_op,
+        },
+        "totals_aspirational": {
+            "ep_sum": asp_totals["ep_sum"],
+            "ep_sum_starters": asp_totals["ep_sum_starters"],
+            "cost_sum": asp_totals["cost_sum"],
+            "net_buys": asp_totals["net_buys"],
+            "slots_filled": asp_totals["slots_filled"],
+            "slots_target": asp_totals["slots_target"],
+            "funded": None,
+            "formation": form_asp,
         },
         "daily_patches": daily_patches,
         "cash_reserved": cash_reserved,
         "residual_after_reserve": residual_after,
         "primary_targets": primary_targets,
+        "aspirational_targets": aspirational_only,
         "slots": slots,
         "dropped": dropped[:12],
         "patch_policy": {
@@ -1382,31 +1863,40 @@ def build_target_board(
         },
         "summary": {
             "slots": len(perfect),
-            "starters": sum(1 for r in perfect if r.get("role") == "starter"),
-            "bench": sum(1 for r in perfect if r.get("role") == "bench"),
+            "starters": op_totals["starters"],
+            "bench": op_totals["bench"],
             "starters_target": sum(starters_n.values()),
             "bench_target": sum(bench_n.values()),
-            "incomplete": (
-                len(perfect) < sum(ideal.values())
-                or sum(1 for r in perfect if r.get("role") == "starter") < sum(starters_n.values())
-                or sum(1 for r in perfect if r.get("role") == "bench") < sum(bench_n.values())
-            ),
-            "keep": len(keep_rows),
-            "buy": len(buy_rows),
+            "incomplete": op_totals["incomplete"],
+            "keep": op_totals["keep"],
+            "buy": op_totals["buy"],
             "sell": len(sell_rows),
             "patches": len(daily_patches),
             "on_daily": sum(1 for r in buy_rows if r.get("on_daily_market")),
             "cash_reserved": cash_reserved,
-            "ep_sum": round(sum(float(r.get("ep_score") or 0) for r in perfect), 1),
-            "ep_sum_starters": round(
-                sum(float(r.get("ep_score") or 0) for r in perfect if r.get("role") == "starter"),
-                1,
-            ),
+            "ep_sum": op_totals["ep_sum"],
+            "ep_sum_starters": op_totals["ep_sum_starters"],
+            "mode": "operable",
+            "formation": form_op,
+            "xi_rule": f"formación {form_op} · titulares ≥70% + hist · oportunidad EP/€",
+            "bench_min_points": int(_bench_min_points()),
+        },
+        "summary_aspirational": {
+            "slots": len(perfect_asp),
+            "starters": asp_totals["starters"],
+            "bench": asp_totals["bench"],
+            "incomplete": asp_totals["incomplete"],
+            "keep": len(asp_keep),
+            "buy": len(asp_buy),
+            "ep_sum": asp_totals["ep_sum"],
+            "ep_sum_starters": asp_totals["ep_sum_starters"],
+            "mode": "aspirational",
+            "formation": form_asp,
+            "xi_rule": f"formación {form_asp} · titulares ≥70% + hist · máx Σ EP",
             "bench_min_points": int(_bench_min_points()),
         },
     }
     return board
-
 
 def funding_plan_from_board(
     board: dict[str, Any] | None,

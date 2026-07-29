@@ -159,8 +159,27 @@ MIN_FW = 2
 IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
 # Once fantasy (suma 11); el resto del IDEAL_SQUAD es banquillo
 IDEAL_XI = {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
+# Formaciones Mister a probar para el ideal (elige la de más Σ EP del once)
+IDEAL_FORMATIONS = (
+    "4-3-3",
+    "4-4-2",
+    "4-5-1",
+    "3-5-2",
+    "3-4-3",
+    "5-3-2",
+    "5-4-1",
+    "4-2-3-1",  # se interpreta como DF4 MF5 FW1 si no encaja 4 números
+)
 # Banquillo del ideal: mínimo puntos Mister (FF) por temporada
 IDEAL_BENCH_MIN_POINTS = 100
+# Ideal operable: prima cláusula/mercado por encima de la cual se exige más EP vs libre/mercado
+IDEAL_CLAUSE_PREMIUM_SOFT = 1.25
+# Banda de empate EP: preferir oportunidad (libre/mercado) si la diferencia ≤ esto
+IDEAL_EP_TIE_BAND = 5.0
+# Upgrade operable con cláusula cara: mínimo ΔEP por M€ de sobrecoste
+IDEAL_CLAUSE_MIN_EP_PER_M = 3.0
+# Hist quality mínima (0–100) para titular sin hist_ok (evita techo EP 42 basura)
+IDEAL_STARTER_HIST_MIN = 35.0
 # Umbrales Mister Mixto: producción histórica “fiable / titular top” por posición
 # (media pts/partido y pts totales/temporada). Premier RPG se escala × avg_scale/8.
 MISTER_HIST_AVG_FLOOR = {"GK": 4.5, "DF": 5.0, "MF": 6.0, "FW": 6.5}

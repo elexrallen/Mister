@@ -846,25 +846,77 @@
     renderObjectives(data);
   }
 
+  let idealMode = "operable";
+  let objectivesData = null;
+
   function renderObjectives(data) {
     const panel = document.getElementById("objectives-panel");
     if (!panel) return;
-    const board = data.target_board;
-    const squad = (board && board.perfect_squad) || [];
-    if (!board || !squad.length) {
+    if (data) objectivesData = data;
+    const src = objectivesData || data;
+    const board = src && src.target_board;
+    const operableSquad = (board && board.perfect_squad) || [];
+    const aspSquad = (board && board.perfect_squad_aspirational) || [];
+    if (!board || !operableSquad.length) {
       panel.hidden = true;
       return;
     }
     panel.hidden = false;
+
+    const toggle = document.getElementById("objectives-mode-toggle");
+    if (toggle && !toggle.dataset.bound) {
+      toggle.dataset.bound = "1";
+      toggle.querySelectorAll("[data-ideal-mode]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          idealMode = btn.getAttribute("data-ideal-mode") || "operable";
+          toggle.querySelectorAll("[data-ideal-mode]").forEach((b) => {
+            b.classList.toggle("is-active", b.getAttribute("data-ideal-mode") === idealMode);
+          });
+          renderObjectives(null);
+        });
+      });
+    }
+    if (toggle) {
+      toggle.querySelectorAll("[data-ideal-mode]").forEach((b) => {
+        b.classList.toggle("is-active", b.getAttribute("data-ideal-mode") === idealMode);
+      });
+    }
+
+    const isAsp = idealMode === "aspirational" && aspSquad.length;
+    const squad = isAsp ? aspSquad : operableSquad;
     const wealth = board.wealth || {};
-    const totals = board.totals || {};
-    const summary = board.summary || {};
+    const totals = isAsp ? board.totals_aspirational || {} : board.totals || {};
+    const summary = isAsp ? board.summary_aspirational || {} : board.summary || {};
+    const operableIds = new Set(operableSquad.map((r) => String(r.player_id || "")));
+    const formation =
+      (summary && summary.formation) ||
+      (isAsp ? board.formation_aspirational : board.formation) ||
+      (totals && totals.formation) ||
+      "";
+
     const title = document.getElementById("objectives-title");
-    if (title) title.textContent = "Plantilla perfecta";
+    if (title) {
+      const formBit = formation ? ` · ${formation}` : "";
+      title.textContent = isAsp
+        ? `Plantilla perfecta · Aspiracional${formBit}`
+        : `Plantilla perfecta · Operable${formBit}`;
+    }
+    const kicker = panel.querySelector(".objectives-kicker");
+    if (kicker) {
+      kicker.textContent = isAsp
+        ? `Ideal máx EP · formación óptima${formation ? ` (${formation})` : ""} · no mueve funding`
+        : `Rotar plantilla · formación óptima por EP${formation ? ` (${formation})` : ""} · oportunidad EP/€`;
+    }
     const sumEl = document.getElementById("objectives-summary");
     if (sumEl) {
-      const keep = summary.keep != null ? summary.keep : (board.moves && board.moves.keep || []).length;
-      const buy = summary.buy != null ? summary.buy : (board.moves && board.moves.buy || []).length;
+      const keep =
+        summary.keep != null
+          ? summary.keep
+          : squad.filter((r) => r.status === "keep").length;
+      const buy =
+        summary.buy != null
+          ? summary.buy
+          : squad.filter((r) => r.status === "buy").length;
       const starters =
         summary.starters != null
           ? summary.starters
@@ -873,24 +925,38 @@
         summary.bench != null
           ? summary.bench
           : squad.filter((r) => r.role === "bench").length;
-      const funded = totals.funded ? "financiable" : "faltan ventas/caja";
+      const fundedBit = isAsp
+        ? "vista informativa"
+        : totals.funded
+          ? "financiable"
+          : "faltan ventas/caja";
       const incomplete = summary.incomplete
         ? " · incompleta (faltan titulares o banquillo de campo ≥100 pts)"
         : "";
-      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (máx EP · ≥70%) · ${bench} banquillo (campo ≥100 pts; GK2 = tándem) · ${keep} keep · ${buy} fichar · ${funded}${incomplete}`;
+      const formTxt = formation ? `formación ${formation} · ` : "";
+      const rule = isAsp
+        ? `${formTxt}titulares ≥70% + hist · máx EP`
+        : `${formTxt}titulares ≥70% + hist · oportunidad EP/€`;
+      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (${rule}) · ${bench} banquillo (campo ≥100 pts; GK2 = tándem) · ${keep} keep · ${buy} fichar · ${fundedBit}${incomplete}`;
     }
     const elW = document.getElementById("objectives-wealth");
     const elC = document.getElementById("objectives-cost");
     const elEp = document.getElementById("objectives-ep");
     const elR = document.getElementById("objectives-reserve");
-    if (elW) elW.textContent = formatMoney(wealth.total != null ? wealth.total : (board.balance || 0) + (board.squad_value || 0));
+    if (elW)
+      elW.textContent = formatMoney(
+        wealth.total != null ? wealth.total : (board.balance || 0) + (board.squad_value || 0)
+      );
     if (elC) elC.textContent = formatMoney(totals.cost_sum);
     if (elEp) {
       const xi = totals.ep_sum_starters != null ? Math.round(Number(totals.ep_sum_starters)) : null;
       const all = totals.ep_sum != null ? Math.round(Number(totals.ep_sum)) : null;
-      elEp.textContent = xi != null ? `${xi}${all != null ? ` (${all})` : ""}` : all != null ? String(all) : "—";
+      elEp.textContent =
+        xi != null ? `${xi}${all != null ? ` (${all})` : ""}` : all != null ? String(all) : "—";
     }
-    if (elR) elR.textContent = formatMoney(board.cash_reserved);
+    if (elR) {
+      elR.textContent = isAsp ? "—" : formatMoney(board.cash_reserved);
+    }
 
     const statusBadge = (st, role, extra) => {
       const bits = [];
@@ -900,6 +966,15 @@
       if (role === "starter") bits.push(`<span class="badge badge-titular">Titular</span>`);
       else if (role === "bench") bits.push(`<span class="badge badge-banca">Banquillo</span>`);
       if (extra && extra.gk_tandem) bits.push(`<span class="badge badge-once">Tándem</span>`);
+      if (
+        isAsp &&
+        st === "buy" &&
+        extra &&
+        extra.player_id &&
+        !operableIds.has(String(extra.player_id))
+      ) {
+        bits.push(`<span class="badge badge-duda">Solo aspiracional</span>`);
+      }
       return bits.join(" ");
     };
 
@@ -937,8 +1012,8 @@
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-player-id");
           const all = [
-            ...((data.me && data.me.squad) || []),
-            ...(data.market_opportunities || []),
+            ...((src.me && src.me.squad) || []),
+            ...(src.market_opportunities || []),
           ];
           const p = all.find((x) => String(x.id || x.player_id) === String(id));
           if (p && typeof openPlayerSource === "function") openPlayerSource(p);
@@ -946,7 +1021,7 @@
       });
     }
 
-    const patches = board.daily_patches || [];
+    const patches = isAsp ? [] : board.daily_patches || [];
     const wrap = document.getElementById("objectives-patches-wrap");
     const list = document.getElementById("objectives-patches");
     if (wrap && list) {
@@ -973,8 +1048,8 @@
           btn.addEventListener("click", () => {
             const id = btn.getAttribute("data-player-id");
             const all = [
-              ...((data.me && data.me.squad) || []),
-              ...(data.market_opportunities || []),
+              ...((src.me && src.me.squad) || []),
+              ...(src.market_opportunities || []),
             ];
             const p = all.find((x) => String(x.id || x.player_id) === String(id));
             if (p && typeof openPlayerSource === "function") openPlayerSource(p);
@@ -983,7 +1058,7 @@
       }
     }
 
-    const sells = ((board.moves || {}).sell || []).slice(0, 4);
+    const sells = isAsp ? [] : ((board.moves || {}).sell || []).slice(0, 8);
     const sellEl = document.getElementById("objectives-sells");
     if (sellEl) {
       if (!sells.length) {
@@ -991,7 +1066,7 @@
         sellEl.textContent = "";
       } else {
         sellEl.hidden = false;
-        sellEl.textContent = `Vender para financiar: ${sells
+        sellEl.textContent = `Vender para rotar / financiar: ${sells
           .map((s) => s.name)
           .filter(Boolean)
           .join(" · ")}`;

@@ -278,6 +278,9 @@ def _plays_little(p: dict[str, Any]) -> bool:
     if mins is not None and mins < mins_low:
         return True
     if lineup is not None and lineup < low_lp:
+        # LP muy baja (<25%): juega poco aunque FotMob tenga minutos residuales
+        if lineup < 25:
+            return True
         if mins is not None and mins >= mins_low * 2:
             return False
         return True
@@ -662,7 +665,16 @@ def protect_depth_if_sold(squad: list[dict[str, Any]], player: dict[str, Any]) -
     """
     True si vender deja la línea fina: cupo sano bajo MIN_* o titulares reales
     por debajo del suelo del once.
+
+    Vender poco usados (no starter/regular) no cuenta como riesgo de once.
     """
+    lineup = _lineup_pct(player)
+    regular_lp = getattr(config, "LINEUP_PROB_REGULAR", 0.45) * 100.0
+    is_regular = _is_reliable_starter(player) or (
+        lineup is not None and lineup >= regular_lp
+    )
+    if not is_regular:
+        return False
     pos = player.get("position") or "MF"
     others = [p for p in squad if str(p.get("id")) != str(player.get("id"))]
     healthy = _healthy_count(others, pos)
@@ -2125,6 +2137,37 @@ def finalize_action_plan(
         for t in (target_board or {}).get("primary_targets") or []
         if t.get("player_id")
     }
+    # Ideal aspiracional: solo scout / watching — no reserva caja ni fund_target
+    plan_ids = {str(i.get("player_id")) for i in plan if i.get("player_id")}
+    for at in (target_board or {}).get("aspirational_targets") or []:
+        pid = str(at.get("player_id") or "")
+        if not pid or pid in plan_ids or pid in primary_ids:
+            continue
+        plan.append(
+            {
+                "player_id": pid,
+                "name": at.get("name"),
+                "position": at.get("position"),
+                "action": "scout",
+                "bid": None,
+                "acquisition_cost": _money(at.get("price")),
+                "price": _money(at.get("price")),
+                "ep_score": at.get("ep_score"),
+                "why": (
+                    f"Ideal aspiracional (máx EP) · no reserva caja operable · "
+                    f"EP {at.get('ep_score') or '—'} · ~{_money(at.get('price')):,.0f} €"
+                ),
+                "urgency": "low",
+                "affordable": False,
+                "budget_fit": "blocked",
+                "target_tier": "aspirational",
+                "is_primary_target": False,
+                "is_board_objective": False,
+                "queue_role": "aspirational_watch",
+                "priority_score": 20,
+            }
+        )
+        plan_ids.add(pid)
 
     action_base = {
         "buy_now": 1000,
