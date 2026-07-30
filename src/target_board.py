@@ -312,8 +312,19 @@ def _assign_roles(rows_pos: list[dict[str, Any]], starter_slots: int) -> None:
 
 
 def _market_price(p: dict[str, Any]) -> float:
-    """Precio de mercado / valor (para wealth y keep)."""
-    return _money(p.get("price") or p.get("market_value") or p.get("puja_recomendada"))
+    """Valor de mercado / VM (wealth, keep). Prefiere market_value si existe."""
+    return _money(p.get("market_value") or p.get("price") or p.get("puja_recomendada"))
+
+
+def _ask_price(p: dict[str, Any]) -> float:
+    """Precio de salida / puja mínima en mercado (puede ser > VM si rival pide más)."""
+    return _money(
+        p.get("min_bid")
+        or p.get("puja_minima")
+        or p.get("price")
+        or p.get("market_value")
+        or p.get("puja_recomendada")
+    )
 
 
 def _buy_price(p: dict[str, Any]) -> float:
@@ -380,6 +391,7 @@ def _normalize_player(
     if not _avail_ok(p):
         return None
     market = _market_price(p)
+    ask = _ask_price(p)
     buy = _buy_price(p)
     seller = p.get("seller")
     clause_known = bool(p.get("clause_known"))
@@ -388,12 +400,12 @@ def _normalize_player(
         slot_cost = market if market > 0 else 100_000.0
         buy = slot_cost
     else:
-        # Libre/mercado: coste = valor listado (no puja +8%); rival con cláusula = buy
+        # Libre/mercado: coste = precio de salida/puja mín. (no VM si rival pide más)
         is_opp = str(seller or "").lower() in ("free", "market") or bool(
             p.get("on_daily_market")
         )
         if is_opp:
-            slot_cost = market if market > 0 else buy
+            slot_cost = ask if ask > 0 else (market if market > 0 else buy)
             buy = slot_cost
         else:
             slot_cost = buy if buy > 0 else market

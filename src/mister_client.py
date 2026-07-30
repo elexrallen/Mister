@@ -648,8 +648,10 @@ def resolve_team_label(team_id: str | None, fallback_name: str | None = None) ->
 def parse_market_players(html: str) -> list[dict[str, Any]]:
     """
     Cards del mercado (orden real en HTML):
-      team-logo → data-position → points → data-id_player → .name → .underName (precio)
-    Solo campos visibles en Mister; sin inventar PPG ni % de Δvalor.
+      team-logo → data-position → points → data-id_player → .name → .underName (VM)
+      + botón .btn-bid (data-text = precio de puja / salida; data-id_owner si rival vende)
+
+    underName ≈ valor de mercado; data-text puede ser mayor si el rival pide más.
     """
     players: list[dict[str, Any]] = []
     pattern = re.compile(
@@ -659,6 +661,18 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
         + _NAME_UNDER_RE,
         re.I,
     )
+    bid_btn_re = re.compile(
+        r"btn-bid[^>]*"
+        r"data-id_owner=['\"](\d+)['\"][^>]*"
+        r"data-id_player=['\"](\d+)['\"][^>]*"
+        r"data-text=['\"]([^'\"]+)['\"]"
+        r"|"
+        r"btn-bid[^>]*"
+        r"data-id_player=['\"](\d+)['\"][^>]*"
+        r"data-id_owner=['\"](\d+)['\"][^>]*"
+        r"data-text=['\"]([^'\"]+)['\"]",
+        re.I,
+    )
     seen: set[str] = set()
     for m in pattern.finditer(html):
         team_id, pos, pid, name_raw, under = m.groups()
@@ -666,11 +680,12 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
         if not name or pid in seen:
             continue
         seen.add(pid)
-        price = parse_euro_amount(under)
+        market_value = parse_euro_amount(under)
         trend = trend_from_arrow(under)
         # points antes del nombre; avg/streak suelen ir DESPUÉS de underName
         head = html[max(0, m.start() - 80) : m.end()]
-        tail = html[m.end() : m.end() + 500]
+        # El botón de puja suele ir justo después de la card
+        tail = html[m.end() : m.end() + 900]
         pts_m = re.search(r'<div class="points">\s*([^<]+?)\s*</div>', head)
         points = int(parse_float_es(pts_m.group(1))) if pts_m else 0
         scoring = parse_scoring_tail(tail)
@@ -681,13 +696,40 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
                 scoring["mister_avg"] = parse_float_es(avg_m.group(1))
                 scoring["form"] = scoring["mister_avg"]
 
-        players.append({
+        ask_price = market_value
+        owner_id: str | None = None
+        bid_m = bid_btn_re.search(tail)
+        if not bid_m:
+            # Atributos a veces en otro orden / más lejos en el <li>
+            wider = html[max(0, m.start() - 40) : m.end() + 1400]
+            bid_m = bid_btn_re.search(wider)
+        if bid_m:
+            g = bid_m.groups()
+            if g[0] is not None:
+                owner_id, bid_pid, bid_text = g[0], g[1], g[2]
+            else:
+                bid_pid, owner_id, bid_text = g[3], g[4], g[5]
+            if str(bid_pid) == str(pid):
+                parsed_ask = parse_euro_amount(bid_text)
+                if parsed_ask > 0:
+                    ask_price = parsed_ask
+                if owner_id and str(owner_id) not in ("", "0"):
+                    owner_id = str(owner_id)
+                else:
+                    owner_id = None
+            else:
+                owner_id = None
+
+        # Coste de fichaje = precio del botón (salida/puja mín.); VM aparte
+        price = ask_price if ask_price > 0 else market_value
+        row: dict[str, Any] = {
             "id": pid,
             "name": name,
             "position": _pos(pos),
             "team": team_label(team_id),
             "team_id": team_id,
             "price": price,
+            "market_value": market_value if market_value > 0 else price,
             "points": points,
             "form": scoring.get("form"),
             "mister_avg": scoring.get("mister_avg"),
@@ -699,13 +741,18 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
             "price_delta_5d": None,
             "min_bid": price,
             "seller": "market",
+            "on_daily_market": True,
             "data_quality": {
-                "price": "mister",
+                "price": "mister_ask" if ask_price != market_value else "mister",
                 "points": "mister",
                 "form": "mister" if scoring.get("mister_avg") is not None else "missing",
                 "trend": "mister_arrow" if trend else "missing",
             },
-        })
+        }
+        if owner_id:
+            row["owner_id"] = owner_id
+            row["listed_by_rival"] = True
+        players.append(row)
     log.info("HTML /market → %s jugadores", len(players))
     return players
 
