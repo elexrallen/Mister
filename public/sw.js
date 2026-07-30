@@ -4,7 +4,7 @@
  * - Network-first (con fallback a cache) para data/latest_data.json
  */
 
-const CACHE_VERSION = "mfa-v38";
+const CACHE_VERSION = "mfa-v39";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
@@ -47,6 +47,11 @@ function isDataRequest(url) {
   );
 }
 
+function isShellCodeRequest(url) {
+  const p = url.pathname;
+  return p.endsWith("/app.js") || p.endsWith("/styles.css") || p.endsWith("/sw.js");
+}
+
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
@@ -56,10 +61,10 @@ self.addEventListener("fetch", (event) => {
   // Solo misma origen
   if (url.origin !== self.location.origin) return;
 
-  if (isDataRequest(url)) {
-    // Network-first para datos frescos
+  if (isDataRequest(url) || isShellCodeRequest(url)) {
+    // Network-first: datos y código de UI (evita hedges/roles nuevos pegados a JS viejo)
     event.respondWith(
-      caches.open(DATA_CACHE).then(async (cache) => {
+      caches.open(isDataRequest(url) ? DATA_CACHE : SHELL_CACHE).then(async (cache) => {
         try {
           const fresh = await fetch(req);
           if (fresh && fresh.ok) {
@@ -69,17 +74,18 @@ self.addEventListener("fetch", (event) => {
         } catch {
           const cached = await cache.match(req);
           if (cached) return cached;
-          // Fallback al shell data path relativo
-          const alt = await cache.match("./data/latest_data.json");
-          if (alt) return alt;
-          throw new Error("Sin red ni cache de datos");
+          if (isDataRequest(url)) {
+            const alt = await cache.match("./data/latest_data.json");
+            if (alt) return alt;
+          }
+          throw new Error("Sin red ni cache");
         }
       })
     );
     return;
   }
 
-  // Cache-first para shell
+  // Cache-first para shell estático (html/iconos/manifest)
   event.respondWith(
     caches.match(req).then((cached) => {
       if (cached) return cached;

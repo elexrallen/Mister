@@ -1302,8 +1302,10 @@
         ? `<p class="queue-funding-hint queue-liquidity-note">${escapeHtml(fp.liquidity_note)}</p>`
         : "";
 
-    const doToday = plan.filter((a) =>
-      ["primary", "primary_target", "secondary", "hedge"].includes(a.queue_role)
+    const doToday = plan.filter(
+      (a) =>
+        ["primary", "primary_target", "secondary", "hedge"].includes(a.queue_role) ||
+        (a.action === "buy_now" && a.alt_for && a.package_note && /hedge/i.test(a.package_note))
     );
     const planB = plan.filter((a) =>
       ["alt_if_lost", "alt_unfunded", "also_good"].includes(a.queue_role)
