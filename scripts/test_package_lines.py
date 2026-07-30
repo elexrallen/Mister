@@ -22,6 +22,7 @@ def _buy(
     fills_need: bool = True,
     fills_structural: bool = False,
     priority: int = 50,
+    puja_minima: float | None = None,
 ) -> dict:
     return {
         "player_id": pid,
@@ -31,6 +32,7 @@ def _buy(
         "bid": cost,
         "cost": cost,
         "price": cost,
+        "puja_minima": puja_minima if puja_minima is not None else cost * 0.7,
         "on_daily_market": True,
         "seller": "market",
         "wait_risk": wait_risk,
@@ -166,13 +168,37 @@ def test_prefer_1_plus_1_over_weak_second() -> None:
             priority=40,
         ),
     ]
-    # 7+3+2.4 = 12.4 > 11 → no cabe 2+1; sí 1+1 (10) y sí 2+0 (9.4)
-    # Excepción: preferir 1+1 sobre 2º débil
+    # 7+3+2.4 = 12.4 > 11 → no cabe 2+1 a puja llena; con hedge 85% (2.55M):
+    # 7+2.55=9.55 cabe 1+1; 7+2.4+2.55=11.95 > 11 → no 2+1
     capped, pkg = finalize_action_plan(plan, balance=11_000_000, market_mode="auction")
     names = {a["name"] for a in capped if a.get("action") == "buy_now"}
     _assert(pkg.get("combo") == "1+1", f"expected 1+1 got {pkg.get('combo')} buys={names}")
     _assert("DF_KEY" in names and "DF_H" in names, names)
     _assert("FW_WEAK" not in names, names)
+
+
+def test_hedge_reduced_bid_and_exit_note() -> None:
+    plan = [
+        _buy("1", "DF_A", "DF", 6_000_000, wait_risk="high", is_key=True, fills_structural=True, priority=95),
+        _buy(
+            "2",
+            "DF_B",
+            "DF",
+            2_000_000,
+            wait_risk="medium",
+            priority=70,
+            puja_minima=1_500_000,
+        ),
+    ]
+    capped, pkg = finalize_action_plan(plan, balance=12_000_000, market_mode="auction")
+    hedge = next(a for a in capped if a.get("queue_role") == "hedge")
+    _assert(hedge.get("hedge_bid_discount") is True, "expected discount flag")
+    _assert(float(hedge["bid"]) < 2_000_000, f"hedge bid should be reduced: {hedge['bid']}")
+    _assert(float(hedge["bid"]) >= 1_500_000, f"hedge bid >= min: {hedge['bid']}")
+    _assert("vende el peor" in (hedge.get("package_note") or ""), hedge.get("package_note"))
+    hedges = pkg.get("hedges") or []
+    _assert(hedges and hedges[0].get("exit_if_both") == "sell_worse_next_cycle", hedges)
+    _assert("vende el peor" in (pkg.get("note") or ""), pkg.get("note"))
 
 
 def main() -> None:
@@ -183,6 +209,7 @@ def main() -> None:
         test_risk_low_no_hedge,
         test_fixed_no_hedge,
         test_prefer_1_plus_1_over_weak_second,
+        test_hedge_reduced_bid_and_exit_note,
     ]
     failed = 0
     for t in tests:

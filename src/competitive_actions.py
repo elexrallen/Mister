@@ -2162,6 +2162,49 @@ def _item_buy_cost(item: dict[str, Any]) -> float:
     return 0.0
 
 
+def _item_min_bid(item: dict[str, Any]) -> float:
+    for key in ("puja_minima", "price", "market_value"):
+        if item.get(key) is not None:
+            try:
+                return float(item[key])
+            except (TypeError, ValueError):
+                pass
+    return 0.0
+
+
+def hedge_bid_amount(item: dict[str, Any]) -> float:
+    """Puja reducida del hedge: ratio sobre la recomendada, nunca bajo el mínimo."""
+    full = _item_buy_cost(item)
+    if full <= 0:
+        return 0.0
+    # Si ya se aplicó descuento, no recomprimir
+    if item.get("hedge_bid_discount") and item.get("bid") is not None:
+        try:
+            return float(item["bid"])
+        except (TypeError, ValueError):
+            pass
+    ratio = float(getattr(config, "PACKAGE_HEDGE_BID_RATIO", 0.85))
+    min_c = _item_min_bid(item)
+    reduced = max(min_c, full * ratio)
+    # Redondeo a 10k hacia abajo (o mínimo)
+    step = 10_000.0
+    if reduced >= step:
+        reduced = max(min_c, (reduced // step) * step)
+    return round(reduced, 0)
+
+
+def apply_hedge_pricing(item: dict[str, Any]) -> float:
+    """Ajusta bid/cost del hedge y guarda la puja llena de referencia."""
+    full = _item_buy_cost(item)
+    reduced = hedge_bid_amount(item)
+    if full > 0 and not item.get("bid_full"):
+        item["bid_full"] = full
+    item["bid"] = reduced
+    item["cost"] = reduced
+    item["hedge_bid_discount"] = True
+    return reduced
+
+
 def _wait_risk_rank(item: dict[str, Any]) -> int:
     risk = str(item.get("wait_risk") or item.get("risk") or "low").lower()
     return {"high": 2, "medium": 1, "low": 0}.get(risk, 0)
@@ -2534,7 +2577,7 @@ def finalize_action_plan(
     ):
         i0, i1 = intents[0], intents[1]
         h0 = hedge_by_intent[str(i0.get("player_id") or "")]
-        c0, c1, ch = _item_buy_cost(i0), _item_buy_cost(i1), _item_buy_cost(h0)
+        c0, c1, ch = _item_buy_cost(i0), _item_buy_cost(i1), hedge_bid_amount(h0)
         can_1_1 = c0 + ch <= bal
         can_2_1 = c0 + c1 + ch <= bal
         if can_1_1 and not can_2_1:
@@ -2562,7 +2605,7 @@ def finalize_action_plan(
         ),
     )
     for iid, hedge in hedge_order:
-        cost = _item_buy_cost(hedge)
+        cost = hedge_bid_amount(hedge)
         # Tras intents, el residual financia hedges (reserva ya protegida al elegir intents)
         if cost <= sim:
             funded_hedge_ids.add(str(hedge.get("player_id") or ""))
@@ -2657,12 +2700,23 @@ def finalize_action_plan(
         if pid in funded_hedge_ids:
             parent_id = hedge_id_to_intent.get(pid, "")
             parent_name = intent_name_by_id.get(parent_id, "")
+            reduced = apply_hedge_pricing(item)
+            full = float(item.get("bid_full") or reduced)
             item["queue_role"] = "hedge"
             item["alt_for"] = parent_id or None
+            discount_note = ""
+            if full > reduced + 1:
+                discount_note = f" · puja reducida {reduced:,.0f} € (vs {full:,.0f} €)"
             item["package_note"] = (
-                f"Pujar también — hedge por si pierdes {parent_name}"
+                (
+                    f"Hedge por si pierdes {parent_name}{discount_note}. "
+                    f"Si ganas ambos, vende el peor al ciclo siguiente"
+                )
                 if parent_name
-                else "Pujar también — hedge same-day"
+                else (
+                    f"Hedge same-day{discount_note}. "
+                    f"Si ganas ambos, vende el peor al ciclo siguiente"
+                )
             )
             item["urgency"] = "high"
             why_prev = (item.get("why") or "").strip()
@@ -2728,6 +2782,19 @@ def finalize_action_plan(
             prefix = "No acumular con el paquete de hoy"
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         demoted.append(item)
+
+    # Sincronizar refs de hedge en lines con puja reducida
+    priced_hedges = {
+        str(a.get("player_id") or ""): a
+        for a in plan
+        if a.get("queue_role") == "hedge"
+    }
+    for line in line_meta:
+        href = line.get("hedge") or {}
+        hid = str(href.get("player_id") or "")
+        if hid and hid in priced_hedges:
+            line["hedge"] = _pkg_player_ref(priced_hedges[hid])
+            line["exit_if_both"] = "sell_worse_next_cycle"
 
     buy_roles = ("primary", "primary_target", "secondary", "hedge")
 
@@ -2884,18 +2951,28 @@ def finalize_action_plan(
                 "Prioridad: jugador clave en mercado. Luego carencias con buen puntaje/trueque."
                 if fixed
                 else (
-                    f"Paquete {combo}: clave/carencias + hedges same-day si hay riesgo y caja."
+                    f"Paquete {combo}: hedges same-day con puja reducida; "
+                    f"si ganas intent+hedge, vende el peor al ciclo siguiente."
                 )
             )
         else:
             note = (
                 "Sin clave hoy: prioriza carencias con más puntaje y valor de trueque."
                 if fixed
-                else f"Paquete {combo}: pujas a carencias; hedge si riesgo medium/high."
+                else (
+                    f"Paquete {combo}: hedges con puja reducida; "
+                    f"si ganas ambos de una línea, vende el peor al ciclo siguiente."
+                )
             )
     else:
         note = "Sin compra clara en el mercado de hoy — vigila claves y carencias."
 
+    # Refs de hedges ya con pricing aplicado en el plan
+    hedge_plan_by_id = {
+        str(a.get("player_id") or ""): a
+        for a in plan
+        if a.get("queue_role") == "hedge"
+    }
     daily_package: dict[str, Any] = {
         "package_id": package_id,
         "market_mode": "fixed" if fixed else "auction",
@@ -2905,9 +2982,18 @@ def finalize_action_plan(
         "secondary": _pkg_player_ref(secondary),
         "hedges": [
             {
-                **(_pkg_player_ref(h) or {}),
+                **(
+                    _pkg_player_ref(
+                        hedge_plan_by_id.get(str(h.get("player_id") or "")) or h
+                    )
+                    or {}
+                ),
                 "alt_for": iid,
                 "queue_role": "hedge",
+                "bid_full": (hedge_plan_by_id.get(str(h.get("player_id") or "")) or {}).get(
+                    "bid_full"
+                ),
+                "exit_if_both": "sell_worse_next_cycle",
             }
             for iid, h in hedge_by_intent.items()
             if str(h.get("player_id") or "") in funded_hedge_ids

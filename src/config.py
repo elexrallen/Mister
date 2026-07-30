@@ -208,6 +208,8 @@ RAMP_DAYS_BEFORE_KICKOFF = 7
 # Paquete del día: colchón de caja y tope del fichaje secundario (parche)
 PACKAGE_CASH_RESERVE = 8_000_000
 PACKAGE_SECONDARY_MAX = 2_500_000
+# Hedge same-day: puja reducida vs recomendada (mínimo = puja_minima/precio)
+PACKAGE_HEDGE_BID_RATIO = 0.85
 # id_competition Mister → clave de scrapers externos (FF/JP)
 LALIGA_COMPETITION_ID = 1
 PREMIER_COMPETITION_ID = 3

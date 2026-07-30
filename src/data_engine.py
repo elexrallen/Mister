@@ -1356,6 +1356,7 @@ def build_action_plan(
                 "position": o.get("position"),
                 "action": "buy_now",
                 "bid": o.get("puja_recomendada"),
+                "puja_minima": o.get("puja_minima"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
                 "urgency": (

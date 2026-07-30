@@ -1235,7 +1235,8 @@
         return `<span class="badge badge-mint">Clave</span>`;
       if (role === "primary") return `<span class="badge badge-mint">Carencia</span>`;
       if (role === "secondary") return `<span class="badge badge-titular">2ª línea</span>`;
-      if (role === "hedge") return `<span class="badge badge-alta">Hedge</span>`;
+      if (role === "hedge")
+        return `<span class="badge badge-alta">Hedge</span><span class="badge badge-duda">Si ambos → vende</span>`;
       if (role === "alt_unfunded") return `<span class="badge badge-baja">Sin caja hedge</span>`;
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Alt</span>`;
       if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
