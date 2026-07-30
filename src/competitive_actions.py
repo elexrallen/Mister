@@ -2162,6 +2162,198 @@ def _item_buy_cost(item: dict[str, Any]) -> float:
     return 0.0
 
 
+def _wait_risk_rank(item: dict[str, Any]) -> int:
+    risk = str(item.get("wait_risk") or item.get("risk") or "low").lower()
+    return {"high": 2, "medium": 1, "low": 0}.get(risk, 0)
+
+
+def _is_strong_intent(item: dict[str, Any], primary_ids: set[str]) -> bool:
+    pid = str(item.get("player_id") or "")
+    return bool(
+        item.get("is_key_market")
+        or item.get("is_primary_target")
+        or pid in primary_ids
+        or item.get("fills_structural")
+    )
+
+
+def _is_weak_intent(item: dict[str, Any], primary_ids: set[str]) -> bool:
+    return not _is_strong_intent(item, primary_ids) and not bool(
+        item.get("fills_coverage_gap") or item.get("fills_need")
+    )
+
+
+def _intent_sort_key(
+    item: dict[str, Any],
+    *,
+    bal: float,
+    cash_reserve: float,
+    primary_ids: set[str],
+) -> tuple:
+    cost = _item_buy_cost(item)
+    residual = bal - cost
+    leaves = bool(item.get("leaves_gap_budget")) or residual >= cash_reserve
+    crowds = bool(item.get("crowds_out_gaps"))
+    fills = bool(
+        item.get("fills_coverage_gap")
+        or item.get("fills_structural")
+        or item.get("fills_need")
+    )
+    pid = str(item.get("player_id") or "")
+    is_prim = bool(item.get("is_primary_target")) or pid in primary_ids
+    is_key = bool(item.get("is_key_market")) or is_prim
+    is_obj = bool(item.get("is_board_objective")) or is_prim
+    try:
+        asset = float(item.get("trade_asset_score") or 0)
+    except (TypeError, ValueError):
+        asset = 0.0
+    try:
+        prod = float(item.get("production_score") or 0)
+    except (TypeError, ValueError):
+        prod = 0.0
+    return (
+        1 if is_key else 0,
+        1 if is_prim else 0,
+        1 if is_obj else 0,
+        1 if fills else 0,
+        int(prod),
+        int(asset * 10),
+        0 if crowds else 1,
+        1 if leaves else 0,
+        int(item.get("priority_score") or 0),
+        int(item.get("_queue_rank") or 0),
+        -cost,
+    )
+
+
+def _pkg_player_ref(item: dict[str, Any] | None) -> dict[str, Any] | None:
+    if not item:
+        return None
+    return {
+        "player_id": item.get("player_id"),
+        "name": item.get("name"),
+        "position": item.get("position"),
+        "bid": item.get("bid") or item.get("cost"),
+        "is_key_market": bool(item.get("is_key_market")),
+        "trade_asset_score": item.get("trade_asset_score"),
+        "wait_risk": item.get("wait_risk"),
+    }
+
+
+def select_intent_lines(
+    daily_buys: list[dict[str, Any]],
+    *,
+    bal: float,
+    cash_reserve: float,
+    primary_ids: set[str],
+    secondary_max: float,
+    max_intents: int = 2,
+) -> list[dict[str, Any]]:
+    """Hasta N intents de posiciones distintas (clave → carencia → score/trueque)."""
+    if not daily_buys or max_intents <= 0:
+        return []
+
+    def sort_key(item: dict[str, Any]) -> tuple:
+        return _intent_sort_key(
+            item, bal=bal, cash_reserve=cash_reserve, primary_ids=primary_ids
+        )
+
+    key_hit = [
+        i
+        for i in daily_buys
+        if i.get("is_key_market")
+        or str(i.get("player_id") or "") in primary_ids
+        or i.get("is_primary_target")
+    ]
+    gap_pool = [
+        i
+        for i in daily_buys
+        if i.get("fills_coverage_gap")
+        or i.get("fills_structural")
+        or i.get("fills_need")
+        or i.get("is_board_objective")
+    ]
+    preferred = [
+        i
+        for i in daily_buys
+        if (bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget")
+    ]
+    pool = key_hit or gap_pool or preferred or daily_buys
+    first = max(pool, key=sort_key)
+    intents: list[dict[str, Any]] = [first]
+    if max_intents < 2:
+        return intents
+
+    residual = max(0.0, bal - _item_buy_cost(first))
+    first_pos = first.get("position")
+    first_id = str(first.get("player_id") or "")
+    for cand in sorted(daily_buys, key=sort_key, reverse=True):
+        if str(cand.get("player_id") or "") == first_id:
+            continue
+        if cand.get("position") == first_pos:
+            continue
+        if first.get("is_key_market") and cand.get("is_key_market"):
+            if _item_buy_cost(cand) > secondary_max:
+                continue
+        cost = _item_buy_cost(cand)
+        if cost <= 0 or cost > secondary_max:
+            continue
+        if cost > residual:
+            continue
+        if not (
+            cand.get("fills_coverage_gap")
+            or cand.get("fills_structural")
+            or cand.get("fills_need")
+            or cand.get("is_key_market")
+            or cand.get("is_primary_target")
+            or str(cand.get("player_id") or "") in primary_ids
+        ):
+            continue
+        if residual - cost < cash_reserve * 0.45 and cost > 1_200_000:
+            continue
+        intents.append(cand)
+        break
+    return intents
+
+
+def select_hedge_for(
+    intent: dict[str, Any],
+    daily_buys: list[dict[str, Any]],
+    *,
+    exclude_ids: set[str],
+    bal: float,
+    cash_reserve: float,
+    primary_ids: set[str],
+    fixed: bool,
+) -> dict[str, Any] | None:
+    """Mejor alt same-pos en mercado diario si el intent está disputado (solo auction)."""
+    if fixed:
+        return None
+    if _wait_risk_rank(intent) < 1:
+        return None
+    if not _is_daily_market_item(intent):
+        return None
+    pos = intent.get("position")
+    intent_id = str(intent.get("player_id") or "")
+
+    def sort_key(item: dict[str, Any]) -> tuple:
+        return _intent_sort_key(
+            item, bal=bal, cash_reserve=cash_reserve, primary_ids=primary_ids
+        )
+
+    cands = [
+        i
+        for i in daily_buys
+        if i.get("position") == pos
+        and str(i.get("player_id") or "") not in exclude_ids
+        and str(i.get("player_id") or "") != intent_id
+        and _is_daily_market_item(i)
+    ]
+    if not cands:
+        return None
+    return max(cands, key=sort_key)
+
+
 def finalize_action_plan(
     plan: list[dict[str, Any]],
     *,
@@ -2171,8 +2363,8 @@ def finalize_action_plan(
     target_board: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
-    Cola operativa = paquete del día (máx. 2 buy_now compatibles) + plan B / also_good.
-    No reserva 1 compra por posición: evita la sensación de «compra los 3».
+    Cola operativa = líneas de necesidad (intents + hedges same-day en auction).
+    Combos típicos: 1+0, 1+1, 2+0, 2+1, 2+2. Fixed: solo intents + also_good.
     Devuelve (action_plan, daily_package).
     """
     cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
@@ -2300,154 +2492,232 @@ def finalize_action_plan(
         and (i.get("budget_fit") in ("comfortable", "tight", None))
     ]
 
-    def _primary_sort_key(item: dict[str, Any]) -> tuple:
-        cost = _item_buy_cost(item)
-        residual = bal - cost
-        leaves = bool(item.get("leaves_gap_budget")) or residual >= cash_reserve
-        crowds = bool(item.get("crowds_out_gaps"))
-        fills = bool(
-            item.get("fills_coverage_gap")
-            or item.get("fills_structural")
-            or item.get("fills_need")
-        )
-        pid = str(item.get("player_id") or "")
-        is_prim = bool(item.get("is_primary_target")) or pid in primary_ids
-        is_key = bool(item.get("is_key_market")) or is_prim
-        is_obj = bool(item.get("is_board_objective")) or is_prim
-        try:
-            asset = float(item.get("trade_asset_score") or 0)
-        except (TypeError, ValueError):
-            asset = 0.0
-        prod = 0.0
-        try:
-            prod = float(item.get("production_score") or 0)
-        except (TypeError, ValueError):
-            prod = 0.0
-        return (
-            1 if is_key else 0,
-            1 if is_prim else 0,
-            1 if is_obj else 0,
-            1 if fills else 0,
-            # Sin clave: maximizar puntaje, luego trueque (caja es filtro, no empate principal)
-            int(prod),
-            int(asset * 10),
-            0 if crowds else 1,
-            1 if leaves else 0,
-            int(item.get("priority_score") or 0),
-            int(item.get("_queue_rank") or 0),
-            -cost,
-        )
+    intents = select_intent_lines(
+        daily_buys,
+        bal=bal,
+        cash_reserve=cash_reserve,
+        primary_ids=primary_ids,
+        secondary_max=secondary_max,
+        max_intents=2,
+    )
 
-    primary: dict[str, Any] | None = None
-    if daily_buys:
-        # 1) Clave / primary del board en mercado de hoy
-        key_hit = [
-            i
-            for i in daily_buys
-            if i.get("is_key_market")
-            or str(i.get("player_id") or "") in primary_ids
-            or i.get("is_primary_target")
-        ]
-        # 2) Carencias del mercado de hoy (todas; no filtrar antes por “deja reserva”
-        #    — eso excluía cracks asequibles frente a chollos que “dejan caja”)
-        gap_pool = [
-            i
-            for i in daily_buys
-            if i.get("fills_coverage_gap")
-            or i.get("fills_structural")
-            or i.get("fills_need")
-            or i.get("is_board_objective")
-        ]
-        preferred = [
-            i
-            for i in daily_buys
-            if (bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget")
-        ]
-        pool = key_hit or gap_pool or preferred or daily_buys
-        primary = max(pool, key=_primary_sort_key)
+    # Candidatos hedge por línea (auction + risk medium/high)
+    intent_ids = {str(i.get("player_id") or "") for i in intents}
+    hedge_by_intent: dict[str, dict[str, Any]] = {}
+    if not fixed:
+        for intent in intents:
+            iid = str(intent.get("player_id") or "")
+            taken_hedges = {
+                str(h.get("player_id") or "") for h in hedge_by_intent.values()
+            }
+            hedge = select_hedge_for(
+                intent,
+                daily_buys,
+                exclude_ids=intent_ids | taken_hedges,
+                bal=bal,
+                cash_reserve=cash_reserve,
+                primary_ids=primary_ids,
+                fixed=fixed,
+            )
+            if hedge:
+                hedge_by_intent[iid] = hedge
+                intent_ids.add(str(hedge.get("player_id") or ""))
 
-    secondary: dict[str, Any] | None = None
-    residual_after_primary = bal
-    if primary is not None:
-        residual_after_primary = max(0.0, bal - _item_buy_cost(primary))
-        primary_pos = primary.get("position")
-        for cand in sorted(daily_buys, key=_primary_sort_key, reverse=True):
-            if str(cand.get("player_id") or "") == str(primary.get("player_id") or ""):
-                continue
-            if cand.get("position") == primary_pos:
-                continue
-            # Tras un clave, el secundario es parche de carencia con buen trueque
-            if primary.get("is_key_market") and cand.get("is_key_market"):
-                # dos claves solo si el 2º cabe barato
-                if _item_buy_cost(cand) > secondary_max:
-                    continue
-            cost = _item_buy_cost(cand)
-            if cost <= 0 or cost > secondary_max:
-                continue
-            if cost > residual_after_primary:
-                continue
-            if not (
-                cand.get("fills_coverage_gap")
-                or cand.get("fills_structural")
-                or cand.get("fills_need")
-                or cand.get("is_key_market")
-            ):
-                continue
-            # No vaciar el colchón con el secundario
-            if residual_after_primary - cost < cash_reserve * 0.45 and cost > 1_200_000:
-                continue
-            secondary = cand
-            break
+    # Excepción 1+1 vs 2º intent débil: clave/crítica high-risk gana al 2º débil
+    if (
+        not fixed
+        and len(intents) >= 2
+        and _is_strong_intent(intents[0], primary_ids)
+        and _wait_risk_rank(intents[0]) >= 2
+        and str(intents[0].get("player_id") or "") in hedge_by_intent
+        and _is_weak_intent(intents[1], primary_ids)
+    ):
+        i0, i1 = intents[0], intents[1]
+        h0 = hedge_by_intent[str(i0.get("player_id") or "")]
+        c0, c1, ch = _item_buy_cost(i0), _item_buy_cost(i1), _item_buy_cost(h0)
+        can_1_1 = c0 + ch <= bal
+        can_2_1 = c0 + c1 + ch <= bal
+        if can_1_1 and not can_2_1:
+            dropped_id = str(i1.get("player_id") or "")
+            intents = [i0]
+            hedge_by_intent = {
+                k: v for k, v in hedge_by_intent.items() if k != dropped_id
+            }
 
+    # Asignar caja: intents primero, luego hedges por riesgo desc
+    sim = bal
+    funded_intent_ids: set[str] = set()
+    funded_hedge_ids: set[str] = set()
+    for intent in intents:
+        cost = _item_buy_cost(intent)
+        if cost <= sim:
+            funded_intent_ids.add(str(intent.get("player_id") or ""))
+            sim -= cost
+
+    hedge_order = sorted(
+        ((iid, h) for iid, h in hedge_by_intent.items() if iid in funded_intent_ids),
+        key=lambda pair: (
+            -_wait_risk_rank(next(i for i in intents if str(i.get("player_id") or "") == pair[0])),
+            -int(pair[1].get("priority_score") or 0),
+        ),
+    )
+    for iid, hedge in hedge_order:
+        cost = _item_buy_cost(hedge)
+        # Tras intents, el residual financia hedges (reserva ya protegida al elegir intents)
+        if cost <= sim:
+            funded_hedge_ids.add(str(hedge.get("player_id") or ""))
+            sim -= cost
+
+    funded_intents = [
+        i for i in intents if str(i.get("player_id") or "") in funded_intent_ids
+    ]
+    primary = funded_intents[0] if funded_intents else None
+    secondary = funded_intents[1] if len(funded_intents) > 1 else None
     primary_id = str(primary.get("player_id") or "") if primary else ""
-    secondary_id = str(secondary.get("player_id") or "") if secondary else ""
-    primary_name = str(primary.get("name") or "") if primary else ""
+
+    # Mapa player_id → línea (intent id) para hedges / alts
+    intent_name_by_id = {
+        str(i.get("player_id") or ""): str(i.get("name") or "") for i in intents
+    }
+    hedge_id_to_intent: dict[str, str] = {
+        str(h.get("player_id") or ""): iid for iid, h in hedge_by_intent.items()
+    }
     demoted: list[dict[str, Any]] = []
+    line_meta: list[dict[str, Any]] = []
+
+    for intent in intents:
+        iid = str(intent.get("player_id") or "")
+        hedge = hedge_by_intent.get(iid)
+        if iid not in funded_intent_ids:
+            # Intent no financiado (no debería con el orden actual salvo bal=0)
+            hedge_status = "not_needed"
+            if hedge:
+                hedge_status = "unfunded"
+            line_meta.append(
+                {
+                    "intent": _pkg_player_ref(intent),
+                    "hedge": _pkg_player_ref(hedge),
+                    "hedge_status": hedge_status,
+                    "intent_funded": False,
+                }
+            )
+            continue
+        if not hedge:
+            hedge_status = "not_needed"
+        elif str(hedge.get("player_id") or "") in funded_hedge_ids:
+            hedge_status = "bid"
+        else:
+            hedge_status = "unfunded"
+        line_meta.append(
+            {
+                "intent": _pkg_player_ref(intent),
+                "hedge": _pkg_player_ref(hedge),
+                "hedge_status": hedge_status,
+                "intent_funded": True,
+            }
+        )
+
+    n_intents_funded = len(funded_intent_ids)
+    n_hedges_funded = len(funded_hedge_ids)
+    combo = f"{n_intents_funded}+{n_hedges_funded}"
 
     for item in plan:
         if item.get("action") != "buy_now":
             continue
         pid = str(item.get("player_id") or "")
         item["package_id"] = package_id
-        if primary and pid == primary_id:
+        if pid in funded_intent_ids:
             if item.get("is_key_market") or item.get("is_primary_target") or pid in primary_ids:
-                item["queue_role"] = "primary_target"
+                item["queue_role"] = "primary_target" if pid == primary_id else "secondary"
                 item["package_note"] = (
                     "Clave del mercado — fichar al precio"
                     if fixed
-                    else "Clave del mercado — pujar ya"
+                    else (
+                        "Clave del mercado — pujar ya"
+                        if pid == primary_id
+                        else "2ª línea — clave / pujar"
+                    )
                 )
-            else:
+            elif pid == primary_id:
                 item["queue_role"] = "primary"
                 item["package_note"] = (
                     "Carencia prioritaria — fichar al precio"
                     if fixed
                     else "Carencia prioritaria — pujar (máx. puntaje/trueque)"
                 )
+            else:
+                item["queue_role"] = "secondary"
+                item["package_note"] = (
+                    "2ª línea — fichar al precio"
+                    if fixed
+                    else "2ª línea — carencia con buen trueque"
+                )
             item["alt_for"] = None
             continue
-        if secondary and pid == secondary_id:
-            item["queue_role"] = "secondary"
-            item["package_note"] = "También si cabe — carencia con buen trueque"
-            item["alt_for"] = None
+        if pid in funded_hedge_ids:
+            parent_id = hedge_id_to_intent.get(pid, "")
+            parent_name = intent_name_by_id.get(parent_id, "")
+            item["queue_role"] = "hedge"
+            item["alt_for"] = parent_id or None
+            item["package_note"] = (
+                f"Pujar también — hedge por si pierdes {parent_name}"
+                if parent_name
+                else "Pujar también — hedge same-day"
+            )
+            item["urgency"] = "high"
+            why_prev = (item.get("why") or "").strip()
+            prefix = item["package_note"]
+            item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
             continue
 
-        # Resto: demote a wait (plan B / also_good / no acumular)
+        # Resto: demote a wait
         why_prev = (item.get("why") or "").strip()
-        if primary and item.get("position") == primary.get("position"):
+        parent_intent = None
+        for intent in funded_intents or intents:
+            if item.get("position") == intent.get("position"):
+                parent_intent = intent
+                break
+        parent_name = str(parent_intent.get("name") or "") if parent_intent else ""
+        parent_pid = parent_intent.get("player_id") if parent_intent else None
+
+        # Hedge candidato no financiado (misma pos que un intent disputado)
+        is_unfunded_hedge = False
+        for iid, h in hedge_by_intent.items():
+            if str(h.get("player_id") or "") == pid and iid in funded_intent_ids:
+                is_unfunded_hedge = True
+                parent_name = intent_name_by_id.get(iid, parent_name)
+                parent_pid = iid
+                break
+
+        if is_unfunded_hedge and not fixed:
+            item["action"] = "wait"
+            item["queue_role"] = "alt_unfunded"
+            item["alt_for"] = parent_pid
+            item["package_note"] = (
+                f"Sin caja para hedge de {parent_name}; "
+                f"si lo pierdes, este alt probablemente ya no esté"
+            )
+            item["urgency"] = "medium"
+            prefix = item["package_note"]
+            item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
+        elif parent_intent and item.get("position") == parent_intent.get("position"):
             item["action"] = "wait"
             if fixed:
                 item["queue_role"] = "also_good"
-                item["alt_for"] = primary.get("player_id")
+                item["alt_for"] = parent_pid
                 item["package_note"] = "También válido — sin prisa (plantillas compartidas)"
                 item["urgency"] = "low"
                 prefix = "También válido — sin prisa"
             else:
                 item["queue_role"] = "alt_if_lost"
-                item["alt_for"] = primary.get("player_id")
-                item["package_note"] = f"Plan B si se va {primary_name}"
-                item["urgency"] = "medium"
-                prefix = f"Plan B si se va {primary_name}"
+                item["alt_for"] = parent_pid
+                item["package_note"] = (
+                    f"Alt de {parent_name} — riesgo bajo; no hedge same-day"
+                    if _wait_risk_rank(parent_intent) < 1
+                    else f"Alt de {parent_name} — sin puja extra hoy"
+                )
+                item["urgency"] = "low"
+                prefix = item["package_note"]
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         else:
             item["action"] = "wait"
@@ -2459,18 +2729,20 @@ def finalize_action_plan(
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         demoted.append(item)
 
+    buy_roles = ("primary", "primary_target", "secondary", "hedge")
+
     # Aspiracionales / fuera de caja → no mezclar con plan de hoy
     for item in plan:
         tier = item.get("target_tier") or target_tier_from_budget_fit(item.get("budget_fit"))
         if tier != "aspirational" and item.get("budget_fit") != "blocked":
             continue
-        if item.get("queue_role") in ("primary", "primary_target", "secondary"):
+        if item.get("queue_role") in buy_roles:
             continue
         if item.get("action") in ("buy_now", "clause_bid"):
-            # No debería llegar: buy_now exige caja; por seguridad
             item["action"] = "wait"
         if not item.get("queue_role") or item.get("queue_role") in (
             "alt_if_lost",
+            "alt_unfunded",
             "also_good",
             "do_not_stack",
         ):
@@ -2489,6 +2761,10 @@ def finalize_action_plan(
             item["_queue_rank"] = 10_000 + int(item.get("priority_score") or 0)
         elif role == "secondary":
             item["_queue_rank"] = 9_000 + int(item.get("priority_score") or 0)
+        elif role == "hedge":
+            item["_queue_rank"] = 8_500 + int(item.get("priority_score") or 0)
+        elif role == "alt_unfunded":
+            item["_queue_rank"] = 750 + int(item.get("priority_score") or 0)
         elif role in ("alt_if_lost", "also_good"):
             item["_queue_rank"] = 700 + int(item.get("priority_score") or 0)
         elif role == "do_not_stack":
@@ -2506,9 +2782,9 @@ def finalize_action_plan(
     capped: list[dict[str, Any]] = []
     per_action: dict[str, int] = {}
     limits = {
-        "buy_now": 2,  # paquete: primary + secondary
+        "buy_now": 2 if fixed else 4,  # auction: hasta 2 intents + 2 hedges
         "clause_bid": 0 if fixed else 4,
-        "wait": 8,  # alts + waits del día
+        "wait": 8,
         "avoid": 3,
         "sell": 5,
         "scout": 0 if fixed else 3,
@@ -2534,14 +2810,14 @@ def finalize_action_plan(
             return False
         if per_action.get(a, 0) >= limits.get(a, 3):
             return False
-        if a == "buy_now" and role not in ("primary", "primary_target", "secondary"):
+        if a == "buy_now" and role not in buy_roles:
             return False
         if a == "buy_now" and sim_balance is not None:
             cost = _item_buy_cost(item)
             if cost > sim_balance:
                 return False
         if a == "wait":
-            if role in ("alt_if_lost", "also_good"):
+            if role in ("alt_if_lost", "alt_unfunded", "also_good"):
                 if alt_waits >= max_alt_waits:
                     return False
                 alt_waits += 1
@@ -2568,22 +2844,25 @@ def finalize_action_plan(
         capped.append(clean)
         return True
 
-    # Paquete → also_good / plan B / no acumular → fuera de caja → resto
     for item in plan:
-        if item.get("queue_role") in ("primary", "primary_target", "secondary"):
+        if item.get("queue_role") in buy_roles:
             _append(item)
     for item in plan:
-        if item.get("queue_role") in ("alt_if_lost", "also_good", "do_not_stack"):
+        if item.get("queue_role") in (
+            "alt_if_lost",
+            "alt_unfunded",
+            "also_good",
+            "do_not_stack",
+        ):
             _append(item)
     for item in plan:
         if item.get("queue_role") == "out_of_budget":
             _append(item)
     for item in plan:
         if item.get("queue_role") in (
-            "primary",
-            "primary_target",
-            "secondary",
+            *buy_roles,
             "alt_if_lost",
+            "alt_unfunded",
             "also_good",
             "do_not_stack",
             "out_of_budget",
@@ -2594,10 +2873,9 @@ def finalize_action_plan(
         _append(item)
 
     spend = 0.0
-    if primary:
-        spend += _item_buy_cost(primary)
-    if secondary:
-        spend += _item_buy_cost(secondary)
+    for item in capped:
+        if item.get("action") == "buy_now" and item.get("queue_role") in buy_roles:
+            spend += _item_buy_cost(item)
     residual_after = max(0.0, bal - spend)
 
     if primary:
@@ -2605,13 +2883,15 @@ def finalize_action_plan(
             note = (
                 "Prioridad: jugador clave en mercado. Luego carencias con buen puntaje/trueque."
                 if fixed
-                else "Prioridad: clave en mercado (pujar). Si no hay, carencias con máx. puntaje/trueque."
+                else (
+                    f"Paquete {combo}: clave/carencias + hedges same-day si hay riesgo y caja."
+                )
             )
         else:
             note = (
                 "Sin clave hoy: prioriza carencias con más puntaje y valor de trueque."
                 if fixed
-                else "Sin clave hoy: pujas a carencias con más puntaje y valor de trueque."
+                else f"Paquete {combo}: pujas a carencias; hedge si riesgo medium/high."
             )
     else:
         note = "Sin compra clara en el mercado de hoy — vigila claves y carencias."
@@ -2619,29 +2899,19 @@ def finalize_action_plan(
     daily_package: dict[str, Any] = {
         "package_id": package_id,
         "market_mode": "fixed" if fixed else "auction",
-        "primary": (
+        "combo": combo,
+        "lines": line_meta,
+        "primary": _pkg_player_ref(primary),
+        "secondary": _pkg_player_ref(secondary),
+        "hedges": [
             {
-                "player_id": primary.get("player_id"),
-                "name": primary.get("name"),
-                "position": primary.get("position"),
-                "bid": primary.get("bid") or primary.get("cost"),
-                "is_key_market": bool(primary.get("is_key_market")),
-                "trade_asset_score": primary.get("trade_asset_score"),
+                **(_pkg_player_ref(h) or {}),
+                "alt_for": iid,
+                "queue_role": "hedge",
             }
-            if primary
-            else None
-        ),
-        "secondary": (
-            {
-                "player_id": secondary.get("player_id"),
-                "name": secondary.get("name"),
-                "position": secondary.get("position"),
-                "bid": secondary.get("bid") or secondary.get("cost"),
-                "trade_asset_score": secondary.get("trade_asset_score"),
-            }
-            if secondary
-            else None
-        ),
+            for iid, h in hedge_by_intent.items()
+            if str(h.get("player_id") or "") in funded_hedge_ids
+        ],
         "alts": [
             {
                 "player_id": a.get("player_id"),
@@ -2665,7 +2935,7 @@ def finalize_action_plan(
                 or str(primary.get("player_id") or "") in primary_ids
             )
         ),
-        "policy": "key_market_first_then_gap_score_trade",
+        "policy": "multi_line_risk_hedge",
     }
 
     return capped, daily_package

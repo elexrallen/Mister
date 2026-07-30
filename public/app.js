@@ -1231,11 +1231,13 @@
       scout: { title: "Vigilar", cls: "act-scout" },
     };
     const roleChip = (role, a) => {
-      if (role === "primary_target" || (a && a.is_key_market))
+      if (role === "primary_target" || (a && a.is_key_market && role !== "hedge"))
         return `<span class="badge badge-mint">Clave</span>`;
       if (role === "primary") return `<span class="badge badge-mint">Carencia</span>`;
-      if (role === "secondary") return `<span class="badge badge-titular">También si cabe</span>`;
-      if (role === "alt_if_lost") return `<span class="badge badge-duda">Plan B</span>`;
+      if (role === "secondary") return `<span class="badge badge-titular">2ª línea</span>`;
+      if (role === "hedge") return `<span class="badge badge-alta">Hedge</span>`;
+      if (role === "alt_unfunded") return `<span class="badge badge-baja">Sin caja hedge</span>`;
+      if (role === "alt_if_lost") return `<span class="badge badge-duda">Alt</span>`;
       if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
       if (role === "do_not_stack") return `<span class="badge badge-baja">No acumular</span>`;
       if (role === "out_of_budget") return `<span class="badge badge-baja">Fuera de caja</span>`;
@@ -1248,11 +1250,23 @@
     }
 
     const fp = data.funding_plan || {};
+    const comboChip =
+      pkg.combo && !fixed
+        ? ` · combo <strong>${escapeHtml(String(pkg.combo))}</strong>`
+        : "";
+    const hedgeNames = (pkg.hedges || [])
+      .map((h) => h && h.name)
+      .filter(Boolean)
+      .slice(0, 2);
     const packageHint = pkg.primary
-      ? `<p class="queue-package-hint">Plan de hoy: <strong>${escapeHtml(
+      ? `<p class="queue-package-hint">Plan de hoy${comboChip}: <strong>${escapeHtml(
           pkg.primary.name || ""
         )}</strong>${
           pkg.secondary ? ` + <strong>${escapeHtml(pkg.secondary.name || "")}</strong>` : ""
+        }${
+          hedgeNames.length
+            ? ` · hedge ${hedgeNames.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}`
+            : ""
         } · gasto ~${formatMoney(pkg.spend_cap)} · queda ~${formatMoney(
           pkg.residual_after
         )}</p>`
@@ -1287,10 +1301,12 @@
         ? `<p class="queue-funding-hint queue-liquidity-note">${escapeHtml(fp.liquidity_note)}</p>`
         : "";
 
-    const doToday = plan.filter(
-      (a) => a.queue_role === "primary" || a.queue_role === "primary_target" || a.queue_role === "secondary"
+    const doToday = plan.filter((a) =>
+      ["primary", "primary_target", "secondary", "hedge"].includes(a.queue_role)
     );
-    const planB = plan.filter((a) => a.queue_role === "alt_if_lost" || a.queue_role === "also_good");
+    const planB = plan.filter((a) =>
+      ["alt_if_lost", "alt_unfunded", "also_good"].includes(a.queue_role)
+    );
     const noStack = plan.filter((a) => a.queue_role === "do_not_stack");
     const outOfBudget = plan.filter((a) => a.queue_role === "out_of_budget");
     const other = plan.filter(
@@ -1299,7 +1315,9 @@
           "primary",
           "primary_target",
           "secondary",
+          "hedge",
           "alt_if_lost",
+          "alt_unfunded",
           "also_good",
           "do_not_stack",
           "out_of_budget",
@@ -1374,7 +1392,9 @@
         opts.muted ||
         a.queue_role === "do_not_stack" ||
         (a.line_already_covered && !a.is_upgrade && (a.action === "wait" || a.action === "scout"));
-      const topCls = a.queue_role === "primary" || a.queue_role === "secondary" ? " is-top" : "";
+      const topCls = ["primary", "primary_target", "secondary", "hedge"].includes(a.queue_role)
+        ? " is-top"
+        : "";
       const rankDisplay = rankLabel != null ? String(rankLabel) : "·";
       return `<button type="button" class="queue-item ${meta.cls}${topCls}${
         muted ? " is-covered" : ""
@@ -1465,7 +1485,11 @@
       fundingHint +
       liquidityNote +
       section("Plan de hoy", doToday, "numbered") +
-      section(fixed ? "También válidos" : "Si se van / plan B", planB, "muted") +
+      section(
+        fixed ? "También válidos" : "Alts sin puja / sin caja",
+        planB,
+        "muted"
+      ) +
       section("No acumular con el paquete", noStack, "muted") +
       section("Fuera de caja / vigilar", outOfBudget, "muted") +
       section("Otras acciones", otherVisible, "muted") +

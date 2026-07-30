@@ -288,6 +288,7 @@ def main(argv: list[str] | None = None) -> None:
     gap_buys = [a for a in buys if a.get("fills_coverage_gap")]
     prim = (daily_package or {}).get("primary") or {}
     sec = (daily_package or {}).get("secondary") or {}
+    hedges = (daily_package or {}).get("hedges") or []
     tb = target_board or {}
     w = tb.get("wealth") or {}
     tot = tb.get("totals") or {}
@@ -309,8 +310,11 @@ def main(argv: list[str] | None = None) -> None:
         f"patches={len(tb.get('daily_patches') or [])} "
         f"reserved={tb.get('cash_reserved')}"
     )
+    hedge_names = ", ".join(h.get("name") or "?" for h in hedges[:4]) or "—"
     print(
-        f"  package primary={prim.get('name')} secondary={sec.get('name')} "
+        f"  package combo={daily_package.get('combo')} "
+        f"primary={prim.get('name')} secondary={sec.get('name')} "
+        f"hedges={hedge_names} "
         f"spend={daily_package.get('spend_cap')} residual={daily_package.get('residual_after')}"
     )
     for a in buys[:12]:
@@ -321,7 +325,7 @@ def main(argv: list[str] | None = None) -> None:
             f"cost={a.get('cost') or a.get('bid')}"
         )
     for a in waits:
-        if a.get("queue_role") in ("alt_if_lost", "do_not_stack"):
+        if a.get("queue_role") in ("alt_if_lost", "alt_unfunded", "do_not_stack"):
             print(
                 f"  {a.get('queue_role')} {a.get('name')} [{a.get('position')}] "
                 f"{(a.get('why') or '')[:90]}"
