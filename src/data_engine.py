@@ -1331,6 +1331,9 @@ def build_action_plan(
             "funding_target": funding.get("funding_target"),
             "funding_shortfall": funding.get("funding_shortfall"),
             "cost": cost,
+            "price": o.get("price"),
+            "min_bid": o.get("min_bid") or o.get("puja_minima"),
+            "puja_minima": o.get("puja_minima"),
             "fills_coverage_gap": fills_cov,
             "line_already_covered": line_covered,
             "is_upgrade": is_upgrade,
@@ -1356,7 +1359,6 @@ def build_action_plan(
                 "position": o.get("position"),
                 "action": "buy_now",
                 "bid": o.get("puja_recomendada"),
-                "puja_minima": o.get("puja_minima"),
                 "bid_ceiling": o.get("puja_techo"),
                 "wait_risk": risk,
                 "urgency": (

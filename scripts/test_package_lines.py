@@ -24,6 +24,7 @@ def _buy(
     priority: int = 50,
     puja_minima: float | None = None,
 ) -> dict:
+    floor = puja_minima if puja_minima is not None else cost * 0.7
     return {
         "player_id": pid,
         "name": name,
@@ -31,8 +32,9 @@ def _buy(
         "action": "buy_now",
         "bid": cost,
         "cost": cost,
-        "price": cost,
-        "puja_minima": puja_minima if puja_minima is not None else cost * 0.7,
+        "price": floor,
+        "puja_minima": floor,
+        "min_bid": floor,
         "on_daily_market": True,
         "seller": "market",
         "wait_risk": wait_risk,
@@ -201,6 +203,62 @@ def test_hedge_reduced_bid_and_exit_note() -> None:
     _assert("vende el peor" in (pkg.get("note") or ""), pkg.get("note"))
 
 
+def test_hedge_never_below_min_bid() -> None:
+    """Sin puja_minima explícita, usar price/listado como suelo."""
+    plan = [
+        _buy("1", "DF_A", "DF", 5_000_000, wait_risk="high", is_key=True, fills_structural=True, priority=95),
+        {
+            "player_id": "2",
+            "name": "DF_B",
+            "position": "DF",
+            "action": "buy_now",
+            "bid": 2_050_000,
+            "cost": 2_050_000,
+            "price": 2_000_000,
+            # sin puja_minima: el suelo debe ser price (2M), no 85% de 2.05M
+            "on_daily_market": True,
+            "seller": "market",
+            "wait_risk": "medium",
+            "budget_fit": "comfortable",
+            "target_tier": "realistic",
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "priority_score": 70,
+            "production_score": 70,
+            "trade_asset_score": 10,
+            "why": "test DF_B",
+        },
+    ]
+    capped, _pkg = finalize_action_plan(plan, balance=12_000_000, market_mode="auction")
+    hedge = next(a for a in capped if a.get("queue_role") == "hedge")
+    _assert(float(hedge["bid"]) >= 2_000_000, f"bid {hedge['bid']} < min price 2M")
+
+
+def test_hedge_missing_floor_no_illegal_discount() -> None:
+    """Sin ningún suelo (ni min ni price): no descontar (evita puja ilegal)."""
+    from competitive_actions import hedge_bid_amount
+
+    item = {"bid": 2_050_000, "cost": 2_050_000}
+    amt = hedge_bid_amount(item)
+    _assert(amt == 2_050_000, f"expected no discount without floor, got {amt}")
+
+
+def test_hedge_floor_round_keeps_min() -> None:
+    """Redondeo a 10k no puede dejar la puja bajo el mínimo."""
+    from competitive_actions import apply_hedge_pricing, hedge_bid_amount
+
+    item = {
+        "bid": 2_007_000,
+        "cost": 2_007_000,
+        "puja_minima": 2_003_000,
+        "price": 2_003_000,
+    }
+    amt = hedge_bid_amount(item)
+    _assert(amt >= 2_003_000, f"hedge_bid_amount {amt} < min")
+    apply_hedge_pricing(item)
+    _assert(float(item["bid"]) >= 2_003_000, f"apply {item['bid']} < min")
+
+
 def main() -> None:
     tests = [
         test_2_plus_2_wide_cash,
@@ -210,6 +268,9 @@ def main() -> None:
         test_fixed_no_hedge,
         test_prefer_1_plus_1_over_weak_second,
         test_hedge_reduced_bid_and_exit_note,
+        test_hedge_never_below_min_bid,
+        test_hedge_missing_floor_no_illegal_discount,
+        test_hedge_floor_round_keeps_min,
     ]
     failed = 0
     for t in tests:

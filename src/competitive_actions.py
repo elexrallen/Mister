@@ -2163,17 +2163,29 @@ def _item_buy_cost(item: dict[str, Any]) -> float:
 
 
 def _item_min_bid(item: dict[str, Any]) -> float:
-    for key in ("puja_minima", "price", "market_value"):
+    """Suelo de puja Mister (mínimo de subasta), no la recomendada."""
+    for key in ("puja_minima", "min_bid"):
         if item.get(key) is not None:
             try:
-                return float(item[key])
+                val = float(item[key])
             except (TypeError, ValueError):
-                pass
-    return 0.0
+                continue
+            if val > 0:
+                return val
+    for key in ("price", "market_value"):
+        if item.get(key) is not None:
+            try:
+                val = float(item[key])
+            except (TypeError, ValueError):
+                continue
+            if val > 0:
+                return val
+    # Sin mínimo explícito: no descontar (evita pujas ilegales)
+    return _item_buy_cost(item)
 
 
 def hedge_bid_amount(item: dict[str, Any]) -> float:
-    """Puja reducida del hedge: ratio sobre la recomendada, nunca bajo el mínimo."""
+    """Puja reducida del hedge: ratio sobre la recomendada, nunca bajo el mínimo Mister."""
     full = _item_buy_cost(item)
     if full <= 0:
         return 0.0
@@ -2185,23 +2197,32 @@ def hedge_bid_amount(item: dict[str, Any]) -> float:
             pass
     ratio = float(getattr(config, "PACKAGE_HEDGE_BID_RATIO", 0.85))
     min_c = _item_min_bid(item)
+    # Nunca sugerir por debajo del mínimo legal de la subasta
     reduced = max(min_c, full * ratio)
-    # Redondeo a 10k hacia abajo (o mínimo)
+    # Redondeo a 10k hacia ABAJO solo si seguimos >= mínimo; si no, usar el mínimo exacto
     step = 10_000.0
     if reduced >= step:
-        reduced = max(min_c, (reduced // step) * step)
+        floored = (reduced // step) * step
+        reduced = floored if floored >= min_c else min_c
+    if reduced < min_c:
+        reduced = min_c
     return round(reduced, 0)
 
 
 def apply_hedge_pricing(item: dict[str, Any]) -> float:
     """Ajusta bid/cost del hedge y guarda la puja llena de referencia."""
     full = _item_buy_cost(item)
+    min_c = _item_min_bid(item)
     reduced = hedge_bid_amount(item)
     if full > 0 and not item.get("bid_full"):
         item["bid_full"] = full
+    # Seguridad final: jamás por debajo del mínimo
+    if min_c > 0 and reduced < min_c:
+        reduced = min_c
     item["bid"] = reduced
     item["cost"] = reduced
-    item["hedge_bid_discount"] = True
+    item["puja_minima"] = min_c if min_c > 0 else item.get("puja_minima")
+    item["hedge_bid_discount"] = bool(full > 0 and reduced < full - 1)
     return reduced
 
 
