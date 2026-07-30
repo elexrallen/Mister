@@ -2943,6 +2943,43 @@ def finalize_action_plan(
         if not item.get("package_note"):
             item["package_note"] = "Vender hoy — puedes listar ya (caja en ~48h salvo rescindir)"
 
+    # Waits del mercado de hoy same-pos / clave sin rol → etiquetar como alt visible
+    primary_pos = primary.get("position") if primary else None
+    primary_name_s = str(primary.get("name") or "") if primary else ""
+    for item in plan:
+        if item.get("action") != "wait":
+            continue
+        if item.get("queue_role"):
+            continue
+        if not _is_daily_market_item(item):
+            continue
+        same_pos = primary_pos and item.get("position") == primary_pos
+        notable = bool(
+            item.get("is_key_market")
+            or item.get("is_primary_target")
+            or item.get("fills_structural")
+            or item.get("fills_need")
+            or item.get("fills_coverage_gap")
+        )
+        if not (same_pos or notable):
+            continue
+        item["package_id"] = package_id
+        if same_pos and primary_name_s:
+            item["queue_role"] = "alt_if_lost"
+            item["alt_for"] = primary.get("player_id")
+            item["package_note"] = (
+                f"No pujar hoy — alt de {primary_name_s} (mismo puesto / ya priorizado otro)"
+            )
+        else:
+            item["queue_role"] = "also_good" if fixed else "alt_if_lost"
+            item["package_note"] = (
+                "No pujar hoy — interesante pero fuera del paquete de pujas"
+            )
+        why_prev = (item.get("why") or "").strip()
+        prefix = item["package_note"]
+        if prefix not in why_prev:
+            item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
+
     # Aspiracionales / fuera de caja → no mezclar con plan de hoy
     for item in plan:
         tier = item.get("target_tier") or target_tier_from_budget_fit(item.get("budget_fit"))

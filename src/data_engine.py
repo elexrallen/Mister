@@ -1880,67 +1880,126 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     board_candidates: list[dict[str, Any]] = []
     board_seen: set[str] = set()
 
-    def _append_board_cand(raw: dict[str, Any], *, seller_hint: str | None = None) -> None:
+    def _append_board_cand(
+        raw: dict[str, Any],
+        *,
+        seller_hint: str | None = None,
+        overwrite_as_market: bool = False,
+    ) -> None:
+        """Añade candidato al universo del tablero.
+
+        overwrite_as_market: si ya existía como rival/cláusula (catálogo o HTML
+        desfasado) pero hoy está libre en el mercado diario, el mercado gana.
+        """
         pid = str(raw.get("id") or raw.get("player_id") or "")
-        if not pid or pid in board_seen:
+        if not pid:
             return
-        board_seen.add(pid)
-        base = dict(enriched_by_id.get(pid) or raw)
-        # Overlay identidad / ownership del catálogo completo
-        for k in (
-            "id",
-            "name",
-            "position",
-            "team",
-            "team_id",
-            "price",
-            "market_value",
-            "owner_id",
-            "owner_name",
-            "clause",
-            "clause_known",
-            "injury",
-            "mister_avg",
-            "form",
-            "points",
-        ):
-            if raw.get(k) is not None:
-                base[k] = raw[k]
-        owner_id = base.get("owner_id")
-        is_mine = pid in owned or bool(raw.get("is_mine")) or (
-            my_uc and str(owner_id or "") == my_uc
-        )
-        is_free = not owner_id or str(owner_id) in ("", "0")
-        if is_mine:
-            base["seller"] = "owned"
-            base["on_daily_market"] = False
-        elif is_free:
-            base.setdefault("seller", seller_hint or "free")
-            if base.get("on_daily_market") is None:
-                base["on_daily_market"] = base.get("seller") == "market"
-            if base.get("min_bid") is None and base.get("price"):
-                base["min_bid"] = base["price"]
-            base["puja_recomendada"] = (
-                base.get("puja_recomendada")
-                or base.get("min_bid")
-                or base.get("price")
+
+        def _build_base(prev: dict[str, Any] | None = None) -> dict[str, Any]:
+            base = dict(prev or enriched_by_id.get(pid) or raw)
+            for k in (
+                "id",
+                "name",
+                "position",
+                "team",
+                "team_id",
+                "price",
+                "market_value",
+                "owner_id",
+                "owner_name",
+                "clause",
+                "clause_known",
+                "injury",
+                "mister_avg",
+                "form",
+                "points",
+                "min_bid",
+                "puja_minima",
+                "puja_recomendada",
+                "puja_techo",
+                "seller",
+                "on_daily_market",
+            ):
+                if raw.get(k) is not None:
+                    base[k] = raw[k]
+            if overwrite_as_market:
+                # Libre / subasta del día: no comprar por cláusula rival obsoleta
+                base["seller"] = "market"
+                base["on_daily_market"] = True
+                raw_owner = raw.get("owner_id")
+                if not raw_owner or str(raw_owner) in ("", "0"):
+                    base["owner_id"] = None
+                    base["owner_name"] = None
+                    base["clause"] = None
+                    base["clause_known"] = False
+                if base.get("min_bid") is None and base.get("price"):
+                    base["min_bid"] = base["price"]
+                base["puja_recomendada"] = (
+                    raw.get("puja_recomendada")
+                    or base.get("puja_recomendada")
+                    or base.get("min_bid")
+                    or base.get("price")
+                )
+                return base
+            owner_id = base.get("owner_id")
+            is_mine = pid in owned or bool(raw.get("is_mine")) or (
+                my_uc and str(owner_id or "") == my_uc
             )
-        else:
-            base["seller"] = "rival"
-            base["on_daily_market"] = False
-            clause = base.get("clause") if base.get("clause_known", base.get("clause") is not None) else None
-            base["puja_recomendada"] = clause or base.get("price") or base.get("market_value")
-            if clause is not None:
-                base["clause"] = clause
-                base["clause_known"] = True
-        board_candidates.append(base)
+            is_free = not owner_id or str(owner_id) in ("", "0")
+            if is_mine:
+                base["seller"] = "owned"
+                base["on_daily_market"] = False
+            elif is_free:
+                base.setdefault("seller", seller_hint or "free")
+                if base.get("on_daily_market") is None:
+                    base["on_daily_market"] = base.get("seller") == "market"
+                if base.get("min_bid") is None and base.get("price"):
+                    base["min_bid"] = base["price"]
+                base["puja_recomendada"] = (
+                    base.get("puja_recomendada")
+                    or base.get("min_bid")
+                    or base.get("price")
+                )
+            else:
+                base["seller"] = "rival"
+                base["on_daily_market"] = False
+                clause = (
+                    base.get("clause")
+                    if base.get("clause_known", base.get("clause") is not None)
+                    else None
+                )
+                base["puja_recomendada"] = clause or base.get("price") or base.get("market_value")
+                if clause is not None:
+                    base["clause"] = clause
+                    base["clause_known"] = True
+            return base
+
+        if pid in board_seen:
+            if not overwrite_as_market:
+                return
+            for i, c in enumerate(board_candidates):
+                if str(c.get("id") or c.get("player_id") or "") != pid:
+                    continue
+                if pid in owned or c.get("seller") == "owned":
+                    return
+                board_candidates[i] = _build_base(c)
+                return
+            return
+
+        board_seen.add(pid)
+        board_candidates.append(_build_base())
 
     # Primario: catálogo completo Mister
     for p in full_pool:
         _append_board_cand(p)
-    # Fallback / extras: mercado clasificado, upgrades, rivales HTML, libres
+    # Mercado diario: puede corregir ownership rival obsoleto (jugador ya libre)
     for p in opportunities or []:
-        _append_board_cand(p, seller_hint="market" if p.get("on_daily_market") else None)
+        daily = bool(p.get("on_daily_market") or p.get("seller") == "market")
+        _append_board_cand(
+            p,
+            seller_hint="market" if daily else None,
+            overwrite_as_market=daily,
+        )
     for u in rival_upgrades or []:
         _append_board_cand(
             {

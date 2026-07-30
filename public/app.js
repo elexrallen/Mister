@@ -1355,11 +1355,40 @@
     );
     // Haz esto hoy: cupo → pujas → ventas → cláusulas
     const doToday = [...slotSells, ...packageBuys, ...otherSells, ...clauses];
-    const doTodayIds = new Set(doToday.map((a) => String(a.player_id || "") + ":" + (a.action || "")));
-    const context = plan.filter((a) => {
+    const doTodayIds = new Set(
+      doToday.map((a) => String(a.player_id || "") + ":" + (a.action || ""))
+    );
+    const contextAll = plan.filter((a) => {
       const key = String(a.player_id || "") + ":" + (a.action || "");
       if (doTodayIds.has(key)) return false;
       return ["wait", "scout", "avoid"].includes(a.action) || a.queue_role === "aspirational_watch";
+    });
+    const primaryPos = (pkg.primary || {}).position;
+    // Siempre visibles: waits del mercado hoy relacionados (same-pos / clave / carencia)
+    const relatedWaits = contextAll
+      .filter((a) => {
+        if (a.action !== "wait" || !a.on_daily_market) return false;
+        if (
+          ["alt_if_lost", "alt_unfunded", "alt_no_slot", "also_good", "do_not_stack"].includes(
+            a.queue_role
+          )
+        )
+          return true;
+        return (
+          (primaryPos && a.position === primaryPos) ||
+          a.is_key_market ||
+          a.fills_need ||
+          a.fills_structural ||
+          a.fills_coverage_gap
+        );
+      })
+      .slice(0, 5);
+    const relatedIds = new Set(
+      relatedWaits.map((a) => String(a.player_id || "") + ":" + (a.action || ""))
+    );
+    const context = contextAll.filter((a) => {
+      const key = String(a.player_id || "") + ":" + (a.action || "");
+      return !relatedIds.has(key);
     });
 
     const renderItem = (a, rankLabel, opts = {}) => {
@@ -1532,12 +1561,18 @@
         "numbered",
         "Pujas, ventas y cláusulas que puedes ejecutar en Mister ahora"
       ) +
+      section(
+        "No pujar hoy (relacionados)",
+        relatedWaits,
+        "muted",
+        "Mercado de hoy en el mismo puesto o clave — no es el primary del paquete"
+      ) +
       (expanded
         ? section(
             "Contexto del mercado",
             contextVisible,
             "muted",
-            "No requiere acción hoy — alternativas, vigilantes o jugadores a evitar"
+            "No requiere acción hoy — vigilantes, evitar, u otras alternativas"
           )
         : "") +
       contextHidden.map((a) => renderItem(a, null, { muted: true, hidden: true })).join("") +

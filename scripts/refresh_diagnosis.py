@@ -104,9 +104,30 @@ def main(argv: list[str] | None = None) -> None:
         or (data.get("sources") or {}).get("market_mode")
         or "auction"
     )
-    board_candidates: list = list(opportunities)
+    # Universo tablero: mercado diario primero; rivales no pisan libres del día
+    board_seen: set[str] = set()
+    board_candidates: list = []
+
+    def _push_cand(row: dict, *, allow_dup: bool = False) -> None:
+        pid = str(row.get("id") or row.get("player_id") or "")
+        if not pid or (pid in board_seen and not allow_dup):
+            return
+        board_seen.add(pid)
+        board_candidates.append(row)
+
+    for o in opportunities:
+        row = dict(o)
+        if row.get("on_daily_market") or row.get("seller") == "market":
+            row["seller"] = "market"
+            row["on_daily_market"] = True
+            if not row.get("owner_id") or str(row.get("owner_id")) in ("", "0"):
+                row["owner_id"] = None
+                row["owner_name"] = None
+                row["clause"] = None
+                row["clause_known"] = False
+        _push_cand(row)
     for u in data.get("rival_upgrades") or []:
-        board_candidates.append(
+        _push_cand(
             {
                 "id": u.get("player_id"),
                 "name": u.get("name"),
@@ -124,10 +145,9 @@ def main(argv: list[str] | None = None) -> None:
                 "sample_thin": u.get("sample_thin"),
             }
         )
-    # Ampliar universo con pool / rivales para rellenar cupos IDEAL
     for riv in data.get("rivals") or []:
         for p in riv.get("squad") or []:
-            board_candidates.append(
+            _push_cand(
                 {
                     **p,
                     "puja_recomendada": p.get("clause") or p.get("puja_recomendada") or p.get("price"),
@@ -136,7 +156,7 @@ def main(argv: list[str] | None = None) -> None:
                 }
             )
     for p in (data.get("pool_top") or data.get("free_agents") or [])[:400]:
-        board_candidates.append(p)
+        _push_cand(p)
 
     slug = str(
         data.get("league_slug")
@@ -179,7 +199,7 @@ def main(argv: list[str] | None = None) -> None:
         market_mode=market_mode,
         target_board=target_board,
         funding_info=funding,
-        max_squad=config.league_max_squad(league),
+        max_squad=config.league_max_squad(config.get_league(slug)),
     )
 
     n_daily = sum(1 for o in opportunities if o.get("on_daily_market"))
