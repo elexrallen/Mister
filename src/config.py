@@ -198,6 +198,11 @@ MINUTES_RECENT_LOW = 90
 SEASON_START_DATE = os.environ.get("SEASON_START_DATE", "2026-08-15").strip()
 # Plazas típicas del mercado diario (meta UI; el HTML puede traer más/menos)
 MARKET_DAY_SLOTS = 16
+# Ciclo de mercado de la liga (Normal = 24h). Oferta Mister en el siguiente ciclo;
+# cobro tras aceptar = otro ciclo → caja usable ≈ 2 * MARKET_CYCLE_HOURS desde listar.
+MARKET_CYCLE_HOURS = 24
+# Rescindir / despedir: liquidez inmediata a este % del valor de mercado
+RESCIND_VALUE_RATIO = 0.80
 # Días antes de J1 en los que la fase pasa a "ramp"
 RAMP_DAYS_BEFORE_KICKOFF = 7
 # Paquete del día: colchón de caja y tope del fichaje secundario (parche)

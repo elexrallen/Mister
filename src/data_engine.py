@@ -2189,6 +2189,18 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "from_target_board": bool(funding_info.get("from_target_board")),
             "wealth": funding_info.get("wealth"),
             "totals": funding_info.get("totals"),
+            "settlement": funding_info.get("settlement") or "market_cycle",
+            "cycle_hours": funding_info.get("cycle_hours")
+            if funding_info.get("cycle_hours") is not None
+            else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
+            "cash_lag_hours": funding_info.get("cash_lag_hours")
+            if funding_info.get("cash_lag_hours") is not None
+            else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+            "liquidity_note": funding_info.get("liquidity_note")
+            or (
+                "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar "
+                "(caja usable en ~1–2 días)."
+            ),
         },
         "target_board": target_board,
         "daily_package": daily_package,

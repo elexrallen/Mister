@@ -15,7 +15,12 @@ from pathlib import Path
 from typing import Any
 
 import config
-from competitive_actions import budget_fit, target_tier_from_budget_fit
+from competitive_actions import (
+    budget_fit,
+    sell_cash_phrase,
+    sell_settlement_fields,
+    target_tier_from_budget_fit,
+)
 
 log = logging.getLogger("target_board")
 
@@ -1676,9 +1681,11 @@ def build_target_board(
                 "delta_5d": delta,
                 "value_note": u.get("value_note"),
                 "why": (
-                    f"Fuera del ideal · EP {u['ep_score']:.0f} · libera {u['price']:,.0f} €"
+                    f"Fuera del ideal · EP {u['ep_score']:.0f} · "
+                    + sell_cash_phrase(float(u["price"] or 0))
                     + (f" · Δ {delta*100:.0f}%" if delta is not None else "")
                 ),
+                **sell_settlement_fields(float(u["price"] or 0)),
             }
         )
     sell_cands.sort(
@@ -1963,7 +1970,9 @@ def funding_plan_from_board(
     *,
     balance: float | None = None,
 ) -> dict[str, Any]:
-    """Funding del día = primary_targets operables (mercado/asequibles), no el rebuild completo."""
+    """Funding del día = primary_targets operables (mercado/asequibles), no el rebuild completo.
+    Shortfall se cubre con ventas al sistema (caja diferida ~1–2 días), no saldo inmediato.
+    """
     bal = max(0.0, float(balance if balance is not None else (board or {}).get("balance") or 0))
     daily = list((board or {}).get("primary_targets") or [])
     if not daily:
@@ -2040,6 +2049,14 @@ def funding_plan_from_board(
         "wealth": (board or {}).get("wealth"),
         "totals": (board or {}).get("totals"),
         "formation": (board or {}).get("formation"),
+        # Ventas al sistema no suman al balance del día (ciclo 24h → caja ~48h)
+        "settlement": "market_cycle",
+        "cycle_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
+        "cash_lag_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+        "liquidity_note": (
+            "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar "
+            "(caja usable en ~1–2 días). Urgente: rescindir ≈ 80% VM o cláusula rival."
+        ),
     }
 
 

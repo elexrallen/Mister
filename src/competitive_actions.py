@@ -36,10 +36,49 @@ def budget_fit(cost: float | None, balance: float, *, min_cost: float | None = N
     return "tight"
 
 
+def sell_settlement_fields(price: float) -> dict[str, Any]:
+    """
+    Liquidez de venta al sistema (Mister): ask ≈ VM; cobro en ciclos de mercado.
+    Lista → oferta (~1 ciclo) → aceptar → cobro (~1 ciclo más) ≈ 2 ciclos.
+    """
+    cycle = int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    proceeds = float(price or 0)
+    return {
+        "list_at": proceeds,
+        "expected_proceeds": proceeds,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": cycle,
+        "cash_lag_hours": cycle * 2,
+    }
+
+
+def sell_cash_phrase(price: float, *, deferred: bool = False) -> str:
+    """Texto corto de ask VM + plazo de caja (ciclo 24h → ~48h usable)."""
+    cycle = int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    lag = cycle * 2
+    base = f"lista a ~{price:,.0f} € (VM)"
+    if deferred:
+        return f"{base}; caja en 1–2 días (no liquida hoy)"
+    return f"{base}; caja usable en ~{lag}h"
+
+
+def rescind_instant_alt(price: float) -> dict[str, Any]:
+    """Alternativa de liquidez inmediata: rescindir ≈ RESCIND_VALUE_RATIO del VM."""
+    ratio = float(getattr(config, "RESCIND_VALUE_RATIO", 0.80) or 0.80)
+    proceeds = round(float(price or 0) * ratio, 0)
+    return {
+        "action": "rescind",
+        "expected_proceeds": proceeds,
+        "settlement": "instant",
+        "note": f"Rescindir ≈ {int(ratio * 100)}% VM al instante si urge el saldo",
+    }
+
+
 def target_tier_from_budget_fit(bf: str | None) -> str:
     """realistic | stretch | aspirational."""
     if bf in ("comfortable", "tight", "funding"):
-        # funding = venta para liberar caja del día (no es objetivo aspiracional)
+        # funding = plan de caja diferida (venta al sistema; no liquida el mismo ciclo)
         return "realistic"
     if bf == "stretch":
         return "stretch"
@@ -742,6 +781,7 @@ def estimate_gap_funding(
     Estima coste mínimo para cubrir needs Alta (multi-carencia).
     Prefiere candidatos asequibles (realistic) del pool; si no hay, marca shortfall.
     funding_target = suma de hasta top_n gaps; shortfall vs saldo.
+    Ventas para cubrir shortfall liquidan en ciclos de mercado (~48h), no el mismo día.
     """
     needs = [n for n in (structural_needs or []) if n.get("priority") == "Alta"]
     market = list(market_opportunities or [])
@@ -860,6 +900,13 @@ def estimate_gap_funding(
         "all_gap_costs": gap_rows,
         "positions": [g.get("position") for g in selected if g.get("position")],
         "cheapest_need": cheapest,
+        "settlement": "market_cycle",
+        "cycle_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
+        "cash_lag_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+        "liquidity_note": (
+            "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar "
+            "(caja usable en ~1–2 días). Urgente: rescindir ≈ 80% VM o cláusula rival."
+        ),
     }
 
 
@@ -1082,7 +1129,7 @@ def is_key_market_candidate(
 def priority_score_sell(item: dict[str, Any]) -> int:
     """
     Prioriza ventas que mejoran el once: banquillo caro, baja producción,
-    liberar caja; protege titulares TOP / once fiable.
+    plan de caja diferida (1–2 días); protege titulares TOP / once fiable.
     """
     score = 0
     reason = item.get("sell_reason") or ""
@@ -1267,7 +1314,7 @@ def build_sell_opportunities(
         demand = rival_demand_for_position(rivals, pos)
         xi = _xi_impact_if_sold(squad, p)
         keep_top = rank <= 2 and _is_star(p) and _ext_avail(p) not in ("injured", "suspended")
-        return {
+        item = {
             "player_id": pid,
             "name": p.get("name"),
             "position": pos,
@@ -1294,7 +1341,12 @@ def build_sell_opportunities(
             "recent_minutes": _recent_minutes(p),
             "funding_shortfall": funding.get("funding_shortfall"),
             "funding_target": funding.get("funding_target"),
+            **sell_settlement_fields(price),
         }
+        # Tip de urgencia: liquidez inmediata vía rescisión (no sustituye listar al VM)
+        if urgency == "high" or reason in ("fund_buy", "fund_target"):
+            item["instant_alt"] = rescind_instant_alt(price)
+        return item
 
     squad_value = sum(_money(p.get("price") or p.get("market_value")) for p in squad) or 1.0
 
@@ -1365,12 +1417,12 @@ def build_sell_opportunities(
             urg = "high" if bench_inflated or price >= 6_000_000 or funding_pressure else "medium"
             bits = [
                 f"fuera del once real (titularidad {int(lineup) if lineup is not None else '—'}%)",
-                f"libera {price:,.0f} € para titulares/producción",
+                sell_cash_phrase(price),
             ]
             if p.get("in_lineup"):
                 bits.insert(0, "en tu once Mister pero sin titularidad real")
             if funding_pressure:
-                bits.append(f"libera caja para {gap_labels}")
+                bits.append(f"plan de caja diferida para {gap_labels}")
             if protect_depth and funding_pressure:
                 bits.append(f"profundidad justa ({starters_left} titulares) pero falta caja")
             if ff is not None:
@@ -1403,7 +1455,7 @@ def build_sell_opportunities(
                 bits.append(f"{int(recent_mins)}' en últimos partidos")
             if p.get("in_lineup"):
                 bits.append("está en tu once fantasy")
-            bits.append(f"libera {price:,.0f} €")
+            bits.append(sell_cash_phrase(price, deferred=funding_pressure))
             if funding_pressure:
                 bits.append(f"caja justa vs {gap_labels}")
             item = base_item(
@@ -1440,7 +1492,7 @@ def build_sell_opportunities(
             ]
             if opp:
                 bits.append(f"vs {opp}")
-            bits.append(f"libera {price:,.0f} € si hay mejor opción")
+            bits.append(f"{sell_cash_phrase(price)} si hay mejor opción")
             item = base_item(
                 p,
                 reason="low_minutes",
@@ -1492,7 +1544,7 @@ def build_sell_opportunities(
             item = base_item(
                 p,
                 reason="injured_covered",
-                why=f"{avail} con cobertura en {pos}; libera valor ({price:,.0f} €) sin romper el once.",
+                why=f"{avail} con cobertura en {pos}; {sell_cash_phrase(price)} sin romper el once.",
                 urgency="medium",
                 sell_risk="low",
             )
@@ -1558,7 +1610,7 @@ def build_sell_opportunities(
                             f"Caja justa ({balance:,.0f} €) vs ~{funding.get('funding_target', 0):,.0f} € "
                             f"para {gap_labels}"
                             + (f" (faltan {shortfall:,.0f} €)" if shortfall else "")
-                            + f"; vender libera ~{price:,.0f} €."
+                            + f"; {sell_cash_phrase(price, deferred=True)}."
                         ),
                         urgency="high" if critical_pos or funding_pressure else "medium",
                         sell_risk=(
@@ -1601,8 +1653,8 @@ def build_sell_opportunities(
                 p,
                 reason="fund_target",
                 why=(
-                    f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €); "
-                    f"faltan ~{shortfall_pt:,.0f} €; libera {price:,.0f} € ({loss_note})"
+                    f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €) en 1–2 días; "
+                    f"faltan ~{shortfall_pt:,.0f} €; {sell_cash_phrase(price, deferred=True)} ({loss_note})"
                 ),
                 urgency="high" if shortfall_pt >= need_price * 0.35 else "medium",
                 sell_risk="low" if not is_starter else "medium",

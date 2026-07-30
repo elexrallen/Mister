@@ -1066,7 +1066,7 @@
         sellEl.textContent = "";
       } else {
         sellEl.hidden = false;
-        sellEl.textContent = `Vender para rotar / financiar: ${sells
+        sellEl.textContent = `Vender (lista a VM; caja en 1–2 días): ${sells
           .map((s) => s.name)
           .filter(Boolean)
           .join(" · ")}`;
@@ -1099,7 +1099,7 @@
       tight: ["badge-duda", "Ajusta"],
       stretch: ["badge-duda", "Al límite"],
       blocked: ["badge-baja-ext", "Sin saldo"],
-      funding: ["badge-mint", "Libera caja"],
+      funding: ["badge-mint", "Caja 1–2 días"],
     };
     const [cls, label] = map[bf] || ["badge-duda", bf];
     return `<span class="badge ${cls}">${label}</span>`;
@@ -1108,7 +1108,7 @@
   const fundingChip = (a) => {
     if (!a) return "";
     if (a.action === "sell" && (a.sell_reason === "fund_buy" || a.sell_reason === "fund_target" || a.budget_fit === "funding")) {
-      return `<span class="badge badge-mint">${a.sell_reason === "fund_target" ? "Financia objetivo" : "Libera caja"}</span>`;
+      return `<span class="badge badge-mint">${a.sell_reason === "fund_target" ? "Financia en 1–2 días" : "Caja diferida"}</span>`;
     }
     if (a.leaves_gap_budget) {
       return `<span class="badge badge-mint">Deja caja</span>`;
@@ -1119,6 +1119,19 @@
     return "";
   };
 
+  const sellSettlementBadge = (a) => {
+    if (!a || a.action !== "sell") return "";
+    const lag = a.cash_lag_hours != null ? Number(a.cash_lag_hours) : 48;
+    return `<span class="badge badge-duda">~${lag}h a caja</span>`;
+  };
+
+  const sellInstantAltBadge = (a) => {
+    if (!a || a.action !== "sell" || !a.instant_alt) return "";
+    const alt = a.instant_alt;
+    const note = alt.note || "Rescindir ≈ 80% VM al instante";
+    return `<span class="badge badge-baja-ext" title="${escapeHtml(note)}">¿Urgente? Rescindir</span>`;
+  };
+
   const sellReasonBadge = (reason) => {
     if (!reason) return "";
     const map = {
@@ -1126,7 +1139,7 @@
       low_minutes: "Pocos minutos",
       low_production: "Baja prod.",
       surplus_to_demand: "Excedente",
-      fund_buy: "Financiar carencias",
+      fund_buy: "Financiar (1–2 días)",
       fund_target: "Financia objetivo",
       injured_covered: "Lesión",
       form_drop: "Forma",
@@ -1263,7 +1276,15 @@
               : (fp.positions || []).length
                 ? ` · ${escapeHtml((fp.positions || []).join(", "))}`
                 : ""
+          }${
+            fp.shortfall != null && Number(fp.shortfall) > 0
+              ? ` · ventas: caja en ~${fp.cash_lag_hours != null ? Number(fp.cash_lag_hours) : 48}h (no hoy)`
+              : ""
           }</p>`
+        : "";
+    const liquidityNote =
+      fp.liquidity_note && fp.shortfall != null && Number(fp.shortfall) > 0
+        ? `<p class="queue-funding-hint queue-liquidity-note">${escapeHtml(fp.liquidity_note)}</p>`
         : "";
 
     const doToday = plan.filter(
@@ -1297,14 +1318,24 @@
       const money =
         a.action === "clause_bid" && a.clause != null
           ? formatMoney(a.clause)
-          : a.bid != null
-            ? formatMoney(a.bid)
-            : "";
+          : a.action === "sell"
+            ? formatMoney(
+                a.list_at != null
+                  ? a.list_at
+                  : a.expected_proceeds != null
+                    ? a.expected_proceeds
+                    : a.price
+              )
+            : a.bid != null
+              ? formatMoney(a.bid)
+              : "";
       const primaryChips = [
         roleChip(a.queue_role, a),
         riskBadge(a.wait_risk || a.sell_risk),
         budgetBadge(a.budget_fit),
         fundingChip(a),
+        sellSettlementBadge(a),
+        sellInstantAltBadge(a),
         coverageChips(a),
         a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
         a.is_key_market ? `<span class="badge badge-alta">Mercado clave</span>` : "",
@@ -1368,6 +1399,11 @@
             }
             ${a.why ? `<p class="queue-why">${escapeHtml(a.why)}</p>` : ""}
             ${
+              a.action === "sell" && a.instant_alt && a.instant_alt.note
+                ? `<p class="queue-meta">${escapeHtml(a.instant_alt.note)}</p>`
+                : ""
+            }
+            ${
               (!fixed && rivals) || a.compared_to
                 ? `<p class="queue-meta">${[
                     a.compared_to ? `Mejora a ${escapeHtml(a.compared_to)}` : "",
@@ -1427,6 +1463,7 @@
     box.innerHTML =
       packageHint +
       fundingHint +
+      liquidityNote +
       section("Plan de hoy", doToday, "numbered") +
       section(fixed ? "También válidos" : "Si se van / plan B", planB, "muted") +
       section("No acumular con el paquete", noStack, "muted") +
