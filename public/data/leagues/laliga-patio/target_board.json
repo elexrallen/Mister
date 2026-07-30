@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-30T13:12:53.447595+00:00",
+  "generated_at": "2026-07-30T15:17:45.299491+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 70 · 3,261,000 € · buy · starter",
-      "added_at": "2026-07-30T13:12:53.438836+00:00"
+      "added_at": "2026-07-30T13:12:53.311593+00:00"
     },
     {
       "slot": "DF4",
@@ -830,7 +830,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 878,000 € · buy · starter",
-      "added_at": "2026-07-30T13:12:53.433150+00:00"
+      "added_at": "2026-07-30T13:12:53.305319+00:00"
     },
     {
       "slot": "MF2",
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,384,500 € · buy · bench",
-      "added_at": "2026-07-30T13:12:53.446348+00:00"
+      "added_at": "2026-07-30T13:12:53.319306+00:00"
     },
     {
       "slot": "FW1",
@@ -1686,83 +1686,7 @@
   ],
   "aspirational_targets": [],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF6",
-      "position": "DF",
-      "role": "bench",
-      "player_id": "64160",
-      "name": "Javi Rueda",
-      "team": "Celta",
-      "team_id": "5",
-      "ep_score": 36.6,
-      "price": 930000.0,
-      "status": "dropped",
-      "delta_5d": 0.1985,
-      "value_note": "rising",
-      "value_ratio": 39.35,
-      "lineup_prob": 50.0,
-      "ff_mister_points": 106.0,
-      "ff_mister_avg": 4.08,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 37 · 930,000 € · buy · bench · Δ 20%",
-      "added_at": "2026-07-30T13:08:14.529222+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF4",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "29403",
-      "name": "Pathé Ciss",
-      "team": "Rayo",
-      "team_id": "14",
-      "ep_score": 42.0,
-      "price": 2125650.0,
-      "status": "dropped",
-      "delta_5d": 0.1298,
-      "value_note": "rising",
-      "value_ratio": 19.76,
-      "lineup_prob": 85.0,
-      "ff_mister_points": 107.0,
-      "ff_mister_avg": 3.69,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 42 · 2,125,650 € · buy · starter · Δ 13%",
-      "added_at": "2026-07-30T13:08:14.516249+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF5",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "33726",
-      "name": "Hugo Álvarez",
-      "team": "Celta",
-      "team_id": "5",
-      "ep_score": 33.0,
-      "price": 906000.0,
-      "status": "dropped",
-      "delta_5d": 0.1921,
-      "value_note": "rising",
-      "value_ratio": 36.42,
-      "lineup_prob": 50.0,
-      "ff_mister_points": 110.0,
-      "ff_mister_avg": 3.93,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 33 · 906,000 € · buy · bench · Δ 19%",
-      "added_at": "2026-07-30T13:08:14.529297+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 0.0

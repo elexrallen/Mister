@@ -2093,6 +2093,58 @@ def build_rival_upgrade_targets(
     return capped
 
 
+def tag_rival_market_listings(
+    opportunities: list[dict[str, Any]],
+    rivals: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """Marca ofertas del mercado diario que un rival está vendiendo.
+
+    La compra sigue siendo vía mercado (puja), no cláusula. Solo añade contexto
+    UI: listed_by_rival / listed_by_name / clause_reference.
+    """
+    rival_owners: dict[str, dict[str, Any]] = {}
+    for riv in rivals or []:
+        owner_label = (
+            riv.get("manager")
+            or riv.get("team_name")
+            or riv.get("name")
+            or riv.get("team")
+        )
+        owner_id = riv.get("team_id") or riv.get("id")
+        for p in riv.get("squad") or []:
+            pid = str(p.get("id") or p.get("player_id") or "")
+            if not pid:
+                continue
+            label = p.get("owner_name") or owner_label
+            rival_owners[pid] = {
+                "listed_by_name": label,
+                "listed_by_owner_id": str(p.get("owner_id") or owner_id or "") or None,
+                "clause_reference": p.get("clause"),
+            }
+
+    out: list[dict[str, Any]] = []
+    for o in opportunities:
+        row = dict(o)
+        pid = str(row.get("id") or row.get("player_id") or "")
+        on_daily = bool(row.get("on_daily_market") or row.get("seller") == "market")
+        info = rival_owners.get(pid) if pid else None
+        if on_daily and info:
+            row["listed_by_rival"] = True
+            if info.get("listed_by_name"):
+                row["listed_by_name"] = info["listed_by_name"]
+            if info.get("listed_by_owner_id"):
+                row["listed_by_owner_id"] = info["listed_by_owner_id"]
+            if info.get("clause_reference") is not None:
+                row["clause_reference"] = info["clause_reference"]
+            # Compra = mercado; no usar cláusula como precio
+            row["seller"] = "market"
+            row["on_daily_market"] = True
+        else:
+            row.setdefault("listed_by_rival", False)
+        out.append(row)
+    return out
+
+
 def annotate_market_budget_risk(
     opportunities: list[dict[str, Any]],
     rivals: list[dict[str, Any]],
@@ -2102,6 +2154,7 @@ def annotate_market_budget_risk(
     market_mode: str = "auction",
 ) -> list[dict[str, Any]]:
     """Añade budget_fit, target_tier, wait_risk, priority_score y reordena mercado."""
+    opportunities = tag_rival_market_listings(opportunities, rivals)
     out: list[dict[str, Any]] = []
     bal = _money(balance)
     mode = market_mode or "auction"

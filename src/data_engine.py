@@ -40,6 +40,7 @@ from competitive_actions import (
     is_key_market_candidate,
     other_gaps_min_cost,
     rival_demand_for_position,
+    tag_rival_market_listings,
     trade_asset_score,
     wait_risk,
 )
@@ -1347,6 +1348,10 @@ def build_action_plan(
             "position_coverage": o.get("position_coverage"),
             "on_daily_market": on_daily,
             "market_mode": "fixed" if fixed else "auction",
+            "listed_by_rival": bool(o.get("listed_by_rival")),
+            "listed_by_name": o.get("listed_by_name"),
+            "listed_by_owner_id": o.get("listed_by_owner_id"),
+            "clause_reference": o.get("clause_reference"),
             "ff_apps": o.get("ff_apps"),
             "sample_thin": bool(o.get("sample_thin")),
             "target_tier": o.get("target_tier"),
@@ -1923,15 +1928,50 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 if raw.get(k) is not None:
                     base[k] = raw[k]
             if overwrite_as_market:
-                # Libre / subasta del día: no comprar por cláusula rival obsoleta
+                # Mercado del día gana: compra por puja, no por cláusula
+                prev_was_rival = bool(
+                    prev
+                    and (
+                        str(prev.get("seller") or "").lower() == "rival"
+                        or (
+                            prev.get("owner_id")
+                            and str(prev.get("owner_id")) not in ("", "0")
+                            and not prev.get("owned")
+                        )
+                    )
+                )
+                listed_name = None
+                listed_oid = None
+                clause_ref = None
+                if prev_was_rival and prev:
+                    listed_name = prev.get("owner_name") or prev.get("listed_by_name")
+                    listed_oid = prev.get("owner_id") or prev.get("listed_by_owner_id")
+                    clause_ref = prev.get("clause")
                 base["seller"] = "market"
                 base["on_daily_market"] = True
                 raw_owner = raw.get("owner_id")
                 if not raw_owner or str(raw_owner) in ("", "0"):
+                    # Limpiar ownership para no disparar lógica de cláusula
                     base["owner_id"] = None
                     base["owner_name"] = None
                     base["clause"] = None
                     base["clause_known"] = False
+                if prev_was_rival or raw.get("listed_by_rival"):
+                    base["listed_by_rival"] = True
+                    if listed_name or raw.get("listed_by_name"):
+                        base["listed_by_name"] = raw.get("listed_by_name") or listed_name
+                    if listed_oid or raw.get("listed_by_owner_id"):
+                        base["listed_by_owner_id"] = (
+                            raw.get("listed_by_owner_id") or listed_oid
+                        )
+                    if clause_ref is not None or raw.get("clause_reference") is not None:
+                        base["clause_reference"] = (
+                            raw.get("clause_reference")
+                            if raw.get("clause_reference") is not None
+                            else clause_ref
+                        )
+                else:
+                    base.setdefault("listed_by_rival", False)
                 if base.get("min_bid") is None and base.get("price"):
                     base["min_bid"] = base["price"]
                 base["puja_recomendada"] = (

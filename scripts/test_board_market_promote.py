@@ -1,4 +1,4 @@
-"""Mercado diario libre debe ganar sobre ownership rival obsoleto en el tablero."""
+"""Mercado diario: rival en venta ≠ cláusula; tag listed_by_rival."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from competitive_actions import tag_rival_market_listings  # noqa: E402
 from target_board import (  # noqa: E402
     _accept_operable_candidate,
     _is_opportunity_buy,
@@ -34,6 +35,7 @@ def _simulate_append():
                 if pid in owned or c.get("seller") == "owned":
                     return
                 base = dict(c)
+                prev_rival = str(c.get("seller") or "") == "rival"
                 for k, v in raw.items():
                     if v is not None:
                         base[k] = v
@@ -44,12 +46,15 @@ def _simulate_append():
                     base["owner_name"] = None
                     base["clause"] = None
                     base["clause_known"] = False
+                if prev_rival:
+                    base["listed_by_rival"] = True
+                    base["listed_by_name"] = c.get("owner_name") or "Rival"
+                    base["clause_reference"] = c.get("clause")
                 board_candidates[i] = base
             return
         board_seen.add(pid)
         board_candidates.append(dict(raw))
 
-    # Catálogo / rival obsoleto (como en latest_data)
     append(
         {
             "id": "58125",
@@ -57,6 +62,7 @@ def _simulate_append():
             "position": "MF",
             "price": 878000,
             "owner_id": "15399697",
+            "owner_name": "Jesus Rodriguez Crespo",
             "clause": 1317000,
             "clause_known": True,
             "seller": "rival",
@@ -67,7 +73,6 @@ def _simulate_append():
             "gw_starter": True,
         }
     )
-    # Mercado diario libre
     append(
         {
             "id": "58125",
@@ -94,6 +99,9 @@ def main() -> None:
     assert row["on_daily_market"] is True, row
     assert not row.get("clause"), row
     assert not row.get("owner_id"), row
+    assert row.get("listed_by_rival") is True, row
+    assert "Jesus" in str(row.get("listed_by_name") or ""), row
+    assert row.get("clause_reference") == 1317000, row
 
     n = _normalize_player(row, owned=False, price_series=None)
     assert n is not None
@@ -101,9 +109,47 @@ def main() -> None:
     assert _accept_operable_candidate(
         n, universe=[n], exclude=set(), eligible=lambda _u: True
     ), n
-    # Coste de mercado, no cláusula
     assert float(n["price"]) == 878000.0, n["price"]
-    print("ok: mercado diario libera a Martín frente a rival obsoleto")
+
+    tagged = tag_rival_market_listings(
+        [
+            {
+                "id": "58125",
+                "name": "M. Martín",
+                "seller": "market",
+                "on_daily_market": True,
+                "price": 878000,
+            },
+            {
+                "id": "1",
+                "name": "Libre",
+                "seller": "market",
+                "on_daily_market": True,
+                "price": 100000,
+            },
+        ],
+        [
+            {
+                "manager": "Jesus Rodriguez Crespo",
+                "team_id": "15399697",
+                "squad": [
+                    {
+                        "id": "58125",
+                        "name": "Mario Martín",
+                        "clause": 1317000,
+                        "owner_id": "15399697",
+                    }
+                ],
+            }
+        ],
+    )
+    assert tagged[0]["listed_by_rival"] is True
+    assert tagged[0]["listed_by_name"] == "Jesus Rodriguez Crespo"
+    assert tagged[0]["seller"] == "market"
+    assert tagged[0]["clause_reference"] == 1317000
+    assert tagged[1].get("listed_by_rival") is False
+
+    print("ok: rival en venta = mercado + badge, no cláusula")
 
 
 if __name__ == "__main__":

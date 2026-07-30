@@ -413,6 +413,12 @@
     if ((p.is_top_ff || ext.is_top_ff) && !p.sample_thin) {
       chips.push(`<span class="badge badge-mint">TOP Mister</span>`);
     }
+    if (p.listed_by_rival) {
+      const who = p.listed_by_name ? ` · ${p.listed_by_name}` : "";
+      chips.push(
+        `<span class="badge badge-titular" title="Rival lo pone a la venta en el mercado (puja, no cláusula)">En venta${escapeHtml(who)}</span>`
+      );
+    }
     if (p.sample_thin || (p.ff_apps != null && Number(p.ff_apps) < 8)) {
       chips.push(`<span class="badge badge-baja-ext" title="Pocos partidos FF">Muestra corta</span>`);
     }
@@ -1412,6 +1418,11 @@
         coverageChips(a),
         a.action === "scout" ? `<span class="badge badge-duda">Ver cláusula</span>` : "",
         a.is_key_market ? `<span class="badge badge-alta">Mercado clave</span>` : "",
+        a.listed_by_rival
+          ? `<span class="badge badge-titular" title="Rival lo pone a la venta (puja de mercado, no cláusula)">En venta${
+              a.listed_by_name ? " · " + escapeHtml(a.listed_by_name) : ""
+            }</span>`
+          : "",
         a.trade_asset_score != null && Number(a.trade_asset_score) >= 12
           ? `<span class="badge badge-titular">Trueque</span>`
           : "",
@@ -1552,7 +1563,7 @@
         "No pujar hoy (relacionados)",
         relatedWaits,
         "muted",
-        "Mercado de hoy en el mismo puesto o clave — no es el primary del paquete"
+        "Alts del paquete de hoy (mismo puesto / sin caja / no apilar) — no pujar ahora"
       ) +
       (expanded
         ? section(

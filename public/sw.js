@@ -4,7 +4,7 @@
  * - Network-first (con fallback a cache) para data/latest_data.json
  */
 
-const CACHE_VERSION = "mfa-v43";
+const CACHE_VERSION = "mfa-v45";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 

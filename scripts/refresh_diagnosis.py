@@ -17,6 +17,7 @@ from competitive_actions import (  # noqa: E402
     build_recommended_gw_xi,
     detect_competition_phase,
     estimate_gap_funding,
+    tag_rival_market_listings,
 )
 from data_engine import (  # noqa: E402
     build_action_plan,
@@ -98,6 +99,7 @@ def main(argv: list[str] | None = None) -> None:
         squad=squad,
         competition_phase=competition_phase,
     )
+    opportunities = tag_rival_market_listings(opportunities, data.get("rivals") or [])
 
     market_mode = str(
         data.get("market_mode")
