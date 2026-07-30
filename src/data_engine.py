@@ -1019,17 +1019,24 @@ def build_action_plan(
     market_mode: str = "auction",
     target_board: dict[str, Any] | None = None,
     funding_info: dict[str, Any] | None = None,
+    max_squad: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Fuente de verdad diaria:
     buy_now | clause_bid | sell | avoid | wait | scout
-    Empaquetado: máx. 2 buy_now compatibles + plan B / also_good.
+    Empaquetado: líneas de necesidad + hedges (auction), respetando cupo de plantilla.
     Devuelve (action_plan, daily_package).
     """
     plan: list[dict[str, Any]] = []
     price_series = price_series or {}
     balance = float(me.get("balance") or 0)
     fixed = (market_mode or "auction") == "fixed"
+    if max_squad is None:
+        max_squad = int(
+            getattr(config, "MAX_SQUAD_SIZE_PREMIER", 22)
+            if fixed
+            else getattr(config, "MAX_SQUAD_SIZE_LALIGA", 25)
+        )
     critical_pos = {
         a["position"] for a in diagnosis.get("alerts", []) if a.get("level") == "critical"
     }
@@ -1498,6 +1505,8 @@ def build_action_plan(
         funding_info=funding,
         market_mode=market_mode,
         target_board=target_board,
+        squad_size=len(me.get("squad") or []),
+        max_squad=max_squad,
     )
 
 
@@ -2019,6 +2028,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         market_mode=market_mode,
         target_board=target_board,
         funding_info=funding_info,
+        max_squad=config.league_max_squad(league_cfg),
     )
 
     matchday_meta = external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None

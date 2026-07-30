@@ -1107,8 +1107,14 @@
 
   const fundingChip = (a) => {
     if (!a) return "";
-    if (a.action === "sell" && (a.sell_reason === "fund_buy" || a.sell_reason === "fund_target" || a.budget_fit === "funding")) {
-      return `<span class="badge badge-mint">${a.sell_reason === "fund_target" ? "Financia en 1–2 días" : "Caja diferida"}</span>`;
+    if (a.action === "sell" && (a.sell_reason === "fund_buy" || a.sell_reason === "fund_target" || a.sell_reason === "free_slot" || a.budget_fit === "funding")) {
+      return `<span class="badge badge-mint">${
+        a.sell_reason === "free_slot"
+          ? "Abre plaza"
+          : a.sell_reason === "fund_target"
+            ? "Financia en 1–2 días"
+            : "Caja diferida"
+      }</span>`;
     }
     if (a.leaves_gap_budget) {
       return `<span class="badge badge-mint">Deja caja</span>`;
@@ -1141,6 +1147,7 @@
       surplus_to_demand: "Excedente",
       fund_buy: "Financiar (1–2 días)",
       fund_target: "Financia objetivo",
+      free_slot: "Abre plaza",
       injured_covered: "Lesión",
       form_drop: "Forma",
     };
@@ -1189,9 +1196,8 @@
     const fixed = isFixedMarket(data);
     const actionsHint = document.getElementById("actions-hint");
     if (actionsHint) {
-      actionsHint.textContent = fixed
-        ? "Plan de hoy: hasta 2 fichajes al precio · el resto sin prisa"
-        : "Plan de hoy: hasta 2 pujas compatibles · el resto es plan B";
+      actionsHint.textContent =
+        "Primero lo que puedes hacer hoy (pujar/vender); abajo solo contexto (no pujar / vigilar)";
     }
     const bidTh = document.getElementById("th-bid-label");
     if (bidTh) bidTh.textContent = fixed ? "Precio" : "Puja rec.";
@@ -1227,8 +1233,8 @@
       clause_bid: { title: "Cláusula", cls: "act-clause" },
       sell: { title: "Vender", cls: "act-sell" },
       avoid: { title: "Evitar", cls: "act-avoid" },
-      wait: { title: "Esperar", cls: "act-wait" },
-      scout: { title: "Vigilar", cls: "act-scout" },
+      wait: { title: "No pujar hoy", cls: "act-wait" },
+      scout: { title: "Solo vigilar", cls: "act-scout" },
     };
     const roleChip = (role, a) => {
       if (role === "primary_target" || (a && a.is_key_market && role !== "hedge"))
@@ -1237,11 +1243,21 @@
       if (role === "secondary") return `<span class="badge badge-titular">2ª línea</span>`;
       if (role === "hedge")
         return `<span class="badge badge-alta">Hedge</span><span class="badge badge-duda">Si ambos → vende</span>`;
+      if (role === "free_slot") return `<span class="badge badge-mint">Abre plaza</span>`;
+      if (role === "sell_now") return `<span class="badge badge-titular">Listar ya</span>`;
       if (role === "alt_unfunded") return `<span class="badge badge-baja">Sin caja hedge</span>`;
+      if (role === "alt_no_slot") return `<span class="badge badge-baja">Sin plaza</span>`;
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Alt</span>`;
       if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
       if (role === "do_not_stack") return `<span class="badge badge-baja">No acumular</span>`;
       if (role === "out_of_budget") return `<span class="badge badge-baja">Fuera de caja</span>`;
+      return "";
+    };
+    const contextNote = (a) => {
+      if (a.package_note) return a.package_note;
+      if (a.action === "wait") return "No requiere acción — alternativa o sin urgencia de puja";
+      if (a.action === "scout") return "Solo contexto — mirar, no comprar aún";
+      if (a.action === "avoid") return "No fichar — lesión/sanción u otra alerta";
       return "";
     };
 
@@ -1255,15 +1271,37 @@
       pkg.combo && !fixed
         ? ` · combo <strong>${escapeHtml(String(pkg.combo))}</strong>`
         : "";
+    const cupoChip =
+      pkg.max_squad != null
+        ? ` · cupo <strong>${escapeHtml(
+            String(pkg.squad_size != null ? pkg.squad_size : "?")
+          )}/${escapeHtml(String(pkg.max_squad))}</strong>${
+            pkg.free_slots != null ? ` (${escapeHtml(String(pkg.free_slots))} libres)` : ""
+          }`
+        : "";
     const hedgeNames = (pkg.hedges || [])
       .map((h) => h && h.name)
       .filter(Boolean)
       .slice(0, 2);
-    const packageHint = pkg.primary
-      ? `<p class="queue-package-hint">Plan de hoy${comboChip}: <strong>${escapeHtml(
-          pkg.primary.name || ""
-        )}</strong>${
-          pkg.secondary ? ` + <strong>${escapeHtml(pkg.secondary.name || "")}</strong>` : ""
+    const slotSellNames = (pkg.slot_sells || [])
+      .map((s) => s && s.name)
+      .filter(Boolean)
+      .slice(0, 2);
+    const packageHint = pkg.primary || (pkg.slot_sells || []).length
+      ? `<p class="queue-package-hint">Plan de hoy${comboChip}${cupoChip}${
+          pkg.primary
+            ? `: <strong>${escapeHtml(pkg.primary.name || "")}</strong>${
+                pkg.secondary
+                  ? ` + <strong>${escapeHtml(pkg.secondary.name || "")}</strong>`
+                  : ""
+              }`
+            : ":"
+        }${
+          slotSellNames.length
+            ? ` · vender ${slotSellNames
+                .map((n) => `<strong>${escapeHtml(n)}</strong>`)
+                .join(", ")}`
+            : ""
         }${
           hedgeNames.length
             ? ` · hedge ${hedgeNames.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}`
@@ -1272,7 +1310,7 @@
           pkg.residual_after
         )}</p>`
       : pkg.note
-        ? `<p class="queue-package-hint">${escapeHtml(pkg.note)}</p>`
+        ? `<p class="queue-package-hint">${escapeHtml(pkg.note)}${cupoChip ? cupoChip.replace(/^ · /, " · ") : ""}</p>`
         : "";
     const fundingHint =
       fp.target != null && Number(fp.target) > 0
@@ -1302,30 +1340,27 @@
         ? `<p class="queue-funding-hint queue-liquidity-note">${escapeHtml(fp.liquidity_note)}</p>`
         : "";
 
-    const doToday = plan.filter(
+    const buyRoles = ["primary", "primary_target", "secondary", "hedge"];
+    const slotSells = plan.filter((a) => a.queue_role === "free_slot" && a.action === "sell");
+    const packageBuys = plan.filter(
       (a) =>
-        ["primary", "primary_target", "secondary", "hedge"].includes(a.queue_role) ||
+        buyRoles.includes(a.queue_role) ||
         (a.action === "buy_now" && a.alt_for && a.package_note && /hedge/i.test(a.package_note))
     );
-    const planB = plan.filter((a) =>
-      ["alt_if_lost", "alt_unfunded", "also_good"].includes(a.queue_role)
+    const otherSells = plan.filter(
+      (a) => a.action === "sell" && a.queue_role !== "free_slot"
     );
-    const noStack = plan.filter((a) => a.queue_role === "do_not_stack");
-    const outOfBudget = plan.filter((a) => a.queue_role === "out_of_budget");
-    const other = plan.filter(
-      (a) =>
-        ![
-          "primary",
-          "primary_target",
-          "secondary",
-          "hedge",
-          "alt_if_lost",
-          "alt_unfunded",
-          "also_good",
-          "do_not_stack",
-          "out_of_budget",
-        ].includes(a.queue_role)
+    const clauses = plan.filter(
+      (a) => a.action === "clause_bid" && a.affordable !== false
     );
+    // Haz esto hoy: cupo → pujas → ventas → cláusulas
+    const doToday = [...slotSells, ...packageBuys, ...otherSells, ...clauses];
+    const doTodayIds = new Set(doToday.map((a) => String(a.player_id || "") + ":" + (a.action || "")));
+    const context = plan.filter((a) => {
+      const key = String(a.player_id || "") + ":" + (a.action || "");
+      if (doTodayIds.has(key)) return false;
+      return ["wait", "scout", "avoid"].includes(a.action) || a.queue_role === "aspirational_watch";
+    });
 
     const renderItem = (a, rankLabel, opts = {}) => {
       const meta = labels[a.action] || { title: a.action || "Acción", cls: "act-wait" };
@@ -1350,6 +1385,7 @@
             : a.bid != null
               ? formatMoney(a.bid)
               : "";
+      const noteText = opts.muted ? contextNote(a) : a.package_note || "";
       const primaryChips = [
         roleChip(a.queue_role, a),
         riskBadge(a.wait_risk || a.sell_risk),
@@ -1391,13 +1427,14 @@
       ]
         .filter(Boolean)
         .join("");
-      const muted =
-        opts.muted ||
-        a.queue_role === "do_not_stack" ||
-        (a.line_already_covered && !a.is_upgrade && (a.action === "wait" || a.action === "scout"));
-      const topCls = ["primary", "primary_target", "secondary", "hedge"].includes(a.queue_role)
+      const muted = Boolean(opts.muted);
+      const topCls = ["primary", "primary_target", "secondary", "hedge", "free_slot", "sell_now"].includes(
+        a.queue_role
+      )
         ? " is-top"
-        : "";
+        : a.action === "sell" || a.action === "buy_now" || a.action === "clause_bid"
+          ? " is-top"
+          : "";
       const rankDisplay = rankLabel != null ? String(rankLabel) : "·";
       return `<button type="button" class="queue-item ${meta.cls}${topCls}${
         muted ? " is-covered" : ""
@@ -1415,11 +1452,7 @@
               </div>
               ${money ? `<span class="queue-money">${money}</span>` : ""}
             </div>
-            ${
-              a.package_note
-                ? `<p class="queue-package-note">${escapeHtml(a.package_note)}</p>`
-                : ""
-            }
+            ${noteText ? `<p class="queue-package-note">${escapeHtml(noteText)}</p>` : ""}
             ${a.why ? `<p class="queue-why">${escapeHtml(a.why)}</p>` : ""}
             ${
               a.action === "sell" && a.instant_alt && a.instant_alt.note
@@ -1448,7 +1481,7 @@
         </button>`;
     };
 
-    const section = (title, items, rankMode) => {
+    const section = (title, items, rankMode, subtitle) => {
       if (!items.length) return "";
       let n = 0;
       const body = items
@@ -1462,22 +1495,28 @@
         .join("");
       return `<div class="queue-section">
         <h3 class="queue-section-title">${escapeHtml(title)}</h3>
+        ${
+          subtitle
+            ? `<p class="queue-section-hint">${escapeHtml(subtitle)}</p>`
+            : ""
+        }
         ${body}
       </div>`;
     };
 
-    const OTHER_PREVIEW = 3;
-    const hasMore = other.length > OTHER_PREVIEW;
+    const CONTEXT_PREVIEW = 0; // colapsado por defecto
+    const hasMore = context.length > CONTEXT_PREVIEW;
     const expanded = queueExpanded || !hasMore;
-    const otherVisible = expanded ? other : other.slice(0, OTHER_PREVIEW);
-    const otherHidden = expanded ? [] : other.slice(OTHER_PREVIEW);
+    const contextVisible = expanded ? context : context.slice(0, CONTEXT_PREVIEW);
+    const contextHidden = expanded ? [] : context.slice(CONTEXT_PREVIEW);
 
-    const rest = other.length - OTHER_PREVIEW;
     const toggleHtml = hasMore
       ? `<button type="button" class="queue-expand-btn" id="queue-expand-btn" aria-expanded="${
           expanded ? "true" : "false"
         }">${
-          expanded ? `Mostrar menos` : `Ver ${rest} acciones más (cláusulas / evitar / vigilar)`
+          expanded
+            ? `Ocultar contexto`
+            : `Ver contexto del mercado (${context.length}: no pujar / vigilar / evitar)`
         }</button>`
       : "";
 
@@ -1487,16 +1526,21 @@
       packageHint +
       fundingHint +
       liquidityNote +
-      section("Plan de hoy", doToday, "numbered") +
       section(
-        fixed ? "También válidos" : "Alts sin puja / sin caja",
-        planB,
-        "muted"
+        "Haz esto hoy",
+        doToday,
+        "numbered",
+        "Pujas, ventas y cláusulas que puedes ejecutar en Mister ahora"
       ) +
-      section("No acumular con el paquete", noStack, "muted") +
-      section("Fuera de caja / vigilar", outOfBudget, "muted") +
-      section("Otras acciones", otherVisible, "muted") +
-      otherHidden.map((a) => renderItem(a, null, { muted: true, hidden: true })).join("") +
+      (expanded
+        ? section(
+            "Contexto del mercado",
+            contextVisible,
+            "muted",
+            "No requiere acción hoy — alternativas, vigilantes o jugadores a evitar"
+          )
+        : "") +
+      contextHidden.map((a) => renderItem(a, null, { muted: true, hidden: true })).join("") +
       toggleHtml;
 
     box.querySelectorAll("[data-focus-id]").forEach((btn) => {

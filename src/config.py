@@ -36,6 +36,7 @@ LEAGUES: list[dict] = [
         "competition": "LaLiga",
         "external": "laliga",
         "market_mode": "auction",
+        "max_squad": 25,
         "season_start": "2026-08-15",
         "default": True,
     },
@@ -47,6 +48,7 @@ LEAGUES: list[dict] = [
         "competition": "Premier League",
         "external": "premier",
         "market_mode": "fixed",
+        "max_squad": 22,
         "season_start": "2026-08-21",
         "default": False,
     },
@@ -210,6 +212,9 @@ PACKAGE_CASH_RESERVE = 8_000_000
 PACKAGE_SECONDARY_MAX = 2_500_000
 # Hedge same-day: puja reducida vs recomendada (mínimo = puja_minima/precio)
 PACKAGE_HEDGE_BID_RATIO = 0.85
+# Cupo máximo de plantilla Mister (fichajes / hedges no pueden superar plazas libres)
+MAX_SQUAD_SIZE_LALIGA = 25
+MAX_SQUAD_SIZE_PREMIER = 22
 # id_competition Mister → clave de scrapers externos (FF/JP)
 LALIGA_COMPETITION_ID = 1
 PREMIER_COMPETITION_ID = 3
@@ -217,6 +222,29 @@ EXTERNAL_BY_COMPETITION_ID: dict[int, str] = {
     LALIGA_COMPETITION_ID: "laliga",
     PREMIER_COMPETITION_ID: "premier",
 }
+
+
+def league_max_squad(league_cfg: dict | None = None) -> int:
+    """Tope de jugadores en plantilla: 25 LaLiga / 22 Premier."""
+    cfg = league_cfg or {}
+    raw = cfg.get("max_squad")
+    if raw is not None:
+        try:
+            n = int(raw)
+            if n > 0:
+                return n
+        except (TypeError, ValueError):
+            pass
+    ext = external_competition_key(league_cfg=cfg)
+    if ext == "premier":
+        return int(MAX_SQUAD_SIZE_PREMIER)
+    try:
+        cid = int(cfg["id_competition"]) if cfg.get("id_competition") is not None else None
+    except (TypeError, ValueError):
+        cid = None
+    if cid == int(PREMIER_COMPETITION_ID):
+        return int(MAX_SQUAD_SIZE_PREMIER)
+    return int(MAX_SQUAD_SIZE_LALIGA)
 
 
 def external_competition_key(

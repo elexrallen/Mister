@@ -179,6 +179,7 @@ def main(argv: list[str] | None = None) -> None:
         market_mode=market_mode,
         target_board=target_board,
         funding_info=funding,
+        max_squad=config.league_max_squad(league),
     )
 
     n_daily = sum(1 for o in opportunities if o.get("on_daily_market"))

@@ -946,6 +946,13 @@ button.player-link:hover {
   color: #64748b;
 }
 
+.queue-section-hint {
+  margin: -0.15rem 0 0.55rem;
+  font-size: 0.72rem;
+  line-height: 1.35;
+  color: #94a3b8;
+}
+
 .queue-package-note {
   margin: 0.15rem 0 0.25rem;
   font-size: 0.72rem;
