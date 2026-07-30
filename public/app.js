@@ -1363,24 +1363,11 @@
       if (doTodayIds.has(key)) return false;
       return ["wait", "scout", "avoid"].includes(a.action) || a.queue_role === "aspirational_watch";
     });
-    const primaryPos = (pkg.primary || {}).position;
-    // Siempre visibles: waits del mercado hoy relacionados (same-pos / clave / carencia)
+    // Siempre visibles: waits del mercado ligados al paquete (alts / no-apilar)
     const relatedWaits = contextAll
       .filter((a) => {
         if (a.action !== "wait" || !a.on_daily_market) return false;
-        if (
-          ["alt_if_lost", "alt_unfunded", "alt_no_slot", "also_good", "do_not_stack"].includes(
-            a.queue_role
-          )
-        )
-          return true;
-        return (
-          (primaryPos && a.position === primaryPos) ||
-          a.is_key_market ||
-          a.fills_need ||
-          a.fills_structural ||
-          a.fills_coverage_gap
-        );
+        return ["alt_if_lost", "alt_unfunded", "do_not_stack"].includes(a.queue_role);
       })
       .slice(0, 5);
     const relatedIds = new Set(
