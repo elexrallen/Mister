@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-31T09:15:49.201950+00:00",
+  "generated_at": "2026-07-31T10:08:15.900462+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -723,44 +723,7 @@
   ],
   "aspirational_targets": [],
   "slots": [],
-  "dropped": [
-    {
-      "player_id": "58959",
-      "name": "J. Strand Larsen",
-      "position": "FW",
-      "ep_score": 42.0,
-      "price": 706000.0,
-      "delta_5d": 0.1864,
-      "value_note": "rising",
-      "why": "Fuera del ideal · EP 42 · lista a ~706,000 € (VM); caja usable en ~48h · Δ 19%",
-      "list_at": 706000.0,
-      "expected_proceeds": 706000.0,
-      "buyer_channel": "system",
-      "settlement": "market_cycle",
-      "cycle_hours": 24,
-      "cash_lag_hours": 48,
-      "status": "dropped",
-      "miss_days": 1
-    },
-    {
-      "player_id": "39833",
-      "name": "A. Garnacho",
-      "position": "FW",
-      "ep_score": 85.9,
-      "price": 945000.0,
-      "delta_5d": 0.1388,
-      "value_note": "rising",
-      "why": "Fuera del ideal · EP 86 · lista a ~945,000 € (VM); caja usable en ~48h · Δ 14%",
-      "list_at": 945000.0,
-      "expected_proceeds": 945000.0,
-      "buyer_channel": "system",
-      "settlement": "market_cycle",
-      "cycle_hours": 24,
-      "cash_lag_hours": 48,
-      "status": "dropped",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 0.0
