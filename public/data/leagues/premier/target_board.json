@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-01T23:12:19.284709+00:00",
+  "generated_at": "2026-08-01T23:14:32.804471+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -239,11 +239,11 @@
       "complete": false
     }
   ],
-  "balance": 8424000.0,
-  "squad_value": 43231000.0,
+  "balance": 7175000.0,
+  "squad_value": 44480000.0,
   "wealth": {
-    "balance": 8424000.0,
-    "squad_value": 43231000.0,
+    "balance": 7175000.0,
+    "squad_value": 44480000.0,
     "total": 51655000.0,
     "liquidity_floor": 4132400.0,
     "budget_cap": 47522600.0
@@ -374,7 +374,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 100 · 3,238,000 € · buy · bench",
-      "added_at": "2026-08-01T23:12:19.274575+00:00"
+      "added_at": "2026-08-01T23:12:19.263706+00:00"
     },
     {
       "slot": "DF1",
@@ -422,7 +422,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 93 · 3,501,000 € · buy · bench",
-      "added_at": "2026-08-01T23:12:19.274709+00:00"
+      "added_at": "2026-08-01T23:12:19.263852+00:00"
     },
     {
       "slot": "FW1",
@@ -552,6 +552,22 @@
     ],
     "sell": [
       {
+        "player_id": "13467",
+        "name": "D. Brooks",
+        "position": "MF",
+        "ep_score": 65.9,
+        "price": 572000.0,
+        "delta_5d": null,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 66 · lista a ~572,000 € (VM); caja usable en ~48h",
+        "list_at": 572000.0,
+        "expected_proceeds": 572000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
         "player_id": "48972",
         "name": "M. Tavernier",
         "position": "MF",
@@ -626,6 +642,22 @@
         "why": "Fuera del ideal · EP 85 · lista a ~6,357,000 € (VM); caja usable en ~48h · Δ 4%",
         "list_at": 6357000.0,
         "expected_proceeds": 6357000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
+        "player_id": "65703",
+        "name": "J. Canvot",
+        "position": "DF",
+        "ep_score": 85.9,
+        "price": 677000.0,
+        "delta_5d": null,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 86 · lista a ~677,000 € (VM); caja usable en ~48h",
+        "list_at": 677000.0,
+        "expected_proceeds": 677000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24,
@@ -707,28 +739,6 @@
   },
   "daily_patches": [
     {
-      "need": "df_starter",
-      "position": "DF",
-      "priority": "Alta",
-      "player_id": "65703",
-      "name": "J. Canvot",
-      "price": 677000.0,
-      "ep_score": 85.9,
-      "max_spend": 1010850.0,
-      "why": "Parche DF hoy · EP 86 · 677,000 € (reserva ideal intacta: 6,739,000 €)"
-    },
-    {
-      "need": "mf_starter",
-      "position": "MF",
-      "priority": "Alta",
-      "player_id": "13467",
-      "name": "D. Brooks",
-      "price": 572000.0,
-      "ep_score": 65.9,
-      "max_spend": 1010850.0,
-      "why": "Parche MF hoy · EP 66 · 572,000 € (reserva ideal intacta: 6,739,000 €)"
-    },
-    {
       "need": "fw_top",
       "position": "FW",
       "priority": "Alta",
@@ -736,12 +746,12 @@
       "name": "C. Talbi",
       "price": 166000.0,
       "ep_score": 59.4,
-      "max_spend": 1010850.0,
+      "max_spend": 436000.0,
       "why": "Parche FW hoy · EP 59 · 166,000 € (reserva ideal intacta: 6,739,000 €)"
     }
   ],
   "cash_reserved": 6739000.0,
-  "residual_after_reserve": 1685000.0,
+  "residual_after_reserve": 436000.0,
   "primary_targets": [
     {
       "player_id": "6315",
@@ -769,60 +779,6 @@
   "aspirational_targets": [],
   "slots": [
     {
-      "need": "df_starter",
-      "position": "DF",
-      "priority": "Alta",
-      "reason": "Parche DF hoy · EP 86 · 677,000 € (reserva ideal intacta: 6,739,000 €)",
-      "primary_target": {
-        "player_id": "65703",
-        "name": "J. Canvot",
-        "price": 677000.0,
-        "ep_score": 85.9,
-        "status": "on_daily",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche DF hoy · EP 86 · 677,000 € (reserva ideal intacta: 6,739,000 €)"
-      },
-      "targets": [],
-      "patch_policy": {
-        "allow": true,
-        "max_spend": 1010850.0,
-        "note": "Parche diario sin romper reserva de objetivos de hoy"
-      },
-      "budget_envelope": {
-        "cash_reserve_for_slot": 0,
-        "min_price": null,
-        "max_price": 1010850.0
-      }
-    },
-    {
-      "need": "mf_starter",
-      "position": "MF",
-      "priority": "Alta",
-      "reason": "Parche MF hoy · EP 66 · 572,000 € (reserva ideal intacta: 6,739,000 €)",
-      "primary_target": {
-        "player_id": "13467",
-        "name": "D. Brooks",
-        "price": 572000.0,
-        "ep_score": 65.9,
-        "status": "on_daily",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche MF hoy · EP 66 · 572,000 € (reserva ideal intacta: 6,739,000 €)"
-      },
-      "targets": [],
-      "patch_policy": {
-        "allow": true,
-        "max_spend": 1010850.0,
-        "note": "Parche diario sin romper reserva de objetivos de hoy"
-      },
-      "budget_envelope": {
-        "cash_reserve_for_slot": 0,
-        "min_price": null,
-        "max_price": 1010850.0
-      }
-    },
-    {
       "need": "fw_top",
       "position": "FW",
       "priority": "Alta",
@@ -840,82 +796,32 @@
       "targets": [],
       "patch_policy": {
         "allow": true,
-        "max_spend": 1010850.0,
+        "max_spend": 436000.0,
         "note": "Parche diario sin romper reserva de objetivos de hoy"
       },
       "budget_envelope": {
         "cash_reserve_for_slot": 0,
         "min_price": null,
-        "max_price": 1010850.0
+        "max_price": 436000.0
       }
     }
   ],
   "dropped": [
     {
-      "slot": "GK1",
-      "position": "GK",
-      "role": "bench",
-      "player_id": "54959",
-      "name": "G. Vicario",
-      "team": "Tottenham",
-      "team_id": "67",
-      "ep_score": 100.0,
-      "price": 1211000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 82.58,
-      "lineup_prob": null,
-      "ff_mister_points": 241.0,
-      "ff_mister_avg": 7.77,
-      "hist_ok": true,
-      "on_daily_market": true,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 100 · 1,211,000 € · buy · bench",
-      "added_at": "2026-08-01T08:35:05.460786+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF1",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "55670",
-      "name": "I. Sangaré",
-      "team": "Nott. Forest",
-      "team_id": "1113",
-      "ep_score": 96.0,
-      "price": 1138000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 84.36,
-      "lineup_prob": null,
-      "ff_mister_points": 264.0,
-      "ff_mister_avg": 9.43,
-      "hist_ok": true,
-      "on_daily_market": true,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 96 · 1,138,000 € · buy · bench",
-      "added_at": "2026-08-01T08:35:05.460996+00:00",
-      "miss_days": 1
-    },
-    {
-      "player_id": "59793",
-      "name": "M. Ugarte",
-      "price": 421000.0,
-      "ep_score": 62.1,
+      "player_id": "64361",
+      "name": "C. Talbi",
+      "price": 166000.0,
+      "ep_score": 59.4,
       "status": "dropped",
       "tier": "realistic",
       "afford_now": true,
-      "why": "Parche MF hoy · EP 62 · 421,000 € (reserva ideal intacta: 2,349,000 €)",
+      "why": "Parche FW hoy · EP 59 · 166,000 € (reserva ideal intacta: 6,739,000 €)",
       "miss_days": 1
     }
   ],
   "patch_policy": {
     "allow": true,
-    "max_spend": 1685000.0
+    "max_spend": 436000.0
   },
   "summary": {
     "slots": 4,
@@ -926,8 +832,8 @@
     "incomplete": true,
     "keep": 2,
     "buy": 2,
-    "sell": 8,
-    "patches": 3,
+    "sell": 10,
+    "patches": 1,
     "on_daily": 0,
     "cash_reserved": 6739000.0,
     "ep_sum": 381.5,
