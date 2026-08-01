@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-01T09:35:51.285715+00:00",
+  "generated_at": "2026-08-01T23:12:19.284709+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -22,8 +22,8 @@
         "FW": 3
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -38,8 +38,8 @@
         "FW": 2
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -54,8 +54,8 @@
         "FW": 1
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -70,8 +70,8 @@
         "FW": 2
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -86,8 +86,8 @@
         "FW": 3
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -102,8 +102,8 @@
         "FW": 2
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -118,8 +118,8 @@
         "FW": 1
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -136,8 +136,8 @@
         "FW": 3
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -152,8 +152,8 @@
         "FW": 2
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -168,8 +168,8 @@
         "FW": 1
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -184,8 +184,8 @@
         "FW": 2
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -200,8 +200,8 @@
         "FW": 3
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -216,8 +216,8 @@
         "FW": 2
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -232,8 +232,8 @@
         "FW": 1
       },
       "ep_sum_starters": 0,
-      "ep_sum": 384.4,
-      "cost_sum": 6515000.0,
+      "ep_sum": 381.5,
+      "cost_sum": 10905000.0,
       "starters": 0,
       "starters_target": 11,
       "complete": false
@@ -252,31 +252,31 @@
     "budget_cap": 47522600.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
-  "ideal_buy_cost": 2349000.0,
+  "ideal_buy_cost": 6739000.0,
   "perfect_squad": [
     {
       "slot": "GK1",
       "position": "GK",
       "role": "bench",
-      "player_id": "54959",
-      "name": "G. Vicario",
-      "team": "Tottenham",
-      "team_id": "67",
+      "player_id": "6315",
+      "name": "M. Sels",
+      "team": "Nott. Forest",
+      "team_id": "1113",
       "ep_score": 100.0,
-      "price": 1211000.0,
+      "price": 3238000.0,
       "status": "buy",
       "delta_5d": null,
       "value_note": "stable",
-      "value_ratio": 82.58,
+      "value_ratio": 30.88,
       "lineup_prob": null,
-      "ff_mister_points": 241.0,
-      "ff_mister_avg": 7.77,
+      "ff_mister_points": 280.0,
+      "ff_mister_avg": 9.03,
       "hist_ok": true,
-      "on_daily_market": true,
+      "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 100 · 1,211,000 € · buy · bench",
-      "added_at": "2026-08-01T08:35:05.460786+00:00"
+      "why": "EP 100 · 3,238,000 € · buy · bench",
+      "added_at": "2026-08-01T23:12:19.263706+00:00"
     },
     {
       "slot": "DF1",
@@ -306,25 +306,25 @@
       "slot": "MF1",
       "position": "MF",
       "role": "bench",
-      "player_id": "55670",
-      "name": "I. Sangaré",
-      "team": "Nott. Forest",
-      "team_id": "1113",
-      "ep_score": 96.0,
-      "price": 1138000.0,
+      "player_id": "4870",
+      "name": "H. Barnes",
+      "team": "Newcastle",
+      "team_id": "177",
+      "ep_score": 93.1,
+      "price": 3501000.0,
       "status": "buy",
       "delta_5d": null,
       "value_note": "stable",
-      "value_ratio": 84.36,
+      "value_ratio": 26.59,
       "lineup_prob": null,
-      "ff_mister_points": 264.0,
-      "ff_mister_avg": 9.43,
+      "ff_mister_points": 268.0,
+      "ff_mister_avg": 7.44,
       "hist_ok": true,
-      "on_daily_market": true,
+      "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 96 · 1,138,000 € · buy · bench",
-      "added_at": "2026-08-01T08:35:05.460996+00:00"
+      "why": "EP 93 · 3,501,000 € · buy · bench",
+      "added_at": "2026-08-01T23:12:19.263852+00:00"
     },
     {
       "slot": "FW1",
@@ -356,25 +356,25 @@
       "slot": "GK1",
       "position": "GK",
       "role": "bench",
-      "player_id": "54959",
-      "name": "G. Vicario",
-      "team": "Tottenham",
-      "team_id": "67",
+      "player_id": "6315",
+      "name": "M. Sels",
+      "team": "Nott. Forest",
+      "team_id": "1113",
       "ep_score": 100.0,
-      "price": 1211000.0,
+      "price": 3238000.0,
       "status": "buy",
       "delta_5d": null,
       "value_note": "stable",
-      "value_ratio": 82.58,
+      "value_ratio": 30.88,
       "lineup_prob": null,
-      "ff_mister_points": 241.0,
-      "ff_mister_avg": 7.77,
+      "ff_mister_points": 280.0,
+      "ff_mister_avg": 9.03,
       "hist_ok": true,
-      "on_daily_market": true,
+      "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 100 · 1,211,000 € · buy · bench",
-      "added_at": "2026-08-01T08:35:05.460786+00:00"
+      "why": "EP 100 · 3,238,000 € · buy · bench",
+      "added_at": "2026-08-01T23:12:19.274575+00:00"
     },
     {
       "slot": "DF1",
@@ -404,25 +404,25 @@
       "slot": "MF1",
       "position": "MF",
       "role": "bench",
-      "player_id": "55670",
-      "name": "I. Sangaré",
-      "team": "Nott. Forest",
-      "team_id": "1113",
-      "ep_score": 96.0,
-      "price": 1138000.0,
+      "player_id": "4870",
+      "name": "H. Barnes",
+      "team": "Newcastle",
+      "team_id": "177",
+      "ep_score": 93.1,
+      "price": 3501000.0,
       "status": "buy",
       "delta_5d": null,
       "value_note": "stable",
-      "value_ratio": 84.36,
+      "value_ratio": 26.59,
       "lineup_prob": null,
-      "ff_mister_points": 264.0,
-      "ff_mister_avg": 9.43,
+      "ff_mister_points": 268.0,
+      "ff_mister_avg": 7.44,
       "hist_ok": true,
-      "on_daily_market": true,
+      "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 96 · 1,138,000 € · buy · bench",
-      "added_at": "2026-08-01T08:35:05.460996+00:00"
+      "why": "EP 93 · 3,501,000 € · buy · bench",
+      "added_at": "2026-08-01T23:12:19.274709+00:00"
     },
     {
       "slot": "FW1",
@@ -505,49 +505,49 @@
         "slot": "GK1",
         "position": "GK",
         "role": "bench",
-        "player_id": "54959",
-        "name": "G. Vicario",
-        "team": "Tottenham",
-        "team_id": "67",
+        "player_id": "6315",
+        "name": "M. Sels",
+        "team": "Nott. Forest",
+        "team_id": "1113",
         "ep_score": 100.0,
-        "price": 1211000.0,
+        "price": 3238000.0,
         "status": "buy",
         "delta_5d": null,
         "value_note": "stable",
-        "value_ratio": 82.58,
+        "value_ratio": 30.88,
         "lineup_prob": null,
-        "ff_mister_points": 241.0,
-        "ff_mister_avg": 7.77,
+        "ff_mister_points": 280.0,
+        "ff_mister_avg": 9.03,
         "hist_ok": true,
-        "on_daily_market": true,
+        "on_daily_market": false,
         "owned": false,
         "gk_tandem": false,
-        "why": "EP 100 · 1,211,000 € · buy · bench",
-        "added_at": "2026-08-01T08:35:05.460786+00:00"
+        "why": "EP 100 · 3,238,000 € · buy · bench",
+        "added_at": "2026-08-01T23:12:19.263706+00:00"
       },
       {
         "slot": "MF1",
         "position": "MF",
         "role": "bench",
-        "player_id": "55670",
-        "name": "I. Sangaré",
-        "team": "Nott. Forest",
-        "team_id": "1113",
-        "ep_score": 96.0,
-        "price": 1138000.0,
+        "player_id": "4870",
+        "name": "H. Barnes",
+        "team": "Newcastle",
+        "team_id": "177",
+        "ep_score": 93.1,
+        "price": 3501000.0,
         "status": "buy",
         "delta_5d": null,
         "value_note": "stable",
-        "value_ratio": 84.36,
+        "value_ratio": 26.59,
         "lineup_prob": null,
-        "ff_mister_points": 264.0,
-        "ff_mister_avg": 9.43,
+        "ff_mister_points": 268.0,
+        "ff_mister_avg": 7.44,
         "hist_ok": true,
-        "on_daily_market": true,
+        "on_daily_market": false,
         "owned": false,
         "gk_tandem": false,
-        "why": "EP 96 · 1,138,000 € · buy · bench",
-        "added_at": "2026-08-01T08:35:05.460996+00:00"
+        "why": "EP 93 · 3,501,000 € · buy · bench",
+        "added_at": "2026-08-01T23:12:19.263852+00:00"
       }
     ],
     "sell": [
@@ -682,24 +682,24 @@
     ]
   },
   "totals": {
-    "ep_sum": 384.4,
+    "ep_sum": 381.5,
     "ep_sum_starters": 0,
-    "cost_sum": 6515000.0,
-    "net_buys": 2349000.0,
+    "cost_sum": 10905000.0,
+    "net_buys": 6739000.0,
     "slots_filled": 4,
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
     "funded_ideal": true,
     "formation": "4-3-3",
-    "ideal_buy_cost": 2349000.0,
+    "ideal_buy_cost": 6739000.0,
     "daily_primary_count": 2
   },
   "totals_aspirational": {
-    "ep_sum": 384.4,
+    "ep_sum": 381.5,
     "ep_sum_starters": 0,
-    "cost_sum": 6515000.0,
-    "net_buys": 2349000.0,
+    "cost_sum": 10905000.0,
+    "net_buys": 6739000.0,
     "slots_filled": 4,
     "slots_target": 15,
     "funded": null,
@@ -707,74 +707,200 @@
   },
   "daily_patches": [
     {
+      "need": "df_starter",
+      "position": "DF",
+      "priority": "Alta",
+      "player_id": "65703",
+      "name": "J. Canvot",
+      "price": 677000.0,
+      "ep_score": 85.9,
+      "max_spend": 1010850.0,
+      "why": "Parche DF hoy · EP 86 · 677,000 € (reserva ideal intacta: 6,739,000 €)"
+    },
+    {
       "need": "mf_starter",
       "position": "MF",
       "priority": "Alta",
-      "player_id": "59793",
-      "name": "M. Ugarte",
-      "price": 421000.0,
-      "ep_score": 62.1,
-      "max_spend": 500000.0,
-      "why": "Parche MF hoy · EP 62 · 421,000 € (reserva ideal intacta: 2,349,000 €)"
-    }
-  ],
-  "cash_reserved": 2349000.0,
-  "residual_after_reserve": 6075000.0,
-  "primary_targets": [
-    {
-      "player_id": "54959",
-      "name": "G. Vicario",
-      "need": "perfect_squad_daily",
-      "position": "GK",
-      "price": 1211000.0,
-      "ep_score": 100.0,
-      "status": "on_daily",
-      "role": "bench",
-      "on_daily_market": true
+      "player_id": "13467",
+      "name": "D. Brooks",
+      "price": 572000.0,
+      "ep_score": 65.9,
+      "max_spend": 1010850.0,
+      "why": "Parche MF hoy · EP 66 · 572,000 € (reserva ideal intacta: 6,739,000 €)"
     },
     {
-      "player_id": "55670",
-      "name": "I. Sangaré",
+      "need": "fw_top",
+      "position": "FW",
+      "priority": "Alta",
+      "player_id": "64361",
+      "name": "C. Talbi",
+      "price": 166000.0,
+      "ep_score": 59.4,
+      "max_spend": 1010850.0,
+      "why": "Parche FW hoy · EP 59 · 166,000 € (reserva ideal intacta: 6,739,000 €)"
+    }
+  ],
+  "cash_reserved": 6739000.0,
+  "residual_after_reserve": 1685000.0,
+  "primary_targets": [
+    {
+      "player_id": "6315",
+      "name": "M. Sels",
+      "need": "perfect_squad_daily",
+      "position": "GK",
+      "price": 3238000.0,
+      "ep_score": 100.0,
+      "status": "affordable",
+      "role": "bench",
+      "on_daily_market": false
+    },
+    {
+      "player_id": "4870",
+      "name": "H. Barnes",
       "need": "perfect_squad_daily",
       "position": "MF",
-      "price": 1138000.0,
-      "ep_score": 96.0,
-      "status": "on_daily",
+      "price": 3501000.0,
+      "ep_score": 93.1,
+      "status": "affordable",
       "role": "bench",
-      "on_daily_market": true
+      "on_daily_market": false
     }
   ],
   "aspirational_targets": [],
   "slots": [
     {
-      "need": "mf_starter",
-      "position": "MF",
+      "need": "df_starter",
+      "position": "DF",
       "priority": "Alta",
-      "reason": "Parche MF hoy · EP 62 · 421,000 € (reserva ideal intacta: 2,349,000 €)",
+      "reason": "Parche DF hoy · EP 86 · 677,000 € (reserva ideal intacta: 6,739,000 €)",
       "primary_target": {
-        "player_id": "59793",
-        "name": "M. Ugarte",
-        "price": 421000.0,
-        "ep_score": 62.1,
+        "player_id": "65703",
+        "name": "J. Canvot",
+        "price": 677000.0,
+        "ep_score": 85.9,
         "status": "on_daily",
         "tier": "realistic",
         "afford_now": true,
-        "why": "Parche MF hoy · EP 62 · 421,000 € (reserva ideal intacta: 2,349,000 €)"
+        "why": "Parche DF hoy · EP 86 · 677,000 € (reserva ideal intacta: 6,739,000 €)"
       },
       "targets": [],
       "patch_policy": {
         "allow": true,
-        "max_spend": 500000.0,
+        "max_spend": 1010850.0,
         "note": "Parche diario sin romper reserva de objetivos de hoy"
       },
       "budget_envelope": {
         "cash_reserve_for_slot": 0,
         "min_price": null,
-        "max_price": 500000.0
+        "max_price": 1010850.0
+      }
+    },
+    {
+      "need": "mf_starter",
+      "position": "MF",
+      "priority": "Alta",
+      "reason": "Parche MF hoy · EP 66 · 572,000 € (reserva ideal intacta: 6,739,000 €)",
+      "primary_target": {
+        "player_id": "13467",
+        "name": "D. Brooks",
+        "price": 572000.0,
+        "ep_score": 65.9,
+        "status": "on_daily",
+        "tier": "realistic",
+        "afford_now": true,
+        "why": "Parche MF hoy · EP 66 · 572,000 € (reserva ideal intacta: 6,739,000 €)"
+      },
+      "targets": [],
+      "patch_policy": {
+        "allow": true,
+        "max_spend": 1010850.0,
+        "note": "Parche diario sin romper reserva de objetivos de hoy"
+      },
+      "budget_envelope": {
+        "cash_reserve_for_slot": 0,
+        "min_price": null,
+        "max_price": 1010850.0
+      }
+    },
+    {
+      "need": "fw_top",
+      "position": "FW",
+      "priority": "Alta",
+      "reason": "Parche FW hoy · EP 59 · 166,000 € (reserva ideal intacta: 6,739,000 €)",
+      "primary_target": {
+        "player_id": "64361",
+        "name": "C. Talbi",
+        "price": 166000.0,
+        "ep_score": 59.4,
+        "status": "on_daily",
+        "tier": "realistic",
+        "afford_now": true,
+        "why": "Parche FW hoy · EP 59 · 166,000 € (reserva ideal intacta: 6,739,000 €)"
+      },
+      "targets": [],
+      "patch_policy": {
+        "allow": true,
+        "max_spend": 1010850.0,
+        "note": "Parche diario sin romper reserva de objetivos de hoy"
+      },
+      "budget_envelope": {
+        "cash_reserve_for_slot": 0,
+        "min_price": null,
+        "max_price": 1010850.0
       }
     }
   ],
   "dropped": [
+    {
+      "slot": "GK1",
+      "position": "GK",
+      "role": "bench",
+      "player_id": "54959",
+      "name": "G. Vicario",
+      "team": "Tottenham",
+      "team_id": "67",
+      "ep_score": 100.0,
+      "price": 1211000.0,
+      "status": "dropped",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 82.58,
+      "lineup_prob": null,
+      "ff_mister_points": 241.0,
+      "ff_mister_avg": 7.77,
+      "hist_ok": true,
+      "on_daily_market": true,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 100 · 1,211,000 € · buy · bench",
+      "added_at": "2026-08-01T08:35:05.460786+00:00",
+      "miss_days": 1
+    },
+    {
+      "slot": "MF1",
+      "position": "MF",
+      "role": "bench",
+      "player_id": "55670",
+      "name": "I. Sangaré",
+      "team": "Nott. Forest",
+      "team_id": "1113",
+      "ep_score": 96.0,
+      "price": 1138000.0,
+      "status": "dropped",
+      "delta_5d": null,
+      "value_note": "stable",
+      "value_ratio": 84.36,
+      "lineup_prob": null,
+      "ff_mister_points": 264.0,
+      "ff_mister_avg": 9.43,
+      "hist_ok": true,
+      "on_daily_market": true,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 96 · 1,138,000 € · buy · bench",
+      "added_at": "2026-08-01T08:35:05.460996+00:00",
+      "miss_days": 1
+    },
     {
       "player_id": "59793",
       "name": "M. Ugarte",
@@ -789,7 +915,7 @@
   ],
   "patch_policy": {
     "allow": true,
-    "max_spend": 2500000.0
+    "max_spend": 1685000.0
   },
   "summary": {
     "slots": 4,
@@ -801,10 +927,10 @@
     "keep": 2,
     "buy": 2,
     "sell": 8,
-    "patches": 1,
-    "on_daily": 2,
-    "cash_reserved": 2349000.0,
-    "ep_sum": 384.4,
+    "patches": 3,
+    "on_daily": 0,
+    "cash_reserved": 6739000.0,
+    "ep_sum": 381.5,
     "ep_sum_starters": 0,
     "mode": "operable",
     "formation": "4-3-3",
@@ -818,7 +944,7 @@
     "incomplete": true,
     "keep": 2,
     "buy": 2,
-    "ep_sum": 384.4,
+    "ep_sum": 381.5,
     "ep_sum_starters": 0,
     "mode": "aspirational",
     "formation": "4-3-3",
