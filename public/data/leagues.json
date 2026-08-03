@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T08:32:57.055957+00:00",
+  "generated_at": "2026-08-03T09:07:27.455605+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,7 +10,7 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-03T08:31:16.951469+00:00",
+      "generated_at": "2026-08-03T09:06:16.311599+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
       "balance": 22818886,
       "rank": 4
@@ -23,7 +23,7 @@
       "id_competition": 3,
       "season_start": "2026-08-21",
       "default": false,
-      "generated_at": "2026-08-03T08:32:57.035264+00:00",
+      "generated_at": "2026-08-03T09:07:27.432491+00:00",
       "path": "leagues/premier/latest_data.json",
       "balance": 36818000,
       "rank": 50
