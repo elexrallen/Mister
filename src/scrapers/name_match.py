@@ -151,14 +151,29 @@ def match_player(
 
     best: dict[str, Any] | None = None
     best_score = 0
+    best_rank = (-1, -1, -1)  # name_tokens, has_ff_prob, has_prob — desempate
+
+    def _cand_rank(cand: dict[str, Any], c_parts: list[str]) -> tuple[int, int, int]:
+        sources = cand.get("sources") or ([cand["source"]] if cand.get("source") else [])
+        srcs = {str(s).lower() for s in sources}
+        has_ff = int(
+            any("futbolfantasy" in s for s in srcs)
+            and cand.get("lineup_prob") is not None
+        )
+        has_prob = int(cand.get("lineup_prob") is not None)
+        return (len(c_parts), has_ff, has_prob)
+
     for cand in candidates:
         cname = normalize_name(str(cand.get("name") or ""))
         if not cname:
             continue
         c_initial, c_surname, c_parts = _split_initial_surname(cname)
+        # Un solo token largo = apellido suelto (JP "Abqar"), no nombre de pila
+        surname_only = len(c_parts) == 1 and len(c_parts[0]) > 1
 
         # Hard gate: inicial abreviada incompatible → descartar
-        if t_initial and not _initial_compatible(t_initial, c_parts):
+        # Apellido solo: no se puede verificar la inicial; no descartar, sí penalizar abajo
+        if t_initial and not surname_only and not _initial_compatible(t_initial, c_parts):
             continue
         # Si el candidato también está abreviado y Mister no, simétrico
         if c_initial and not t_initial and not _initial_compatible(c_initial, t_parts):
@@ -168,7 +183,10 @@ def match_player(
 
         # Score más fiable cuando Mister es "X. Apellido"
         if t_initial and t_surname:
-            if c_surname == t_surname and _initial_compatible(t_initial, c_parts):
+            if surname_only and c_surname == t_surname:
+                # token_set("a abqar","abqar")=100 → capar para que pierda vs "Abdel Abqar"
+                score = min(score, 82)
+            elif c_surname == t_surname and _initial_compatible(t_initial, c_parts):
                 # Inicial + apellido exacto: base alta sin depender de token_set
                 score = max(score, 92)
             elif fuzz.ratio(t_surname, c_surname) >= 90 and _initial_compatible(t_initial, c_parts):
@@ -178,7 +196,13 @@ def match_player(
                 score = min(score, fuzz.token_sort_ratio(target, cname))
 
         # Bonus clásico por inicial + apellido (L. Yamal ↔ Lamine Yamal)
-        if t_parts and c_parts and len(t_parts[0]) == 1 and t_parts[0] == c_parts[0][:1]:
+        if (
+            not surname_only
+            and t_parts
+            and c_parts
+            and len(t_parts[0]) == 1
+            and t_parts[0] == c_parts[0][:1]
+        ):
             if t_parts[-1] == c_parts[-1]:
                 score = max(score, min(100, fuzz.ratio(t_parts[-1], c_parts[-1]) + 12))
 
@@ -187,6 +211,7 @@ def match_player(
         strong_abbrev = bool(
             t_initial
             and t_surname
+            and not surname_only
             and c_surname == t_surname
             and _initial_compatible(t_initial, c_parts)
         )
@@ -201,8 +226,10 @@ def match_player(
                 score -= 28
 
         score = max(0, min(100, score))
-        if score > best_score:
+        rank = _cand_rank(cand, c_parts)
+        if score > best_score or (score == best_score and rank > best_rank):
             best_score = score
+            best_rank = rank
             best = cand
 
     if best is None or best_score < threshold:

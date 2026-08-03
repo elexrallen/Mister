@@ -79,7 +79,8 @@ def _parse_lesionados(prefix: str) -> list[dict[str, Any]]:
             if "lesionados-equipo-nombre" in cls:
                 team = prev.get_text(" ", strip=True)
                 break
-        lineup_prob = 0 if availability in ("injured", "suspended") else (40 if availability == "doubt" else None)
+        # Duda: no inventar % (antes 40 fijo pisaba el real de Fútbol Fantasy vía match por apellido).
+        lineup_prob = 0 if availability in ("injured", "suspended") else None
         out.append({
             "name": name,
             "team": team,
