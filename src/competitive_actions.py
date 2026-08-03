@@ -263,12 +263,15 @@ def _avg_scale(p: dict[str, Any] | None) -> float:
 
 
 def _lineup_titularidad_label(p: dict[str, Any] | None, lineup: float | None) -> str:
-    """Texto de titularidad; marca proxy por PJ cuando no hay % FF."""
+    """Texto de titularidad; marca proxy por PJ / ficha cuando no hay % de alineación."""
     if lineup is None:
         return "—%"
     src = ((p or {}).get("external") or {}).get("lineup_prob_source")
-    if src == "ff_apps_proxy":
-        return f"≈{int(lineup)}% (por PJ)"
+    if src == "ff_profile_titular":
+        return f"{int(lineup)}% (titular FF)"
+    if src in ("ff_apps_proxy", "ff_apps_proxy_fotmob"):
+        suffix = "por PJ" if src == "ff_apps_proxy" else "por PJ+min"
+        return f"≈{int(lineup)}% ({suffix})"
     return f"{int(lineup)}%"
 
 

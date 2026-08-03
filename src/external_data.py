@@ -19,12 +19,14 @@ from scrapers.comuniate import enrich_profiles_for_names
 from scrapers.name_match import match_player
 from scrapers.ff_points import (
     THIN_APPS,
+    SEASON_GAMES,
     apps_to_lineup_prob,
     default_ff_seasons,
     fetch_ff_mister_points,
     is_top_production,
     production_score,
 )
+from scrapers.ff_profile import fetch_ff_profile_titular, reset_ff_profile_fetch_budget
 
 log = logging.getLogger("external_data")
 
@@ -576,6 +578,8 @@ def enrich_players_with_ff_production(
         primary_key, prior_key = (prior_key or primary_key), primary_key
     threshold = float(bundle.get("threshold") or top_floor)
 
+    reset_ff_profile_fetch_budget()
+
     # Índice prior por nombre lower
     prior_by_name: dict[str, dict[str, Any]] = {}
     for r in prior_recs:
@@ -659,7 +663,16 @@ def enrich_players_with_ff_production(
             except (TypeError, ValueError):
                 lp = None
 
-        # Proxy titularidad desde PJ históricos si FF/JP no dieron %
+        # URL de ficha FF (analytics) para titular real si no hay widget de alineación
+        ff_url = str((profile_src or {}).get("profile_url") or "") or None
+        if not ff_url:
+            ff_url = str(ext.get("profile_url") or "") or None
+        if ff_url and "futbolfantasy.com/jugadores/" not in ff_url:
+            ff_url = None
+
+        # Proxy titularidad si FF/JP no dieron %
+        # apps/38 castiga fichajes a mitad de temporada (Gallagher 16 PJ → 42% falso;
+        # ficha FF: Titular 88%). Preferir % Titular de ficha; si no, apps/38 + suelo FotMob.
         apps_for_proxy: float | None = None
         apps_samples: list[float] = []
         if hit and apps >= THIN_APPS:
@@ -674,13 +687,57 @@ def enrich_players_with_ff_production(
             apps_for_proxy = sum(apps_samples) / len(apps_samples)
 
         if lp is None:
-            proxy_lp = apps_to_lineup_prob(apps_for_proxy)
-            if proxy_lp is not None:
-                lp = float(proxy_lp)
-                lp_source = "ff_apps_proxy"
-                ext["lineup_prob_ext"] = int(proxy_lp)
+            profile_pct = None
+            # Pedir ficha si el proxy apps/38 quedaría por debajo de titular (~70%)
+            # o la muestra es corta/media temporada (llegada a mitad de curso)
+            apps_proxy_guess = apps_to_lineup_prob(apps_for_proxy)
+            need_profile = (
+                ff_url
+                and apps_for_proxy is not None
+                and (
+                    float(apps_for_proxy) < float(SEASON_GAMES) * 0.75
+                    or (apps_proxy_guess is not None and apps_proxy_guess < 70)
+                )
+            )
+            if need_profile:
+                prof = fetch_ff_profile_titular(ff_url)
+                if prof and prof.get("titular_pct") is not None:
+                    try:
+                        profile_pct = int(prof["titular_pct"])
+                    except (TypeError, ValueError):
+                        profile_pct = None
+                    if profile_pct is not None:
+                        ext["ff_starts"] = prof.get("starts")
+                        ext["ff_profile_apps"] = prof.get("apps")
+
+            if profile_pct is not None:
+                lp = float(profile_pct)
+                lp_source = "ff_profile_titular"
+            else:
+                proxy_lp = apps_proxy_guess
+                # Suelo: minutos recientes altos ⇒ no tratar como banquillo eterno
+                fm = p.get("fotmob_stats") or {}
                 try:
-                    new_p["lineup_prob"] = float(proxy_lp) / 100.0
+                    recent_mins = float(fm["minutos_ultimos_5"]) if fm.get("minutos_ultimos_5") is not None else None
+                except (TypeError, ValueError):
+                    recent_mins = None
+                if proxy_lp is not None and recent_mins is not None and recent_mins >= 270:
+                    # ≥54'/partido en últimos 5 ⇒ al menos regular/titular usable
+                    floored = max(int(proxy_lp), 70)
+                    if floored > int(proxy_lp):
+                        proxy_lp = floored
+                        lp_source = "ff_apps_proxy_fotmob"
+                    else:
+                        lp_source = "ff_apps_proxy"
+                elif proxy_lp is not None:
+                    lp_source = "ff_apps_proxy"
+                if proxy_lp is not None:
+                    lp = float(proxy_lp)
+
+            if lp is not None:
+                ext["lineup_prob_ext"] = int(round(float(lp)))
+                try:
+                    new_p["lineup_prob"] = float(lp) / 100.0
                 except (TypeError, ValueError):
                     pass
 
@@ -728,7 +785,6 @@ def enrich_players_with_ff_production(
             }
         )
         # Preferir ficha FF de analytics si no hay URL de jugador o solo hay link a partido
-        ff_url = str((profile_src or {}).get("profile_url") or "") or None
         if ff_url:
             cur = str(ext.get("profile_url") or "")
             better = (

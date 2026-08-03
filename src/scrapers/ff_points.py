@@ -76,7 +76,8 @@ COMPETITION_PROFILES: dict[str, dict[str, Any]] = {
     },
 }
 
-# Partidos de liga por temporada (proxy titularidad = apps / SEASON_GAMES)
+# Partidos de liga por temporada (proxy titularidad fallback = apps / SEASON_GAMES).
+# Preferir % Titular de ficha FF (llegadas a mitad de temporada).
 SEASON_GAMES = 38
 MIXTO_AVG_SCALE = 8.0
 

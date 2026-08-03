@@ -1481,7 +1481,9 @@ def build_action_plan(
                 wait_bits.append("duda de alineación")
             if lineup is not None and float(lineup) < 70:
                 src = (o.get("external") or {}).get("lineup_prob_source")
-                if src == "ff_apps_proxy":
+                if src == "ff_profile_titular":
+                    wait_bits.append(f"titularidad {int(float(lineup))}% (titular FF)")
+                elif src in ("ff_apps_proxy", "ff_apps_proxy_fotmob"):
                     wait_bits.append(f"titularidad ≈{int(float(lineup))}% (por PJ)")
                 else:
                     wait_bits.append(f"titularidad {int(float(lineup))}%")
