@@ -18,6 +18,8 @@ from scrapers import fetch_all_external
 from scrapers.comuniate import enrich_profiles_for_names
 from scrapers.name_match import match_player
 from scrapers.ff_points import (
+    THIN_APPS,
+    apps_to_lineup_prob,
     fetch_ff_mister_points,
     is_top_production,
     production_score,
@@ -200,6 +202,9 @@ def _empty_external() -> dict[str, Any]:
         "gw_out": False,
         "gw_opponent": None,
         "gw_fixture_id": None,
+        "ff_avg_scale": None,
+        "ff_scoring": None,
+        "lineup_prob_source": None,
     }
 
 
@@ -546,12 +551,14 @@ def enrich_players_with_ff_production(
         "fallback_price": False,
         "competition": comp,
         "scoring": None,
+        "avg_scale": None,
     }
     bundle = fetch_ff_mister_points(competition=comp)
     meta["ff_points"] = bundle.get("status") or "fail"
     meta["threshold"] = bundle.get("threshold")
     meta["scoring"] = bundle.get("scoring")
     avg_scale = float(bundle.get("avg_scale") or 8.0)
+    meta["avg_scale"] = avg_scale
     top_floor = float(bundle.get("top_floor") or 5.5)
     scoring_label = str(bundle.get("scoring") or ("Fantasy RPG" if comp == "premier" else "Mister Mixto"))
 
@@ -589,6 +596,7 @@ def enrich_players_with_ff_production(
         avg = None
         points = None
         apps = 0
+        prior_apps: int | None = None
         season = None
         prior_avg = None
         prior_season = None
@@ -614,6 +622,7 @@ def enrich_players_with_ff_production(
             if pref:
                 prior_avg = pref.get("mister_avg")
                 prior_season = pref.get("season_label") or pref.get("season")
+                prior_apps = int(pref.get("apps") or 0)
                 if not profile_src.get("profile_url") and pref.get("profile_url"):
                     profile_src = pref
 
@@ -626,6 +635,7 @@ def enrich_players_with_ff_production(
                 prior_avg = phit.get("mister_avg")
                 prior_season = phit.get("season_label") or phit.get("season")
                 apps = int(phit.get("apps") or 0)
+                prior_apps = apps
                 score = pscore
 
         mister_form = None
@@ -638,11 +648,39 @@ def enrich_players_with_ff_production(
             mister_form = None
 
         lp = ext.get("lineup_prob_ext")
+        lp_source = ext.get("lineup_prob_source")
         if lp is None and p.get("lineup_prob") is not None:
             try:
                 lp = float(p["lineup_prob"]) * 100.0
+                if lp_source is None:
+                    lp_source = "mister_or_ext"
             except (TypeError, ValueError):
                 lp = None
+
+        # Proxy titularidad desde PJ históricos si FF/JP no dieron %
+        apps_for_proxy: float | None = None
+        apps_samples: list[float] = []
+        if hit and apps >= THIN_APPS:
+            apps_samples.append(float(apps))
+        if prior_apps is not None and prior_apps >= THIN_APPS:
+            apps_samples.append(float(prior_apps))
+        elif prior_apps is not None and not apps_samples and prior_apps > 0:
+            apps_samples.append(float(prior_apps))
+        if not apps_samples and apps > 0:
+            apps_samples.append(float(apps))
+        if apps_samples:
+            apps_for_proxy = sum(apps_samples) / len(apps_samples)
+
+        if lp is None:
+            proxy_lp = apps_to_lineup_prob(apps_for_proxy)
+            if proxy_lp is not None:
+                lp = float(proxy_lp)
+                lp_source = "ff_apps_proxy"
+                ext["lineup_prob_ext"] = int(proxy_lp)
+                try:
+                    new_p["lineup_prob"] = float(proxy_lp) / 100.0
+                except (TypeError, ValueError):
+                    pass
 
         ref_avg = avg if avg is not None else prior_avg
         is_top = (
@@ -681,6 +719,8 @@ def enrich_players_with_ff_production(
                 "production_score": prod,
                 "ff_match_score": score if hit else None,
                 "ff_scoring": scoring_label,
+                "ff_avg_scale": avg_scale,
+                "lineup_prob_source": lp_source,
             }
         )
         # Preferir ficha FF de analytics si no hay URL de jugador o solo hay link a partido
@@ -705,6 +745,8 @@ def enrich_players_with_ff_production(
         new_p["production_score"] = prod
         new_p["is_top_ff"] = is_top
         new_p["top_reason"] = reason
+        new_p["ff_avg_scale"] = avg_scale
+        new_p["ff_scoring"] = scoring_label
         enriched.append(new_p)
 
     # Fallback TOP por percentil de precio vs universo mercado si casi no hubo matches FF

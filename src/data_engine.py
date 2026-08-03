@@ -26,6 +26,7 @@ import config
 from mister_client import fetch_live_league, enrich_players_with_clauses
 from external_data import enrich_players_with_external, enrich_players_with_ff_production
 from fotmob_service import enrich_players_with_fotmob
+from scrapers.ff_points import resolve_avg_scale, scale_threshold
 from competitive_actions import (
     annotate_market_budget_risk,
     budget_fit,
@@ -494,13 +495,14 @@ def classify_market_opportunities(
             categories.append("chollo_economico")
         elif trend == "up" and rel_price <= 1.1:
             categories.append("chollo_economico")
-        if (avg_ppg is not None and float(avg_ppg) >= 5.2 and reliability and float(reliability) >= 0.5):
+        scale = resolve_avg_scale(p)
+        if (avg_ppg is not None and float(avg_ppg) >= scale_threshold(5.2, scale) and reliability and float(reliability) >= 0.5):
             categories.append("titular_garantizado")
-        elif form is not None and float(form) >= 5.5:
+        elif form is not None and float(form) >= scale_threshold(5.5, scale):
             categories.append("titular_garantizado")
         if delta is not None and delta >= 0.10:
             categories.append("especulacion_trading")
-        elif trend == "up" and (form is None or float(form) < 4.0):
+        elif trend == "up" and (form is None or float(form) < scale_threshold(4.0, scale)):
             categories.append("especulacion_trading")
         if not categories:
             if p["position"] in needy or fills_coverage_gap:
@@ -537,9 +539,10 @@ def classify_market_opportunities(
         elif trend == "down":
             score -= 4
         if form is not None:
-            score += float(form) * 3
+            scale = resolve_avg_scale(p)
+            score += (float(form) * 3.0) * (8.0 / scale)
         if avg_ppg is not None:
-            score += (float(avg_ppg) / 8.0) * 15
+            score += (float(avg_ppg) / resolve_avg_scale(p)) * 15
         if p["position"] in needy:
             score += 15
         if fills_coverage_gap:
@@ -576,14 +579,15 @@ def classify_market_opportunities(
             if prod is not None:
                 score += (float(prod) / 100.0) * (18 if preseasonish else 28)
             elif ff_avg is not None:
-                score += (float(ff_avg) / 8.0) * (14 if preseasonish else 22)
+                score += (float(ff_avg) / resolve_avg_scale(p)) * (14 if preseasonish else 22)
         except (TypeError, ValueError):
             pass
         if sample_thin:
             score -= 8
         try:
             if ff_avg is not None and price > 0 and not sample_thin:
-                roi = float(ff_avg) / max(price / 1_000_000, 0.4)
+                scale = resolve_avg_scale(p)
+                roi = (float(ff_avg) / scale * 8.0) / max(price / 1_000_000, 0.4)
                 if roi >= 1.2:
                     score += 8
                 elif roi < 0.45 and price >= 5_000_000:
@@ -1397,7 +1401,11 @@ def build_action_plan(
             if avail == "doubt":
                 wait_bits.append("duda de alineación")
             if lineup is not None and float(lineup) < 70:
-                wait_bits.append(f"titularidad {int(float(lineup))}%")
+                src = (o.get("external") or {}).get("lineup_prob_source")
+                if src == "ff_apps_proxy":
+                    wait_bits.append(f"titularidad ≈{int(float(lineup))}% (por PJ)")
+                else:
+                    wait_bits.append(f"titularidad {int(float(lineup))}%")
             if delta is not None and float(delta) < 0:
                 wait_bits.append(f"Δprecio {float(delta)*100:.1f}%")
             if fills_cov:
@@ -1676,6 +1684,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta["ff_tops"] = ff_meta.get("top_count", 0)
         external_meta["ff_threshold"] = ff_meta.get("threshold")
         external_meta["ff_scoring"] = ff_meta.get("scoring")
+        external_meta["ff_avg_scale"] = ff_meta.get("avg_scale")
         squad = universe_ff[:n_squad]
         market_ext = universe_ff[n_squad:]
     else:
@@ -1684,6 +1693,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta["ff_tops"] = 0
         external_meta["ff_threshold"] = None
         external_meta["ff_scoring"] = None
+        external_meta["ff_avg_scale"] = None
     me = {**me_raw, "squad": squad}
     log.info(
         "External match %s/%s (FF=%s JP=%s Com=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",

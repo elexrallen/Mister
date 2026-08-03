@@ -10,6 +10,7 @@ from datetime import date, datetime, timezone
 from typing import Any
 
 import config
+from scrapers.ff_points import resolve_avg_scale, scale_threshold
 
 
 def _money(v: Any) -> float:
@@ -257,6 +258,20 @@ def _is_top_ff(p: dict[str, Any]) -> bool:
     return bool((p.get("external") or {}).get("is_top_ff"))
 
 
+def _avg_scale(p: dict[str, Any] | None) -> float:
+    return resolve_avg_scale(p)
+
+
+def _lineup_titularidad_label(p: dict[str, Any] | None, lineup: float | None) -> str:
+    """Texto de titularidad; marca proxy por PJ cuando no hay % FF."""
+    if lineup is None:
+        return "—%"
+    src = ((p or {}).get("external") or {}).get("lineup_prob_source")
+    if src == "ff_apps_proxy":
+        return f"≈{int(lineup)}% (por PJ)"
+    return f"{int(lineup)}%"
+
+
 def _is_star(p: dict[str, Any]) -> bool:
     """Estrella / pieza de once: TOP FF, o titular con buen rating/media."""
     if _is_top_ff(p):
@@ -266,12 +281,13 @@ def _is_star(p: dict[str, Any]) -> bool:
     avg = _mister_avg(p)
     prod = _production_score(p)
     ff = _ff_avg(p)
+    scale = _avg_scale(p)
     if lineup is not None and lineup >= 80:
         if rating is not None and rating >= 7.0:
             return True
-        if avg is not None and avg >= 5.0:
+        if avg is not None and avg >= scale_threshold(5.0, scale):
             return True
-        if ff is not None and ff >= 5.0:
+        if ff is not None and ff >= scale_threshold(5.0, scale):
             return True
         if prod is not None and prod >= 58:
             return True
@@ -1024,8 +1040,9 @@ def priority_score_buy(item: dict[str, Any]) -> int:
             score -= 10
     ff = _ff_avg(item)
     if ff is not None and not sample_thin:
-        score += int(min(12, ff * 1.5))
-        if ff < 3.5 and _money(item.get("price") or item.get("market_value")) >= 5_000_000:
+        scale = _avg_scale(item)
+        score += int(min(12, ff * 1.5 * (8.0 / scale)))
+        if ff < scale_threshold(3.5, scale) and _money(item.get("price") or item.get("market_value")) >= 5_000_000:
             score -= 12
     if (item.get("is_top_ff") or (item.get("external") or {}).get("is_top_ff")) and not sample_thin:
         score += 8
@@ -1033,7 +1050,8 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     avg = item.get("mister_avg")
     try:
         if avg is not None and float(avg) > 0 and not sample_thin:
-            score += min(15, int(float(avg) * 2))
+            scale = _avg_scale(item)
+            score += min(15, int(float(avg) * 2 * (8.0 / scale)))
     except (TypeError, ValueError):
         pass
     trend = item.get("points_trend") or item.get("trend")
@@ -1194,9 +1212,10 @@ def priority_score_sell(item: dict[str, Any]) -> int:
     except (TypeError, ValueError):
         ffv = None
     if ffv is not None:
-        if ffv < 3.5:
+        scale = resolve_avg_scale(item)
+        if ffv < scale_threshold(3.5, scale):
             score += 10
-        elif ffv >= 5.2:
+        elif ffv >= scale_threshold(5.2, scale):
             score -= 12
 
     price = _money(item.get("price"))
@@ -1417,7 +1436,7 @@ def build_sell_opportunities(
         ):
             urg = "high" if bench_inflated or price >= 6_000_000 or funding_pressure else "medium"
             bits = [
-                f"fuera del once real (titularidad {int(lineup) if lineup is not None else '—'}%)",
+                f"fuera del once real (titularidad {_lineup_titularidad_label(p, lineup)})",
                 sell_cash_phrase(price),
             ]
             if p.get("in_lineup"):
@@ -1451,7 +1470,7 @@ def build_sell_opportunities(
         ):
             bits = []
             if lineup is not None:
-                bits.append(f"titularidad {int(lineup)}%")
+                bits.append(f"titularidad {_lineup_titularidad_label(p, lineup)}")
             if recent_mins is not None:
                 bits.append(f"{int(recent_mins)}' en últimos partidos")
             if p.get("in_lineup"):
@@ -1506,12 +1525,13 @@ def build_sell_opportunities(
 
         # 2) Baja producción a precio alto → reinvertir en puntos
         low_prod = False
+        scale = _avg_scale(p)
         if price >= 4_000_000 and not is_star:
-            if ff is not None and ff < 4.0:
+            if ff is not None and ff < scale_threshold(4.0, scale):
                 low_prod = True
             if prod is not None and prod < 42:
                 low_prod = True
-            if points_phase == "active" and avg is not None and avg < 4.2:
+            if points_phase == "active" and avg is not None and avg < scale_threshold(4.2, scale):
                 low_prod = True
         if (
             low_prod
@@ -1639,7 +1659,9 @@ def build_sell_opportunities(
             if is_star or (is_starter and (prod is not None and prod >= 55)):
                 continue
             # Preferir bajo EP / banquillo / Δ negativo (menor pérdida)
-            low_ep = (prod is not None and prod < 45) or (ff is not None and ff < 3.8)
+            low_ep = (prod is not None and prod < 45) or (
+                ff is not None and ff < scale_threshold(3.8, _avg_scale(p))
+            )
             delta_ok = delta is None or float(delta) <= 0.02  # no vender si está subiendo fuerte
             if not (low_ep or plays_little or not is_starter):
                 continue
@@ -1667,14 +1689,15 @@ def build_sell_opportunities(
             break  # una venta fund_target por jugador owned basta vía add()
 
         # 6) Forma / tendencia a la baja
+        scale = _avg_scale(p)
         form_bad = (lineup is not None and lineup < 50) or (rating is not None and rating < 6.0)
         if points_phase == "active":
-            if avg is not None and avg < 4.0:
+            if avg is not None and avg < scale_threshold(4.0, scale):
                 form_bad = True
             if ptrend == "down":
                 form_bad = True
         if price >= 4_000_000 and (
-            (ff is not None and ff < 3.8) or (prod is not None and prod < 38)
+            (ff is not None and ff < scale_threshold(3.8, scale)) or (prod is not None and prod < 38)
         ):
             form_bad = True
         delta_bad = delta is not None and float(delta) <= -0.08
@@ -1689,13 +1712,14 @@ def build_sell_opportunities(
         ):
             bits = []
             if lineup is not None and lineup < 50:
-                bits.append(f"titularidad {int(lineup)}%")
+                bits.append(f"titularidad {_lineup_titularidad_label(p, lineup)}")
             if rating is not None and rating < 6.0:
                 bits.append(f"nota {rating}")
-            if points_phase == "active" and avg is not None and avg < 4.0:
+            if points_phase == "active" and avg is not None and avg < scale_threshold(4.0, scale):
                 bits.append(f"media Mister {avg}")
-            if ff is not None and ff < 3.8 and price >= 4_000_000:
-                bits.append(f"FF Mister Mixto {ff:.1f} baja para {price/1e6:.1f}M€")
+            if ff is not None and ff < scale_threshold(3.8, scale) and price >= 4_000_000:
+                scoring = (p.get("external") or {}).get("ff_scoring") or p.get("ff_scoring") or "FF"
+                bits.append(f"{scoring} {ff:.1f} baja para {price/1e6:.1f}M€")
             if ptrend == "down":
                 bits.append("tendencia pts ↓")
             if delta_bad:
@@ -1807,7 +1831,7 @@ def compute_upgrade_score(
             score += min(10, cand_prior)
         why_extra.append("prior season")
 
-    # Producción Fútbol Fantasy Mister Mixto
+    # Producción Fútbol Fantasy (Mister Mixto / Fantasy RPG según liga)
     cand_ff = _ff_avg(cand)
     ref_ff = _ff_avg(ref) if ref else None
     cand_prod = _production_score(cand)

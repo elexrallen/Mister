@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import config
+from scrapers.ff_points import resolve_avg_scale, scale_threshold
 from competitive_actions import (
     budget_fit,
     sell_cash_phrase,
@@ -175,8 +176,7 @@ def _hist_quality(p: dict[str, Any]) -> tuple[float | None, bool]:
     avg = _ff_avg(p)
     pts = _ff_points(p)
     apps = _ff_apps(p)
-    # Detectar escala RPG vs Mixto: medias > 10 suelen ser RPG
-    avg_scale = 16.0 if (avg is not None and avg > 10) else 8.0
+    avg_scale = resolve_avg_scale(p)
     avg_floor, pts_floor = _hist_floors(pos, avg_scale=avg_scale)
 
     if avg is None and pts is None:
@@ -448,6 +448,10 @@ def _normalize_player(
         "clause_known": clause_known,
         "sample_thin": sample_thin,
         "seller": seller,
+        "ff_avg_scale": p.get("ff_avg_scale") or ext.get("ff_avg_scale"),
+        "ff_scoring": p.get("ff_scoring") or ext.get("ff_scoring"),
+        "external": ext if ext else None,
+        "lineup_prob_source": ext.get("lineup_prob_source") or p.get("lineup_prob_source"),
     }
 
 
@@ -512,8 +516,10 @@ def _ideal_for_xi(xi: dict[str, int]) -> dict[str, int]:
     return ideal
 
 
-def _bench_min_points() -> float:
-    return float(getattr(config, "IDEAL_BENCH_MIN_POINTS", 100))
+def _bench_min_points(p: dict[str, Any] | None = None, *, avg_scale: float | None = None) -> float:
+    base = float(getattr(config, "IDEAL_BENCH_MIN_POINTS", 100))
+    scale = resolve_avg_scale(p, avg_scale=avg_scale)
+    return scale_threshold(base, scale)
 
 
 def _clause_premium(u: dict[str, Any]) -> float:
@@ -603,7 +609,7 @@ def _is_bench_eligible(u: dict[str, Any]) -> bool:
         return True  # elegibilidad real del GK2 se resuelve por tándem / club
     pts = u.get("ff_mister_points")
     try:
-        return pts is not None and float(pts) >= _bench_min_points()
+        return pts is not None and float(pts) >= _bench_min_points(u)
     except (TypeError, ValueError):
         return False
 
@@ -1898,7 +1904,9 @@ def build_target_board(
             "mode": "operable",
             "formation": form_op,
             "xi_rule": f"formación {form_op} · titulares ≥70% + hist · oportunidad EP/€",
-            "bench_min_points": int(_bench_min_points()),
+            "bench_min_points": int(
+                _bench_min_points(universe[0] if universe else None)
+            ),
         },
         "summary_aspirational": {
             "slots": len(perfect_asp),
@@ -1912,7 +1920,9 @@ def build_target_board(
             "mode": "aspirational",
             "formation": form_asp,
             "xi_rule": f"formación {form_asp} · titulares ≥70% + hist · máx Σ EP",
-            "bench_min_points": int(_bench_min_points()),
+            "bench_min_points": int(
+                _bench_min_points(universe[0] if universe else None)
+            ),
         },
     }
     return board

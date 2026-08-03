@@ -15,6 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 import config
+from scrapers.ff_points import resolve_avg_scale, scale_threshold
 
 # --- Umbrales (buenas prácticas Fantasy) ---
 TOP_COUNT_MIN = 3
@@ -735,12 +736,19 @@ def _analyze_mf(
     starters = [p for p in healthy if _is_starter(p)]
     # En temporada activa exigimos promedio; en pretemporada basta titularidad + FF
     if points_phase == "active":
-        quality = [p for p in starters if _form_score(p) >= 4.5 or (_ff_avg(p) or 0) >= 4.5]
+        quality = [
+            p
+            for p in starters
+            if _form_score(p) >= scale_threshold(4.5, resolve_avg_scale(p))
+            or (_ff_avg(p) or 0) >= scale_threshold(4.5, resolve_avg_scale(p))
+        ]
     else:
         quality = [
             p
             for p in starters
-            if (_ff_avg(p) or 0) >= 4.0 or _prod(p) >= 45 or _form_score(p) >= 4.5
+            if (_ff_avg(p) or 0) >= scale_threshold(4.0, resolve_avg_scale(p))
+            or _prod(p) >= 45
+            or _form_score(p) >= scale_threshold(4.5, resolve_avg_scale(p))
         ]
         if len(quality) < MF_STARTERS_MIN:
             # Ampliar a titulares aunque sin FF (datos incompletos)
@@ -812,13 +820,19 @@ def _analyze_fw(
     fw_tops = [
         p
         for p in players
-        if _is_top_player(p) or str(p.get("id")) in top_ids or (_ff_avg(p) or 0) >= 5.5
+        if _is_top_player(p)
+        or str(p.get("id")) in top_ids
+        or (_ff_avg(p) or 0) >= scale_threshold(5.5, resolve_avg_scale(p))
     ]
     if len(fw_tops) < FW_TOP_MIN:
         fw_sorted = sorted(
             players, key=lambda p: (_prod(p), _ff_avg(p) or 0, _player_value(p)), reverse=True
         )
-        fw_tops = [p for p in fw_sorted if (_ff_avg(p) or 0) >= 4.8 or _prod(p) >= 55][:FW_TOP_MIN]
+        fw_tops = [
+            p
+            for p in fw_sorted
+            if (_ff_avg(p) or 0) >= scale_threshold(4.8, resolve_avg_scale(p)) or _prod(p) >= 55
+        ][:FW_TOP_MIN]
 
     suggested_formation = None
     n = len(players)
@@ -930,7 +944,11 @@ def _analyze_patches(squad: list[dict[str, Any]]) -> tuple[dict[str, Any], list[
         if 0 < _player_value(p) <= PATCH_MAX_PRICE
         and _is_regular(p)
         and not _is_injured(p)
-        and (_ff_avg(p) is None or (_ff_avg(p) or 0) >= 3.0 or _prod(p) >= 35)
+        and (
+            _ff_avg(p) is None
+            or (_ff_avg(p) or 0) >= scale_threshold(3.0, resolve_avg_scale(p))
+            or _prod(p) >= 35
+        )
     ]
     # Si precios incompletos, aceptar regulares baratos o sin precio en banquillo rotatorio
     if len(patches) < PATCH_MIN_COUNT:
@@ -941,7 +959,11 @@ def _analyze_patches(squad: list[dict[str, Any]]) -> tuple[dict[str, Any], list[
             and not _is_injured(p)
             and _player_value(p) <= PATCH_MAX_PRICE
             and p not in patches
-            and (_prod(p) >= 30 or (_ff_avg(p) or 0) >= 3.0 or _ff_avg(p) is None)
+            and (
+                _prod(p) >= 30
+                or (_ff_avg(p) or 0) >= scale_threshold(3.0, resolve_avg_scale(p))
+                or _ff_avg(p) is None
+            )
         ]
         patches = patches + soft
 

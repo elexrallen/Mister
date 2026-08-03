@@ -50,9 +50,9 @@ COMPETITION_PROFILES: dict[str, dict[str, Any]] = {
         "url_tpl": f"{BASE}/analytics/premier-league/estadisticas-puntos/{{year}}",
         "cache_name": "ff_premier_points.json",
         "score_columns": [
-            ("Total - Mister Mixto", "Media - Mister Mixto"),
             ("Total - Fantasy RPG", "Media - Fantasy RPG"),
             ("Total - Futmondo Stats", "Media - Futmondo Stats"),
+            ("Total - Mister Mixto", "Media - Mister Mixto"),
         ],
         "avg_scale": 16.0,  # RPG ~8–18 → map similar a Mister Mixto 2–8
         "top_floor": 10.0,
@@ -60,10 +60,90 @@ COMPETITION_PROFILES: dict[str, dict[str, Any]] = {
     },
 }
 
+# Partidos de liga por temporada (proxy titularidad = apps / SEASON_GAMES)
+SEASON_GAMES = 38
+MIXTO_AVG_SCALE = 8.0
+
 
 def _profile(competition: str) -> dict[str, Any]:
     key = (competition or "laliga").strip().lower()
     return COMPETITION_PROFILES.get(key, COMPETITION_PROFILES["laliga"])
+
+
+def league_avg_scale(competition: str | None = None) -> float:
+    """Media “buena” de referencia por competición (Mister Mixto ~8, Fantasy RPG ~16)."""
+    return float(_profile(competition or "laliga")["avg_scale"])
+
+
+def scale_threshold(mixto_value: float, avg_scale: float | None = None) -> float:
+    """Escala un umbral pensado en Mister Mixto (~8) a la escala de la liga."""
+    scale = float(avg_scale) if avg_scale and avg_scale > 0 else MIXTO_AVG_SCALE
+    return float(mixto_value) * (scale / MIXTO_AVG_SCALE)
+
+
+def apps_to_lineup_prob(apps: float | int | None, *, season_games: int = SEASON_GAMES) -> int | None:
+    """Equivale PJ históricos a % titularidad (0–100). None si no hay muestra."""
+    if apps is None:
+        return None
+    try:
+        n = float(apps)
+    except (TypeError, ValueError):
+        return None
+    if n < 0:
+        return None
+    games = max(1, int(season_games or SEASON_GAMES))
+    return int(min(100, round(100.0 * n / float(games))))
+
+
+def resolve_avg_scale(
+    player: dict[str, Any] | None = None,
+    *,
+    competition: str | None = None,
+    avg_scale: float | None = None,
+    ff_scoring: str | None = None,
+) -> float:
+    """
+    Resuelve escala de media fantasy (Mixto ~8 / RPG ~16).
+    Prioridad: avg_scale explícito → jugador → scoring label → competition profile.
+    """
+    if avg_scale is not None:
+        try:
+            v = float(avg_scale)
+            if v > 0:
+                return v
+        except (TypeError, ValueError):
+            pass
+    if player:
+        for key in ("ff_avg_scale",):
+            if player.get(key) is not None:
+                try:
+                    v = float(player[key])
+                    if v > 0:
+                        return v
+                except (TypeError, ValueError):
+                    pass
+        ext = player.get("external") or {}
+        if isinstance(ext, dict) and ext.get("ff_avg_scale") is not None:
+            try:
+                v = float(ext["ff_avg_scale"])
+                if v > 0:
+                    return v
+            except (TypeError, ValueError):
+                pass
+        label = (
+            ff_scoring
+            or player.get("ff_scoring")
+            or (ext.get("ff_scoring") if isinstance(ext, dict) else None)
+        )
+        if label and "rpg" in str(label).lower():
+            return float(COMPETITION_PROFILES["premier"]["avg_scale"])
+        if label and "mixto" in str(label).lower():
+            return float(COMPETITION_PROFILES["laliga"]["avg_scale"])
+    if ff_scoring and "rpg" in str(ff_scoring).lower():
+        return float(COMPETITION_PROFILES["premier"]["avg_scale"])
+    if competition:
+        return league_avg_scale(competition)
+    return MIXTO_AVG_SCALE
 
 
 def _now() -> datetime:
@@ -407,7 +487,14 @@ __all__ = [
     "compute_top_threshold",
     "is_top_production",
     "production_score",
+    "league_avg_scale",
+    "scale_threshold",
+    "apps_to_lineup_prob",
+    "resolve_avg_scale",
     "MIN_APPS_TOP",
     "TOP_AVG_FLOOR",
+    "THIN_APPS",
+    "SEASON_GAMES",
+    "MIXTO_AVG_SCALE",
     "COMPETITION_PROFILES",
 ]
