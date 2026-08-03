@@ -1172,16 +1172,25 @@ def build_action_plan(
             except (TypeError, ValueError):
                 prior_apps_n = 0
 
-            # Señal FF real: media >0 con PJ >0 (actual o previa)
+            # Señal FF real: media >0 con PJ >0 en la temporada de referencia.
+            # Si esa temporada tiene 0 PJ y media ≤0, NO usar una más antigua como “media alta”.
             has_ff_signal = False
             signal_avg = None
             signal_apps = 0
             try:
+                cur_known_empty = cur_apps == 0 and (
+                    cur_avg is None or float(cur_avg) <= 0
+                )
                 if cur_avg is not None and float(cur_avg) > 0 and cur_apps > 0:
                     has_ff_signal = True
                     signal_avg = float(cur_avg)
                     signal_apps = cur_apps
-                elif prior_avg is not None and float(prior_avg) > 0 and prior_apps_n > 0:
+                elif (
+                    not cur_known_empty
+                    and prior_avg is not None
+                    and float(prior_avg) > 0
+                    and prior_apps_n > 0
+                ):
                     has_ff_signal = True
                     signal_avg = float(prior_avg)
                     signal_apps = prior_apps_n

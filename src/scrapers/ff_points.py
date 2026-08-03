@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from pathlib import Path
 from typing import Any
 
@@ -25,8 +25,24 @@ BASE = "https://www.futbolfantasy.com"
 CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
 CACHE_TTL_HOURS = 36
 
-# Temporadas a scrapear: year en URL = fin de temporada (2026 → 2025/26)
-DEFAULT_SEASONS = [2026, 2025]
+# year en URL = fin de temporada (2026 → 2025/26). Se calcula por calendario.
+# Hasta junio inclusive: temporada en curso termina en `hoy.year`.
+# Desde julio: nueva temporada (fin = hoy.year + 1); la previa completa es hoy.year.
+DEFAULT_SEASONS = [2026, 2025]  # fallback estático; preferir default_ff_seasons()
+
+
+def default_ff_seasons(today: date | None = None) -> list[int]:
+    """
+    Temporadas FF a scrapear: [fin_actual_o_próxima, fin_previa_completa].
+    Ej. 2026-08-03 → [2027, 2026]  (26/27 vacía + 25/26).
+    Ej. 2026-03-01 → [2026, 2025]  (25/26 en curso + 24/25).
+    """
+    d = today or date.today()
+    if d.month >= 7:
+        current_end = d.year + 1
+    else:
+        current_end = d.year
+    return [current_end, current_end - 1]
 
 MIN_APPS_TOP = 15
 RELIABLE_APPS = 20  # muestra decente ≈ media temporada para confiar en la media
@@ -448,16 +464,24 @@ def fetch_ff_mister_points(
     """
     comp = (competition or "laliga").strip().lower()
     prof = _profile(comp)
-    seasons = seasons or list(DEFAULT_SEASONS)
+    seasons = list(seasons) if seasons else default_ff_seasons()
     if use_cache:
         cached = _load_cache(comp)
         if cached and cached.get("by_season"):
+            cached_seasons = [int(x) for x in (cached.get("seasons") or [])]
+            if cached_seasons == [int(x) for x in seasons]:
+                log.info(
+                    "FF points [%s] desde caché (%s)",
+                    comp,
+                    cached.get("fetched_at"),
+                )
+                return cached
             log.info(
-                "FF points [%s] desde caché (%s)",
+                "FF points [%s] caché obsoleta (seasons %s ≠ %s) → rescrape",
                 comp,
-                cached.get("fetched_at"),
+                cached_seasons,
+                seasons,
             )
-            return cached
 
     by_season: dict[str, list[dict[str, Any]]] = {}
     status = "ok"
@@ -523,10 +547,12 @@ __all__ = [
     "scale_threshold",
     "apps_to_lineup_prob",
     "resolve_avg_scale",
+    "default_ff_seasons",
     "MIN_APPS_TOP",
     "TOP_AVG_FLOOR",
     "THIN_APPS",
     "SEASON_GAMES",
     "MIXTO_AVG_SCALE",
+    "DEFAULT_SEASONS",
     "COMPETITION_PROFILES",
 ]

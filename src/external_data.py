@@ -20,6 +20,7 @@ from scrapers.name_match import match_player
 from scrapers.ff_points import (
     THIN_APPS,
     apps_to_lineup_prob,
+    default_ff_seasons,
     fetch_ff_mister_points,
     is_top_production,
     production_score,
@@ -563,13 +564,13 @@ def enrich_players_with_ff_production(
     top_floor = float(bundle.get("top_floor") or 5.5)
     scoring_label = str(bundle.get("scoring") or ("Fantasy RPG" if comp == "premier" else "Mister Mixto"))
 
-    seasons = bundle.get("seasons") or [2026, 2025]
+    seasons = bundle.get("seasons") or default_ff_seasons()
     by_season = bundle.get("by_season") or {}
     primary_key = str(seasons[0])
     prior_key = str(seasons[1]) if len(seasons) > 1 else None
     primary_recs = list(by_season.get(primary_key) or [])
     prior_recs = list(by_season.get(prior_key) or []) if prior_key else []
-    # Pretemporada: si 2026 está vacío/casi vacío, prior pasa a ser la fuente principal
+    # Pretemporada: si la temporada nueva está vacía/casi vacía, la previa completa es primaria
     if len(primary_recs) < 20 and prior_recs:
         primary_recs, prior_recs = prior_recs, primary_recs
         primary_key, prior_key = (prior_key or primary_key), primary_key
