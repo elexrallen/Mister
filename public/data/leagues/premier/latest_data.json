@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T09:54:31.270167+00:00",
+  "generated_at": "2026-08-03T10:06:37.829635+00:00",
   "league_slug": "premier",
   "sources": {
     "mister": "api",
@@ -1393,7 +1393,7 @@
     "liquidity_note": "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar (caja usable en ~1–2 días). Urgente: rescindir ≈ 80% VM o cláusula rival."
   },
   "target_board": {
-    "generated_at": "2026-08-03T09:54:31.267286+00:00",
+    "generated_at": "2026-08-03T10:06:37.826489+00:00",
     "league_slug": "premier",
     "market_mode": "fixed",
     "mode_default": "operable",
@@ -2176,7 +2176,7 @@
         "owned": true,
         "gk_tandem": false,
         "why": "EP 42 · 187,000 € · keep · starter · Δ 8%",
-        "added_at": "2026-08-03T09:54:31.265506+00:00"
+        "added_at": "2026-08-03T09:54:31.253177+00:00"
       },
       {
         "slot": "DF6",
@@ -2200,7 +2200,7 @@
         "owned": false,
         "gk_tandem": false,
         "why": "EP 42 · 5,620,000 € · buy · bench",
-        "added_at": "2026-08-03T09:54:31.266837+00:00"
+        "added_at": "2026-08-03T09:54:31.254669+00:00"
       },
       {
         "slot": "MF1",
@@ -2224,7 +2224,7 @@
         "owned": false,
         "gk_tandem": false,
         "why": "EP 98 · 20,610,000 € · buy · starter · Δ -0%",
-        "added_at": "2026-08-03T09:54:31.266092+00:00"
+        "added_at": "2026-08-03T09:54:31.253830+00:00"
       },
       {
         "slot": "MF2",
@@ -2344,7 +2344,7 @@
         "owned": true,
         "gk_tandem": false,
         "why": "EP 42 · 3,713,000 € · keep · starter · Δ 14%",
-        "added_at": "2026-08-03T09:54:31.266026+00:00"
+        "added_at": "2026-08-03T09:54:31.253725+00:00"
       },
       {
         "slot": "FW2",
@@ -2909,69 +2909,7 @@
     ],
     "aspirational_targets": [],
     "slots": [],
-    "dropped": [
-      {
-        "slot": "DF5",
-        "position": "DF",
-        "role": "bench",
-        "player_id": "65707",
-        "name": "P. Hincapié",
-        "team": "Arsenal",
-        "team_id": "51",
-        "ep_score": 52.9,
-        "price": 8253000.0,
-        "status": "dropped",
-        "delta_5d": null,
-        "value_note": "stable",
-        "value_ratio": 6.41,
-        "lineup_prob": 66.0,
-        "ff_mister_points": 223.0,
-        "ff_mister_avg": 8.92,
-        "hist_ok": false,
-        "on_daily_market": true,
-        "owned": false,
-        "gk_tandem": false,
-        "why": "EP 53 · 8,253,000 € · buy · bench",
-        "added_at": "2026-08-03T09:36:34.000497+00:00",
-        "miss_days": 1
-      },
-      {
-        "slot": "MF4",
-        "position": "MF",
-        "role": "starter",
-        "player_id": "12955",
-        "name": "C. Jones",
-        "team": "Liverpool",
-        "team_id": "59",
-        "ep_score": 42.0,
-        "price": 1191000.0,
-        "status": "dropped",
-        "delta_5d": null,
-        "value_note": "stable",
-        "value_ratio": 35.26,
-        "lineup_prob": 89.0,
-        "ff_mister_points": 235.0,
-        "ff_mister_avg": 6.91,
-        "hist_ok": false,
-        "on_daily_market": true,
-        "owned": false,
-        "gk_tandem": false,
-        "why": "EP 42 · 1,191,000 € · buy · starter",
-        "added_at": "2026-08-03T09:07:27.404677+00:00",
-        "miss_days": 1
-      },
-      {
-        "player_id": "64176",
-        "name": "I. Jesus",
-        "price": 1489000.0,
-        "ep_score": 42.0,
-        "status": "dropped",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche FW hoy · EP 42 · 1,489,000 € (reserva ideal intacta: 32,093,000 €)",
-        "miss_days": 1
-      }
-    ],
+    "dropped": [],
     "patch_policy": {
       "allow": false,
       "max_spend": 0.0
@@ -10403,7 +10341,7 @@
     "competition": "premier",
     "fixtures_count": 12,
     "players_count": 0,
-    "fetched_at": "2026-08-03T09:53:09.024160+00:00",
+    "fetched_at": "2026-08-03T10:06:11.125811+00:00",
     "cache_used": false,
     "fixtures": [
       {
