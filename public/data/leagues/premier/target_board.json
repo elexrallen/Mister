@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-03T09:07:27.429315+00:00",
+  "generated_at": "2026-08-03T09:29:48.705281+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -662,7 +662,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 4 · 232,000 € · buy · bench · tándem mismo club",
-      "added_at": "2026-08-03T09:07:27.419345+00:00"
+      "added_at": "2026-08-03T09:07:27.404088+00:00"
     },
     {
       "slot": "DF1",
@@ -686,7 +686,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 85 · 1,495,000 € · keep · starter · Δ 12%",
-      "added_at": "2026-08-03T09:07:27.419603+00:00"
+      "added_at": "2026-08-03T09:07:27.404360+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 76 · 2,412,000 € · buy · starter",
-      "added_at": "2026-08-03T09:07:27.419679+00:00"
+      "added_at": "2026-08-03T09:07:27.404442+00:00"
     },
     {
       "slot": "DF3",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 74 · 2,912,000 € · buy · starter",
-      "added_at": "2026-08-03T09:07:27.420414+00:00"
+      "added_at": "2026-08-03T09:07:27.405298+00:00"
     },
     {
       "slot": "DF4",
@@ -782,7 +782,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 5,620,000 € · buy · bench",
-      "added_at": "2026-08-03T09:07:27.420861+00:00"
+      "added_at": "2026-08-03T09:07:27.405750+00:00"
     },
     {
       "slot": "MF1",
@@ -830,7 +830,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 77 · 2,012,000 € · keep · starter · Δ 14%",
-      "added_at": "2026-08-03T09:07:27.420049+00:00"
+      "added_at": "2026-08-03T09:07:27.404815+00:00"
     },
     {
       "slot": "MF3",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,043,000 € · buy · starter",
-      "added_at": "2026-08-03T09:07:27.419757+00:00"
+      "added_at": "2026-08-03T09:07:27.404524+00:00"
     },
     {
       "slot": "MF4",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,126,000 € · buy · starter",
-      "added_at": "2026-08-03T09:07:27.419832+00:00"
+      "added_at": "2026-08-03T09:07:27.404602+00:00"
     },
     {
       "slot": "MF5",
@@ -902,7 +902,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,191,000 € · buy · starter",
-      "added_at": "2026-08-03T09:07:27.419905+00:00"
+      "added_at": "2026-08-03T09:07:27.404677+00:00"
     },
     {
       "slot": "MF6",
@@ -926,7 +926,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 42 · 1,095,000 € · keep · bench · Δ 12%",
-      "added_at": "2026-08-03T09:07:27.420892+00:00"
+      "added_at": "2026-08-03T09:07:27.405782+00:00"
     },
     {
       "slot": "FW1",
@@ -950,7 +950,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,075,000 € · buy · starter",
-      "added_at": "2026-08-03T09:07:27.420103+00:00"
+      "added_at": "2026-08-03T09:07:27.404872+00:00"
     },
     {
       "slot": "FW2",
@@ -974,7 +974,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,489,000 € · buy · bench",
-      "added_at": "2026-08-03T09:07:27.420911+00:00"
+      "added_at": "2026-08-03T09:07:27.405801+00:00"
     }
   ],
   "moves": {
@@ -1686,33 +1686,7 @@
       }
     }
   ],
-  "dropped": [
-    {
-      "slot": "FW1",
-      "position": "FW",
-      "role": "bench",
-      "player_id": "48325",
-      "name": "J. Anthony",
-      "team": "Burnley",
-      "team_id": "619",
-      "ep_score": 99.4,
-      "price": 6162000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 16.13,
-      "lineup_prob": null,
-      "ff_mister_points": 310.0,
-      "ff_mister_avg": 8.38,
-      "hist_ok": true,
-      "on_daily_market": true,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 99 · 6,162,000 € · buy · bench",
-      "added_at": "2026-08-03T08:32:57.009917+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": true,
     "max_spend": 2500000.0
