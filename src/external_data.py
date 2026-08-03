@@ -192,6 +192,7 @@ def _empty_external() -> dict[str, Any]:
         "ff_season": None,
         "ff_prior_avg": None,
         "ff_prior_season": None,
+        "ff_prior_apps": None,
         "is_top_ff": False,
         "top_reason": None,
         "production_score": None,
@@ -700,6 +701,7 @@ def enrich_players_with_ff_production(
             avg=float(avg) if avg is not None else None,
             prior_avg=float(prior_avg) if prior_avg is not None else None,
             apps=apps,
+            prior_apps=prior_apps,
             lineup_prob=float(lp) if lp is not None else None,
             mister_avg=mister_form,
             points_phase=points_phase,
@@ -714,6 +716,7 @@ def enrich_players_with_ff_production(
                 "ff_season": season,
                 "ff_prior_avg": round(float(prior_avg), 2) if prior_avg is not None else None,
                 "ff_prior_season": prior_season,
+                "ff_prior_apps": prior_apps,
                 "is_top_ff": is_top,
                 "top_reason": reason,
                 "production_score": prod,
@@ -742,6 +745,7 @@ def enrich_players_with_ff_production(
         new_p["ff_mister_points"] = ext["ff_mister_points"]
         new_p["ff_apps"] = ext["ff_apps"]
         new_p["ff_prior_avg"] = ext["ff_prior_avg"]
+        new_p["ff_prior_apps"] = prior_apps
         new_p["production_score"] = prod
         new_p["is_top_ff"] = is_top
         new_p["top_reason"] = reason

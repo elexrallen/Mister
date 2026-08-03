@@ -348,6 +348,7 @@ def production_score(
     mister_avg: float | None = None,
     points_phase: str = "preseason",
     avg_scale: float = 8.0,
+    prior_apps: int | None = None,
 ) -> float:
     """
     Score 0–100 para gestión diaria.
@@ -356,45 +357,76 @@ def production_score(
 
     La media se pondera por volumen (shrinkage hacia media de liga) para que
     7 pts en 4 PJ no brille como 7 pts en 30 PJ.
+    Sin PJ y media ≤0 (actual o previa) no inventa producción “buena”.
     """
     scale = float(avg_scale) if avg_scale and avg_scale > 0 else 8.0
     league_avg = 0.55 * scale
     n_apps = max(0, int(apps or 0))
+    n_prior = max(0, int(prior_apps)) if prior_apps is not None else None
     score = 0.0
-    primary = avg
+
+    def _positive(v: float | None) -> float | None:
+        if v is None:
+            return None
+        try:
+            fv = float(v)
+        except (TypeError, ValueError):
+            return None
+        return fv if fv > 0 else None
+
+    # Media actual solo cuenta si hubo PJ; media 0 / 0 PJ no rellena con media de liga
+    avg_u = _positive(avg) if n_apps > 0 else None
+    # Previa con 0 PJ explícitos → descartar; si prior_apps es None, aceptar media >0
+    if n_prior is not None and n_prior <= 0:
+        prior_u = None
+    else:
+        prior_u = _positive(prior_avg)
+
+    primary: float | None = None
+    used_prior_only = False
     if points_phase == "active" and mister_avg is not None and float(mister_avg) > 0:
-        primary = 0.65 * float(mister_avg) + 0.35 * float(avg or mister_avg)
-    elif primary is None and prior_avg is not None:
-        primary = prior_avg
+        primary = 0.65 * float(mister_avg) + 0.35 * float(avg_u if avg_u is not None else mister_avg)
+    elif avg_u is not None:
+        primary = avg_u
+    elif prior_u is not None:
+        primary = prior_u
+        used_prior_only = True
 
     if primary is not None:
-        weight = min(1.0, n_apps / float(RELIABLE_APPS))
-        effective = weight * float(primary) + (1.0 - weight) * league_avg
-        score += max(0.0, min(70.0, (effective / scale) * 70.0))
-    if prior_avg is not None and avg is not None and points_phase != "active":
-        delta = float(avg) - float(prior_avg)
-        # Delta solo confiable con muestra mínima
-        if n_apps >= THIN_APPS:
-            score += max(-5.0, min(5.0, delta * 3))
-    elif prior_avg is not None and avg is None:
-        # Solo temporada previa: shrinkage suave (asume ~mitad de muestra fiable)
-        prior_w = 0.5
-        effective_prior = prior_w * float(prior_avg) + (1.0 - prior_w) * league_avg
-        score += max(0.0, min(55.0, (effective_prior / scale) * 55.0))
+        if used_prior_only:
+            sample = n_prior if n_prior is not None else (RELIABLE_APPS // 2)
+            prior_w = min(0.5, max(0.15, float(sample) / float(RELIABLE_APPS)))
+            effective = prior_w * float(primary) + (1.0 - prior_w) * league_avg
+            score += max(0.0, min(55.0, (effective / scale) * 55.0))
+        else:
+            weight = min(1.0, n_apps / float(RELIABLE_APPS))
+            effective = weight * float(primary) + (1.0 - weight) * league_avg
+            score += max(0.0, min(70.0, (effective / scale) * 70.0))
 
-    if n_apps >= 30:
+    if (
+        prior_u is not None
+        and avg_u is not None
+        and points_phase != "active"
+        and n_apps >= THIN_APPS
+    ):
+        score += max(-5.0, min(5.0, (float(avg_u) - float(prior_u)) * 3))
+
+    vol = n_prior if used_prior_only and n_prior is not None else n_apps
+    if vol >= 30:
         score += 15
-    elif n_apps >= 15:
+    elif vol >= 15:
         score += 10
-    elif n_apps >= THIN_APPS:
+    elif vol >= THIN_APPS:
         score += 5
-    # < THIN_APPS → sin bonus de volumen
 
     if lineup_prob is not None:
         lp = float(lineup_prob)
         if lp > 1.5:
             lp = lp / 100.0
-        score += max(0.0, min(15.0, lp * 15.0))
+        if primary is not None:
+            score += max(0.0, min(15.0, lp * 15.0))
+        elif lp > 0:
+            score += max(0.0, min(8.0, lp * 8.0))
 
     return round(max(0.0, min(100.0, score)), 1)
 

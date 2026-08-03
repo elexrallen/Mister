@@ -567,18 +567,39 @@ def classify_market_opportunities(
             ff_apps = int(ff_apps_raw) if ff_apps_raw is not None else None
         except (TypeError, ValueError):
             ff_apps = None
-        sample_thin = ff_apps is not None and ff_apps < 8
+        prior_apps_raw = p.get("ff_prior_apps")
+        if prior_apps_raw is None:
+            prior_apps_raw = (p.get("external") or {}).get("ff_prior_apps")
+        try:
+            prior_apps_i = int(prior_apps_raw) if prior_apps_raw is not None else None
+        except (TypeError, ValueError):
+            prior_apps_i = None
+        # Si la actual está vacía, la muestra fiable es la previa
+        eff_apps = ff_apps
+        if (ff_apps is None or ff_apps <= 0) and prior_apps_i is not None:
+            eff_apps = prior_apps_i
+        sample_thin = eff_apps is not None and eff_apps < 8
 
         prod = p.get("production_score")
         ff_avg = p.get("ff_mister_avg")
         if ff_avg is None:
             ff_avg = (p.get("external") or {}).get("ff_mister_avg")
+        # Media 0 no aporta; preferir previa si actual vacía
+        try:
+            if (ff_avg is None or float(ff_avg) <= 0) and (ff_apps is None or ff_apps <= 0):
+                pa = p.get("ff_prior_avg")
+                if pa is None:
+                    pa = (p.get("external") or {}).get("ff_prior_avg")
+                if pa is not None and float(pa) > 0 and (prior_apps_i or 0) > 0:
+                    ff_avg = float(pa)
+        except (TypeError, ValueError):
+            pass
         if prod is None:
             prod = (p.get("external") or {}).get("production_score")
         try:
             if prod is not None:
                 score += (float(prod) / 100.0) * (18 if preseasonish else 28)
-            elif ff_avg is not None:
+            elif ff_avg is not None and float(ff_avg) > 0:
                 score += (float(ff_avg) / resolve_avg_scale(p)) * (14 if preseasonish else 22)
         except (TypeError, ValueError):
             pass
@@ -758,7 +779,17 @@ def find_free_agents_top(
             ff_apps = int(ff_apps_raw) if ff_apps_raw is not None else None
         except (TypeError, ValueError):
             ff_apps = None
-        sample_thin = ff_apps is not None and ff_apps < 8
+        prior_apps_raw = p.get("ff_prior_apps")
+        if prior_apps_raw is None:
+            prior_apps_raw = (p.get("external") or {}).get("ff_prior_apps")
+        try:
+            prior_apps_i = int(prior_apps_raw) if prior_apps_raw is not None else None
+        except (TypeError, ValueError):
+            prior_apps_i = None
+        eff_apps = ff_apps
+        if (ff_apps is None or ff_apps <= 0) and prior_apps_i is not None:
+            eff_apps = prior_apps_i
+        sample_thin = eff_apps is not None and eff_apps < 8
         row: dict[str, Any] = {
             **p,
             "roi_ppg_per_million": round(roi, 3),
@@ -1126,21 +1157,60 @@ def build_action_plan(
         gw_starter = bool(o.get("gw_starter") or ext_o.get("gw_starter"))
         prod_ok = False
         try:
-            prod_ok = float(o.get("production_score") or 0) >= 35 or (
-                bool(o.get("is_top_ff")) and not o.get("sample_thin")
+            cur_avg = o.get("ff_mister_avg")
+            if cur_avg is None:
+                cur_avg = ext_o.get("ff_mister_avg")
+            cur_apps = int(o.get("ff_apps") if o.get("ff_apps") is not None else (ext_o.get("ff_apps") or 0))
+            prior_avg = o.get("ff_prior_avg")
+            if prior_avg is None:
+                prior_avg = ext_o.get("ff_prior_avg")
+            prior_apps_n = o.get("ff_prior_apps")
+            if prior_apps_n is None:
+                prior_apps_n = ext_o.get("ff_prior_apps")
+            try:
+                prior_apps_n = int(prior_apps_n) if prior_apps_n is not None else 0
+            except (TypeError, ValueError):
+                prior_apps_n = 0
+
+            # Señal FF real: media >0 con PJ >0 (actual o previa)
+            has_ff_signal = False
+            signal_avg = None
+            signal_apps = 0
+            try:
+                if cur_avg is not None and float(cur_avg) > 0 and cur_apps > 0:
+                    has_ff_signal = True
+                    signal_avg = float(cur_avg)
+                    signal_apps = cur_apps
+                elif prior_avg is not None and float(prior_avg) > 0 and prior_apps_n > 0:
+                    has_ff_signal = True
+                    signal_avg = float(prior_avg)
+                    signal_apps = prior_apps_n
+            except (TypeError, ValueError):
+                has_ff_signal = False
+
+            prod_ok = has_ff_signal and (
+                float(o.get("production_score") or 0) >= 35
+                or (bool(o.get("is_top_ff")) and not o.get("sample_thin"))
             )
         except (TypeError, ValueError):
-            prod_ok = bool(o.get("is_top_ff")) and not o.get("sample_thin")
+            prod_ok = False
+            has_ff_signal = False
+            signal_avg = None
+            signal_apps = 0
 
         if gw_out:
             why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
-        if o.get("sample_thin") and (o.get("ff_mister_avg") is not None or o.get("production_score")):
-            apps_n = o.get("ff_apps")
+        # Solo avisar “media alta / pocos PJ” si hay media >0 con algún partido
+        if (
+            o.get("sample_thin")
+            and has_ff_signal
+            and signal_avg is not None
+            and signal_avg > 0
+            and 0 < signal_apps < 8
+        ):
             why_parts.append(
-                f"Media alta pero pocos partidos ({apps_n} PJ) — poco fiable"
-                if apps_n is not None
-                else "Media con muestra corta — poco fiable"
+                f"Media alta pero pocos partidos ({signal_apps} PJ) — poco fiable"
             )
         if not on_daily:
             # Pipeline breve: solo vigilantes claros (no saturar la cola)
