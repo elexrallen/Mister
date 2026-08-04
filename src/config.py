@@ -212,6 +212,9 @@ PACKAGE_CASH_RESERVE = 8_000_000
 PACKAGE_SECONDARY_MAX = 2_500_000
 # Hedge same-day: puja reducida vs recomendada (mínimo = puja_minima/precio)
 PACKAGE_HEDGE_BID_RATIO = 0.85
+# Solvencia pre-jornada: ≤48h → no endeudarse (saldo negativo = no puntúa)
+SOLVENCY_STRICT_HOURS = 48
+SOLVENCY_D1_BUFFER_HOURS = 24
 # Cupo máximo de plantilla Mister (fichajes / hedges no pueden superar plazas libres)
 MAX_SQUAD_SIZE_LALIGA = 25
 MAX_SQUAD_SIZE_PREMIER = 22

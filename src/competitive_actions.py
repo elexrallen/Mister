@@ -6,11 +6,17 @@ y objetivos en plantillas rivales (cláusulas).
 from __future__ import annotations
 
 import math
+import re
 from datetime import date, datetime, timezone
 from typing import Any
 
 import config
 from scrapers.ff_points import resolve_avg_scale, scale_threshold
+
+# Día antes de jornada: no endeudarse (Mister: saldo negativo → no puntúa).
+SOLVENCY_STRICT_HOURS = 48
+# Margen D-1: las ventas deben cobrar antes de (jornada - 24h).
+SOLVENCY_D1_BUFFER_HOURS = 24
 
 
 def _money(v: Any) -> float:
@@ -20,21 +26,245 @@ def _money(v: Any) -> float:
         return 0.0
 
 
-def budget_fit(cost: float | None, balance: float, *, min_cost: float | None = None) -> str:
-    """comfortable|tight|stretch|blocked según saldo real."""
-    bal = max(0.0, float(balance or 0))
+def mister_bid_cap(balance: float, max_debt: float | None = None) -> float:
+    """Techo de puja Mister: maxDebt si existe; si no, saldo actual."""
+    bal = float(balance or 0)
+    if max_debt is None:
+        return max(0.0, bal)
+    try:
+        md = float(max_debt)
+    except (TypeError, ValueError):
+        return max(0.0, bal)
+    return md
+
+
+def liquidity_balance(balance: float, balance_future: float | None = None) -> float:
+    """Mejor estimación de caja post-pujas pendientes."""
+    if balance_future is not None:
+        try:
+            return float(balance_future)
+        except (TypeError, ValueError):
+            pass
+    return float(balance or 0)
+
+
+def _parse_kickoff_hours(raw: Any, *, now: datetime | None = None) -> float | None:
+    """Horas hasta un kickoff ISO-ish (p.ej. 2026-08-15T19:30)."""
+    if raw is None:
+        return None
+    s = str(raw).strip()
+    if not s:
+        return None
+    s = s.replace("Z", "+00:00")
+    try:
+        if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", s) and len(s) == 16:
+            dt = datetime.fromisoformat(s).replace(tzinfo=timezone.utc)
+        else:
+            dt = datetime.fromisoformat(s)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+    except (TypeError, ValueError):
+        return None
+    base = now or datetime.now(timezone.utc)
+    if base.tzinfo is None:
+        base = base.replace(tzinfo=timezone.utc)
+    return (dt - base).total_seconds() / 3600.0
+
+
+def resolve_hours_to_jornada(
+    *,
+    hours_to_jornada: float | None = None,
+    days_to_kickoff: float | int | None = None,
+    matchday: dict[str, Any] | None = None,
+    now: datetime | None = None,
+) -> float | None:
+    """
+    Horas hasta el próximo cierre/jornada.
+    Preferencia: hours explícitas → kickoffs FF matchday → days_to_kickoff (J1).
+    None = fecha no fiable.
+    """
+    if hours_to_jornada is not None:
+        try:
+            return float(hours_to_jornada)
+        except (TypeError, ValueError):
+            pass
+
+    earliest: float | None = None
+    for fx in (matchday or {}).get("fixtures") or []:
+        h = _parse_kickoff_hours((fx or {}).get("kickoff"), now=now)
+        if h is None:
+            continue
+        if earliest is None or h < earliest:
+            earliest = h
+    if earliest is not None:
+        return earliest
+
+    if days_to_kickoff is not None:
+        try:
+            d = float(days_to_kickoff)
+        except (TypeError, ValueError):
+            return None
+        # Solo fiable como J1 futura; si ya empezó la temporada, sin FF → desconocido
+        if d > 0:
+            return d * 24.0
+        return None
+    return None
+
+
+def solvency_strict_window(hours_to_jornada: float | None) -> bool:
+    """True si no debemos endeudarnos (≤48h o sin fecha fiable)."""
+    if hours_to_jornada is None:
+        return True
+    return float(hours_to_jornada) <= float(
+        getattr(config, "SOLVENCY_STRICT_HOURS", SOLVENCY_STRICT_HOURS)
+    )
+
+
+def sells_settle_before_d1(
+    *,
+    hours_to_jornada: float | None,
+    cash_lag_hours: float | None = None,
+) -> bool:
+    """¿El cobro de ventas (~48h) llega antes del día previo a la jornada?"""
+    if hours_to_jornada is None:
+        return False
+    lag = float(
+        cash_lag_hours
+        if cash_lag_hours is not None
+        else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2
+    )
+    buffer = float(
+        getattr(config, "SOLVENCY_D1_BUFFER_HOURS", SOLVENCY_D1_BUFFER_HOURS)
+    )
+    return lag <= max(0.0, float(hours_to_jornada) - buffer)
+
+
+def evaluate_bid_finance(
+    cost: float | None,
+    balance: float,
+    *,
+    min_cost: float | None = None,
+    max_debt: float | None = None,
+    balance_future: float | None = None,
+    hours_to_jornada: float | None = None,
+    days_to_kickoff: float | int | None = None,
+    matchday: dict[str, Any] | None = None,
+    sell_proceeds_timely: float = 0.0,
+    cash_lag_hours: float | None = None,
+) -> dict[str, Any]:
+    """
+    Dos techos: bid_cap (Mister maxDebt) y solvencia pre-jornada.
+    budget_fit: comfortable|tight|stretch|blocked
+    """
+    bal = float(balance or 0)
+    bid_cap = mister_bid_cap(bal, max_debt)
+    liquidity = liquidity_balance(bal, balance_future)
+    hours = resolve_hours_to_jornada(
+        hours_to_jornada=hours_to_jornada,
+        days_to_kickoff=days_to_kickoff,
+        matchday=matchday,
+    )
+    strict = solvency_strict_window(hours)
+    sells_ok = float(sell_proceeds_timely or 0) > 0 and sells_settle_before_d1(
+        hours_to_jornada=hours,
+        cash_lag_hours=cash_lag_hours,
+    )
+    timely_sells = float(sell_proceeds_timely or 0) if sells_ok else 0.0
+
+    out: dict[str, Any] = {
+        "bid_cap": bid_cap,
+        "liquidity": liquidity,
+        "hours_to_jornada": hours,
+        "solvency_strict": strict,
+        "debt_risk": False,
+        "solvency_ok": True,
+        "solvency_blocked": False,
+        "projected_after": liquidity,
+        "budget_fit": "blocked",
+        "sells_timely": sells_ok,
+    }
+
     if cost is None:
-        return "blocked"
+        out["solvency_ok"] = liquidity >= 0
+        return out
+
     c = float(cost)
+    projected_no_sells = liquidity - c
+    projected = projected_no_sells + timely_sells
+    out["projected_after"] = projected
+    out["debt_risk"] = projected_no_sells < 0 and c <= bid_cap
+
     if c <= 0:
-        return "comfortable"
-    if c > bal:
-        if min_cost is not None and float(min_cost) <= bal:
-            return "stretch"
-        return "blocked"
-    if c <= bal * 0.40:
-        return "comfortable"
-    return "tight"
+        out["budget_fit"] = "comfortable"
+        out["solvency_ok"] = liquidity >= 0
+        out["debt_risk"] = False
+        return out
+
+    # Techo Mister
+    if c > bid_cap:
+        if min_cost is not None and float(min_cost) <= bid_cap:
+            out["budget_fit"] = "stretch"
+        else:
+            out["budget_fit"] = "blocked"
+        if projected < 0:
+            out["solvency_ok"] = False
+            if strict:
+                out["solvency_blocked"] = True
+        return out
+
+    # Solvencia: no puntuar en negativo el día antes
+    if projected < 0:
+        out["solvency_ok"] = False
+        out["debt_risk"] = True
+        if strict:
+            out["solvency_blocked"] = True
+            out["budget_fit"] = "blocked"
+            return out
+        # Fuera de ventana sin cobro a tiempo → stretch (exige venta antes)
+        out["budget_fit"] = "stretch"
+        return out
+
+    # Cabe (con liquidez o con ventas que cobran antes de D-1)
+    if out["debt_risk"]:
+        out["budget_fit"] = "tight"
+        out["solvency_ok"] = True
+        return out
+    if c <= max(liquidity, 0.0) * 0.40:
+        out["budget_fit"] = "comfortable"
+    else:
+        out["budget_fit"] = "tight"
+    return out
+
+
+def budget_fit(
+    cost: float | None,
+    balance: float,
+    *,
+    min_cost: float | None = None,
+    max_debt: float | None = None,
+    balance_future: float | None = None,
+    hours_to_jornada: float | None = None,
+    days_to_kickoff: float | int | None = None,
+    matchday: dict[str, Any] | None = None,
+    sell_proceeds_timely: float = 0.0,
+    cash_lag_hours: float | None = None,
+) -> str:
+    """comfortable|tight|stretch|blocked (techo Mister + solvencia pre-jornada)."""
+    return str(
+        evaluate_bid_finance(
+            cost,
+            balance,
+            min_cost=min_cost,
+            max_debt=max_debt,
+            balance_future=balance_future,
+            hours_to_jornada=hours_to_jornada,
+            days_to_kickoff=days_to_kickoff,
+            matchday=matchday,
+            sell_proceeds_timely=sell_proceeds_timely,
+            cash_lag_hours=cash_lag_hours,
+        ).get("budget_fit")
+        or "blocked"
+    )
 
 
 def sell_settlement_fields(price: float) -> dict[str, Any]:
@@ -2179,19 +2409,38 @@ def annotate_market_budget_risk(
     *,
     points_phase: str = "preseason",
     market_mode: str = "auction",
+    max_debt: float | None = None,
+    balance_future: float | None = None,
+    hours_to_jornada: float | None = None,
+    days_to_kickoff: float | int | None = None,
+    matchday: dict[str, Any] | None = None,
+    sell_proceeds_timely: float = 0.0,
 ) -> list[dict[str, Any]]:
     """Añade budget_fit, target_tier, wait_risk, priority_score y reordena mercado."""
     opportunities = tag_rival_market_listings(opportunities, rivals)
     out: list[dict[str, Any]] = []
     bal = _money(balance)
     mode = market_mode or "auction"
+    cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2)
     for o in opportunities:
         row = dict(o)
         fills = bool(row.get("fills_need"))
         risk = wait_risk(row, rivals, fills_need=fills, market_mode=mode)
         cost = _money(row.get("puja_recomendada") or row.get("price"))
         min_c = _money(row.get("puja_minima") or row.get("price"))
-        bf = budget_fit(cost, bal, min_cost=min_c)
+        fin = evaluate_bid_finance(
+            cost,
+            bal,
+            min_cost=min_c,
+            max_debt=max_debt,
+            balance_future=balance_future,
+            hours_to_jornada=hours_to_jornada,
+            days_to_kickoff=days_to_kickoff,
+            matchday=matchday,
+            sell_proceeds_timely=sell_proceeds_timely,
+            cash_lag_hours=cash_lag,
+        )
+        bf = str(fin.get("budget_fit") or "blocked")
         tier = target_tier_from_budget_fit(bf)
         # Muestra corta desde ff_apps si no vino ya
         if row.get("sample_thin") is None:
@@ -2207,6 +2456,12 @@ def annotate_market_budget_risk(
         row["wait_risk"] = risk
         row["budget_fit"] = bf
         row["target_tier"] = tier
+        row["bid_cap"] = fin.get("bid_cap")
+        row["debt_risk"] = bool(fin.get("debt_risk"))
+        row["solvency_ok"] = bool(fin.get("solvency_ok"))
+        row["solvency_blocked"] = bool(fin.get("solvency_blocked"))
+        row["solvency_strict"] = bool(fin.get("solvency_strict"))
+        row["hours_to_jornada"] = fin.get("hours_to_jornada")
         row["rival_demand"] = len(
             rival_demand_for_position(rivals, row.get("position") or "", market_mode=mode)
         )
@@ -2223,6 +2478,8 @@ def annotate_market_budget_risk(
         row["affordable"] = bf in ("comfortable", "tight")
         # Nunca Alta si aspiracional (refuerzo tras annotate)
         if tier == "aspirational" and row.get("priority") == "Alta":
+            row["priority"] = "Media"
+        if fin.get("solvency_blocked") and row.get("priority") == "Alta":
             row["priority"] = "Media"
         out.append(row)
     out.sort(key=lambda x: (-int(x.get("priority_score") or 0), -float(x.get("score") or 0)))

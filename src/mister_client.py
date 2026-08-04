@@ -1380,11 +1380,24 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     fg_cfg = _extract_js_object(market_html or team_html, "_FG_cfg") or {}
     _ = fg_cfg  # disponible para debug futuro
 
-    bal = 0
-    if balance_data:
-        bal = int(float(balance_data.get("current") or 0))
+    bal_src: dict[str, Any] = {}
+    if isinstance(balance_data, dict) and balance_data:
+        bal_src = balance_data
     elif isinstance(fg_user.get("balance"), dict):
-        bal = int(float(fg_user["balance"].get("current") or 0))
+        bal_src = fg_user["balance"]
+
+    def _bal_int(key: str) -> int | None:
+        raw = bal_src.get(key)
+        if raw is None:
+            return None
+        try:
+            return int(float(raw))
+        except (TypeError, ValueError):
+            return None
+
+    bal = int(_bal_int("current") or 0)
+    bal_future = _bal_int("future")
+    max_debt = _bal_int("maxDebt")
 
     market = parse_market_players(market_html) if market_html else []
     squad = parse_team_players(team_html) if team_html else []
@@ -1501,6 +1514,8 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "manager": manager,
             "team_name": team_name,
             "balance": bal,
+            "balance_future": bal_future,
+            "max_debt": max_debt,
             "squad_value": squad_value or int((me_row or {}).get("squad_value") or 0),
             "rank": int((me_row or {}).get("rank") or 0) or None,
             "points": int((me_row or {}).get("points") or 0),
