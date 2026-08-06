@@ -503,33 +503,37 @@ def classify_market_opportunities(
         fills_coverage_gap = bool(cov.get("fills_coverage_gap"))
         line_covered = bool(cov.get("line_already_covered"))
         is_upgrade = bool(cov.get("is_upgrade"))
+        overstocked = bool(cov.get("overstocked"))
 
         struct_bonus, fills_structural, struct_label = structural_market_boost(p, needs)
 
-        # GK con titular usable: "needy" solo si cubre tándem/parche o need estructural
+        # Línea needy solo si el jugador cubre gap real / need estructural
+        # (overstock o GK con titular: no inflar a toda la posición)
         position_needy = p["position"] in needy
-        if p["position"] == "GK" and position_needy and not fills_coverage_gap and not fills_structural:
-            # Warning por no-tándem no debe inflar a todos los porteros del mercado
-            gk_starters = 0
-            try:
-                gk_starters = int(
-                    ((diagnostico_plantilla or {}).get("lineas") or {})
-                    .get("GK", {})
-                    .get("starters_real")
-                    or 0
-                )
-            except (TypeError, ValueError):
-                gk_starters = 0
-            if gk_starters <= 0 and squad:
-                gk_starters = sum(
-                    1
-                    for s in squad
-                    if s.get("position") == "GK"
-                    and not (s.get("injury") or (s.get("external") or {}).get("availability") in ("injured", "suspended"))
-                    and float(s.get("lineup_prob") or 0) >= float(getattr(config, "LINEUP_PROB_TITULAR", 0.70))
-                )
-            if gk_starters >= 1:
+        if position_needy and not fills_coverage_gap and not fills_structural:
+            if overstocked:
                 position_needy = False
+            elif p["position"] == "GK":
+                gk_starters = 0
+                try:
+                    gk_starters = int(
+                        ((diagnostico_plantilla or {}).get("lineas") or {})
+                        .get("GK", {})
+                        .get("starters_real")
+                        or 0
+                    )
+                except (TypeError, ValueError):
+                    gk_starters = 0
+                if gk_starters <= 0 and squad:
+                    gk_starters = sum(
+                        1
+                        for s in squad
+                        if s.get("position") == "GK"
+                        and not (s.get("injury") or (s.get("external") or {}).get("availability") in ("injured", "suspended"))
+                        and float(s.get("lineup_prob") or 0) >= float(getattr(config, "LINEUP_PROB_TITULAR", 0.70))
+                    )
+                if gk_starters >= 1:
+                    position_needy = False
 
         categories: list[str] = []
         if delta is not None and delta >= config.CHOLLO_DELTA_MIN and rel_price <= 1.15:
@@ -594,7 +598,11 @@ def classify_market_opportunities(
             score += 22 if preseasonish else 16
         if on_daily and fills_coverage_gap:
             score += 10
-        if line_covered and not is_upgrade:
+        if overstocked and not fills_coverage_gap:
+            score -= 35
+            if is_upgrade:
+                score -= 10  # upgrade en línea sobrada: no urgencia
+        elif line_covered and not is_upgrade:
             score -= 28
         elif is_upgrade:
             score += 12
@@ -731,6 +739,8 @@ def classify_market_opportunities(
             priority = "Media" if score >= 25 else "Baja"
         elif line_covered and not is_upgrade:
             priority = "Baja"
+        elif overstocked and not fills_coverage_gap:
+            priority = "Baja" if not is_upgrade else "Media"
         elif fills_coverage_gap or fills_structural or score >= 35:
             priority = "Alta"
         elif is_top and not sample_thin and (
@@ -777,6 +787,7 @@ def classify_market_opportunities(
             "fills_coverage_gap": fills_coverage_gap,
             "line_already_covered": line_covered,
             "is_upgrade": is_upgrade,
+            "overstocked": overstocked,
             "position_coverage": cov.get("position_coverage"),
             "on_daily_market": on_daily,
             "signal_basis": "mister_live" if not allow_synthetic else "mixed",
@@ -1277,9 +1288,10 @@ def build_action_plan(
         line_covered = bool(o.get("line_already_covered"))
         is_upgrade = bool(o.get("is_upgrade"))
         fills_structural_o = bool(o.get("fills_structural"))
-        # Alta en la posición ≠ este jugador cubre el hueco (p. ej. gk_tandem)
+        overstocked = bool(o.get("overstocked"))
+        # Alta en la posición ≠ este jugador cubre el hueco (p. ej. gk_tandem / overstock)
         structural_gap = pos in need_pos_alta
-        if pos == "GK":
+        if pos == "GK" or overstocked or line_covered:
             structural_gap = fills_structural_o or fills_cov
         real_starter_cand = lineup is not None and float(lineup) >= 70
         on_daily = bool(o.get("on_daily_market") or o.get("seller") == "market")
@@ -1370,6 +1382,18 @@ def build_action_plan(
                 if fixed
                 else "línea ya cubierta — no insistir en la puja"
             )
+        elif overstocked and not fills_cov and not fills_structural_o:
+            # Sobrecupo adaptativo: ni gap ni upgrade → buy_now
+            buy_now = False
+            why_parts.append(
+                "línea sobrada — upgrade en espera, no pujar hoy"
+                if is_upgrade
+                else (
+                    "línea sobrada — no insistir"
+                    if fixed
+                    else "línea sobrada — no insistir en la puja"
+                )
+            )
         else:
             if fills and (pos in critical_pos) and (lineup is None or float(lineup) >= 70):
                 buy_now = True
@@ -1440,7 +1464,15 @@ def build_action_plan(
             fills_gap=fills_gap_any or is_objective,
         )
         # Objetivo del board en mercado del día → priorizar buy_now
-        if is_objective and on_daily and bf in ("comfortable", "tight") and not gw_out:
+        # (línea sobrada sin gap real: no saltarse el techo de sobrecupo)
+        overstock_blocks = overstocked and not fills_cov and not fills_structural_o
+        if (
+            is_objective
+            and on_daily
+            and bf in ("comfortable", "tight")
+            and not gw_out
+            and not overstock_blocks
+        ):
             buy_now = True
             if is_primary_obj:
                 why_parts.insert(0, "objetivo primary del tablero — fichar si sale hoy")
@@ -1448,17 +1480,26 @@ def build_action_plan(
                 why_parts.append("objetivo del tablero (hueco estructural)")
         # Jugador clave en mercado (crack / top / ideal) → máxima prioridad
         if is_key and on_daily and bf in ("comfortable", "tight") and not gw_out:
-            # GK ya cubierto: no forzar buy_now solo por producción/clave
-            if not (pos == "GK" and line_covered and not is_upgrade):
+            # Línea cubierta / sobrada: no forzar buy_now solo por producción/clave
+            if not overstock_blocks and not (line_covered and not is_upgrade and not fills_cov):
                 buy_now = True
                 if not any("clave" in w for w in why_parts):
                     why_parts.insert(0, "jugador clave en mercado de hoy — prioridad")
 
-        # Red de seguridad: 2.º GK caro con titular usable → nunca buy_now
+        # Red de seguridad: línea sobrada o GK caro ya cubierto → nunca buy_now
+        if buy_now and overstock_blocks:
+            buy_now = False
+            if not any("sobrada" in w.lower() or "ya cubierta" in w.lower() for w in why_parts):
+                why_parts.append("línea sobrada — no insistir en la puja")
         if buy_now and pos == "GK" and line_covered and not is_upgrade and not fills_structural_o:
             buy_now = False
             if not any("ya cubierta" in w.lower() for w in why_parts):
                 why_parts.append("línea GK ya cubierta — no gastar caja en 2.º titular")
+        # Upgrade en línea sobrada: como máximo wait/scout (ya no buy_now)
+        if buy_now and overstocked and is_upgrade and not fills_cov and not fills_structural_o:
+            buy_now = False
+            if not any("sobrada" in w.lower() for w in why_parts):
+                why_parts.append("línea sobrada — upgrade en espera, no pujar hoy")
         # Parche barato: no romper reserva de buys del ideal (clave/primary sí pueden usarla)
         is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
             cost <= patch_cap
@@ -1553,15 +1594,17 @@ def build_action_plan(
                 prio_i += 18
             if on_daily and fills_cov:
                 prio_i += 8
-            if line_covered and not is_upgrade:
+            if overstocked and not fills_cov:
+                prio_i -= 55
+            elif line_covered and not is_upgrade:
                 prio_i -= 40
             elif is_upgrade:
                 prio_i += 10
-            if is_primary_obj and on_daily:
+            if is_primary_obj and on_daily and not overstock_blocks:
                 prio_i += 80
-            elif is_objective and on_daily:
+            elif is_objective and on_daily and not overstock_blocks:
                 prio_i += 40
-            if is_key and on_daily:
+            if is_key and on_daily and not overstock_blocks:
                 prio_i += 90
             # Sin clave: premiar puntaje + capacidad de trueque en carencias
             if fills_gap_any and not is_key:
@@ -1582,6 +1625,7 @@ def build_action_plan(
             "fills_coverage_gap": fills_cov,
             "line_already_covered": line_covered,
             "is_upgrade": is_upgrade,
+            "overstocked": overstocked,
             "position_coverage": o.get("position_coverage"),
             "on_daily_market": on_daily,
             "market_mode": "fixed" if fixed else "auction",

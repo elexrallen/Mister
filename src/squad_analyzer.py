@@ -311,15 +311,17 @@ def position_coverage_map(diagnostico: dict[str, Any] | None) -> dict[str, str]:
     return out
 
 
-def _gk_starters_real(
+def _line_starters_real(
+    position: str,
     diagnostico: dict[str, Any] | None,
     squad: list[dict[str, Any]] | None,
 ) -> int:
-    """Titulares GK usables (≥ LINEUP_STARTER, sanos)."""
+    """Titulares usables (≥ LINEUP_STARTER, sanos) en una posición."""
+    pos = position or "MF"
     lineas = (diagnostico or {}).get("lineas") or {}
-    gk_info = lineas.get("GK") or {}
+    info = lineas.get(pos) or {}
     try:
-        n = int(gk_info.get("starters_real") or 0)
+        n = int(info.get("starters_real") or 0)
     except (TypeError, ValueError):
         n = 0
     if n > 0:
@@ -329,8 +331,55 @@ def _gk_starters_real(
     return sum(
         1
         for p in squad
-        if p.get("position") == "GK" and not _is_injured(p) and _is_starter(p)
+        if p.get("position") == pos and not _is_injured(p) and _is_starter(p)
     )
+
+
+def _line_healthy_count(
+    position: str,
+    diagnostico: dict[str, Any] | None,
+    squad: list[dict[str, Any]] | None,
+) -> int:
+    """Jugadores sanos en la posición (headcount, no usables)."""
+    pos = position or "MF"
+    lineas = (diagnostico or {}).get("lineas") or {}
+    info = lineas.get(pos) or {}
+    try:
+        n = int(info.get("count") or 0)
+    except (TypeError, ValueError):
+        n = 0
+    if n > 0:
+        return n
+    if not squad:
+        return 0
+    return sum(
+        1 for p in squad if p.get("position") == pos and not _is_injured(p)
+    )
+
+
+def _gk_starters_real(
+    diagnostico: dict[str, Any] | None,
+    squad: list[dict[str, Any]] | None,
+) -> int:
+    """Titulares GK usables (≥ LINEUP_STARTER, sanos)."""
+    return _line_starters_real("GK", diagnostico, squad)
+
+
+def is_line_overstocked(
+    position: str,
+    diagnostico: dict[str, Any] | None = None,
+    squad: list[dict[str, Any]] | None = None,
+) -> bool:
+    """
+    Línea sobrada: cupo ≥ ideal y titulares reales ≥ objetivo.
+    Se recalcula cada snapshot (adaptativo; no hardcodea conteos).
+    """
+    pos = position or "MF"
+    ideal = int(IDEAL_SQUAD.get(pos, 3))
+    starter_tgt = int(STARTERS_TARGET.get(pos, 1))
+    healthy = _line_healthy_count(pos, diagnostico, squad)
+    starters = _line_starters_real(pos, diagnostico, squad)
+    return healthy >= ideal and starters >= starter_tgt
 
 
 def _player_matches_gk_tandem(
@@ -366,6 +415,9 @@ def assess_market_coverage(
 
     GK con titular usable: el hueco real es tándem mismo club o parche ≤4M;
     un titular caro de otro club no cubre gap ni cuenta como upgrade.
+
+    Outfield con titulares OK: solo profundidad barata (≤4M) cubre gap de depth.
+    Línea overstocked (cupo≥ideal y starters≥target): no gap caro; upgrades no urgentes.
     """
     pos = player.get("position") or "MF"
     cov_map = position_coverage_map(diagnostico)
@@ -376,13 +428,15 @@ def assess_market_coverage(
     lp = _lineup_frac(player)
     is_upgrade = False
     label_override: str | None = None
-    block_gk_upgrade = False
+    block_upgrade = False
+    overstocked = is_line_overstocked(pos, diagnostico, squad)
+    starters_real = _line_starters_real(pos, diagnostico, squad)
+    starter_tgt = int(STARTERS_TARGET.get(pos, 1))
+    price = float(_player_value(player) or 0)
+    depth_cap = float(PATCH_MAX_PRICE * 2)
 
     if pos == "GK" and coverage != "critical":
-        starters_real = _gk_starters_real(diagnostico, squad)
         if starters_real >= 1:
-            price = float(_player_value(player) or 0)
-            depth_cap = float(PATCH_MAX_PRICE * 2)
             if _player_matches_gk_tandem(player, diagnostico):
                 fills_gap = True
                 line_covered = False
@@ -394,9 +448,23 @@ def assess_market_coverage(
                 # Titular propio OK: no gastar caja en 2.º titular de otro club
                 fills_gap = False
                 line_covered = True
-                block_gk_upgrade = True
+                block_upgrade = True
+    elif pos in ("DF", "MF", "FW") and coverage != "critical":
+        # Titulares OK: hueco real = profundidad barata, no otro titular caro
+        if starters_real >= starter_tgt:
+            if coverage == "thin" and price > 0 and price <= depth_cap:
+                fills_gap = True
+                line_covered = False
+            else:
+                fills_gap = False
+                line_covered = True
 
-    if line_covered and squad and not block_gk_upgrade:
+    # Sobrecupo con cobertura ok: nunca gap (upgrades se calculan aparte)
+    if overstocked and coverage == "ok":
+        fills_gap = False
+        line_covered = True
+
+    if line_covered and squad and not block_upgrade:
         same = [
             p
             for p in squad
@@ -432,6 +500,7 @@ def assess_market_coverage(
         "line_already_covered": line_covered and not is_upgrade,
         "is_upgrade": is_upgrade,
         "coverage_label": label,
+        "overstocked": overstocked,
     }
 
 

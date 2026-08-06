@@ -1718,7 +1718,9 @@ def build_target_board(
     ideal_buy_cost = round(net_buys, 0)
     funded_ideal = bal + sum(float(s.get("price") or 0) for s in sell_cands) >= net_buys
 
-    primary_targets = _select_daily_primary_targets(buy_rows, balance=bal)
+    primary_targets = _select_daily_primary_targets(
+        buy_rows, balance=bal, squad=squad
+    )
     # Enriquecer flags
     primary_targets = [
         {
@@ -1931,12 +1933,26 @@ def _select_daily_primary_targets(
     buy_rows: list[dict[str, Any]],
     *,
     balance: float,
+    squad: list[dict[str, Any]] | None = None,
+    diagnostico: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Objetivos del día para cola/funding: mercado diario (máx 2) + buys asequibles
     con el saldo actual (sin exigir vender casi toda la plantilla).
+
+    Excluye posiciones overstocked (cupo≥ideal y titulares OK) para no reservar
+    caja en líneas ya sobradas.
     """
+    from squad_analyzer import is_line_overstocked
+
     bal = max(0.0, float(balance or 0))
+    squad = list(squad or [])
+
+    def _overstocked_row(r: dict[str, Any]) -> bool:
+        pos = r.get("position") or ""
+        if not pos:
+            return False
+        return is_line_overstocked(pos, diagnostico, squad)
 
     def _sort_key(r: dict[str, Any]) -> tuple:
         return (
@@ -1946,14 +1962,16 @@ def _select_daily_primary_targets(
         )
 
     on_daily = sorted(
-        [r for r in buy_rows if r.get("on_daily_market")],
+        [r for r in buy_rows if r.get("on_daily_market") and not _overstocked_row(r)],
         key=_sort_key,
     )
     affordable = sorted(
         [
             r
             for r in buy_rows
-            if not r.get("on_daily_market") and float(r.get("price") or 0) <= bal + 1e-6
+            if not r.get("on_daily_market")
+            and not _overstocked_row(r)
+            and float(r.get("price") or 0) <= bal + 1e-6
         ],
         key=_sort_key,
     )
@@ -2000,7 +2018,7 @@ def funding_plan_from_board(
     if not daily:
         # Compat: si el board antiguo no separó daily, derivar de moves.buy
         buys = list(((board or {}).get("moves") or {}).get("buy") or [])
-        daily = _select_daily_primary_targets(buys, balance=bal)
+        daily = _select_daily_primary_targets(buys, balance=bal, squad=None)
 
     gaps: list[dict[str, Any]] = []
     for b in daily:

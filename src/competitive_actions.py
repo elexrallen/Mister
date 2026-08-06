@@ -1263,12 +1263,15 @@ def wait_risk(
 
 def priority_score_buy(item: dict[str, Any]) -> int:
     score = 0
+    overstock_blocks = bool(item.get("overstocked")) and not (
+        item.get("fills_coverage_gap") or item.get("fills_structural")
+    )
     # Jugador clave en mercado del día: por encima de cualquier parche
-    if item.get("is_key_market") and _is_daily_market_item(item):
+    if not overstock_blocks and item.get("is_key_market") and _is_daily_market_item(item):
         score += 140
-    elif item.get("is_primary_target") and _is_daily_market_item(item):
+    elif not overstock_blocks and item.get("is_primary_target") and _is_daily_market_item(item):
         score += 100
-    elif item.get("is_board_objective") and _is_daily_market_item(item):
+    elif not overstock_blocks and item.get("is_board_objective") and _is_daily_market_item(item):
         score += 55
     if item.get("fills_need"):
         score += 35
@@ -1278,7 +1281,9 @@ def priority_score_buy(item: dict[str, Any]) -> int:
         score += 22
     if item.get("on_daily_market") and item.get("fills_coverage_gap"):
         score += 10
-    if item.get("line_already_covered") and not item.get("is_upgrade"):
+    if overstock_blocks:
+        score -= 80
+    elif item.get("line_already_covered") and not item.get("is_upgrade"):
         score -= 40
     elif item.get("is_upgrade"):
         score += 15
@@ -1390,6 +1395,13 @@ def is_key_market_candidate(
     Jugador clave del mercado de hoy: objetivo del ideal, o crack/top que cubre hueco.
     """
     if not on_daily or gw_out:
+        return False
+    # Línea sobrada sin gap real: no elevar a clave (ni primary/board)
+    if (
+        o.get("overstocked")
+        and not o.get("fills_coverage_gap")
+        and not o.get("fills_structural")
+    ):
         return False
     if is_primary_obj:
         return True
@@ -2630,6 +2642,15 @@ def _is_weak_intent(item: dict[str, Any], primary_ids: set[str]) -> bool:
     )
 
 
+def _intent_eligible(item: dict[str, Any]) -> bool:
+    """Excluye líneas sobradas sin gap real del pool de intents/primary."""
+    if item.get("overstocked") and not (
+        item.get("fills_coverage_gap") or item.get("fills_structural")
+    ):
+        return False
+    return True
+
+
 def _intent_sort_key(
     item: dict[str, Any],
     *,
@@ -2647,9 +2668,14 @@ def _intent_sort_key(
         or item.get("fills_need")
     )
     pid = str(item.get("player_id") or "")
-    is_prim = bool(item.get("is_primary_target")) or pid in primary_ids
-    is_key = bool(item.get("is_key_market")) or is_prim
-    is_obj = bool(item.get("is_board_objective")) or is_prim
+    overstock_blocks = not _intent_eligible(item)
+    is_prim = (not overstock_blocks) and (
+        bool(item.get("is_primary_target")) or pid in primary_ids
+    )
+    is_key = (not overstock_blocks) and (bool(item.get("is_key_market")) or is_prim)
+    is_obj = (not overstock_blocks) and (
+        bool(item.get("is_board_objective")) or is_prim
+    )
     try:
         asset = float(item.get("trade_asset_score") or 0)
     except (TypeError, ValueError):
@@ -2659,6 +2685,7 @@ def _intent_sort_key(
     except (TypeError, ValueError):
         prod = 0.0
     return (
+        0 if overstock_blocks else 1,
         1 if is_key else 0,
         1 if is_prim else 0,
         1 if is_obj else 0,
@@ -2708,24 +2735,34 @@ def select_intent_lines(
     key_hit = [
         i
         for i in daily_buys
-        if i.get("is_key_market")
-        or str(i.get("player_id") or "") in primary_ids
-        or i.get("is_primary_target")
+        if _intent_eligible(i)
+        and (
+            i.get("is_key_market")
+            or str(i.get("player_id") or "") in primary_ids
+            or i.get("is_primary_target")
+        )
     ]
     gap_pool = [
         i
         for i in daily_buys
-        if i.get("fills_coverage_gap")
-        or i.get("fills_structural")
-        or i.get("fills_need")
-        or i.get("is_board_objective")
+        if _intent_eligible(i)
+        and (
+            i.get("fills_coverage_gap")
+            or i.get("fills_structural")
+            or i.get("fills_need")
+            or i.get("is_board_objective")
+        )
     ]
     preferred = [
         i
         for i in daily_buys
-        if (bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget")
+        if _intent_eligible(i)
+        and ((bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget"))
     ]
-    pool = key_hit or gap_pool or preferred or daily_buys
+    eligible = [i for i in daily_buys if _intent_eligible(i)]
+    pool = key_hit or gap_pool or preferred or eligible
+    if not pool:
+        return []
     first = max(pool, key=sort_key)
     intents: list[dict[str, Any]] = [first]
     if max_intents < 2:
@@ -2735,6 +2772,8 @@ def select_intent_lines(
     first_pos = first.get("position")
     first_id = str(first.get("player_id") or "")
     for cand in sorted(daily_buys, key=sort_key, reverse=True):
+        if not _intent_eligible(cand):
+            continue
         if str(cand.get("player_id") or "") == first_id:
             continue
         if cand.get("position") == first_pos:
@@ -2843,12 +2882,37 @@ def finalize_action_plan(
         max_squad = int(max_squad)
     squad_n = int(squad_size) if squad_size is not None else 0
     free_slots = max(0, max_squad - squad_n)
+    # Ideal aspiracional: solo scout / watching — no reserva caja ni fund_target
+    # Filtrar primary_ids de posiciones sobradas (adaptativo por snapshot del plan)
+    overstock_pos = {
+        i.get("position")
+        for i in plan
+        if i.get("position")
+        and i.get("overstocked")
+        and not (i.get("fills_coverage_gap") or i.get("fills_structural"))
+    }
     primary_ids = {
         str(t.get("player_id"))
         for t in (target_board or {}).get("primary_targets") or []
-        if t.get("player_id")
+        if t.get("player_id") and t.get("position") not in overstock_pos
     }
-    # Ideal aspiracional: solo scout / watching — no reserva caja ni fund_target
+    cash_reserved_targets = float((funding_info or {}).get("cash_reserved") or 0)
+    # Reserva de caja: no anclar millions a líneas overstocked del board
+    if overstock_pos:
+        filtered_reserved = round(
+            sum(
+                float(t.get("price") or 0)
+                for t in (target_board or {}).get("primary_targets") or []
+                if t.get("position") not in overstock_pos
+            ),
+            0,
+        )
+        cash_reserved_targets = filtered_reserved
+        if filtered_reserved > 0:
+            cash_reserve = min(filtered_reserved, bal) if bal > 0 else filtered_reserved
+        else:
+            base_res = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+            cash_reserve = min(base_res, bal * 0.5) if bal > 0 else base_res
     plan_ids = {str(i.get("player_id")) for i in plan if i.get("player_id")}
     for at in (target_board or {}).get("aspirational_targets") or []:
         pid = str(at.get("player_id") or "")
@@ -3619,7 +3683,7 @@ def finalize_action_plan(
         "cash_reserve": cash_reserve,
         "residual_after": residual_after,
         "note": note,
-        "cash_reserved_targets": float((funding_info or {}).get("cash_reserved") or 0),
+        "cash_reserved_targets": cash_reserved_targets,
         "primary_is_target": bool(
             primary
             and (
