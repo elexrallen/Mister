@@ -706,9 +706,16 @@ def enrich_players_with_ff_production(
                         profile_pct = int(prof["titular_pct"])
                     except (TypeError, ValueError):
                         profile_pct = None
+                    try:
+                        profile_apps_n = int(prof["apps"]) if prof.get("apps") is not None else 0
+                    except (TypeError, ValueError):
+                        profile_apps_n = 0
                     if profile_pct is not None:
                         ext["ff_starts"] = prof.get("starts")
                         ext["ff_profile_apps"] = prof.get("apps")
+                    # Titular(100%) con 1 PJ (p.ej. Padilla) no es titularidad habitual
+                    if profile_pct is not None and profile_apps_n < THIN_APPS:
+                        profile_pct = None
 
             if profile_pct is not None:
                 lp = float(profile_pct)
@@ -721,7 +728,18 @@ def enrich_players_with_ff_production(
                     recent_mins = float(fm["minutos_ultimos_5"]) if fm.get("minutos_ultimos_5") is not None else None
                 except (TypeError, ValueError):
                     recent_mins = None
-                if proxy_lp is not None and recent_mins is not None and recent_mins >= 270:
+                apps_ok_for_floor = (
+                    apps_for_proxy is not None and float(apps_for_proxy) >= float(THIN_APPS)
+                )
+                # En pretemporada / muestra corta el suelo FotMob infla suplentes con minutos
+                # puntuales (amistosos, copa, baja del titular).
+                allow_fotmob_floor = points_phase == "active" or apps_ok_for_floor
+                if (
+                    proxy_lp is not None
+                    and recent_mins is not None
+                    and recent_mins >= 270
+                    and allow_fotmob_floor
+                ):
                     # ≥54'/partido en últimos 5 ⇒ al menos regular/titular usable
                     floored = max(int(proxy_lp), 70)
                     if floored > int(proxy_lp):

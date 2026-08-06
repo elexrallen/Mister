@@ -1038,7 +1038,7 @@
         "ppg_source": "mister_form",
         "external": {
           "availability": "unknown",
-          "lineup_prob_ext": 100,
+          "lineup_prob_ext": 3,
           "is_chollo_ext": false,
           "is_recommendation_ext": false,
           "sofascore_avg_5": 6.12,
@@ -1065,7 +1065,7 @@
           "gw_fixture_id": null,
           "ff_avg_scale": 8.0,
           "ff_scoring": "Mister Mixto",
-          "lineup_prob_source": "ff_profile_titular",
+          "lineup_prob_source": "ff_apps_proxy",
           "ff_starts": 1,
           "ff_profile_apps": 1,
           "ff_match_score": 100
@@ -1080,7 +1080,7 @@
           "match_score": 100,
           "source": "fotmob"
         },
-        "lineup_prob": 1.0,
+        "lineup_prob": 0.03,
         "ff_mister_avg": 1.0,
         "ff_mister_points": 1.0,
         "ff_apps": 1,
@@ -2351,7 +2351,7 @@
         "delta_5d": 0.1126,
         "value_note": "rising",
         "value_ratio": 23.57,
-        "lineup_prob": 100.0,
+        "lineup_prob": 0.05,
         "ff_mister_points": 11.0,
         "ff_mister_avg": 5.5,
         "hist_ok": false,
@@ -3150,7 +3150,7 @@
           "delta_5d": 0.1126,
           "value_note": "rising",
           "value_ratio": 23.57,
-          "lineup_prob": 100.0,
+          "lineup_prob": 0.05,
           "ff_mister_points": 11.0,
           "ff_mister_avg": 5.5,
           "hist_ok": false,
@@ -6325,7 +6325,7 @@
       "gw_out": false,
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 100,
+        "lineup_prob_ext": 3,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -6355,7 +6355,7 @@
         "ff_match_score": 100,
         "ff_scoring": "Mister Mixto",
         "ff_avg_scale": 8.0,
-        "lineup_prob_source": "ff_profile_titular"
+        "lineup_prob_source": "ff_apps_proxy"
       },
       "fotmob_stats": {
         "rating_promedio": null,
@@ -6367,7 +6367,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 1.0,
+      "lineup_prob": 0.03,
       "ff_mister_avg": 8.0,
       "ff_mister_points": 8.0,
       "ff_apps": 1,
@@ -15875,7 +15875,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 100,
+        "lineup_prob_ext": 8,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -15902,7 +15902,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 3,
         "ff_profile_apps": 3,
         "ff_match_score": 100
@@ -15917,7 +15917,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 1.0,
+      "lineup_prob": 0.08,
       "ff_mister_avg": 1.67,
       "ff_mister_points": 5.0,
       "ff_apps": 3,
@@ -16127,7 +16127,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 86,
+        "lineup_prob_ext": 18,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -16154,7 +16154,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 6,
         "ff_profile_apps": 7,
         "ff_match_score": 100
@@ -16169,7 +16169,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.86,
+      "lineup_prob": 0.18,
       "ff_mister_avg": 3.14,
       "ff_mister_points": 22.0,
       "ff_apps": 7,
@@ -22231,7 +22231,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 100,
+        "lineup_prob_ext": 5,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -22258,7 +22258,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 2,
         "ff_profile_apps": 2,
         "ff_match_score": 100
@@ -22273,7 +22273,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 1.0,
+      "lineup_prob": 0.05,
       "ff_mister_avg": 3.0,
       "ff_mister_points": 6.0,
       "ff_apps": 2,
@@ -25163,7 +25163,7 @@
       "gw_out": false,
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 100,
+        "lineup_prob_ext": 3,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -25193,7 +25193,7 @@
         "ff_match_score": 100,
         "ff_scoring": "Mister Mixto",
         "ff_avg_scale": 8.0,
-        "lineup_prob_source": "ff_profile_titular"
+        "lineup_prob_source": "ff_apps_proxy"
       },
       "fotmob_stats": {
         "rating_promedio": null,
@@ -25205,7 +25205,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 1.0,
+      "lineup_prob": 0.03,
       "ff_mister_avg": 0.0,
       "ff_mister_points": 0.0,
       "ff_apps": 1,
@@ -35248,7 +35248,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 67,
+        "lineup_prob_ext": 8,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -35275,7 +35275,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 2,
         "ff_profile_apps": 3,
         "ff_match_score": 100
@@ -35290,7 +35290,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.67,
+      "lineup_prob": 0.08,
       "ff_mister_avg": 1.0,
       "ff_mister_points": 3.0,
       "ff_apps": 3,
@@ -35763,7 +35763,7 @@
       "gw_out": false,
       "external": {
         "availability": "doubt",
-        "lineup_prob_ext": 50,
+        "lineup_prob_ext": 5,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -35793,7 +35793,7 @@
         "ff_match_score": 100,
         "ff_scoring": "Mister Mixto",
         "ff_avg_scale": 8.0,
-        "lineup_prob_source": "ff_profile_titular"
+        "lineup_prob_source": "ff_apps_proxy"
       },
       "fotmob_stats": {
         "rating_promedio": null,
@@ -35805,7 +35805,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.5,
+      "lineup_prob": 0.05,
       "ff_mister_avg": 2.0,
       "ff_mister_points": 4.0,
       "ff_apps": 2,
@@ -38565,7 +38565,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 0,
+        "lineup_prob_ext": 3,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -38592,7 +38592,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 0,
         "ff_profile_apps": 1,
         "ff_match_score": 100
@@ -38607,7 +38607,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.0,
+      "lineup_prob": 0.03,
       "ff_mister_avg": 12.0,
       "ff_mister_points": 12.0,
       "ff_apps": 1,
@@ -42514,7 +42514,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 50,
+        "lineup_prob_ext": 5,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -42541,7 +42541,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 1,
         "ff_profile_apps": 2,
         "ff_match_score": 100
@@ -42556,7 +42556,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.5,
+      "lineup_prob": 0.05,
       "ff_mister_avg": 2.5,
       "ff_mister_points": 5.0,
       "ff_apps": 2,
@@ -43401,7 +43401,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 29,
+        "lineup_prob_ext": 18,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -43428,7 +43428,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 2,
         "ff_profile_apps": 7,
         "ff_match_score": 100
@@ -43443,7 +43443,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.29,
+      "lineup_prob": 0.18,
       "ff_mister_avg": 2.14,
       "ff_mister_points": 15.0,
       "ff_apps": 7,
@@ -47074,7 +47074,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 0,
+        "lineup_prob_ext": 3,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -47101,7 +47101,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 0,
         "ff_profile_apps": 1,
         "ff_match_score": 100
@@ -47116,7 +47116,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.0,
+      "lineup_prob": 0.03,
       "ff_mister_avg": 0.0,
       "ff_mister_points": 0.0,
       "ff_apps": 1,
@@ -49082,7 +49082,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 0,
+        "lineup_prob_ext": 3,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -49109,7 +49109,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 0,
         "ff_profile_apps": 1,
         "ff_match_score": 100
@@ -49124,7 +49124,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.0,
+      "lineup_prob": 0.03,
       "ff_mister_avg": 0.0,
       "ff_mister_points": 0.0,
       "ff_apps": 1,
@@ -49207,7 +49207,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 0,
+        "lineup_prob_ext": 11,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -49234,7 +49234,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 0,
         "ff_profile_apps": 4,
         "ff_match_score": 100
@@ -49249,7 +49249,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.0,
+      "lineup_prob": 0.11,
       "ff_mister_avg": 0.0,
       "ff_mister_points": 0.0,
       "ff_apps": 4,
@@ -51884,7 +51884,7 @@
       "ppg_source": "mister_form",
       "external": {
         "availability": "unknown",
-        "lineup_prob_ext": 0,
+        "lineup_prob_ext": 8,
         "is_chollo_ext": false,
         "is_recommendation_ext": false,
         "sofascore_avg_5": null,
@@ -51911,7 +51911,7 @@
         "gw_fixture_id": null,
         "ff_avg_scale": 8.0,
         "ff_scoring": "Mister Mixto",
-        "lineup_prob_source": "ff_profile_titular",
+        "lineup_prob_source": "ff_apps_proxy",
         "ff_starts": 0,
         "ff_profile_apps": 3,
         "ff_match_score": 100
@@ -51926,7 +51926,7 @@
         "match_score": 0,
         "source": "skip"
       },
-      "lineup_prob": 0.0,
+      "lineup_prob": 0.08,
       "ff_mister_avg": 0.0,
       "ff_mister_points": 0.0,
       "ff_apps": 3,
@@ -52119,7 +52119,7 @@
             "ppg_source": "mister_form",
             "external": {
               "availability": "unknown",
-              "lineup_prob_ext": 100,
+              "lineup_prob_ext": 3,
               "is_chollo_ext": false,
               "is_recommendation_ext": false,
               "sofascore_avg_5": 6.12,
@@ -52146,7 +52146,7 @@
               "gw_fixture_id": null,
               "ff_avg_scale": 8.0,
               "ff_scoring": "Mister Mixto",
-              "lineup_prob_source": "ff_profile_titular",
+              "lineup_prob_source": "ff_apps_proxy",
               "ff_starts": 1,
               "ff_profile_apps": 1,
               "ff_match_score": 100
@@ -52161,7 +52161,7 @@
               "match_score": 100,
               "source": "fotmob"
             },
-            "lineup_prob": 1.0,
+            "lineup_prob": 0.03,
             "ff_mister_avg": 1.0,
             "ff_mister_points": 1.0,
             "ff_apps": 1,
@@ -54037,10 +54037,10 @@
             "team": "Athletic",
             "team_id": "1",
             "price": 283000,
-            "lineup_prob": 1.0,
+            "lineup_prob": 0.03,
             "in_lineup": false,
             "plays_little": false,
-            "is_real_starter": true,
+            "is_real_starter": false,
             "recent_minutes": 480.0,
             "form": 0.0,
             "mister_avg": 0.0,
@@ -54071,8 +54071,8 @@
             "id": "59089",
             "name": "A. Padilla",
             "price": 283000,
-            "lineup_pct": 100,
-            "is_real_starter": true,
+            "lineup_pct": 3,
+            "is_real_starter": false,
             "is_regular": true
           }
         ]
@@ -54726,10 +54726,10 @@
           "team": "Athletic",
           "team_id": "1",
           "price": 283000,
-          "lineup_prob": 1.0,
+          "lineup_prob": 0.03,
           "in_lineup": false,
           "plays_little": false,
-          "is_real_starter": true,
+          "is_real_starter": false,
           "recent_minutes": 480.0,
           "form": 0.0,
           "mister_avg": 0.0,
@@ -55950,10 +55950,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 1.0,
+          "lineup_prob": 0.05,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 100,
+            "lineup_prob_ext": 5,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -55980,7 +55980,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 2,
             "ff_profile_apps": 2,
             "ff_match_score": 100
@@ -57474,10 +57474,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 0.33,
+          "lineup_prob": 0.16,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 33,
+            "lineup_prob_ext": 16,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -57504,7 +57504,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 2,
             "ff_profile_apps": 6,
             "ff_match_score": 100
@@ -61655,10 +61655,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 0.0,
+          "lineup_prob": 0.03,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 0,
+            "lineup_prob_ext": 3,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -61685,7 +61685,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 0,
             "ff_profile_apps": 1,
             "ff_match_score": 100
@@ -61869,10 +61869,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 0.0,
+          "lineup_prob": 0.03,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 0,
+            "lineup_prob_ext": 3,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -61899,7 +61899,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 0,
             "ff_profile_apps": 1,
             "ff_match_score": 100
@@ -63893,10 +63893,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 1.0,
+          "lineup_prob": 0.16,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 100,
+            "lineup_prob_ext": 16,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -63923,7 +63923,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 6,
             "ff_profile_apps": 6,
             "ff_match_score": 100
@@ -64250,10 +64250,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 0.2,
+          "lineup_prob": 0.13,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 20,
+            "lineup_prob_ext": 13,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -64280,7 +64280,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 1,
             "ff_profile_apps": 5,
             "ff_match_score": 100
@@ -64391,10 +64391,10 @@
             "ownership": "mister_sw_players",
             "clause": "mister"
           },
-          "lineup_prob": 0.75,
+          "lineup_prob": 0.11,
           "external": {
             "availability": "unknown",
-            "lineup_prob_ext": 75,
+            "lineup_prob_ext": 11,
             "is_chollo_ext": false,
             "is_recommendation_ext": false,
             "sofascore_avg_5": null,
@@ -64421,7 +64421,7 @@
             "gw_fixture_id": null,
             "ff_avg_scale": 8.0,
             "ff_scoring": "Mister Mixto",
-            "lineup_prob_source": "ff_profile_titular",
+            "lineup_prob_source": "ff_apps_proxy",
             "ff_starts": 3,
             "ff_profile_apps": 4,
             "ff_match_score": 100
@@ -79353,13 +79353,13 @@
         "team": "Athletic",
         "role": "xi",
         "signal": "start",
-        "prob": 100.0,
+        "prob": 3,
         "prob_source": "season",
         "opponent": null,
         "in_lineup": false,
         "injured": false,
         "score": 90.0,
-        "why": "Titularidad habitual 100% (sin previa FF)",
+        "why": "Titularidad habitual 3% (sin previa FF)",
         "jornada": 1
       },
       {
