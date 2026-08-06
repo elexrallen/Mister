@@ -504,6 +504,33 @@ def classify_market_opportunities(
         line_covered = bool(cov.get("line_already_covered"))
         is_upgrade = bool(cov.get("is_upgrade"))
 
+        struct_bonus, fills_structural, struct_label = structural_market_boost(p, needs)
+
+        # GK con titular usable: "needy" solo si cubre tándem/parche o need estructural
+        position_needy = p["position"] in needy
+        if p["position"] == "GK" and position_needy and not fills_coverage_gap and not fills_structural:
+            # Warning por no-tándem no debe inflar a todos los porteros del mercado
+            gk_starters = 0
+            try:
+                gk_starters = int(
+                    ((diagnostico_plantilla or {}).get("lineas") or {})
+                    .get("GK", {})
+                    .get("starters_real")
+                    or 0
+                )
+            except (TypeError, ValueError):
+                gk_starters = 0
+            if gk_starters <= 0 and squad:
+                gk_starters = sum(
+                    1
+                    for s in squad
+                    if s.get("position") == "GK"
+                    and not (s.get("injury") or (s.get("external") or {}).get("availability") in ("injured", "suspended"))
+                    and float(s.get("lineup_prob") or 0) >= float(getattr(config, "LINEUP_PROB_TITULAR", 0.70))
+                )
+            if gk_starters >= 1:
+                position_needy = False
+
         categories: list[str] = []
         if delta is not None and delta >= config.CHOLLO_DELTA_MIN and rel_price <= 1.15:
             categories.append("chollo_economico")
@@ -519,7 +546,7 @@ def classify_market_opportunities(
         elif trend == "up" and (form is None or float(form) < scale_threshold(4.0, scale)):
             categories.append("especulacion_trading")
         if not categories:
-            if p["position"] in needy or fills_coverage_gap:
+            if position_needy or fills_coverage_gap:
                 categories.append("titular_garantizado")
             elif rel_price < 0.85:
                 categories.append("chollo_economico")
@@ -533,7 +560,7 @@ def classify_market_opportunities(
             bid_ceiling = list_price
         else:
             premium = 0.03
-            if p["position"] in needy or fills_coverage_gap:
+            if position_needy or fills_coverage_gap:
                 premium += 0.05 if preseasonish else 0.04
             if fills_coverage_gap and on_daily:
                 premium += 0.02
@@ -561,7 +588,7 @@ def classify_market_opportunities(
             score += (float(form) * 3.0) * (8.0 / scale)
         if avg_ppg is not None:
             score += (float(avg_ppg) / resolve_avg_scale(p)) * 15
-        if p["position"] in needy:
+        if position_needy:
             score += 15
         if fills_coverage_gap:
             score += 22 if preseasonish else 16
@@ -675,7 +702,7 @@ def classify_market_opportunities(
             score -= 10
         elif gw_starter:
             score += 14
-            if p["position"] in needy:
+            if position_needy:
                 score += 6
         if ext.get("is_chollo_ext") or ext.get("is_recommendation_ext"):
             score += 10
@@ -692,7 +719,6 @@ def classify_market_opportunities(
             except (TypeError, ValueError):
                 pass
 
-        struct_bonus, fills_structural, struct_label = structural_market_boost(p, needs)
         score += struct_bonus
         if fills_structural and struct_label:
             categories.insert(0, "ajuste_estructural")
@@ -708,7 +734,7 @@ def classify_market_opportunities(
         elif fills_coverage_gap or fills_structural or score >= 35:
             priority = "Alta"
         elif is_top and not sample_thin and (
-            p["position"] in needy or fills_structural or fills_coverage_gap
+            position_needy or fills_structural or fills_coverage_gap
         ):
             priority = "Alta"
         elif score >= 18:
@@ -745,7 +771,7 @@ def classify_market_opportunities(
             "hours_to_jornada": fin.get("hours_to_jornada"),
             "ff_apps": ff_apps,
             "sample_thin": sample_thin,
-            "fills_need": p["position"] in needy or fills_structural or fills_coverage_gap,
+            "fills_need": position_needy or fills_structural or fills_coverage_gap,
             "fills_structural": fills_structural,
             "structural_label": coverage_label or struct_label,
             "fills_coverage_gap": fills_coverage_gap,
@@ -1173,6 +1199,9 @@ def build_action_plan(
         hours_to_jornada=float(hours_to_jornada) if hours_to_jornada is not None else None,
         days_to_kickoff=days_to_kickoff,
         matchday=matchday_ctx if isinstance(matchday_ctx, dict) else None,
+        season_start=(diagnostico_plantilla or {}).get("season_start")
+        if isinstance(diagnostico_plantilla, dict)
+        else None,
     )
     # Plan de venta a tiempo: shortfall cubierto solo si el cobro llega antes de D-1
     sell_proceeds_timely = 0.0
@@ -1966,6 +1995,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     hours_j = resolve_hours_to_jornada(
         days_to_kickoff=comp.get("days_to_kickoff"),
         matchday=matchday_early,
+        season_start=comp.get("season_start"),
     )
     diagnostico_plantilla["hours_to_jornada"] = hours_j
     max_debt_me = me.get("max_debt")
@@ -2099,6 +2129,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     hours_j = resolve_hours_to_jornada(
         days_to_kickoff=comp.get("days_to_kickoff"),
         matchday=matchday_early,
+        season_start=comp.get("season_start"),
     )
     diagnostico_plantilla["hours_to_jornada"] = hours_j
 

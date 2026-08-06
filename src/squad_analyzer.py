@@ -311,6 +311,49 @@ def position_coverage_map(diagnostico: dict[str, Any] | None) -> dict[str, str]:
     return out
 
 
+def _gk_starters_real(
+    diagnostico: dict[str, Any] | None,
+    squad: list[dict[str, Any]] | None,
+) -> int:
+    """Titulares GK usables (≥ LINEUP_STARTER, sanos)."""
+    lineas = (diagnostico or {}).get("lineas") or {}
+    gk_info = lineas.get("GK") or {}
+    try:
+        n = int(gk_info.get("starters_real") or 0)
+    except (TypeError, ValueError):
+        n = 0
+    if n > 0:
+        return n
+    if not squad:
+        return 0
+    return sum(
+        1
+        for p in squad
+        if p.get("position") == "GK" and not _is_injured(p) and _is_starter(p)
+    )
+
+
+def _player_matches_gk_tandem(
+    player: dict[str, Any],
+    diagnostico: dict[str, Any] | None,
+) -> bool:
+    """True si el GK del mercado encaja en need gk_tandem (mismo club)."""
+    if player.get("position") != "GK":
+        return False
+    team = (player.get("team") or "").lower()
+    team_id = str(player.get("team_id") or "")
+    for need in (diagnostico or {}).get("structural_needs") or []:
+        if need.get("need") != "gk_tandem":
+            continue
+        want_id = str(need.get("same_team_id") or "")
+        want_team = (need.get("same_team_as") or "").lower()
+        if want_id and team_id and team_id == want_id:
+            return True
+        if want_team and want_team in team:
+            return True
+    return False
+
+
 def assess_market_coverage(
     player: dict[str, Any],
     diagnostico: dict[str, Any] | None,
@@ -320,6 +363,9 @@ def assess_market_coverage(
     """
     ¿El fichaje cubre un hueco de cobertura o la línea ya está OK?
     is_upgrade: mejora clara vs el peor usable de la línea.
+
+    GK con titular usable: el hueco real es tándem mismo club o parche ≤4M;
+    un titular caro de otro club no cubre gap ni cuenta como upgrade.
     """
     pos = player.get("position") or "MF"
     cov_map = position_coverage_map(diagnostico)
@@ -329,7 +375,28 @@ def assess_market_coverage(
 
     lp = _lineup_frac(player)
     is_upgrade = False
-    if line_covered and squad:
+    label_override: str | None = None
+    block_gk_upgrade = False
+
+    if pos == "GK" and coverage != "critical":
+        starters_real = _gk_starters_real(diagnostico, squad)
+        if starters_real >= 1:
+            price = float(_player_value(player) or 0)
+            depth_cap = float(PATCH_MAX_PRICE * 2)
+            if _player_matches_gk_tandem(player, diagnostico):
+                fills_gap = True
+                line_covered = False
+                label_override = "Tándem portero"
+            elif price > 0 and price <= depth_cap:
+                fills_gap = True
+                line_covered = False
+            else:
+                # Titular propio OK: no gastar caja en 2.º titular de otro club
+                fills_gap = False
+                line_covered = True
+                block_gk_upgrade = True
+
+    if line_covered and squad and not block_gk_upgrade:
         same = [
             p
             for p in squad
@@ -350,7 +417,9 @@ def assess_market_coverage(
             is_upgrade = True
 
     label = None
-    if fills_gap:
+    if label_override:
+        label = label_override
+    elif fills_gap:
         label = "Cubre hueco"
     elif is_upgrade:
         label = "Upgrade"

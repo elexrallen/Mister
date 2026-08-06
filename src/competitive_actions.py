@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import config
@@ -77,10 +77,11 @@ def resolve_hours_to_jornada(
     days_to_kickoff: float | int | None = None,
     matchday: dict[str, Any] | None = None,
     now: datetime | None = None,
+    season_start: str | None = None,
 ) -> float | None:
     """
     Horas hasta el próximo cierre/jornada.
-    Preferencia: hours explícitas → kickoffs FF matchday → days_to_kickoff (J1).
+    Preferencia: hours explícitas → kickoffs FF matchday (oficiales) → days_to_kickoff (J1).
     None = fecha no fiable.
     """
     if hours_to_jornada is not None:
@@ -89,11 +90,49 @@ def resolve_hours_to_jornada(
         except (TypeError, ValueError):
             pass
 
+    base = now or datetime.now(timezone.utc)
+    if base.tzinfo is None:
+        base = base.replace(tzinfo=timezone.utc)
+
+    # Floor: no usar amistosos / kickoffs anteriores al inicio de temporada
+    start_floor: datetime | None = None
+    start_raw = (season_start or "").strip()
+    if not start_raw and days_to_kickoff is not None:
+        try:
+            d_chk = float(days_to_kickoff)
+        except (TypeError, ValueError):
+            d_chk = None
+        else:
+            if d_chk > 0:
+                # Derivar floor desde days_to_kickoff (medianoche UTC del J1)
+                start_floor = (base + timedelta(days=int(d_chk))).replace(
+                    hour=0, minute=0, second=0, microsecond=0
+                )
+    if start_raw:
+        try:
+            y, m, d = (int(x) for x in start_raw.split("-")[:3])
+            start_floor = datetime(y, m, d, tzinfo=timezone.utc)
+        except (TypeError, ValueError):
+            pass
+
     earliest: float | None = None
     for fx in (matchday or {}).get("fixtures") or []:
-        h = _parse_kickoff_hours((fx or {}).get("kickoff"), now=now)
-        if h is None:
+        h = _parse_kickoff_hours((fx or {}).get("kickoff"), now=base)
+        if h is None or h < 0:
             continue
+        if start_floor is not None:
+            raw = str((fx or {}).get("kickoff") or "").strip().replace("Z", "+00:00")
+            try:
+                if re.match(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}", raw) and len(raw) == 16:
+                    kdt = datetime.fromisoformat(raw).replace(tzinfo=timezone.utc)
+                else:
+                    kdt = datetime.fromisoformat(raw)
+                    if kdt.tzinfo is None:
+                        kdt = kdt.replace(tzinfo=timezone.utc)
+                if kdt < start_floor:
+                    continue
+            except (TypeError, ValueError):
+                pass
         if earliest is None or h < earliest:
             earliest = h
     if earliest is not None:
@@ -1356,6 +1395,9 @@ def is_key_market_candidate(
         return True
     if is_objective and (real_starter or bool(o.get("is_top_ff"))):
         return True
+    # GK sin hueco real (tándem/parche): no elevar a clave por producción
+    if (o.get("position") or "") == "GK" and not fills_gap and not o.get("fills_structural"):
+        return False
     if not fills_gap:
         return False
     if not real_starter and not o.get("is_top_ff"):

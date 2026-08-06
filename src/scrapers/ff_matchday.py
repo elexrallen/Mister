@@ -1,7 +1,8 @@
 """
 Fútbol Fantasy — posibles alineaciones por jornada.
 
-Hub:  /{laliga|premier-league}/posibles-alineaciones
+Hub LaLiga:  /laliga/posibles-alineaciones
+Hub Premier: /premier-league/posibles-alineaciones
 Previas: /partidos/{id}-{slug}
 
 Fail-soft + caché disco (TTL 8h).
@@ -25,6 +26,76 @@ log = logging.getLogger("scrapers.ff_matchday")
 CACHE_DIR = Path(__file__).resolve().parent.parent / "cache"
 CACHE_TTL_HOURS = 8
 MAX_FIXTURES = 12
+
+# Slugs canónicos / variantes FF para filtrar amistosos (ambos clubs deben ser de liga)
+LALIGA_CLUB_SLUGS = frozenset(
+    {
+        "alaves",
+        "deportivo-alaves",
+        "athletic",
+        "athletic-club",
+        "atletico",
+        "atletico-madrid",
+        "barcelona",
+        "betis",
+        "real-betis",
+        "celta",
+        "deportivo",
+        "elche",
+        "espanyol",
+        "getafe",
+        "girona",
+        "levante",
+        "malaga",
+        "osasuna",
+        "racing",
+        "rayo",
+        "rayo-vallecano",
+        "real-madrid",
+        "real-sociedad",
+        "sevilla",
+        "valencia",
+        "villarreal",
+    }
+)
+
+PREMIER_CLUB_SLUGS = frozenset(
+    {
+        # Plantilla 2026/27 (FF /premier-league/posibles-alineaciones)
+        "arsenal",
+        "aston-villa",
+        "bournemouth",
+        "brentford",
+        "brighton",
+        "brighton-and-hove",
+        "chelsea",
+        "coventry",
+        "coventry-city",
+        "coventrycity",
+        "crystal-palace",
+        "everton",
+        "fulham",
+        "hull",
+        "hull-city",
+        "hullcity",
+        "ipswich",
+        "ipswich-town",
+        "leeds",
+        "leeds-united",
+        "liverpool",
+        "man-city",
+        "manchester-city",
+        "man-united",
+        "manchester-united",
+        "newcastle",
+        "newcastle-united",
+        "nottingham-forest",
+        "nott-forest",
+        "sunderland",
+        "tottenham",
+        "tottenham-hotspur",
+    }
+)
 
 MONTHS_ES = {
     "ene": 1,
@@ -142,6 +213,25 @@ def _parse_kickoff_label(label: str) -> str | None:
         return None
 
 
+def _competition_club_slugs(competition: str) -> frozenset[str]:
+    comp = (competition or "laliga").strip().lower()
+    if "premier" in comp:
+        return PREMIER_CLUB_SLUGS
+    return LALIGA_CLUB_SLUGS
+
+
+def _both_clubs_in_league(home_slug: str, away_slug: str, competition: str) -> bool:
+    clubs = _competition_club_slugs(competition)
+    h = (home_slug or "").strip().lower()
+    a = (away_slug or "").strip().lower()
+    return bool(h and a and h in clubs and a in clubs)
+
+
+def _is_amistoso_context(label: str, parent_txt: str) -> bool:
+    blob = f"{label} {parent_txt}".lower()
+    return "amistoso" in blob
+
+
 def _hub_fixtures(competition: str) -> tuple[int | None, list[dict[str, Any]]]:
     path = _ff_path(competition)
     url = f"{BASE}/{path}/posibles-alineaciones"
@@ -161,24 +251,20 @@ def _hub_fixtures(competition: str) -> tuple[int | None, list[dict[str, Any]]]:
         fid, slug = m.group(1), m.group(2).lower()
         if fid in seen:
             continue
-        # Amistosos / no liga: slugs con clubs extranjeros frecuentes en bloque pretemporada
-        # Nos quedamos con partidos que tienen "Previa" cerca o están en contenedores de liga.
         label = a.get_text(" ", strip=True)
         parent = a.find_parent(class_=True)
         parent_txt = parent.get_text(" ", strip=True) if parent else label
+        if _is_amistoso_context(label, parent_txt):
+            continue
         is_previa = "previa" in (label + " " + parent_txt).lower()
-        # Excluir amistosos obvios (julio en label cuando jornada es agosto+) — soft
-        if not is_previa and "previa" not in parent_txt.lower():
-            # Aún incluir si el slug parece partido de liga (dos equipos conocidos)
-            if "-" not in slug:
-                continue
+        if not is_previa and "-" not in slug:
+            continue
 
-        parts = slug.split("-")
-        # home-away: split roughly in half by known pattern team-team
         home_slug, away_slug = _split_match_slug(slug)
         home = _slug_to_name(home_slug)
         away = _slug_to_name(away_slug)
         kickoff = _parse_kickoff_label(label) or _parse_kickoff_label(parent_txt)
+        league_match = _both_clubs_in_league(home_slug, away_slug, path)
 
         seen.add(fid)
         fixtures.append(
@@ -188,25 +274,36 @@ def _hub_fixtures(competition: str) -> tuple[int | None, list[dict[str, Any]]]:
                 "kickoff": kickoff,
                 "home": home,
                 "away": away,
+                "home_slug": home_slug,
+                "away_slug": away_slug,
                 "url": _abs(href),
                 "label": label[:80],
                 "has_previa": is_previa,
+                "league_match": league_match,
             }
         )
-        if len(fixtures) >= MAX_FIXTURES * 2:
+        if len(fixtures) >= MAX_FIXTURES * 3:
             break
 
-    # Preferir los que tienen Previa (jornada actual); completar con el resto del hub
-    with_previa = [f for f in fixtures if f.get("has_previa")]
-    without = [f for f in fixtures if not f.get("has_previa")]
-    chosen = (with_previa + without)[:MAX_FIXTURES]
+    # Jornada oficial: Previa primero; completar solo con liga-liga (nunca amistosos)
+    with_previa = [f for f in fixtures if f.get("has_previa") and f.get("league_match")]
+    league_rest = [
+        f
+        for f in fixtures
+        if f.get("league_match") and not f.get("has_previa")
+    ]
+    if with_previa:
+        chosen = (with_previa + league_rest)[:MAX_FIXTURES]
+    else:
+        chosen = league_rest[:MAX_FIXTURES]
 
     log.info(
-        "FF matchday hub [%s] jornada=%s fixtures=%d (previa=%d)",
+        "FF matchday hub [%s] jornada=%s fixtures=%d (previa=%d league=%d)",
         path,
         jornada,
         len(chosen),
         len(with_previa),
+        len([f for f in chosen if f.get("league_match")]),
     )
     return jornada, chosen
 
@@ -223,14 +320,17 @@ def _split_match_slug(slug: str) -> tuple[str, str]:
         "manchester-united",
         "manchester-city",
         "nottingham-forest",
-        "west-ham",
         "crystal-palace",
         "newcastle-united",
         "brighton-and-hove",
-        "wolverhampton-wanderers",
         "tottenham-hotspur",
-        "sheffield-united",
         "aston-villa",
+        "coventry-city",
+        "hull-city",
+        "leeds-united",
+        "ipswich-town",
+        "man-united",
+        "man-city",
     ]
     s = slug.lower().strip("-")
     for km in sorted(known_multi, key=len, reverse=True):
