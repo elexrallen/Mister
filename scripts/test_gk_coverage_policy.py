@@ -80,6 +80,7 @@ def test_roman_not_gap() -> None:
         "lineup_prob": 0.8,
         "production_score": 66.2,
         "ff_mister_avg": 4.48,
+        "ff_mister_points": 148.0,
     }
     cov = assess_market_coverage(roman, diag, squad=squad)
     assert cov["fills_coverage_gap"] is False, cov
@@ -87,15 +88,23 @@ def test_roman_not_gap() -> None:
     assert cov["line_already_covered"] is True, cov
     assert cov["coverage_label"] == "Ya cubierto", cov
 
+    roman_flags = {
+        **roman,
+        "fills_structural": False,
+        "fills_coverage_gap": False,
+        "line_already_covered": True,
+        "is_upgrade": False,
+        "sample_thin": False,
+    }
     assert (
         is_key_market_candidate(
-            {**roman, "fills_structural": False},
+            roman_flags,
             is_primary_obj=False,
             is_objective=False,
             on_daily=True,
             gw_out=False,
             real_starter=True,
-            fills_gap=False,
+            fills_gap=True,  # incluso si el plan pasa gap por posición Alta
         )
         is False
     )

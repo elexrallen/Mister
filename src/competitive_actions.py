@@ -1395,9 +1395,12 @@ def is_key_market_candidate(
         return True
     if is_objective and (real_starter or bool(o.get("is_top_ff"))):
         return True
-    # GK sin hueco real (tándem/parche): no elevar a clave por producción
-    if (o.get("position") or "") == "GK" and not fills_gap and not o.get("fills_structural"):
-        return False
+    # GK ya cubierto / sin tándem ni parche real: no elevar a clave por producción
+    if (o.get("position") or "") == "GK":
+        if o.get("line_already_covered") and not o.get("is_upgrade"):
+            return False
+        if not o.get("fills_coverage_gap") and not o.get("fills_structural"):
+            return False
     if not fills_gap:
         return False
     if not real_starter and not o.get("is_top_ff"):

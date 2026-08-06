@@ -1273,11 +1273,15 @@ def build_action_plan(
 
         buy_now = False
         why_parts: list[str] = []
-        structural_gap = pos in need_pos_alta
-        real_starter_cand = lineup is not None and float(lineup) >= 70
         fills_cov = bool(o.get("fills_coverage_gap"))
         line_covered = bool(o.get("line_already_covered"))
         is_upgrade = bool(o.get("is_upgrade"))
+        fills_structural_o = bool(o.get("fills_structural"))
+        # Alta en la posición ≠ este jugador cubre el hueco (p. ej. gk_tandem)
+        structural_gap = pos in need_pos_alta
+        if pos == "GK":
+            structural_gap = fills_structural_o or fills_cov
+        real_starter_cand = lineup is not None and float(lineup) >= 70
         on_daily = bool(o.get("on_daily_market") or o.get("seller") == "market")
         ext_o = o.get("external") or {}
         gw_out = bool(o.get("gw_out") or ext_o.get("gw_out"))
@@ -1444,10 +1448,17 @@ def build_action_plan(
                 why_parts.append("objetivo del tablero (hueco estructural)")
         # Jugador clave en mercado (crack / top / ideal) → máxima prioridad
         if is_key and on_daily and bf in ("comfortable", "tight") and not gw_out:
-            buy_now = True
-            if not any("clave" in w for w in why_parts):
-                why_parts.insert(0, "jugador clave en mercado de hoy — prioridad")
+            # GK ya cubierto: no forzar buy_now solo por producción/clave
+            if not (pos == "GK" and line_covered and not is_upgrade):
+                buy_now = True
+                if not any("clave" in w for w in why_parts):
+                    why_parts.insert(0, "jugador clave en mercado de hoy — prioridad")
 
+        # Red de seguridad: 2.º GK caro con titular usable → nunca buy_now
+        if buy_now and pos == "GK" and line_covered and not is_upgrade and not fills_structural_o:
+            buy_now = False
+            if not any("ya cubierta" in w.lower() for w in why_parts):
+                why_parts.append("línea GK ya cubierta — no gastar caja en 2.º titular")
         # Parche barato: no romper reserva de buys del ideal (clave/primary sí pueden usarla)
         is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
             cost <= patch_cap
