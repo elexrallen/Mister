@@ -19,7 +19,6 @@ from scrapers.comuniate import enrich_profiles_for_names
 from scrapers.name_match import match_player
 from scrapers.ff_points import (
     THIN_APPS,
-    SEASON_GAMES,
     apps_to_lineup_prob,
     default_ff_seasons,
     fetch_ff_mister_points,
@@ -688,18 +687,8 @@ def enrich_players_with_ff_production(
 
         if lp is None:
             profile_pct = None
-            # Pedir ficha si el proxy apps/38 quedaría por debajo de titular (~70%)
-            # o la muestra es corta/media temporada (llegada a mitad de curso)
-            apps_proxy_guess = apps_to_lineup_prob(apps_for_proxy)
-            need_profile = (
-                ff_url
-                and apps_for_proxy is not None
-                and (
-                    float(apps_for_proxy) < float(SEASON_GAMES) * 0.75
-                    or (apps_proxy_guess is not None and apps_proxy_guess < 70)
-                )
-            )
-            if need_profile:
+            # Siempre preferir % Titular de ficha FF; apps/38 solo si FF no aporta valor usable
+            if ff_url:
                 prof = fetch_ff_profile_titular(ff_url)
                 if prof and prof.get("titular_pct") is not None:
                     try:
@@ -721,7 +710,7 @@ def enrich_players_with_ff_production(
                 lp = float(profile_pct)
                 lp_source = "ff_profile_titular"
             else:
-                proxy_lp = apps_proxy_guess
+                proxy_lp = apps_to_lineup_prob(apps_for_proxy)
                 # Suelo: minutos recientes altos ⇒ no tratar como banquillo eterno
                 fm = p.get("fotmob_stats") or {}
                 try:
