@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-07T08:37:52.294776+00:00",
+  "generated_at": "2026-08-07T09:38:28.059001+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,7 +10,7 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-07T08:36:38.141711+00:00",
+      "generated_at": "2026-08-07T09:38:27.764184+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
       "balance": 18979798,
       "rank": 4
