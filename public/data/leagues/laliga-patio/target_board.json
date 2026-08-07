@@ -1,29 +1,29 @@
 {
-  "generated_at": "2026-08-07T07:30:28.097971+00:00",
+  "generated_at": "2026-08-07T08:36:38.133732+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
-  "formation": "4-4-2",
+  "formation": "4-5-1",
   "formation_aspirational": "5-4-1",
   "formation_shape": {
     "GK": 1,
     "DF": 4,
-    "MF": 4,
-    "FW": 2
+    "MF": 5,
+    "FW": 1
   },
   "formation_trials": [
     {
-      "formation": "4-4-2",
-      "formation_raw": "4-4-2",
+      "formation": "4-5-1",
+      "formation_raw": "4-5-1",
       "shape": {
         "GK": 1,
         "DF": 4,
-        "MF": 4,
-        "FW": 2
+        "MF": 5,
+        "FW": 1
       },
-      "ep_sum_starters": 646.3,
-      "ep_sum": 794.1,
-      "cost_sum": 55473000.0,
+      "ep_sum_starters": 643.8,
+      "ep_sum": 791.6,
+      "cost_sum": 55621000.0,
       "starters": 11,
       "starters_target": 11,
       "complete": true
@@ -61,6 +61,22 @@
       "complete": true
     },
     {
+      "formation": "4-4-2",
+      "formation_raw": "4-4-2",
+      "shape": {
+        "GK": 1,
+        "DF": 4,
+        "MF": 4,
+        "FW": 2
+      },
+      "ep_sum_starters": 630.4,
+      "ep_sum": 769.2,
+      "cost_sum": 55889500.0,
+      "starters": 11,
+      "starters_target": 11,
+      "complete": true
+    },
+    {
       "formation": "5-3-2",
       "formation_raw": "5-3-2",
       "shape": {
@@ -69,8 +85,8 @@
         "MF": 3,
         "FW": 2
       },
-      "ep_sum_starters": 632.2,
-      "ep_sum": 780.0,
+      "ep_sum_starters": 626.3,
+      "ep_sum": 774.1,
       "cost_sum": 55436000.0,
       "starters": 11,
       "starters_target": 11,
@@ -85,8 +101,8 @@
         "MF": 4,
         "FW": 1
       },
-      "ep_sum_starters": 626.4,
-      "ep_sum": 774.2,
+      "ep_sum_starters": 620.5,
+      "ep_sum": 768.3,
       "cost_sum": 55878500.0,
       "starters": 11,
       "starters_target": 11,
@@ -101,25 +117,9 @@
         "MF": 3,
         "FW": 3
       },
-      "ep_sum_starters": 623.6,
-      "ep_sum": 771.4,
-      "cost_sum": 55383000.0,
-      "starters": 11,
-      "starters_target": 11,
-      "complete": true
-    },
-    {
-      "formation": "4-5-1",
-      "formation_raw": "4-5-1",
-      "shape": {
-        "GK": 1,
-        "DF": 4,
-        "MF": 5,
-        "FW": 1
-      },
-      "ep_sum_starters": 612.4,
-      "ep_sum": 751.8,
-      "cost_sum": 55798500.0,
+      "ep_sum_starters": 611.2,
+      "ep_sum": 759.0,
+      "cost_sum": 55009000.0,
       "starters": 11,
       "starters_target": 11,
       "complete": true
@@ -136,7 +136,7 @@
         "FW": 1
       },
       "ep_sum_starters": 631.4,
-      "ep_sum": 782.0,
+      "ep_sum": 754.4,
       "cost_sum": 55519830.0,
       "starters": 11,
       "starters_target": 11,
@@ -152,7 +152,7 @@
         "FW": 1
       },
       "ep_sum_starters": 613.1,
-      "ep_sum": 772.1,
+      "ep_sum": 744.5,
       "cost_sum": 54384830.0,
       "starters": 11,
       "starters_target": 11,
@@ -168,7 +168,7 @@
         "FW": 2
       },
       "ep_sum_starters": 613.1,
-      "ep_sum": 772.1,
+      "ep_sum": 744.5,
       "cost_sum": 55826330.0,
       "starters": 11,
       "starters_target": 11,
@@ -184,7 +184,7 @@
         "FW": 2
       },
       "ep_sum_starters": 613.1,
-      "ep_sum": 763.1,
+      "ep_sum": 735.5,
       "cost_sum": 55743330.0,
       "starters": 11,
       "starters_target": 11,
@@ -200,7 +200,7 @@
         "FW": 3
       },
       "ep_sum_starters": 606.5,
-      "ep_sum": 757.1,
+      "ep_sum": 729.5,
       "cost_sum": 55611330.0,
       "starters": 11,
       "starters_target": 11,
@@ -216,7 +216,7 @@
         "FW": 3
       },
       "ep_sum_starters": 599.8,
-      "ep_sum": 758.8,
+      "ep_sum": 731.2,
       "cost_sum": 54899830.0,
       "starters": 11,
       "starters_target": 11,
@@ -232,7 +232,7 @@
         "FW": 2
       },
       "ep_sum_starters": 588.7,
-      "ep_sum": 769.6,
+      "ep_sum": 742.0,
       "cost_sum": 55218330.0,
       "starters": 11,
       "starters_target": 11,
@@ -252,7 +252,7 @@
     "budget_cap": 55956054.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
-  "ideal_buy_cost": 49554000.0,
+  "ideal_buy_cost": 49702000.0,
   "perfect_squad": [
     {
       "slot": "GK1",
@@ -306,25 +306,25 @@
       "slot": "DF1",
       "position": "DF",
       "role": "starter",
-      "player_id": "27333",
-      "name": "Eric García",
-      "team": "Barcelona",
-      "team_id": "3",
-      "ep_score": 90.7,
-      "price": 16881000.0,
+      "player_id": "1713",
+      "name": "Florian Lejeune",
+      "team": "Rayo",
+      "team_id": "14",
+      "ep_score": 77.6,
+      "price": 11999000.0,
       "status": "buy",
-      "delta_5d": -0.0171,
+      "delta_5d": -0.0265,
       "value_note": "stable",
-      "value_ratio": 5.37,
-      "lineup_prob": 89.0,
-      "ff_mister_points": 212.0,
-      "ff_mister_avg": 6.24,
-      "hist_ok": true,
+      "value_ratio": 6.47,
+      "lineup_prob": 90.0,
+      "ff_mister_points": 173.0,
+      "ff_mister_avg": 4.81,
+      "hist_ok": false,
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 91 · 16,881,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-06T09:54:38.307433+00:00"
+      "why": "EP 78 · 11,999,000 € · buy · starter · Δ -3%",
+      "added_at": "2026-08-07T08:36:37.565903+00:00"
     },
     {
       "slot": "DF2",
@@ -388,7 +388,7 @@
       "delta_5d": 0.2093,
       "value_note": "rising",
       "value_ratio": 35.12,
-      "lineup_prob": 85.0,
+      "lineup_prob": 70.0,
       "ff_mister_points": 101.0,
       "ff_mister_avg": 3.61,
       "hist_ok": false,
@@ -426,6 +426,30 @@
       "slot": "MF1",
       "position": "MF",
       "role": "starter",
+      "player_id": "20141",
+      "name": "Germán Valera",
+      "team": "Elche",
+      "team_id": "23",
+      "ep_score": 74.4,
+      "price": 11803000.0,
+      "status": "buy",
+      "delta_5d": -0.0251,
+      "value_note": "stable",
+      "value_ratio": 6.3,
+      "lineup_prob": 90.0,
+      "ff_mister_points": 190.0,
+      "ff_mister_avg": 5.28,
+      "hist_ok": false,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 74 · 11,803,000 € · buy · starter · Δ -3%",
+      "added_at": "2026-08-07T08:36:37.573880+00:00"
+    },
+    {
+      "slot": "MF2",
+      "position": "MF",
+      "role": "starter",
       "player_id": "14911",
       "name": "Álvaro García",
       "team": "Rayo",
@@ -447,7 +471,7 @@
       "added_at": "2026-08-04T06:58:39.581713+00:00"
     },
     {
-      "slot": "MF2",
+      "slot": "MF3",
       "position": "MF",
       "role": "starter",
       "player_id": "65674",
@@ -471,7 +495,7 @@
       "added_at": "2026-08-06T07:09:09.523483+00:00"
     },
     {
-      "slot": "MF3",
+      "slot": "MF4",
       "position": "MF",
       "role": "starter",
       "player_id": "56628",
@@ -495,7 +519,7 @@
       "added_at": "2026-08-03T07:44:46.292901+00:00"
     },
     {
-      "slot": "MF4",
+      "slot": "MF5",
       "position": "MF",
       "role": "starter",
       "player_id": "56502",
@@ -519,7 +543,7 @@
       "added_at": "2026-08-04T06:58:39.577630+00:00"
     },
     {
-      "slot": "MF5",
+      "slot": "MF6",
       "position": "MF",
       "role": "bench",
       "player_id": "24778",
@@ -546,30 +570,6 @@
       "slot": "FW1",
       "position": "FW",
       "role": "starter",
-      "player_id": "11697",
-      "name": "Lucas Boyé",
-      "team": "Alavés",
-      "team_id": "48",
-      "ep_score": 63.8,
-      "price": 6773000.0,
-      "status": "buy",
-      "delta_5d": 0.073,
-      "value_note": "rising",
-      "value_ratio": 9.42,
-      "lineup_prob": 80.0,
-      "ff_mister_points": 144.0,
-      "ff_mister_avg": 4.97,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 64 · 6,773,000 € · buy · starter · Δ 7%",
-      "added_at": "2026-08-07T07:03:21.321881+00:00"
-    },
-    {
-      "slot": "FW2",
-      "position": "FW",
-      "role": "starter",
       "player_id": "56924",
       "name": "E. Eyong",
       "team": "Levante",
@@ -591,7 +591,7 @@
       "added_at": "2026-08-03T07:44:46.293855+00:00"
     },
     {
-      "slot": "FW3",
+      "slot": "FW2",
       "position": "FW",
       "role": "bench",
       "player_id": "6065",
@@ -638,7 +638,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 89 · 27,267,330 € · buy · starter · tándem mismo club",
-      "added_at": "2026-08-07T07:30:28.039677+00:00"
+      "added_at": "2026-08-07T08:36:38.081325+00:00"
     },
     {
       "slot": "GK2",
@@ -648,21 +648,21 @@
       "name": "Wojciech Szczęsny",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 42.0,
+      "ep_score": 14.4,
       "price": 547000.0,
       "status": "buy",
       "delta_5d": 0.1325,
       "value_note": "rising",
-      "value_ratio": 76.78,
-      "lineup_prob": 100.0,
+      "value_ratio": 26.33,
+      "lineup_prob": 10.0,
       "ff_mister_points": 39.0,
       "ff_mister_avg": 4.88,
       "hist_ok": false,
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": true,
-      "why": "EP 42 · 547,000 € · buy · bench · tándem mismo club · Δ 13%",
-      "added_at": "2026-08-07T07:30:28.039688+00:00"
+      "why": "EP 14 · 547,000 € · buy · bench · tándem mismo club · Δ 13%",
+      "added_at": "2026-08-07T08:36:38.081334+00:00"
     },
     {
       "slot": "DF1",
@@ -686,7 +686,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 77 · 8,400,000 € · buy · starter · Δ 5%",
-      "added_at": "2026-08-07T07:30:28.048154+00:00"
+      "added_at": "2026-08-07T08:36:38.088917+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 67 · 1,229,000 € · buy · starter · Δ 12%",
-      "added_at": "2026-08-07T07:30:28.041663+00:00"
+      "added_at": "2026-08-07T07:30:27.399789+00:00"
     },
     {
       "slot": "DF3",
@@ -782,7 +782,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 60 · 3,671,000 € · buy · starter · Δ 16%",
-      "added_at": "2026-08-07T07:30:28.064649+00:00"
+      "added_at": "2026-08-07T08:36:38.103127+00:00"
     },
     {
       "slot": "DF6",
@@ -798,7 +798,7 @@
       "delta_5d": 0.2093,
       "value_note": "rising",
       "value_ratio": 35.12,
-      "lineup_prob": 85.0,
+      "lineup_prob": 70.0,
       "ff_mister_points": 101.0,
       "ff_mister_avg": 3.61,
       "hist_ok": false,
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 34 · 1,400,000 € · buy · bench · Δ 14%",
-      "added_at": "2026-08-07T07:30:28.094877+00:00"
+      "added_at": "2026-08-07T08:36:38.130747+00:00"
     },
     {
       "slot": "FW1",
@@ -1017,7 +1017,7 @@
         "delta_5d": 0.2093,
         "value_note": "rising",
         "value_ratio": 35.12,
-        "lineup_prob": 85.0,
+        "lineup_prob": 70.0,
         "ff_mister_points": 101.0,
         "ff_mister_avg": 3.61,
         "hist_ok": false,
@@ -1028,7 +1028,7 @@
         "added_at": "2026-08-07T07:03:21.289681+00:00"
       },
       {
-        "slot": "MF3",
+        "slot": "MF4",
         "position": "MF",
         "role": "starter",
         "player_id": "56628",
@@ -1052,7 +1052,7 @@
         "added_at": "2026-08-03T07:44:46.292901+00:00"
       },
       {
-        "slot": "FW2",
+        "slot": "FW1",
         "position": "FW",
         "role": "starter",
         "player_id": "56924",
@@ -1129,25 +1129,25 @@
         "slot": "DF1",
         "position": "DF",
         "role": "starter",
-        "player_id": "27333",
-        "name": "Eric García",
-        "team": "Barcelona",
-        "team_id": "3",
-        "ep_score": 90.7,
-        "price": 16881000.0,
+        "player_id": "1713",
+        "name": "Florian Lejeune",
+        "team": "Rayo",
+        "team_id": "14",
+        "ep_score": 77.6,
+        "price": 11999000.0,
         "status": "buy",
-        "delta_5d": -0.0171,
+        "delta_5d": -0.0265,
         "value_note": "stable",
-        "value_ratio": 5.37,
-        "lineup_prob": 89.0,
-        "ff_mister_points": 212.0,
-        "ff_mister_avg": 6.24,
-        "hist_ok": true,
+        "value_ratio": 6.47,
+        "lineup_prob": 90.0,
+        "ff_mister_points": 173.0,
+        "ff_mister_avg": 4.81,
+        "hist_ok": false,
         "on_daily_market": false,
         "owned": false,
         "gk_tandem": false,
-        "why": "EP 91 · 16,881,000 € · buy · starter · Δ -2%",
-        "added_at": "2026-08-06T09:54:38.307433+00:00"
+        "why": "EP 78 · 11,999,000 € · buy · starter · Δ -3%",
+        "added_at": "2026-08-07T08:36:37.565903+00:00"
       },
       {
         "slot": "DF2",
@@ -1201,6 +1201,30 @@
         "slot": "MF1",
         "position": "MF",
         "role": "starter",
+        "player_id": "20141",
+        "name": "Germán Valera",
+        "team": "Elche",
+        "team_id": "23",
+        "ep_score": 74.4,
+        "price": 11803000.0,
+        "status": "buy",
+        "delta_5d": -0.0251,
+        "value_note": "stable",
+        "value_ratio": 6.3,
+        "lineup_prob": 90.0,
+        "ff_mister_points": 190.0,
+        "ff_mister_avg": 5.28,
+        "hist_ok": false,
+        "on_daily_market": false,
+        "owned": false,
+        "gk_tandem": false,
+        "why": "EP 74 · 11,803,000 € · buy · starter · Δ -3%",
+        "added_at": "2026-08-07T08:36:37.573880+00:00"
+      },
+      {
+        "slot": "MF2",
+        "position": "MF",
+        "role": "starter",
         "player_id": "14911",
         "name": "Álvaro García",
         "team": "Rayo",
@@ -1222,7 +1246,7 @@
         "added_at": "2026-08-04T06:58:39.581713+00:00"
       },
       {
-        "slot": "MF2",
+        "slot": "MF3",
         "position": "MF",
         "role": "starter",
         "player_id": "65674",
@@ -1246,7 +1270,7 @@
         "added_at": "2026-08-06T07:09:09.523483+00:00"
       },
       {
-        "slot": "MF4",
+        "slot": "MF5",
         "position": "MF",
         "role": "starter",
         "player_id": "56502",
@@ -1270,7 +1294,7 @@
         "added_at": "2026-08-04T06:58:39.577630+00:00"
       },
       {
-        "slot": "MF5",
+        "slot": "MF6",
         "position": "MF",
         "role": "bench",
         "player_id": "24778",
@@ -1294,31 +1318,7 @@
         "added_at": "2026-08-07T07:03:21.341100+00:00"
       },
       {
-        "slot": "FW1",
-        "position": "FW",
-        "role": "starter",
-        "player_id": "11697",
-        "name": "Lucas Boyé",
-        "team": "Alavés",
-        "team_id": "48",
-        "ep_score": 63.8,
-        "price": 6773000.0,
-        "status": "buy",
-        "delta_5d": 0.073,
-        "value_note": "rising",
-        "value_ratio": 9.42,
-        "lineup_prob": 80.0,
-        "ff_mister_points": 144.0,
-        "ff_mister_avg": 4.97,
-        "hist_ok": false,
-        "on_daily_market": false,
-        "owned": false,
-        "gk_tandem": false,
-        "why": "EP 64 · 6,773,000 € · buy · starter · Δ 7%",
-        "added_at": "2026-08-07T07:03:21.321881+00:00"
-      },
-      {
-        "slot": "FW3",
+        "slot": "FW2",
         "position": "FW",
         "role": "bench",
         "player_id": "6065",
@@ -1360,6 +1360,22 @@
         "cash_lag_hours": 48
       },
       {
+        "player_id": "65090",
+        "name": "F. Ugrinic",
+        "position": "MF",
+        "ep_score": 26.4,
+        "price": 705000.0,
+        "delta_5d": 0.2072,
+        "value_note": "rising",
+        "why": "Fuera del ideal · EP 26 · lista a ~705,000 € (VM); caja usable en ~48h · Δ 21%",
+        "list_at": 705000.0,
+        "expected_proceeds": 705000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
         "player_id": "70917",
         "name": "A. Sangante",
         "position": "DF",
@@ -1386,22 +1402,6 @@
         "why": "Fuera del ideal · EP 32 · lista a ~2,634,000 € (VM); caja usable en ~48h · Δ 18%",
         "list_at": 2634000.0,
         "expected_proceeds": 2634000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
-        "player_id": "65179",
-        "name": "A. Castrín",
-        "position": "DF",
-        "ep_score": 37.2,
-        "price": 1404000.0,
-        "delta_5d": 0.0977,
-        "value_note": "rising",
-        "why": "Fuera del ideal · EP 37 · lista a ~1,404,000 € (VM); caja usable en ~48h · Δ 10%",
-        "list_at": 1404000.0,
-        "expected_proceeds": 1404000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24,
@@ -1536,16 +1536,16 @@
         "cash_lag_hours": 48
       },
       {
-        "player_id": "65090",
-        "name": "F. Ugrinic",
-        "position": "MF",
-        "ep_score": 42.0,
-        "price": 705000.0,
-        "delta_5d": 0.2072,
+        "player_id": "65179",
+        "name": "A. Castrín",
+        "position": "DF",
+        "ep_score": 52.6,
+        "price": 1404000.0,
+        "delta_5d": 0.0977,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~705,000 € (VM); caja usable en ~48h · Δ 21%",
-        "list_at": 705000.0,
-        "expected_proceeds": 705000.0,
+        "why": "Fuera del ideal · EP 53 · lista a ~1,404,000 € (VM); caja usable en ~48h · Δ 10%",
+        "list_at": 1404000.0,
+        "expected_proceeds": 1404000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24,
@@ -1586,21 +1586,21 @@
     ]
   },
   "totals": {
-    "ep_sum": 794.1,
-    "ep_sum_starters": 646.3,
-    "cost_sum": 55473000.0,
-    "net_buys": 49554000.0,
+    "ep_sum": 791.6,
+    "ep_sum_starters": 643.8,
+    "cost_sum": 55621000.0,
+    "net_buys": 49702000.0,
     "slots_filled": 15,
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
     "funded_ideal": true,
-    "formation": "4-4-2",
-    "ideal_buy_cost": 49554000.0,
+    "formation": "4-5-1",
+    "ideal_buy_cost": 49702000.0,
     "daily_primary_count": 0
   },
   "totals_aspirational": {
-    "ep_sum": 782.0,
+    "ep_sum": 754.4,
     "ep_sum_starters": 631.4,
     "cost_sum": 55519830.0,
     "net_buys": 49600830.0,
@@ -1629,7 +1629,7 @@
       "name": "Wojciech Szczęsny",
       "position": "GK",
       "price": 547000.0,
-      "ep_score": 42.0,
+      "ep_score": 14.4,
       "role": "bench",
       "status": "buy",
       "need": "perfect_squad_aspirational"
@@ -1668,28 +1668,53 @@
   "slots": [],
   "dropped": [
     {
-      "slot": "DF4",
+      "slot": "DF1",
       "position": "DF",
       "role": "starter",
-      "player_id": "64200",
-      "name": "Jeremy Toljan",
-      "team": "Levante",
-      "team_id": "12",
-      "ep_score": 42.0,
-      "price": 1260000.0,
+      "player_id": "27333",
+      "name": "Eric García",
+      "team": "Barcelona",
+      "team_id": "3",
+      "ep_score": 90.7,
+      "price": 16881000.0,
       "status": "dropped",
-      "delta_5d": 0.1943,
+      "delta_5d": -0.0171,
+      "value_note": "stable",
+      "value_ratio": 5.37,
+      "lineup_prob": 89.0,
+      "ff_mister_points": 212.0,
+      "ff_mister_avg": 6.24,
+      "hist_ok": true,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 91 · 16,881,000 € · buy · starter · Δ -2%",
+      "added_at": "2026-08-06T09:54:38.307433+00:00",
+      "miss_days": 1
+    },
+    {
+      "slot": "FW1",
+      "position": "FW",
+      "role": "starter",
+      "player_id": "11697",
+      "name": "Lucas Boyé",
+      "team": "Alavés",
+      "team_id": "48",
+      "ep_score": 63.8,
+      "price": 6773000.0,
+      "status": "dropped",
+      "delta_5d": 0.073,
       "value_note": "rising",
-      "value_ratio": 33.33,
+      "value_ratio": 9.42,
       "lineup_prob": 80.0,
-      "ff_mister_points": 113.0,
-      "ff_mister_avg": 3.05,
+      "ff_mister_points": 144.0,
+      "ff_mister_avg": 4.97,
       "hist_ok": false,
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 42 · 1,260,000 € · buy · starter · Δ 19%",
-      "added_at": "2026-08-07T07:03:21.291308+00:00",
+      "why": "EP 64 · 6,773,000 € · buy · starter · Δ 7%",
+      "added_at": "2026-08-07T07:03:21.321881+00:00",
       "miss_days": 1
     }
   ],
@@ -1710,11 +1735,11 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0,
-    "ep_sum": 794.1,
-    "ep_sum_starters": 646.3,
+    "ep_sum": 791.6,
+    "ep_sum_starters": 643.8,
     "mode": "operable",
-    "formation": "4-4-2",
-    "xi_rule": "formación 4-4-2 · titulares ≥70% + hist · oportunidad EP/€",
+    "formation": "4-5-1",
+    "xi_rule": "formación 4-5-1 · titulares ≥70% + hist · oportunidad EP/€",
     "bench_min_points": 100
   },
   "summary_aspirational": {
@@ -1724,7 +1749,7 @@
     "incomplete": false,
     "keep": 4,
     "buy": 11,
-    "ep_sum": 782.0,
+    "ep_sum": 754.4,
     "ep_sum_starters": 631.4,
     "mode": "aspirational",
     "formation": "5-4-1",

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-07T07:32:02.600151+00:00",
+  "generated_at": "2026-08-07T08:37:52.264941+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -239,11 +239,11 @@
       "complete": true
     }
   ],
-  "balance": 15402000.0,
-  "squad_value": 39737000.0,
+  "balance": 12621000.0,
+  "squad_value": 42518000.0,
   "wealth": {
-    "balance": 15402000.0,
-    "squad_value": 39737000.0,
+    "balance": 12621000.0,
+    "squad_value": 42518000.0,
     "total": 55139000.0,
     "liquidity_floor": 4411120.0,
     "budget_cap": 50727880.0
@@ -252,7 +252,7 @@
     "budget_cap": 50727880.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
-  "ideal_buy_cost": 14072000.0,
+  "ideal_buy_cost": 12678000.0,
   "perfect_squad": [
     {
       "slot": "GK1",
@@ -384,7 +384,7 @@
       "team_id": "51",
       "ep_score": 69.4,
       "price": 1394000.0,
-      "status": "buy",
+      "status": "keep",
       "delta_5d": null,
       "value_note": "stable",
       "value_ratio": 49.78,
@@ -392,10 +392,10 @@
       "ff_mister_points": 234.0,
       "ff_mister_avg": 9.0,
       "hist_ok": false,
-      "on_daily_market": true,
-      "owned": false,
+      "on_daily_market": false,
+      "owned": true,
       "gk_tandem": false,
-      "why": "EP 69 · 1,394,000 € · buy · starter",
+      "why": "EP 69 · 1,394,000 € · keep · starter",
       "added_at": "2026-08-07T07:20:12.946996+00:00"
     },
     {
@@ -770,7 +770,7 @@
       "team_id": "51",
       "ep_score": 69.4,
       "price": 1394000.0,
-      "status": "buy",
+      "status": "keep",
       "delta_5d": null,
       "value_note": "stable",
       "value_ratio": 49.78,
@@ -778,10 +778,10 @@
       "ff_mister_points": 234.0,
       "ff_mister_avg": 9.0,
       "hist_ok": false,
-      "on_daily_market": true,
-      "owned": false,
+      "on_daily_market": false,
+      "owned": true,
       "gk_tandem": false,
-      "why": "EP 69 · 1,394,000 € · buy · starter",
+      "why": "EP 69 · 1,394,000 € · keep · starter",
       "added_at": "2026-08-07T07:20:12.946996+00:00"
     },
     {
@@ -1028,6 +1028,30 @@
         "added_at": "2026-08-04T07:05:52.841624+00:00"
       },
       {
+        "slot": "DF4",
+        "position": "DF",
+        "role": "starter",
+        "player_id": "59354",
+        "name": "R. Calafiori",
+        "team": "Arsenal",
+        "team_id": "51",
+        "ep_score": 69.4,
+        "price": 1394000.0,
+        "status": "keep",
+        "delta_5d": null,
+        "value_note": "stable",
+        "value_ratio": 49.78,
+        "lineup_prob": 85.0,
+        "ff_mister_points": 234.0,
+        "ff_mister_avg": 9.0,
+        "hist_ok": false,
+        "on_daily_market": false,
+        "owned": true,
+        "gk_tandem": false,
+        "why": "EP 69 · 1,394,000 € · keep · starter",
+        "added_at": "2026-08-07T07:20:12.946996+00:00"
+      },
+      {
         "slot": "DF5",
         "position": "DF",
         "role": "starter",
@@ -1246,30 +1270,6 @@
         "added_at": "2026-08-03T09:07:27.404442+00:00"
       },
       {
-        "slot": "DF4",
-        "position": "DF",
-        "role": "starter",
-        "player_id": "59354",
-        "name": "R. Calafiori",
-        "team": "Arsenal",
-        "team_id": "51",
-        "ep_score": 69.4,
-        "price": 1394000.0,
-        "status": "buy",
-        "delta_5d": null,
-        "value_note": "stable",
-        "value_ratio": 49.78,
-        "lineup_prob": 85.0,
-        "ff_mister_points": 234.0,
-        "ff_mister_avg": 9.0,
-        "hist_ok": false,
-        "on_daily_market": true,
-        "owned": false,
-        "gk_tandem": false,
-        "why": "EP 69 · 1,394,000 € · buy · starter",
-        "added_at": "2026-08-07T07:20:12.946996+00:00"
-      },
-      {
         "slot": "DF6",
         "position": "DF",
         "role": "bench",
@@ -1408,6 +1408,22 @@
         "cash_lag_hours": 48
       },
       {
+        "player_id": "52004",
+        "name": "K. Schade",
+        "position": "FW",
+        "ep_score": 42.0,
+        "price": 1387000.0,
+        "delta_5d": null,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 42 · lista a ~1,387,000 € (VM); caja usable en ~48h",
+        "list_at": 1387000.0,
+        "expected_proceeds": 1387000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
         "player_id": "18445",
         "name": "I. Maatsen",
         "position": "DF",
@@ -1445,75 +1461,30 @@
     "ep_sum": 946.3,
     "ep_sum_starters": 784.5,
     "cost_sum": 43231000.0,
-    "net_buys": 14072000.0,
+    "net_buys": 12678000.0,
     "slots_filled": 15,
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
     "funded_ideal": true,
     "formation": "5-4-1",
-    "ideal_buy_cost": 14072000.0,
-    "daily_primary_count": 6
+    "ideal_buy_cost": 12678000.0,
+    "daily_primary_count": 2
   },
   "totals_aspirational": {
     "ep_sum": 946.3,
     "ep_sum_starters": 789.2,
     "cost_sum": 43231000.0,
-    "net_buys": 14072000.0,
+    "net_buys": 12678000.0,
     "slots_filled": 15,
     "slots_target": 15,
     "funded": null,
     "formation": "5-4-1"
   },
-  "daily_patches": [
-    {
-      "need": "depth_df",
-      "position": "DF",
-      "priority": "Media",
-      "player_id": "59354",
-      "name": "R. Calafiori",
-      "price": 1394000.0,
-      "ep_score": 69.4,
-      "max_spend": 1903800.0,
-      "why": "Parche DF hoy · EP 69 · 1,394,000 € (reserva ideal intacta: 12,692,000 €)"
-    },
-    {
-      "need": "depth_fw",
-      "position": "FW",
-      "priority": "Media",
-      "player_id": "52004",
-      "name": "K. Schade",
-      "price": 1387000.0,
-      "ep_score": 42.0,
-      "max_spend": 1903800.0,
-      "why": "Parche FW hoy · EP 42 · 1,387,000 € (reserva ideal intacta: 12,692,000 €)"
-    }
-  ],
-  "cash_reserved": 12692000.0,
-  "residual_after_reserve": 2710000.0,
+  "daily_patches": [],
+  "cash_reserved": 4077000.0,
+  "residual_after_reserve": 8544000.0,
   "primary_targets": [
-    {
-      "player_id": "59354",
-      "name": "R. Calafiori",
-      "need": "perfect_squad_daily",
-      "position": "DF",
-      "price": 1394000.0,
-      "ep_score": 69.4,
-      "status": "on_daily",
-      "role": "starter",
-      "on_daily_market": true
-    },
-    {
-      "player_id": "54889",
-      "name": "J. Timber",
-      "need": "perfect_squad_daily",
-      "position": "DF",
-      "price": 2729000.0,
-      "ep_score": 76.1,
-      "status": "affordable",
-      "role": "starter",
-      "on_daily_market": false
-    },
     {
       "player_id": "6315",
       "name": "M. Sels",
@@ -1523,28 +1494,6 @@
       "ep_score": 73.7,
       "status": "affordable",
       "role": "starter",
-      "on_daily_market": false
-    },
-    {
-      "player_id": "65116",
-      "name": "O. Alderete",
-      "need": "perfect_squad_daily",
-      "position": "DF",
-      "price": 3264000.0,
-      "ep_score": 73.9,
-      "status": "affordable",
-      "role": "bench",
-      "on_daily_market": false
-    },
-    {
-      "player_id": "39833",
-      "name": "A. Garnacho",
-      "need": "perfect_squad_daily",
-      "position": "FW",
-      "price": 1228000.0,
-      "ep_score": 42.0,
-      "status": "affordable",
-      "role": "bench",
       "on_daily_market": false
     },
     {
@@ -1560,77 +1509,10 @@
     }
   ],
   "aspirational_targets": [],
-  "slots": [
-    {
-      "need": "depth_df",
-      "position": "DF",
-      "priority": "Media",
-      "reason": "Parche DF hoy · EP 69 · 1,394,000 € (reserva ideal intacta: 12,692,000 €)",
-      "primary_target": {
-        "player_id": "59354",
-        "name": "R. Calafiori",
-        "price": 1394000.0,
-        "ep_score": 69.4,
-        "status": "on_daily",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche DF hoy · EP 69 · 1,394,000 € (reserva ideal intacta: 12,692,000 €)"
-      },
-      "targets": [],
-      "patch_policy": {
-        "allow": true,
-        "max_spend": 1903800.0,
-        "note": "Parche diario sin romper reserva de objetivos de hoy"
-      },
-      "budget_envelope": {
-        "cash_reserve_for_slot": 0,
-        "min_price": null,
-        "max_price": 1903800.0
-      }
-    },
-    {
-      "need": "depth_fw",
-      "position": "FW",
-      "priority": "Media",
-      "reason": "Parche FW hoy · EP 42 · 1,387,000 € (reserva ideal intacta: 12,692,000 €)",
-      "primary_target": {
-        "player_id": "52004",
-        "name": "K. Schade",
-        "price": 1387000.0,
-        "ep_score": 42.0,
-        "status": "on_daily",
-        "tier": "realistic",
-        "afford_now": true,
-        "why": "Parche FW hoy · EP 42 · 1,387,000 € (reserva ideal intacta: 12,692,000 €)"
-      },
-      "targets": [],
-      "patch_policy": {
-        "allow": true,
-        "max_spend": 1903800.0,
-        "note": "Parche diario sin romper reserva de objetivos de hoy"
-      },
-      "budget_envelope": {
-        "cash_reserve_for_slot": 0,
-        "min_price": null,
-        "max_price": 1903800.0
-      }
-    }
-  ],
-  "dropped": [
-    {
-      "player_id": "52004",
-      "name": "K. Schade",
-      "price": 1387000.0,
-      "ep_score": 42.0,
-      "status": "dropped",
-      "tier": "realistic",
-      "afford_now": true,
-      "why": "Parche FW hoy · EP 42 · 1,387,000 € (reserva ideal intacta: 12,692,000 €)",
-      "miss_days": 1
-    }
-  ],
+  "slots": [],
+  "dropped": [],
   "patch_policy": {
-    "allow": true,
+    "allow": false,
     "max_spend": 2500000.0
   },
   "summary": {
@@ -1640,12 +1522,12 @@
     "starters_target": 11,
     "bench_target": 4,
     "incomplete": false,
-    "keep": 8,
-    "buy": 7,
-    "sell": 6,
-    "patches": 2,
-    "on_daily": 2,
-    "cash_reserved": 12692000.0,
+    "keep": 9,
+    "buy": 6,
+    "sell": 7,
+    "patches": 0,
+    "on_daily": 1,
+    "cash_reserved": 4077000.0,
     "ep_sum": 946.3,
     "ep_sum_starters": 784.5,
     "mode": "operable",
@@ -1658,8 +1540,8 @@
     "starters": 11,
     "bench": 4,
     "incomplete": false,
-    "keep": 8,
-    "buy": 7,
+    "keep": 9,
+    "buy": 6,
     "ep_sum": 946.3,
     "ep_sum_starters": 789.2,
     "mode": "aspirational",
