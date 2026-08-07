@@ -1264,7 +1264,9 @@ def wait_risk(
 def priority_score_buy(item: dict[str, Any]) -> int:
     score = 0
     overstock_blocks = bool(item.get("overstocked")) and not (
-        item.get("fills_coverage_gap") or item.get("fills_structural")
+        item.get("fills_coverage_gap")
+        or item.get("fills_structural")
+        or item.get("upgrade_worth_buy")
     )
     # Jugador clave en mercado del día: por encima de cualquier parche
     if not overstock_blocks and item.get("is_key_market") and _is_daily_market_item(item):
@@ -1287,6 +1289,8 @@ def priority_score_buy(item: dict[str, Any]) -> int:
         score -= 40
     elif item.get("is_upgrade"):
         score += 15
+        if item.get("upgrade_worth_buy"):
+            score += 20
     risk = item.get("wait_risk") or item.get("risk") or "low"
     score += {"high": 25, "medium": 15, "low": 5}.get(str(risk), 5)
     bf = item.get("budget_fit") or "blocked"
@@ -1396,16 +1400,20 @@ def is_key_market_candidate(
     """
     if not on_daily or gw_out:
         return False
-    # Línea sobrada sin gap real: no elevar a clave (ni primary/board)
+    # Línea sobrada sin gap real: no elevar a clave (salvo upgrade que renta)
     if (
         o.get("overstocked")
         and not o.get("fills_coverage_gap")
         and not o.get("fills_structural")
+        and not o.get("upgrade_worth_buy")
     ):
         return False
     if is_primary_obj:
         return True
     if is_objective and (real_starter or bool(o.get("is_top_ff"))):
+        return True
+    # Upgrade rentable en línea sobrada: clave si es titular/top
+    if o.get("upgrade_worth_buy") and (real_starter or bool(o.get("is_top_ff"))):
         return True
     # GK ya cubierto / sin tándem ni parche real: no elevar a clave por producción
     if (o.get("position") or "") == "GK":
@@ -2643,9 +2651,11 @@ def _is_weak_intent(item: dict[str, Any], primary_ids: set[str]) -> bool:
 
 
 def _intent_eligible(item: dict[str, Any]) -> bool:
-    """Excluye líneas sobradas sin gap real del pool de intents/primary."""
+    """Excluye líneas sobradas sin gap/upgrade rentable del pool de intents/primary."""
     if item.get("overstocked") and not (
-        item.get("fills_coverage_gap") or item.get("fills_structural")
+        item.get("fills_coverage_gap")
+        or item.get("fills_structural")
+        or item.get("upgrade_worth_buy")
     ):
         return False
     return True
@@ -2883,18 +2893,31 @@ def finalize_action_plan(
     squad_n = int(squad_size) if squad_size is not None else 0
     free_slots = max(0, max_squad - squad_n)
     # Ideal aspiracional: solo scout / watching — no reserva caja ni fund_target
-    # Filtrar primary_ids de posiciones sobradas (adaptativo por snapshot del plan)
+    # Filtrar primary_ids de posiciones sobradas (salvo upgrade que renta)
     overstock_pos = {
         i.get("position")
         for i in plan
         if i.get("position")
         and i.get("overstocked")
-        and not (i.get("fills_coverage_gap") or i.get("fills_structural"))
+        and not (
+            i.get("fills_coverage_gap")
+            or i.get("fills_structural")
+            or i.get("upgrade_worth_buy")
+        )
+    }
+    worth_upgrade_ids = {
+        str(i.get("player_id"))
+        for i in plan
+        if i.get("player_id") and i.get("upgrade_worth_buy")
     }
     primary_ids = {
         str(t.get("player_id"))
         for t in (target_board or {}).get("primary_targets") or []
-        if t.get("player_id") and t.get("position") not in overstock_pos
+        if t.get("player_id")
+        and (
+            t.get("position") not in overstock_pos
+            or str(t.get("player_id")) in worth_upgrade_ids
+        )
     }
     cash_reserved_targets = float((funding_info or {}).get("cash_reserved") or 0)
     # Reserva de caja: no anclar millions a líneas overstocked del board

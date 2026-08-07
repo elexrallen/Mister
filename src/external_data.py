@@ -154,17 +154,31 @@ def _merge_source_records(
             existing["availability"] = r["availability"]
 
     for r in jp:
-        existing = ensure(r)
+        # JP = once de jornada; no alimentar lineup_prob habitual (STARTER_PROB=85)
+        r_gw = dict(r)
+        r_gw["lineup_prob"] = None
+        existing = ensure(r_gw)
         if not existing:
             continue
         touch_meta(existing, r)
         if AVAIL_PRIO.get(r.get("availability"), 0) > AVAIL_PRIO.get(existing.get("availability"), 0):
             existing["availability"] = r["availability"]
-        if not existing.get("_ff_prob") and r.get("lineup_prob") is not None:
-            if existing.get("lineup_prob") is None:
-                existing["lineup_prob"] = r["lineup_prob"]
-            elif existing.get("availability") == "available":
-                existing["lineup_prob"] = max(existing.get("lineup_prob") or 0, r["lineup_prob"])
+        pct = r.get("lineup_prob")
+        try:
+            pct_i = int(pct) if pct is not None else None
+        except (TypeError, ValueError):
+            pct_i = None
+        if pct_i is not None:
+            # No pisar gw_* si matchday FF ya aportó % más fresco
+            if existing.get("gw_lineup_prob") is None:
+                existing["gw_lineup_prob"] = pct_i
+                role = "starter" if pct_i >= 70 else ("doubt" if pct_i >= 40 else "bench")
+                existing["gw_role"] = existing.get("gw_role") or role
+                existing["gw_starter"] = bool(pct_i >= 70)
+                existing["gw_doubt"] = bool(40 <= pct_i < 70)
+                existing["gw_out"] = bool(pct_i < 40)
+            if pct_i >= 80:
+                existing["is_recommendation"] = True
 
     for r in com + sofa:
         existing = ensure(r)
@@ -366,11 +380,13 @@ def enrich_players_with_external(
     players: list[dict[str, Any]],
     *,
     competition: str = "laliga",
+    squad_teams: list[str] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Devuelve jugadores enriquecidos + meta
     {futbolfantasy, jornadaperfecta, comuniate, sofascore, ff_matchday, matched, ...}.
     competition: `laliga` | `premier`.
+    squad_teams: equipos de plantilla propia (FF siempre scrapea estas páginas).
     """
     comp = (competition or "laliga").strip().lower() or "laliga"
     meta: dict[str, Any] = {
@@ -388,6 +404,9 @@ def enrich_players_with_external(
     }
 
     team_names = list({str(p.get("team") or "") for p in players if p.get("team")})
+    priority = list(
+        {str(t).strip() for t in (squad_teams or []) if str(t).strip()}
+    )
     candidates: list[dict[str, Any]] = []
     matchday: dict[str, Any] | None = None
 
@@ -396,6 +415,7 @@ def enrich_players_with_external(
             team_names,
             competition=comp,
             sofascore_candidates=None,
+            priority_teams=priority or None,
         )
         status = dict(bundle.get("status") or {})
         com_catalog = bundle.get("comuniate") or []

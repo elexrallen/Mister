@@ -16,9 +16,12 @@ from competitive_actions import (  # noqa: E402
     is_key_market_candidate,
     select_intent_lines,
 )
+from external_data import _merge_source_records  # noqa: E402
 from squad_analyzer import (  # noqa: E402
     assess_market_coverage,
+    is_clear_overstock_upgrade,
     is_line_overstocked,
+    upgrade_worth_buy,
 )
 
 
@@ -394,6 +397,213 @@ def test_mf_overstock_fw_thin_prefers_fw() -> None:
     assert cov_f["fills_coverage_gap"] is True, cov_f
 
 
+def test_jp_does_not_set_habitual_lineup_prob() -> None:
+    """JP STARTER_PROB solo alimenta gw_*; FF conserva titularidad habitual."""
+    ff = [
+        {
+            "name": "Filip Ugrinic",
+            "team": "Valencia",
+            "availability": "available",
+            "lineup_prob": 40,
+            "is_chollo": False,
+            "is_recommendation": False,
+            "source": "futbolfantasy",
+        }
+    ]
+    jp = [
+        {
+            "name": "Filip Ugrinic",
+            "team": "Valencia",
+            "availability": "available",
+            "lineup_prob": 85,
+            "is_chollo": False,
+            "is_recommendation": True,
+            "source": "jornadaperfecta",
+        }
+    ]
+    merged = _merge_source_records(ff, jp, [], [])
+    assert len(merged) == 1, merged
+    rec = merged[0]
+    assert rec.get("lineup_prob") == 40, rec
+    assert rec.get("gw_lineup_prob") == 85, rec
+    assert rec.get("gw_starter") is True, rec
+
+    # Solo JP: sin % habitual (ficha/apps después)
+    only_jp = _merge_source_records([], jp, [], [])
+    assert len(only_jp) == 1
+    assert only_jp[0].get("lineup_prob") is None, only_jp[0]
+    assert only_jp[0].get("gw_lineup_prob") == 85, only_jp[0]
+
+
+def test_upgrade_mediocre_not_worth_buy() -> None:
+    diag = _diag_df_overstock()
+    squad = _squad_df_overstock()
+    # Titular flojo vs alts (is_upgrade) pero sin superar +0.20 al peor titular ni TOP
+    cand = {
+        "id": "x",
+        "name": "DF mediocre",
+        "position": "DF",
+        "price": 4_000_000,
+        "lineup_prob": 0.75,
+        "production_score": 40,
+        "is_top_ff": False,
+    }
+    cov = assess_market_coverage(cand, diag, squad=squad)
+    assert cov.get("is_upgrade") is True, cov
+    clear = is_clear_overstock_upgrade(cand, squad, is_upgrade=True)
+    worth = upgrade_worth_buy(
+        cand,
+        is_upgrade=True,
+        overstocked=True,
+        squad=squad,
+        budget_fit="comfortable",
+        leaves_gap_budget=True,
+        crowds_out_gaps=False,
+        residual=15_000_000,
+        other_gaps_min=5_000_000,
+        cash_reserve=8_000_000,
+    )
+    assert clear is False, clear
+    assert worth is False, worth
+def test_upgrade_elite_worth_buy_when_residual_ok() -> None:
+    diag = _diag_df_overstock()
+    squad = _squad_df_overstock()
+    cand = {
+        "id": "elite",
+        "name": "DF Elite",
+        "position": "DF",
+        "price": 3_000_000,
+        "lineup_prob": 0.95,
+        "production_score": 70,
+        "is_top_ff": True,
+    }
+    cov = assess_market_coverage(cand, diag, squad=squad)
+    assert cov["is_upgrade"] is True, cov
+    assert is_clear_overstock_upgrade(cand, squad, is_upgrade=True) is True
+    worth = upgrade_worth_buy(
+        cand,
+        is_upgrade=True,
+        overstocked=True,
+        squad=squad,
+        budget_fit="comfortable",
+        debt_risk=False,
+        solvency_blocked=False,
+        leaves_gap_budget=True,
+        crowds_out_gaps=False,
+        residual=16_000_000,
+        other_gaps_min=5_000_000,
+        cash_reserve=8_000_000,
+    )
+    assert worth is True, worth
+    assert (
+        is_key_market_candidate(
+            {**cand, **cov, "upgrade_worth_buy": True, "fills_structural": False},
+            is_primary_obj=False,
+            is_objective=False,
+            on_daily=True,
+            gw_out=False,
+            real_starter=True,
+            fills_gap=False,
+        )
+        is True
+    )
+
+
+def test_upgrade_elite_crowds_out_not_worth() -> None:
+    squad = _squad_df_overstock()
+    cand = {
+        "id": "elite2",
+        "name": "DF Elite caro",
+        "position": "DF",
+        "price": 12_000_000,
+        "lineup_prob": 0.95,
+        "production_score": 75,
+        "is_top_ff": True,
+    }
+    worth = upgrade_worth_buy(
+        cand,
+        is_upgrade=True,
+        overstocked=True,
+        squad=squad,
+        budget_fit="tight",
+        leaves_gap_budget=False,
+        crowds_out_gaps=True,
+        residual=3_000_000,
+        other_gaps_min=10_000_000,
+        cash_reserve=8_000_000,
+    )
+    assert worth is False
+
+    # Intent: upgrade overstock sin worth → sigue saltado; con worth → elegible
+    daily_skip = [
+        {
+            "player_id": "df_up",
+            "name": "DF Upgrade",
+            "position": "DF",
+            "action": "buy_now",
+            "bid": 2_000_000,
+            "cost": 2_000_000,
+            "overstocked": True,
+            "fills_coverage_gap": False,
+            "fills_structural": False,
+            "upgrade_worth_buy": False,
+            "is_key_market": True,
+            "on_daily_market": True,
+            "seller": "market",
+            "priority_score": 200,
+            "leaves_gap_budget": True,
+            "budget_fit": "comfortable",
+        },
+        {
+            "player_id": "fw_need",
+            "name": "FW Need",
+            "position": "FW",
+            "action": "buy_now",
+            "bid": 4_500_000,
+            "cost": 4_500_000,
+            "overstocked": False,
+            "fills_coverage_gap": True,
+            "fills_structural": True,
+            "fills_need": True,
+            "on_daily_market": True,
+            "seller": "market",
+            "priority_score": 80,
+            "leaves_gap_budget": True,
+            "budget_fit": "comfortable",
+            "production_score": 55,
+        },
+    ]
+    intents = select_intent_lines(
+        daily_skip,
+        bal=19_000_000,
+        cash_reserve=8_000_000,
+        primary_ids=set(),
+        secondary_max=2_500_000,
+        max_intents=2,
+    )
+    assert intents[0]["player_id"] == "fw_need", intents[0]
+
+    daily_ok = [
+        {
+            **daily_skip[0],
+            "upgrade_worth_buy": True,
+            "is_upgrade": True,
+            "priority_score": 220,
+        },
+        daily_skip[1],
+    ]
+    intents_ok = select_intent_lines(
+        daily_ok,
+        bal=19_000_000,
+        cash_reserve=8_000_000,
+        primary_ids={"df_up"},
+        secondary_max=2_500_000,
+        max_intents=2,
+    )
+    ids = [i["player_id"] for i in intents_ok]
+    assert "df_up" in ids, ids
+
+
 def main() -> None:
     tests = [
         test_overstock_df_expensive_not_gap,
@@ -402,6 +612,10 @@ def main() -> None:
         test_select_intent_skips_overstock_df,
         test_solvency_strict_blocks_negative,
         test_mf_overstock_fw_thin_prefers_fw,
+        test_jp_does_not_set_habitual_lineup_prob,
+        test_upgrade_mediocre_not_worth_buy,
+        test_upgrade_elite_worth_buy_when_residual_ok,
+        test_upgrade_elite_crowds_out_not_worth,
     ]
     failed = 0
     for fn in tests:

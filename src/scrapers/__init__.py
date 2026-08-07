@@ -18,10 +18,12 @@ def fetch_all_external(
     *,
     competition: str = "laliga",
     sofascore_candidates: list[dict[str, Any]] | None = None,
+    priority_teams: list[str] | None = None,
 ) -> dict[str, Any]:
     """
     Ejecuta scrapers hub fail-soft.
     competition: `laliga` | `premier` (u otra → FF/JP vacíos + status skip).
+    priority_teams: equipos de plantilla (FF sin tope).
     sofascore_candidates se ignora (nota → FotMob en data_engine).
     """
     _ = sofascore_candidates  # legacy kw; no API Sofascore
@@ -45,7 +47,11 @@ def fetch_all_external(
             "competition": comp,
         }
 
-    ff = fetch_futbolfantasy(team_names, competition=comp)
+    ff = fetch_futbolfantasy(
+        team_names,
+        competition=comp,
+        priority_teams=priority_teams,
+    )
     status["futbolfantasy"] = "ok" if ff else "fail"
 
     jp = fetch_jornadaperfecta(competition=comp)

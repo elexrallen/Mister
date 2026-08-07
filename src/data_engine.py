@@ -63,8 +63,10 @@ from squad_analyzer import (
     analyze_squad,
     apply_realistic_need_caps,
     assess_market_coverage,
+    is_clear_overstock_upgrade,
     merge_structural_into_diagnosis,
     structural_market_boost,
+    upgrade_worth_buy,
 )
 
 logging.basicConfig(
@@ -599,9 +601,12 @@ def classify_market_opportunities(
         if on_daily and fills_coverage_gap:
             score += 10
         if overstocked and not fills_coverage_gap:
-            score -= 35
-            if is_upgrade:
-                score -= 10  # upgrade en línea sobrada: no urgencia
+            if is_upgrade and is_clear_overstock_upgrade(p, squad, is_upgrade=True):
+                score += 12  # upgrade claro: no penalizar como cupo muerto
+            else:
+                score -= 35
+                if is_upgrade:
+                    score -= 10  # upgrade flojo en línea sobrada: no urgencia
         elif line_covered and not is_upgrade:
             score -= 28
         elif is_upgrade:
@@ -740,7 +745,10 @@ def classify_market_opportunities(
         elif line_covered and not is_upgrade:
             priority = "Baja"
         elif overstocked and not fills_coverage_gap:
-            priority = "Baja" if not is_upgrade else "Media"
+            if is_upgrade and is_clear_overstock_upgrade(p, squad, is_upgrade=True):
+                priority = "Alta" if score >= 35 else "Media"
+            else:
+                priority = "Baja" if not is_upgrade else "Media"
         elif fills_coverage_gap or fills_structural or score >= 35:
             priority = "Alta"
         elif is_top and not sample_thin and (
@@ -1289,6 +1297,22 @@ def build_action_plan(
         is_upgrade = bool(o.get("is_upgrade"))
         fills_structural_o = bool(o.get("fills_structural"))
         overstocked = bool(o.get("overstocked"))
+        my_squad = list(me.get("squad") or [])
+        cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+        worth_upgrade = upgrade_worth_buy(
+            o,
+            is_upgrade=is_upgrade,
+            overstocked=overstocked,
+            squad=my_squad,
+            budget_fit=bf,
+            debt_risk=debt_risk,
+            solvency_blocked=solvency_blocked,
+            leaves_gap_budget=leaves_budget if other_min > 0 else None,
+            crowds_out_gaps=crowds_out,
+            residual=residual if residual >= 0 else None,
+            other_gaps_min=other_min,
+            cash_reserve=cash_reserve,
+        )
         # Alta en la posición ≠ este jugador cubre el hueco (p. ej. gk_tandem / overstock)
         structural_gap = pos in need_pos_alta
         if pos == "GK" or overstocked or line_covered:
@@ -1382,8 +1406,8 @@ def build_action_plan(
                 if fixed
                 else "línea ya cubierta — no insistir en la puja"
             )
-        elif overstocked and not fills_cov and not fills_structural_o:
-            # Sobrecupo adaptativo: ni gap ni upgrade → buy_now
+        elif overstocked and not fills_cov and not fills_structural_o and not worth_upgrade:
+            # Sobrecupo: veto salvo upgrade que renta (caja + mejora clara)
             buy_now = False
             why_parts.append(
                 "línea sobrada — upgrade en espera, no pujar hoy"
@@ -1438,7 +1462,10 @@ def build_action_plan(
                 why_parts.append("titular probable y prioridad alta")
             if is_upgrade and bf in ("comfortable", "tight") and real_starter_cand:
                 buy_now = True
-                why_parts.append("upgrade claro vs lo que tienes en la línea")
+                if worth_upgrade and overstocked:
+                    why_parts.append("upgrade rentable — deja caja para otras carencias")
+                else:
+                    why_parts.append("upgrade claro vs lo que tienes en la línea")
             # Titular GW FF + hueco: refuerzo buy_now
             if (
                 gw_starter
@@ -1455,7 +1482,10 @@ def build_action_plan(
         is_primary_obj = pid in primary_ids
         fills_gap_any = bool(fills or fills_cov or structural_gap)
         is_key = is_key_market_candidate(
-            o,
+            {
+                **o,
+                "upgrade_worth_buy": worth_upgrade,
+            },
             is_primary_obj=is_primary_obj,
             is_objective=is_objective,
             on_daily=on_daily,
@@ -1465,7 +1495,12 @@ def build_action_plan(
         )
         # Objetivo del board en mercado del día → priorizar buy_now
         # (línea sobrada sin gap real: no saltarse el techo de sobrecupo)
-        overstock_blocks = overstocked and not fills_cov and not fills_structural_o
+        overstock_blocks = (
+            overstocked
+            and not fills_cov
+            and not fills_structural_o
+            and not worth_upgrade
+        )
         if (
             is_objective
             and on_daily
@@ -1495,12 +1530,31 @@ def build_action_plan(
             buy_now = False
             if not any("ya cubierta" in w.lower() for w in why_parts):
                 why_parts.append("línea GK ya cubierta — no gastar caja en 2.º titular")
-        # Upgrade en línea sobrada: como máximo wait/scout (ya no buy_now)
-        if buy_now and overstocked and is_upgrade and not fills_cov and not fills_structural_o:
+        # Upgrade en línea sobrada sin umbral de ROI → wait/scout
+        if (
+            buy_now
+            and overstocked
+            and is_upgrade
+            and not fills_cov
+            and not fills_structural_o
+            and not worth_upgrade
+        ):
             buy_now = False
             if not any("sobrada" in w.lower() for w in why_parts):
                 why_parts.append("línea sobrada — upgrade en espera, no pujar hoy")
-        # Parche barato: no romper reserva de buys del ideal (clave/primary sí pueden usarla)
+        # Si el upgrade no renta por caja residual → wait explícito
+        if (
+            is_upgrade
+            and overstocked
+            and not fills_cov
+            and not fills_structural_o
+            and not worth_upgrade
+            and crowds_out
+            and not any("prioriza otras" in w or "poca caja" in w for w in why_parts)
+        ):
+            why_parts.append(
+                f"upgrade bueno, pero reserva caja para {gap_pos_labels}"
+            )        # Parche barato: no romper reserva de buys del ideal (clave/primary sí pueden usarla)
         is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
             cost <= patch_cap
             or (not real_starter_cand and cost < 2_500_000)
@@ -1595,7 +1649,10 @@ def build_action_plan(
             if on_daily and fills_cov:
                 prio_i += 8
             if overstocked and not fills_cov:
-                prio_i -= 55
+                if worth_upgrade:
+                    prio_i += 15
+                else:
+                    prio_i -= 55
             elif line_covered and not is_upgrade:
                 prio_i -= 40
             elif is_upgrade:
@@ -1626,6 +1683,7 @@ def build_action_plan(
             "line_already_covered": line_covered,
             "is_upgrade": is_upgrade,
             "overstocked": overstocked,
+            "upgrade_worth_buy": worth_upgrade,
             "position_coverage": o.get("position_coverage"),
             "on_daily_market": on_daily,
             "market_mode": "fixed" if fixed else "auction",
@@ -1935,9 +1993,11 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         id_competition=id_competition_i,
     )
     if external_key:
+        squad_teams = list({str(p.get("team") or "") for p in squad if p.get("team")})
         universe_ext, external_meta = enrich_players_with_external(
             universe,
             competition=external_key,
+            squad_teams=squad_teams,
         )
     else:
         universe_ext = []

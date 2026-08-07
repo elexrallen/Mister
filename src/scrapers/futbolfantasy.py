@@ -133,10 +133,12 @@ def fetch_futbolfantasy(
     team_names: list[str] | None = None,
     *,
     competition: str = "laliga",
+    priority_teams: list[str] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Devuelve registros de jugadores FF.
-    team_names: equipos Mister a enriquecer con % (cap MAX_TEAM_PAGES).
+    priority_teams: equipos de plantilla propia (sin tope; siempre se scrapean).
+    team_names: resto (mercado/universo); se añaden hasta MAX_TEAM_PAGES.
     competition: `laliga` | `premier`.
     """
     path = _ff_path(competition)
@@ -174,14 +176,23 @@ def fetch_futbolfantasy(
         for rec in _parse_sancionados(path):
             upsert(rec)
 
-        slugs: list[str] = []
-        seen: set[str] = set()
-        for t in team_names or []:
-            slug = team_slug(t)
-            if slug and slug not in seen:
-                seen.add(slug)
-                slugs.append(slug)
-        for slug in slugs[:MAX_TEAM_PAGES]:
+        def _collect_slugs(names: list[str] | None) -> list[str]:
+            out: list[str] = []
+            seen_local: set[str] = set()
+            for t in names or []:
+                slug = team_slug(t)
+                if slug and slug not in seen_local:
+                    seen_local.add(slug)
+                    out.append(slug)
+            return out
+
+        priority_slugs = _collect_slugs(priority_teams)
+        other_slugs = [
+            s for s in _collect_slugs(team_names) if s not in set(priority_slugs)
+        ][:MAX_TEAM_PAGES]
+        slugs = priority_slugs + other_slugs
+
+        for slug in slugs:
             try:
                 for rec in _parse_team_page(path, slug):
                     upsert(rec)
@@ -189,7 +200,13 @@ def fetch_futbolfantasy(
                 log.warning("FF team %s/%s falló: %s", path, slug, exc)
 
         result = list(by_key.values())
-        log.info("FF [%s] total registros: %d", path, len(result))
+        log.info(
+            "FF [%s] total registros: %d (priority_teams=%d + market_cap=%d)",
+            path,
+            len(result),
+            len(priority_slugs),
+            len(other_slugs),
+        )
         return result
     except Exception as exc:  # noqa: BLE001
         log.warning("FF scraper [%s] falló: %s", path, exc)

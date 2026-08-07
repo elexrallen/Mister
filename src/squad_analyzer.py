@@ -504,6 +504,90 @@ def assess_market_coverage(
     }
 
 
+def is_clear_overstock_upgrade(
+    player: dict[str, Any],
+    squad: list[dict[str, Any]] | None = None,
+    *,
+    is_upgrade: bool = False,
+) -> bool:
+    """
+    Mejora clara en línea sobrada: titular ≥70% y (Δlineup ≥+0.20 vs peor titular,
+    TOP FF, o prod≥65 con el peor de la línea <50).
+    """
+    if not is_upgrade:
+        return False
+    lp = _lineup_frac(player)
+    if lp is None or lp < LINEUP_STARTER:
+        return False
+    pos = player.get("position") or "MF"
+    same = [
+        p
+        for p in (squad or [])
+        if p.get("position") == pos and not _is_injured(p) and _is_regular(p)
+    ]
+    if not same:
+        return bool(_is_top_player(player))
+    starters = [p for p in same if (_lineup_frac(p) or 0.0) >= LINEUP_STARTER]
+    pool = starters or same
+    worst_lp = min((_lineup_frac(p) or 0.0) for p in pool)
+    if lp >= worst_lp + 0.20:
+        return True
+    if _is_top_player(player):
+        return True
+    if _prod(player) >= 65 and max(_prod(p) for p in same) < 50:
+        return True
+    return False
+
+
+def upgrade_worth_buy(
+    player: dict[str, Any],
+    *,
+    is_upgrade: bool = False,
+    overstocked: bool = False,
+    squad: list[dict[str, Any]] | None = None,
+    budget_fit: str | None = None,
+    debt_risk: bool = False,
+    solvency_blocked: bool = False,
+    leaves_gap_budget: bool | None = None,
+    crowds_out_gaps: bool | None = None,
+    residual: float | None = None,
+    other_gaps_min: float | None = None,
+    cash_reserve: float | None = None,
+) -> bool:
+    """
+    ¿Renta pujar un upgrade aunque la línea esté cubierta/sobrada?
+    Exige mejora clara (si overstock), caja usable y residual para otras carencias.
+    """
+    if not is_upgrade:
+        return False
+    if solvency_blocked or debt_risk:
+        return False
+    if (budget_fit or "blocked") not in ("comfortable", "tight"):
+        return False
+    if crowds_out_gaps:
+        return False
+
+    reserve = float(
+        cash_reserve
+        if cash_reserve is not None
+        else getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)
+    )
+    other_min = float(other_gaps_min or 0)
+    if other_min > 0:
+        if leaves_gap_budget is False:
+            return False
+        if leaves_gap_budget is None and residual is not None and residual < other_min:
+            return False
+    elif residual is not None and residual < reserve:
+        return False
+
+    if overstocked:
+        return is_clear_overstock_upgrade(player, squad, is_upgrade=True)
+    # Línea cubierta sin sobrecupo: basta is_upgrade + finanzas
+    lp = _lineup_frac(player)
+    return lp is not None and lp >= LINEUP_STARTER
+
+
 def realistic_price_cap(balance: float) -> float:
     """Techo de gasto realista: saldo menos colchón del paquete diario."""
     reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
