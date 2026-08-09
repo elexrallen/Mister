@@ -1194,7 +1194,13 @@
           ? `Solo pujables ahora · ${daily}${slots != null ? ` (ref. ${slots} plazas)` : ""}`
           : "Sin mercado del día en los datos — prueba «Todos los libres»";
     } else {
-      hint.textContent = `Pool de libres enriquecido · ${total} jugadores`;
+      const faSrc = (DATA.sources || {}).free_agents;
+      const poolSize = Number((DATA.sources || {}).pool_size || 0);
+      if (faSrc === "unavailable" || (total > 0 && daily === total && poolSize === 0)) {
+        hint.textContent = `Pool de libres no disponible · solo ${total} del mercado del día`;
+      } else {
+        hint.textContent = `Pool de libres enriquecido · ${total} jugadores`;
+      }
     }
   }
 

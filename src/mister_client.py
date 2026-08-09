@@ -28,6 +28,11 @@ log = logging.getLogger("mister_client")
 
 POS_MAP = {"1": "GK", "2": "DF", "3": "MF", "4": "FW"}
 
+# Mister rota `_FG_cfg.auth` al cambiar de comunidad. El secret estático
+# (MISTER_X_AUTH) vale para la liga inicial; tras switch hay que renovarlo
+# o /ajax/* responde 401 (HTML sigue OK con cookies).
+_session_x_auth: str | None = None
+
 
 def _strip_accents(text: str) -> str:
     nk = unicodedata.normalize("NFKD", text or "")
@@ -48,6 +53,34 @@ def build_cookie_header() -> str:
     return "; ".join(parts)
 
 
+def current_x_auth() -> str:
+    return (_session_x_auth or config.MISTER_X_AUTH or "").strip()
+
+
+def apply_x_auth_from_cfg(fg_cfg: dict[str, Any] | None) -> bool:
+    """Actualiza x-auth de sesión desde `_FG_cfg.auth` (JS embebido)."""
+    if not isinstance(fg_cfg, dict):
+        return False
+    auth = fg_cfg.get("auth")
+    if not isinstance(auth, str):
+        return False
+    auth = auth.strip()
+    if not auth:
+        return False
+    global _session_x_auth
+    if auth != _session_x_auth:
+        prev = (_session_x_auth or config.MISTER_X_AUTH or "")[:8]
+        _session_x_auth = auth
+        log.info("x-auth sesión actualizado (%s… → %s…)", prev or "env", auth[:8])
+    return True
+
+
+def refresh_x_auth_from_html(html: str) -> bool:
+    if not html:
+        return False
+    return apply_x_auth_from_cfg(_extract_js_object(html, "_FG_cfg"))
+
+
 def mister_headers(referer: str | None = None) -> dict[str, str]:
     headers = {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
@@ -60,8 +93,9 @@ def mister_headers(referer: str | None = None) -> dict[str, str]:
         ),
         "Cookie": build_cookie_header(),
     }
-    if config.MISTER_X_AUTH:
-        headers["x-auth"] = config.MISTER_X_AUTH
+    x_auth = current_x_auth()
+    if x_auth:
+        headers["x-auth"] = x_auth
     return headers
 
 
@@ -76,6 +110,17 @@ def ajax_headers() -> dict[str, str]:
 def ajax_post(path: str, data: dict[str, Any] | None = None, timeout: int = 25) -> Any:
     url = f"{config.MISTER_API_BASE}{path}"
     resp = requests.post(url, headers=ajax_headers(), data=data or {}, timeout=timeout)
+    if resp.status_code == 401:
+        # Tras switch_community el auth del secret queda obsoleto.
+        log.warning("ajax %s → 401; reintento tras renovar x-auth desde /team", path)
+        try:
+            html = fetch_html("/team", timeout=timeout)
+            if refresh_x_auth_from_html(html):
+                resp = requests.post(
+                    url, headers=ajax_headers(), data=data or {}, timeout=timeout
+                )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Renovación x-auth falló: %s", exc)
     resp.raise_for_status()
     if not resp.content:
         return {}
@@ -1130,7 +1175,8 @@ def fetch_free_agents_best_effort() -> tuple[list[dict[str, Any]], str]:
 def _sw_players_form(offset: int = 0) -> dict[str, Any]:
     """
     Payload real de search-players.js → POST /ajax/sw/players.
-    value_to/clause_to deben ser altos: 0 filtra el catálogo entero.
+    value_to alto evita filtrar el catálogo. No enviar clause_*: en ligas
+    fixed/sin cláusulas (Premier) clause_to>0 deja players=[].
     """
     ceiling = int(getattr(config, "MISTER_POOL_VALUE_CEILING", 100_000_000))
     return {
@@ -1141,8 +1187,6 @@ def _sw_players_form(offset: int = 0) -> dict[str, Any]:
         "filters[position]": 0,
         "filters[value_from]": 0,
         "filters[value_to]": ceiling,
-        "filters[clause_from]": 0,
-        "filters[clause_to]": ceiling,
         "filters[team]": 0,
         "filters[injured]": 0,
         "filters[favs]": 0,
@@ -1324,6 +1368,8 @@ def switch_community(id_community: str | int) -> dict[str, Any]:
         log.warning("switch_community(%s) falló: %s", cid, exc)
         return {}
 
+    # Auth AJAX rota con la comunidad; sin esto /ajax/* → 401 tras el switch.
+    refresh_x_auth_from_html(html)
     fg_user = _extract_js_object(html, "_FG_user") or {}
     got = str(fg_user.get("id_community") or "")
     if got and got != cid:
@@ -1348,6 +1394,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         # Peek sesión actual vía /team (ligero) o switch directo
         try:
             peek = fetch_html("/team")
+            refresh_x_auth_from_html(peek)
             cur = _extract_js_object(peek, "_FG_user") or {}
             cur_cid = str(cur.get("id_community") or "")
             if cur_cid != target_cid:
@@ -1378,7 +1425,8 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
 
     fg_user = _extract_js_object(market_html or team_html, "_FG_user") or {}
     fg_cfg = _extract_js_object(market_html or team_html, "_FG_cfg") or {}
-    _ = fg_cfg  # disponible para debug futuro
+    # Asegurar auth fresco antes del pool /ajax/sw/players (crítico multi-liga).
+    apply_x_auth_from_cfg(fg_cfg)
 
     bal_src: dict[str, Any] = {}
     if isinstance(balance_data, dict) and balance_data:
