@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T08:10:07.034613+00:00",
+  "generated_at": "2026-08-09T12:06:28.413672+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -239,17 +239,17 @@
       "complete": true
     }
   ],
-  "balance": 15579796.0,
-  "squad_value": 47402000.0,
+  "balance": 17111746.0,
+  "squad_value": 45887000.0,
   "wealth": {
-    "balance": 15579796.0,
-    "squad_value": 47402000.0,
-    "total": 62981796.0,
-    "liquidity_floor": 5038544.0,
-    "budget_cap": 57943252.0
+    "balance": 17111746.0,
+    "squad_value": 45887000.0,
+    "total": 62998746.0,
+    "liquidity_floor": 5039900.0,
+    "budget_cap": 57958846.0
   },
   "budget_operable": {
-    "budget_cap": 57943252.0,
+    "budget_cap": 57958846.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
   "ideal_buy_cost": 49366000.0,
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,795,000 € · buy · starter · Δ 12%",
-      "added_at": "2026-08-09T08:10:06.931060+00:00"
+      "added_at": "2026-08-09T12:06:28.313794+00:00"
     },
     {
       "slot": "MF5",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 33 · 1,235,000 € · buy · bench · Δ 10%",
-      "added_at": "2026-08-09T08:10:06.966175+00:00"
+      "added_at": "2026-08-09T12:06:28.347575+00:00"
     },
     {
       "slot": "FW1",
@@ -1488,22 +1488,6 @@
         "cash_lag_hours": 48
       },
       {
-        "player_id": "5916",
-        "name": "J. Guridi 💥",
-        "position": "MF",
-        "ep_score": 42.0,
-        "price": 1515000.0,
-        "delta_5d": 0.1663,
-        "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~1,515,000 € (VM); caja usable en ~48h · Δ 17%",
-        "list_at": 1515000.0,
-        "expected_proceeds": 1515000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
         "player_id": "28621",
         "name": "A. Abqar",
         "position": "DF",
@@ -1578,8 +1562,8 @@
     "formation": "3-4-3"
   },
   "daily_patches": [],
-  "cash_reserved": 11621000.0,
-  "residual_after_reserve": 3958796.0,
+  "cash_reserved": 15690000.0,
+  "residual_after_reserve": 1421746.0,
   "primary_targets": [
     {
       "player_id": "28612",
@@ -1593,14 +1577,14 @@
       "on_daily_market": false
     },
     {
-      "player_id": "64458",
-      "name": "Pablo Campos",
+      "player_id": "68495",
+      "name": "Martín Satriano",
       "need": "perfect_squad_daily",
-      "position": "GK",
-      "price": 1971000.0,
-      "ep_score": 8.9,
+      "position": "FW",
+      "price": 6040000.0,
+      "ep_score": 42.0,
       "status": "affordable",
-      "role": "bench",
+      "role": "starter",
       "on_daily_market": false
     }
   ],
@@ -1627,10 +1611,29 @@
     }
   ],
   "slots": [],
-  "dropped": [],
+  "dropped": [
+    {
+      "player_id": "5916",
+      "name": "J. Guridi 💥",
+      "position": "MF",
+      "ep_score": 42.0,
+      "price": 1515000.0,
+      "delta_5d": 0.1663,
+      "value_note": "rising",
+      "why": "Fuera del ideal · EP 42 · lista a ~1,515,000 € (VM); caja usable en ~48h · Δ 17%",
+      "list_at": 1515000.0,
+      "expected_proceeds": 1515000.0,
+      "buyer_channel": "system",
+      "settlement": "market_cycle",
+      "cycle_hours": 24,
+      "cash_lag_hours": 48,
+      "status": "dropped",
+      "miss_days": 1
+    }
+  ],
   "patch_policy": {
     "allow": false,
-    "max_spend": 2500000.0
+    "max_spend": 1421746.0
   },
   "summary": {
     "slots": 15,
@@ -1641,10 +1644,10 @@
     "incomplete": false,
     "keep": 5,
     "buy": 10,
-    "sell": 13,
+    "sell": 12,
     "patches": 0,
     "on_daily": 0,
-    "cash_reserved": 11621000.0,
+    "cash_reserved": 15690000.0,
     "ep_sum": 717.9,
     "ep_sum_starters": 591.4,
     "mode": "operable",
