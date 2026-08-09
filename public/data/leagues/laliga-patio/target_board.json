@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-09T12:06:28.413672+00:00",
+  "generated_at": "2026-08-09T12:18:15.309736+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,795,000 € · buy · starter · Δ 12%",
-      "added_at": "2026-08-09T12:06:28.313794+00:00"
+      "added_at": "2026-08-09T12:18:15.251414+00:00"
     },
     {
       "slot": "MF5",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 33 · 1,235,000 € · buy · bench · Δ 10%",
-      "added_at": "2026-08-09T12:06:28.347575+00:00"
+      "added_at": "2026-08-09T12:18:15.271104+00:00"
     },
     {
       "slot": "FW1",
@@ -1611,26 +1611,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "player_id": "5916",
-      "name": "J. Guridi 💥",
-      "position": "MF",
-      "ep_score": 42.0,
-      "price": 1515000.0,
-      "delta_5d": 0.1663,
-      "value_note": "rising",
-      "why": "Fuera del ideal · EP 42 · lista a ~1,515,000 € (VM); caja usable en ~48h · Δ 17%",
-      "list_at": 1515000.0,
-      "expected_proceeds": 1515000.0,
-      "buyer_channel": "system",
-      "settlement": "market_cycle",
-      "cycle_hours": 24,
-      "cash_lag_hours": 48,
-      "status": "dropped",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 1421746.0
