@@ -2262,12 +2262,31 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     rival_upgrades: list[dict[str, Any]] = []
     if not fixed_market:
+        # Reserva para carencias de mercado antes de gastar en cláusulas
+        market_reserved = 0.0
+        needy_pos = {
+            pos
+            for pos, info in (diagnosis.get("by_position") or {}).items()
+            if info.get("status") in ("critical", "warning")
+            or info.get("coverage") in ("critical", "thin")
+        }
+        if needy_pos:
+            market_reserved = min(
+                float(me.get("balance") or 0) * 0.45,
+                float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)),
+            )
         rival_upgrades = build_rival_upgrade_targets(
             me,
             diagnosis,
             rivals,
             balance=float(me.get("balance") or 0),
             points_phase=points_phase,
+            max_debt=max_debt_f,
+            balance_future=bal_future_f,
+            hours_to_jornada=hours_j,
+            days_to_kickoff=comp.get("days_to_kickoff"),
+            matchday=matchday_early,
+            market_reserved=market_reserved,
         )
 
     owned = set(league.get("owned_across_league") or [])

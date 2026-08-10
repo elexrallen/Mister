@@ -2217,6 +2217,184 @@ def compute_upgrade_score(
     return score, improves, why_extra
 
 
+def clause_premium_ratio(clause: float | None, market_value: float | None) -> float:
+    """Ratio cláusula/VM; 1.0 si no se puede calcular."""
+    c = _money(clause)
+    m = _money(market_value)
+    if c <= 0 or m <= 0:
+        return 1.0
+    return c / m
+
+
+def clause_roi(upgrade_score: float, clause: float | None) -> float:
+    """upgrade_score por M€ de cláusula."""
+    m = max(_money(clause) / 1_000_000.0, 0.5)
+    return float(upgrade_score or 0) / m
+
+
+def clause_roi_gate(
+    *,
+    upgrade_score: float,
+    clause: float | None,
+    market_value: float | None,
+    fills: bool,
+) -> tuple[bool, str | None]:
+    """
+    ¿La cláusula renta lo bastante para clause_bid?
+    Prima alta o ROI bajo sin carencia → False (scout).
+    """
+    soft = float(getattr(config, "IDEAL_CLAUSE_PREMIUM_SOFT", 1.25))
+    min_roi = float(getattr(config, "CLAUSE_MIN_UPGRADE_PER_M", 5.0))
+    prem = clause_premium_ratio(clause, market_value)
+    roi = clause_roi(upgrade_score, clause)
+    if prem > soft and not fills:
+        return False, f"mejora cara vs valor (prima {prem:.2f}× VM)"
+    if roi < min_roi and not fills:
+        return False, f"mejora cara vs valor (ROI {roi:.1f}/M€ < {min_roi:.0f})"
+    if prem > soft and fills and roi < min_roi * 0.7:
+        return False, f"prima alta y ROI flojo ({roi:.1f}/M€) pese a carencia"
+    return True, None
+
+
+def allocate_clause_bids(
+    items: list[dict[str, Any]],
+    balance: float,
+    *,
+    market_reserved: float = 0.0,
+    cash_reserve: float | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Mutual exclusivity: ordena por ROI y asigna con saldo simulado.
+    Máx. 1 cara (≥40% liquidez) + 1 barata si el residual lo permite.
+    """
+    bal = max(0.0, float(balance or 0))
+    reserve = float(
+        cash_reserve
+        if cash_reserve is not None
+        else getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)
+    )
+    reserved = max(0.0, float(market_reserved or 0))
+    sim = max(0.0, bal - reserved)
+    expensive_floor = bal * 0.40
+    n_exp = 0
+    n_cheap = 0
+    best_name: str | None = None
+
+    clause_items = [i for i in items if i.get("action") == "clause_bid"]
+    others = [i for i in items if i.get("action") != "clause_bid"]
+    clause_items.sort(
+        key=lambda x: (
+            -float(x.get("clause_roi") or 0),
+            -float(x.get("upgrade_score") or 0),
+            _money(x.get("clause")),
+        )
+    )
+
+    kept: list[dict[str, Any]] = []
+    for item in clause_items:
+        row = dict(item)
+        cost = _money(row.get("clause") or row.get("bid") or row.get("acquisition_cost"))
+        is_exp = cost >= expensive_floor and expensive_floor > 0
+        why = (row.get("why") or "").strip()
+
+        if cost <= 0 or cost > sim:
+            row["action"] = "scout"
+            row["bid"] = None
+            row["affordable"] = False
+            row["urgency"] = "low"
+            note = (
+                f"caja ya comprometida en mejor cláusula ({best_name})"
+                if best_name
+                else f"caja comprometida / residual {sim:,.0f} € < cláusula {cost:,.0f} €"
+            )
+            if note not in why:
+                row["why"] = f"{why}; {note}" if why else note
+            row["priority_score"] = max(
+                5, priority_score_clause(row) // 2 + int(float(row.get("upgrade_score") or 0) // 3)
+            )
+            others.append(row)
+            continue
+
+        if is_exp:
+            if n_exp >= 1:
+                row["action"] = "scout"
+                row["bid"] = None
+                row["affordable"] = False
+                row["urgency"] = "low"
+                note = f"mejor cláusula ya elegida ({best_name}); esta queda en vigilante"
+                if note not in why:
+                    row["why"] = f"{why}; {note}" if why else note
+                row["priority_score"] = max(
+                    5,
+                    priority_score_clause(row) // 2
+                    + int(float(row.get("upgrade_score") or 0) // 3),
+                )
+                others.append(row)
+                continue
+        else:
+            if n_cheap >= 1:
+                row["action"] = "scout"
+                row["bid"] = None
+                row["affordable"] = False
+                row["urgency"] = "low"
+                note = "otra cláusula barata ya priorizada; esta queda en vigilante"
+                if note not in why:
+                    row["why"] = f"{why}; {note}" if why else note
+                row["priority_score"] = max(
+                    5,
+                    priority_score_clause(row) // 2
+                    + int(float(row.get("upgrade_score") or 0) // 3),
+                )
+                others.append(row)
+                continue
+            # Barata: no comerse la reserva de carencias de mercado
+            if reserved > 0 and (sim - cost) < min(reserve, reserved):
+                row["action"] = "scout"
+                row["bid"] = None
+                row["affordable"] = False
+                row["urgency"] = "low"
+                note = "upgrade bueno, pero reserva caja para carencias de mercado"
+                if note not in why:
+                    row["why"] = f"{why}; {note}" if why else note
+                row["priority_score"] = max(
+                    5,
+                    priority_score_clause(row) // 2
+                    + int(float(row.get("upgrade_score") or 0) // 3),
+                )
+                others.append(row)
+                continue
+
+        sim -= cost
+        residual = sim
+        roi = float(row.get("clause_roi") or clause_roi(float(row.get("upgrade_score") or 0), cost))
+        prem = float(
+            row.get("clause_premium")
+            or clause_premium_ratio(cost, row.get("market_value"))
+        )
+        extra = f"ROI {roi:.1f}/M€ · prima {prem:.2f}× · residual {residual:,.0f} €"
+        if extra not in why:
+            row["why"] = f"{why}; {extra}" if why else extra
+        row["residual_after_clause"] = residual
+        if is_exp:
+            n_exp += 1
+        else:
+            n_cheap += 1
+        if best_name is None:
+            best_name = str(row.get("name") or "")
+        kept.append(row)
+
+    out = kept + others
+    out.sort(
+        key=lambda x: (
+            0 if x.get("action") == "clause_bid" else 1,
+            -float(x.get("clause_roi") or 0),
+            -int(x.get("priority_score") or 0),
+            -float(x.get("upgrade_score") or 0),
+        )
+    )
+    return out
+
+
 def build_rival_upgrade_targets(
     me: dict[str, Any],
     diagnosis: dict[str, Any],
@@ -2224,17 +2402,36 @@ def build_rival_upgrade_targets(
     *,
     balance: float | None = None,
     points_phase: str | None = None,
+    max_debt: float | None = None,
+    balance_future: float | None = None,
+    hours_to_jornada: float | None = None,
+    days_to_kickoff: float | int | None = None,
+    matchday: dict[str, Any] | None = None,
+    market_reserved: float | None = None,
 ) -> list[dict[str, Any]]:
     """
     Objetivos en plantillas rivales.
-    clause_bid solo si clause_known + asequible + improves_owned.
-    Score adaptativo: puntos como capa adicional según fase.
+    clause_bid solo si clause_known + finance OK + improves_owned + ROI/prima OK,
+    con mutual exclusivity sobre el saldo (máx. 1 cara + 1 barata).
     """
     squad = list(me.get("squad") or [])
     bal = _money(balance if balance is not None else me.get("balance"))
+    if max_debt is None:
+        try:
+            max_debt = float(me["max_debt"]) if me.get("max_debt") is not None else None
+        except (TypeError, ValueError):
+            max_debt = None
+    if balance_future is None:
+        try:
+            balance_future = (
+                float(me["balance_future"]) if me.get("balance_future") is not None else None
+            )
+        except (TypeError, ValueError):
+            balance_future = None
     needy = {
         pos for pos, info in diagnosis.get("by_position", {}).items()
         if info.get("status") in ("critical", "warning")
+        or info.get("coverage") in ("critical", "thin")
     }
     critical_pos = {
         a["position"] for a in diagnosis.get("alerts", []) if a.get("level") == "critical"
@@ -2316,7 +2513,36 @@ def build_rival_upgrade_targets(
         luxury_block = critical_elsewhere and clause_known
 
         compared_to = (ref or {}).get("name") if ref else None
-        bf = budget_fit(acquisition, bal) if clause_known else None
+        fin: dict[str, Any] | None = None
+        bf: str | None = None
+        if clause_known and acquisition is not None:
+            fin = evaluate_bid_finance(
+                acquisition,
+                bal,
+                min_cost=acquisition,
+                max_debt=max_debt,
+                balance_future=balance_future,
+                hours_to_jornada=hours_to_jornada,
+                days_to_kickoff=days_to_kickoff,
+                matchday=matchday,
+            )
+            bf = str(fin.get("budget_fit") or "blocked")
+            if fin.get("solvency_blocked"):
+                bf = "blocked"
+
+        prem = clause_premium_ratio(clause, market_value) if clause_known else 1.0
+        roi = clause_roi(upgrade_score, clause) if clause_known else 0.0
+        roi_ok, roi_why = (
+            clause_roi_gate(
+                upgrade_score=upgrade_score,
+                clause=clause,
+                market_value=market_value,
+                fills=fills,
+            )
+            if clause_known
+            else (True, None)
+        )
+
         why_bits = []
         if fills:
             why_bits.append(f"cubre carencia {pos}")
@@ -2341,20 +2567,33 @@ def build_rival_upgrade_targets(
             urgency = "low"
             why_bits.append("prioridad: cubre antes tu carencia crítica")
             risk = "low"
-            bf = bf
-        elif clause_known and bf in ("comfortable", "tight"):
+        elif clause_known and bf in ("comfortable", "tight") and roi_ok:
             action = "clause_bid"
             urgency = "high" if fills or bf == "comfortable" else "medium"
             why_bits.append(f"cláusula {clause:,.0f} €")
             risk = "medium" if bf == "tight" else "low"
+        elif clause_known and bf in ("comfortable", "tight") and not roi_ok:
+            action = "scout"
+            urgency = "low"
+            why_bits.append(roi_why or "mejora cara vs valor")
+            if clause:
+                why_bits.append(f"cláusula {clause:,.0f} €")
+            risk = "low"
         elif clause_known and bf in ("stretch", "blocked"):
             action = "scout"
             urgency = "low"
-            why_bits.append(
-                f"mejora clara pero caja corta (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
-                if clause
-                else "mejora clara pero caja corta"
-            )
+            if fin and fin.get("solvency_blocked"):
+                why_bits.append(
+                    f"bloqueado: solvencia D-1 (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
+                    if clause
+                    else "bloqueado: solvencia D-1"
+                )
+            else:
+                why_bits.append(
+                    f"mejora clara pero caja corta (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
+                    if clause
+                    else "mejora clara pero caja corta"
+                )
             risk = "low"
         else:
             action = "scout"
@@ -2378,8 +2617,12 @@ def build_rival_upgrade_targets(
             "improves_owned": True,
             "compared_to": compared_to,
             "upgrade_score": round(upgrade_score, 1),
+            "clause_roi": round(roi, 2) if clause_known else None,
+            "clause_premium": round(prem, 3) if clause_known else None,
             "fills_need": fills,
             "budget_fit": bf,
+            "debt_risk": bool(fin.get("debt_risk")) if fin else False,
+            "solvency_blocked": bool(fin.get("solvency_blocked")) if fin else False,
             "wait_risk": risk,
             "urgency": urgency,
             "trend": c.get("trend"),
@@ -2393,18 +2636,33 @@ def build_rival_upgrade_targets(
             "affordable": action == "clause_bid",
         }
         if action == "clause_bid":
-            item["priority_score"] = priority_score_clause(item) + int(upgrade_score // 2)
+            item["priority_score"] = (
+                priority_score_clause(item)
+                + int(upgrade_score // 2)
+                + int(min(25, roi * 2))
+            )
         else:
-            item["priority_score"] = max(5, priority_score_clause(item) // 2 + int(upgrade_score // 3))
+            item["priority_score"] = max(
+                5, priority_score_clause(item) // 2 + int(upgrade_score // 3)
+            )
         results.append(item)
 
-    results.sort(key=lambda x: (-int(x.get("priority_score") or 0), -float(x.get("upgrade_score") or 0)))
+    # Reserva caja de mercado si hay carencias (no gastar todo en cláusulas)
+    reserved = float(market_reserved) if market_reserved is not None else 0.0
+    if market_reserved is None and needy:
+        reserved = min(
+            bal * 0.45,
+            float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)),
+        )
+
+    results = allocate_clause_bids(results, bal, market_reserved=reserved)
+
     capped: list[dict[str, Any]] = []
     n_clause = 0
     n_scout = 0
     for r in results:
         if r["action"] == "clause_bid":
-            if n_clause >= 4:
+            if n_clause >= 2:
                 continue
             n_clause += 1
         else:
@@ -3512,7 +3770,7 @@ def finalize_action_plan(
     # Si no hay plazas, no emitir buy_now (todo demoted)
     limits = {
         "buy_now": buy_cap,
-        "clause_bid": 0 if fixed else 4,
+        "clause_bid": 0 if fixed else 2,
         "wait": 8,
         "avoid": 3,
         "sell": 5,
@@ -3547,6 +3805,14 @@ def finalize_action_plan(
             cost = _item_buy_cost(item)
             if cost > sim_balance:
                 return False
+        if a == "clause_bid" and sim_balance is not None:
+            cost = _money(
+                item.get("bid")
+                or item.get("clause")
+                or item.get("acquisition_cost")
+            )
+            if cost > sim_balance:
+                return False
         if a == "wait":
             if role in ("alt_if_lost", "alt_unfunded", "alt_no_slot", "also_good"):
                 if alt_waits >= max_alt_waits:
@@ -3571,6 +3837,16 @@ def finalize_action_plan(
             used_ids.add(pid)
         if a == "buy_now" and sim_balance is not None:
             sim_balance = max(0.0, sim_balance - _item_buy_cost(item))
+        elif a == "clause_bid" and sim_balance is not None:
+            sim_balance = max(
+                0.0,
+                sim_balance
+                - _money(
+                    item.get("bid")
+                    or item.get("clause")
+                    or item.get("acquisition_cost")
+                ),
+            )
         clean = {k: v for k, v in item.items() if k != "_queue_rank"}
         capped.append(clean)
         return True
@@ -3609,6 +3885,12 @@ def finalize_action_plan(
     for item in capped:
         if item.get("action") == "buy_now" and item.get("queue_role") in buy_roles:
             spend += _item_buy_cost(item)
+        elif item.get("action") == "clause_bid":
+            spend += _money(
+                item.get("bid")
+                or item.get("clause")
+                or item.get("acquisition_cost")
+            )
     residual_after = max(0.0, bal - spend)
 
     if primary:

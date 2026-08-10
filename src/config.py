@@ -180,6 +180,8 @@ IDEAL_CLAUSE_PREMIUM_SOFT = 1.25
 IDEAL_EP_TIE_BAND = 5.0
 # Upgrade operable con cláusula cara: mínimo ΔEP por M€ de sobrecoste
 IDEAL_CLAUSE_MIN_EP_PER_M = 3.0
+# Recomendación clause_bid: mínimo upgrade_score por M€ de cláusula
+CLAUSE_MIN_UPGRADE_PER_M = 5.0
 # Hist quality mínima (0–100) para titular sin hist_ok (evita techo EP 42 basura)
 IDEAL_STARTER_HIST_MIN = 35.0
 # Primaries del mercado diario que pueden exigir ventas (máx en cola/funding del día)
