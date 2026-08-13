@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-13T07:49:23.544679+00:00",
+  "generated_at": "2026-08-13T08:53:14.809134+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -638,7 +638,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 90 · 10,035,000 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-13T07:49:23.510262+00:00"
+      "added_at": "2026-08-13T07:49:23.262990+00:00"
     },
     {
       "slot": "GK2",
@@ -662,7 +662,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 10 · 205,000 € · buy · bench · tándem mismo club · Δ -12%",
-      "added_at": "2026-08-13T07:49:23.510271+00:00"
+      "added_at": "2026-08-13T07:49:23.262998+00:00"
     },
     {
       "slot": "DF1",
@@ -686,7 +686,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 92 · 7,421,000 € · keep · starter · Δ 5%",
-      "added_at": "2026-08-13T07:49:23.514214+00:00"
+      "added_at": "2026-08-13T07:49:23.267461+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 89 · 10,371,000 € · buy · starter · Δ 0%",
-      "added_at": "2026-08-13T07:49:23.515171+00:00"
+      "added_at": "2026-08-13T07:49:23.268623+00:00"
     },
     {
       "slot": "DF3",
@@ -782,7 +782,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 72 · 1,398,000 € · buy · starter · Δ 13%",
-      "added_at": "2026-08-13T07:49:23.529058+00:00"
+      "added_at": "2026-08-13T08:53:14.795541+00:00"
     },
     {
       "slot": "DF6",
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 628,000 € · buy · bench · Δ 11%",
-      "added_at": "2026-08-13T07:49:23.542695+00:00"
+      "added_at": "2026-08-13T07:49:23.284948+00:00"
     },
     {
       "slot": "FW1",
@@ -1530,133 +1530,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "GK1",
-      "position": "GK",
-      "role": "starter",
-      "player_id": "64542",
-      "name": "Robin Roefs",
-      "team": "Sunderland",
-      "team_id": "65",
-      "ep_score": 89.2,
-      "price": 6087000.0,
-      "status": "dropped",
-      "delta_5d": 0.0616,
-      "value_note": "rising",
-      "value_ratio": 14.65,
-      "lineup_prob": 92.0,
-      "ff_mister_points": 371.0,
-      "ff_mister_avg": 10.6,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": true,
-      "why": "EP 89 · 6,087,000 € · buy · starter · tándem mismo club · Δ 6%",
-      "added_at": "2026-08-09T12:32:10.687900+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "GK2",
-      "position": "GK",
-      "role": "bench",
-      "player_id": "68679",
-      "name": "Melker Ellborg",
-      "team": "Sunderland",
-      "team_id": "65",
-      "ep_score": 10.3,
-      "price": 160000.0,
-      "status": "dropped",
-      "delta_5d": -0.1667,
-      "value_note": "falling",
-      "value_ratio": 25.75,
-      "lineup_prob": 8.0,
-      "ff_mister_points": 36.0,
-      "ff_mister_avg": 12.0,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": true,
-      "why": "EP 10 · 160,000 € · buy · bench · tándem mismo club · Δ -17%",
-      "added_at": "2026-08-09T12:32:10.687907+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF1",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "23017",
-      "name": "Gabriel Magalhães",
-      "team": "Arsenal",
-      "team_id": "51",
-      "ep_score": 93.0,
-      "price": 19052000.0,
-      "status": "dropped",
-      "delta_5d": -0.0134,
-      "value_note": "stable",
-      "value_ratio": 4.88,
-      "lineup_prob": 94.0,
-      "ff_mister_points": 397.0,
-      "ff_mister_avg": 13.23,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 93 · 19,052,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-12T07:48:15.578798+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF4",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "28127",
-      "name": "Nathan Collins",
-      "team": "Brentford",
-      "team_id": "619",
-      "ep_score": 72.9,
-      "price": 1635000.0,
-      "status": "dropped",
-      "delta_5d": 0.1612,
-      "value_note": "rising",
-      "value_ratio": 44.59,
-      "lineup_prob": 92.0,
-      "ff_mister_points": 286.0,
-      "ff_mister_avg": 8.17,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 73 · 1,635,000 € · buy · starter · Δ 16%",
-      "added_at": "2026-08-09T12:32:10.706415+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW1",
-      "position": "FW",
-      "role": "starter",
-      "player_id": "52112",
-      "name": "Dango Ouattara",
-      "team": "Brentford",
-      "team_id": "619",
-      "ep_score": 66.1,
-      "price": 1764000.0,
-      "status": "dropped",
-      "delta_5d": 0.1659,
-      "value_note": "rising",
-      "value_ratio": 37.47,
-      "lineup_prob": 84.0,
-      "ff_mister_points": 312.0,
-      "ff_mister_avg": 9.75,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 66 · 1,764,000 € · buy · starter · Δ 17%",
-      "added_at": "2026-08-09T12:32:10.723439+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 497000.0
