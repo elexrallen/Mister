@@ -3802,17 +3802,111 @@ body[data-view="today"] #tactical-kpis .kpi-value {
   text-transform: uppercase;
 }
 
-@media (max-width: 374px) {
+/* Plan de hoy — móvil/tablet: sin solapes en el hero + scroll de acciones */
+@media (max-width: 1023.98px) {
+  body[data-view="today"] #daily-plan-panel .action-queue-list {
+    max-height: min(22rem, 46dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-gutter: stable;
+  }
+
   .command-hero {
-    grid-template-columns: minmax(0, 1.2fr) minmax(6.5rem, 0.8fr);
+    min-height: 18.5rem;
   }
 
   .command-copy {
-    padding-left: 0.75rem;
+    padding: 0.9rem 0.4rem 0.95rem 0.9rem;
+    background: linear-gradient(
+      90deg,
+      #0d151e 0%,
+      #0d151e 58%,
+      rgba(13, 21, 30, 0.82) 78%,
+      rgba(13, 21, 30, 0.35) 100%
+    );
+  }
+
+  .command-copy h3 {
+    max-width: 100%;
+    font-size: clamp(1.65rem, 8vw, 2.7rem);
+  }
+
+  .command-reason {
+    max-width: 100%;
+  }
+
+  .command-cta {
+    width: 100%;
+    max-width: none;
+  }
+
+  .command-visual {
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .command-visual::after {
+    right: -2.2rem;
+    bottom: -2.8rem;
+    width: 9.5rem;
+    height: 9.5rem;
+  }
+
+  .tactical-player-media.is-hero {
+    inset: 2.35rem 0.35rem 0.25rem 12%;
+    overflow: hidden;
+  }
+
+  .tactical-player-media.is-hero .tactical-player-photo {
+    filter: saturate(0.95) contrast(1.06) drop-shadow(-8px 6px 12px rgba(0, 0, 0, 0.4));
+  }
+
+  .tactical-player-media.is-hero .tactical-team-logo {
+    right: 0.4rem;
+    bottom: 0.45rem;
+    width: 1.65rem;
+    height: 1.65rem;
+  }
+
+  .command-confidence {
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2.7rem;
+    height: 2.7rem;
+    font-size: 0.8rem;
+    box-shadow: 0 0 0 4px rgba(5, 8, 13, 0.5);
+  }
+
+  .tactical-action-row {
+    overflow: hidden;
+  }
+
+  .tactical-player-media.is-row {
+    overflow: hidden;
+  }
+
+  .tactical-player-media.is-row .tactical-team-logo {
+    right: 0.1rem;
+    bottom: 0.1rem;
+  }
+}
+
+@media (max-width: 374px) {
+  .command-hero {
+    grid-template-columns: minmax(0, 1.25fr) minmax(5.8rem, 0.72fr);
+  }
+
+  .command-copy {
+    padding-left: 0.7rem;
   }
 
   .command-reason {
     -webkit-line-clamp: 2;
+  }
+
+  .command-numbers {
+    gap: 0.55rem;
   }
 
   .tactical-action-row {
