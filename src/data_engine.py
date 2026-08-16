@@ -36,10 +36,16 @@ from league_rules import (
     merge_rules_into_league_cfg,
     normalize_rules,
 )
-from daily_playbook import build_daily_playbook, playbook_to_recommendations
+from daily_playbook import build_daily_playbook, playbook_to_recommendations, resolve_phase
 from external_data import enrich_players_with_external, enrich_players_with_ff_production
-from fixture_difficulty import annotate_players_with_fdr, build_team_strength
+from fixture_difficulty import (
+    annotate_players_with_fdr,
+    build_fantasy_conceded,
+    build_team_prior,
+    build_team_strength,
+)
 from expected_points import annotate_players_with_xpts
+from model_calibration import build_calibration
 from fotmob_service import enrich_players_with_fotmob
 from scrapers.ff_points import resolve_avg_scale, scale_threshold
 from competitive_actions import (
@@ -60,6 +66,7 @@ from competitive_actions import (
     resolve_hours_to_jornada,
     rival_demand_for_position,
     sells_settle_before_d1,
+    set_matchday_phase,
     solvency_strict_window,
     tag_rival_market_listings,
     trade_asset_score,
@@ -250,6 +257,24 @@ def _player_price_pairs_from_payload(payload: dict[str, Any]) -> dict[str, float
     return prices
 
 
+def build_team_name_index(
+    table: dict[str, dict[str, Any]] | None,
+    pool: list[dict[str, Any]] | None,
+) -> dict[str, str]:
+    """`{team_id: nombre}` para poder decir 'vs Barcelona' y no 'vs 178'."""
+    out: dict[str, str] = {}
+    for tid, row in (table or {}).items():
+        name = (row or {}).get("name") if isinstance(row, dict) else None
+        if tid and name:
+            out[str(tid)] = str(name)
+    for p in pool or []:
+        tid = str(p.get("team_id") or "").strip()
+        name = p.get("team")
+        if tid and name and tid not in out:
+            out[tid] = str(name)
+    return out
+
+
 def merge_matchday_sources(
     mister_md: dict[str, Any] | None,
     ff_md: dict[str, Any] | None,
@@ -324,6 +349,35 @@ def _player_points_from_payload(payload: dict[str, Any]) -> tuple[dict[str, list
     return by_gw, current
 
 
+def _player_xpts_from_payload(payload: dict[str, Any]) -> dict[str, list[float]]:
+    """id → `[xpts, p_play]` predichos hoy, para poder juzgarlos tras la jornada."""
+    out: dict[str, list[float]] = {}
+
+    def _absorb(items: Any) -> None:
+        if not isinstance(items, list):
+            return
+        for p in items:
+            if not isinstance(p, dict) or p.get("id") is None:
+                continue
+            pid = str(p["id"])
+            if pid in out or p.get("xpts") is None:
+                continue
+            try:
+                xpts = round(float(p["xpts"]), 2)
+            except (TypeError, ValueError):
+                continue
+            try:
+                p_play = round(float(p.get("xpts_p_play")), 2)
+            except (TypeError, ValueError):
+                p_play = None
+            out[pid] = [xpts, p_play] if p_play is not None else [xpts]
+
+    _absorb((payload.get("me") or {}).get("squad"))
+    _absorb(payload.get("market_opportunities"))
+    _absorb(payload.get("free_agents_top"))
+    return out
+
+
 def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = None) -> dict[str, Any]:
     """
     Snapshot slim diario: precios + puntos por jornada (no el payload completo).
@@ -340,7 +394,24 @@ def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = N
         "prices": _player_price_pairs_from_payload(payload),
         "points_by_gw": points_by_gw,
         "gw_points": gw_points,
+        "xpts": _player_xpts_from_payload(payload),
     }
+
+
+def load_history_snapshots(slug: str, days: int = 45) -> list[dict[str, Any]]:
+    """Snapshots diarios de la liga, del más antiguo al más reciente."""
+    history_dir = config.league_history_dir(slug)
+    if not history_dir.exists():
+        return []
+    out: list[dict[str, Any]] = []
+    for snap_path in sorted(history_dir.glob("*.json"))[-days:]:
+        try:
+            snap = load_json(snap_path)
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(snap, dict):
+            out.append(snap)
+    return out
 
 
 def load_points_history_for_league(slug: str, days: int = 30) -> dict[str, list[dict[str, Any]]]:
@@ -348,15 +419,8 @@ def load_points_history_for_league(slug: str, days: int = 30) -> dict[str, list[
     Histórico de puntos por jugador: `{player_id: [{date, jornada, points}]}`.
     Solo jornadas cerradas (una entrada por jornada, la última observada gana).
     """
-    history_dir = config.league_history_dir(slug)
-    if not history_dir.exists():
-        return {}
     out: dict[str, dict[Any, dict[str, Any]]] = {}
-    for snap_path in sorted(history_dir.glob("*.json"))[-days:]:
-        try:
-            snap = load_json(snap_path)
-        except Exception:  # noqa: BLE001
-            continue
+    for snap in load_history_snapshots(slug, days):
         jornada = snap.get("jornada")
         date = snap.get("date")
         for pid, pts in (snap.get("gw_points") or {}).items():
@@ -2411,7 +2475,18 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta["mister_provider"] = league_rules.get("provider")
 
     # Dificultad de rival (calendario + clasificación Mister) y puntos esperados
-    team_strength = build_team_strength(gw_bundle.get("table") if isinstance(gw_bundle.get("table"), dict) else None)
+    gw_table = gw_bundle.get("table") if isinstance(gw_bundle.get("table"), dict) else None
+    team_prior = build_team_prior(full_pool or universe)
+    fantasy_conceded = build_fantasy_conceded(
+        full_pool or universe,
+        played_opponents=(
+            gw_bundle.get("played_opponents")
+            if isinstance(gw_bundle.get("played_opponents"), dict)
+            else None
+        ),
+    )
+    team_strength = build_team_strength(gw_table, prior=team_prior, conceded=fantasy_conceded)
+    team_names = build_team_name_index(gw_table, full_pool or universe)
     scoring_rules = {
         **league_rules,
         "avg_scale": external_meta.get("ff_avg_scale") or ff_hint.get("avg_scale"),
@@ -2421,16 +2496,23 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         xpts_targets,
         strength=team_strength,
         team_schedule=gw_bundle.get("team_schedule") if isinstance(gw_bundle.get("team_schedule"), dict) else None,
+        team_names=team_names,
     )
     n_xpts = annotate_players_with_xpts(xpts_targets, league_rules=scoring_rules)
     external_meta["fdr_confidence"] = team_strength.get("confidence")
+    external_meta["fdr_source"] = team_strength.get("source")
+    external_meta["fdr_table_weight"] = team_strength.get("table_weight")
+    external_meta["fdr_prior_teams"] = team_prior.get("teams_ranked")
+    external_meta["fdr_fantasy_teams"] = len((fantasy_conceded.get("teams") or {}))
     external_meta["xpts_players"] = n_xpts
     log.info(
-        "xPts [%s]: %s jugadores (FDR %s, confianza=%s, jugadas=%s)",
+        "xPts [%s]: %s jugadores (FDR %s, fuente=%s peso_tabla=%s prior=%s equipos, jugadas=%s)",
         slug,
         n_xpts,
         n_fdr,
-        team_strength.get("confidence"),
+        team_strength.get("source"),
+        team_strength.get("table_weight"),
+        team_prior.get("teams_ranked"),
         team_strength.get("max_played"),
     )
 
@@ -2491,6 +2573,14 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         season_start=comp.get("season_start"),
     )
     diagnostico_plantilla["hours_to_jornada"] = hours_j
+    # Pegado al cierre el mercado deja de ser patrimonio y pasa a ser jornada
+    set_matchday_phase(
+        resolve_phase(
+            hours_to_jornada=hours_j,
+            matchday=matchday_early,
+            competition_phase=competition_phase,
+        )
+    )
     max_debt_me = me.get("max_debt")
     try:
         max_debt_f = float(max_debt_me) if max_debt_me is not None else None
@@ -2629,6 +2719,13 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         season_start=comp.get("season_start"),
     )
     diagnostico_plantilla["hours_to_jornada"] = hours_j
+    set_matchday_phase(
+        resolve_phase(
+            hours_to_jornada=hours_j,
+            matchday=matchday_early,
+            competition_phase=competition_phase,
+        )
+    )
 
     opportunities = annotate_market_budget_risk(
         opportunities,
@@ -2993,6 +3090,21 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     attach_mister_assets(gw_xi_advice, player_index=asset_index)
     attach_mister_assets(recommended_xi.get("players") or [], player_index=asset_index)
 
+    # ¿Acertó el xPts la jornada pasada? Sin esto los pesos se afinan a ciegas
+    calibration = build_calibration(
+        load_history_snapshots(slug),
+        names={pid: str(p.get("name") or "") for pid, p in asset_index.items() if p.get("name")},
+        current_jornada=(matchday_meta or {}).get("jornada"),
+    )
+    log.info(
+        "Calibración xPts [%s]: %s (n=%s sesgo=%s mae=%s)",
+        slug,
+        calibration.get("status"),
+        calibration.get("sample"),
+        calibration.get("bias"),
+        calibration.get("mae"),
+    )
+
     playbook = build_daily_playbook(
         hours_to_jornada=hours_j,
         matchday=matchday_meta,
@@ -3002,6 +3114,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         diagnostico=diagnostico_plantilla,
         me=me,
         league_rules=league_rules,
+        calibration=calibration,
     )
     recommendations = playbook_to_recommendations(playbook)
     squad_notes = build_squad_notes(me, diagnosis, diagnostico_plantilla)
@@ -3138,6 +3251,13 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "cache_used": bool(external_meta.get("cache_used")),
                 "note": external_meta.get("note"),
             },
+            "fixture_difficulty": {
+                "source": external_meta.get("fdr_source"),
+                "table_weight": external_meta.get("fdr_table_weight"),
+                "prior_teams": external_meta.get("fdr_prior_teams"),
+                "fantasy_teams": external_meta.get("fdr_fantasy_teams"),
+                "confidence": external_meta.get("fdr_confidence"),
+            },
             "rivals_squads": bool(live_meta.get("rivals_squads_ok")),
             "clauses": clause_meta.get("clauses", "skip"),
             "clauses_known": clause_meta.get("known", 0),
@@ -3255,6 +3375,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "actions": ["buy_now", "clause_bid", "wait", "avoid", "sell", "scout"],
             },
             "history_retention_days": config.HISTORY_RETENTION_DAYS,
+            "model_calibration": calibration,
             "live_meta": live_meta,
             "free_agents_note": (
                 (

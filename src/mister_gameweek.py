@@ -384,6 +384,45 @@ def build_standings_table(comp_data: dict[str, Any] | None) -> dict[str, dict[st
     return out
 
 
+def build_played_opponents(
+    comp_data: dict[str, Any] | None,
+    *,
+    before_jornada: int | None = None,
+) -> dict[str, list[str]]:
+    """
+    Rivales ya disputados por equipo, en orden de jornada.
+
+    Sirve para saber contra quién sumó cada jugador su racha de puntos y, con
+    eso, cuántos puntos fantasy concede realmente cada equipo.
+    """
+    games_by_gw = (comp_data or {}).get("games")
+    if not isinstance(games_by_gw, dict):
+        return {}
+    try:
+        gw_keys = sorted(games_by_gw, key=lambda k: int(k))
+    except (TypeError, ValueError):
+        return {}
+
+    out: dict[str, list[str]] = {}
+    for key in gw_keys:
+        try:
+            jornada = int(key)
+        except (TypeError, ValueError):
+            continue
+        if before_jornada is not None and jornada >= before_jornada:
+            break
+        for game in games_by_gw.get(key) or []:
+            if not isinstance(game, dict):
+                continue
+            home_id = str(game.get("id_home") or "")
+            away_id = str(game.get("id_away") or "")
+            if not home_id or not away_id:
+                continue
+            out.setdefault(home_id, []).append(away_id)
+            out.setdefault(away_id, []).append(home_id)
+    return out
+
+
 def build_team_schedule(
     comp_data: dict[str, Any] | None,
     *,

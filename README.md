@@ -45,9 +45,12 @@ El motor enriquece plantilla y mercado vía `src/external_data.py` + `src/scrape
 
 Sobre esa base el pipeline calcula:
 
-- `fdr` / `fdr_note` (`src/fixture_difficulty.py`): dificultad del rival derivada de los puntos que concede cada equipo en el propio pool de Mister, más localía. En pretemporada degrada a neutro.
+- `fdr` / `fdr_label` / `fdr_why` / `opponent_name` / `is_home` (`src/fixture_difficulty.py`): dificultad del rival en escala 1..5. La fuerza de cada equipo encadena clasificación real → prior de calidad de plantilla (valor del pool + media FF previa, disponible desde J1) → puntos fantasy que concede cada equipo por posición. El rival mueve hasta ±22% los puntos esperados y la localía ~5% por lado; nunca se devuelve un neutro plano si hay prior.
 - `xpts` / `xpts_floor` / `xpts_why` (`src/expected_points.py`): puntos esperados de la jornada como `p_juega × producción_base × ajuste_fdr`, escalados por el `provider` de la liga.
-- `recommended_xi` con **capitán** elegido por `xpts × (multiplicador − 1)` y desempate por probabilidad de jugar, si la liga tiene capitán activo.
+- `recommended_xi` con **capitán** elegido por `xpts × (multiplicador − 1)` y desempate por probabilidad de jugar y rival, si la liga tiene capitán activo.
+- `risky_slots[]` y `formation_switch`: huecos del once que un jugador con poca probabilidad de jugar convertiría en cero, y la formación alternativa que los evita.
+- `meta.model_calibration` (`src/model_calibration.py`): sesgo y error medio del xPts contra los puntos reales de las jornadas ya cerradas, desglosado por tramo de probabilidad de jugar, más los mayores aciertos y desvíos del último ciclo. El snapshot diario guarda la predicción para poder juzgarla después.
+- Mercado según fase: en `confirmacion` / `visperas` / `dia_partido` el `priority_score_buy` dobla el peso del xPts y reduce a la mitad el de objetivo del board, porque a esas horas se ficha para puntuar el sábado y no para revender en tres semanas.
 - `recommendations[]` y `squad_notes[]` desde `src/daily_playbook.py`.
 
 ### Motor competitivo

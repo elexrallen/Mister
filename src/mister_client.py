@@ -1495,6 +1495,7 @@ def fetch_gameweek_bundle(
         "my_lineup": {},
         "table": {},
         "team_schedule": {},
+        "played_opponents": {},
         "status": "unavailable",
     }
     if not gw_id:
@@ -1543,6 +1544,9 @@ def fetch_gameweek_bundle(
         jornada = (bundle.get("matchday") or {}).get("jornada")
         bundle["team_schedule"] = mister_gameweek.build_team_schedule(
             comp, from_jornada=jornada if isinstance(jornada, int) else None
+        )
+        bundle["played_opponents"] = mister_gameweek.build_played_opponents(
+            comp, before_jornada=jornada if isinstance(jornada, int) else None
         )
     return bundle
 

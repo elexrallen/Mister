@@ -506,6 +506,180 @@ footer,
   color: #f1f5f9;
 }
 
+.matchday-xi-card.is-risk {
+  border-color: rgba(244, 63, 94, 0.35);
+  background: rgba(244, 63, 94, 0.07);
+}
+
+.matchday-cap-mark {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: #0f172a;
+  background: #fbbf24;
+}
+
+.matchday-captain {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.65rem;
+  background: rgba(251, 191, 36, 0.07);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+}
+
+.matchday-captain-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.matchday-captain-kicker {
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fbbf24;
+}
+
+.matchday-captain-name {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.matchday-captain-gain {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+.matchday-captain-why,
+.matchday-captain-alt {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #94a3b8;
+}
+
+.matchday-risk {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.65rem;
+  background: rgba(244, 63, 94, 0.07);
+  border: 1px solid rgba(244, 63, 94, 0.28);
+}
+
+.matchday-risk-title {
+  margin: 0;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #fb7185;
+}
+
+.matchday-risk-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.matchday-risk-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+}
+
+.matchday-risk-list .matchday-why {
+  grid-column: 1 / -1;
+}
+
+.matchday-risk-switch {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #cbd5e1;
+}
+
+.matchday-metrics {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.matchday-xpts-chip {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--acid, #a3e635);
+  white-space: nowrap;
+}
+
+.matchday-stat-value.is-alert {
+  color: #fb7185;
+}
+
+.fixture-chip {
+  display: inline-block;
+  justify-self: start;
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.68rem;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fixture-chip.is-easy {
+  color: #86efac;
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.28);
+}
+
+.fixture-chip.is-hard {
+  color: #fda4af;
+  background: rgba(244, 63, 94, 0.1);
+  border-color: rgba(244, 63, 94, 0.28);
+}
+
+.gw-cell {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: start;
+}
+
+.playbook-links {
+  margin: 0.25rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.playbook-link {
+  padding: 0.08rem 0.4rem;
+  border-radius: 0.35rem;
+  font-size: 0.7rem;
+  color: #e2e8f0;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+}
+
 .matchday-bench {
   list-style: none;
   margin: 0;

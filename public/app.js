@@ -38,6 +38,7 @@
   const SORT_OPTIONS = {
     market: [
       { key: "priority", label: "Prioridad" },
+      { key: "xpts", label: "Puntos esperados" },
       { key: "price", label: "Precio" },
       { key: "bid", label: "Puja rec." },
       { key: "mister", label: "Media Mister" },
@@ -103,6 +104,7 @@
         return v != null ? Number(v) : -1;
       },
       category: (p) => String(p.category_label || p.category || "").toLowerCase(),
+      xpts: (p) => (p.xpts != null ? Number(p.xpts) : -1),
     },
     squad: {
       name: (p) => String(p.name || "").toLowerCase(),
@@ -741,15 +743,21 @@
       else bits.push("sin previa FF completa — usa titularidad habitual");
       summary.textContent = bits.join(" · ");
     }
-    const sig = (rec.summary && rec.summary.signals) || {};
+    const sum = rec.summary || {};
     const elForm = document.getElementById("matchday-formation");
+    const elXpts = document.getElementById("matchday-xpts");
+    const elRisk = document.getElementById("matchday-risk-count");
     const elStart = document.getElementById("matchday-start");
-    const elDoubt = document.getElementById("matchday-doubt");
-    const elSit = document.getElementById("matchday-sit");
     if (elForm) elForm.textContent = String(form);
-    if (elStart) elStart.textContent = String(xi.length);
-    if (elDoubt) elDoubt.textContent = String(sig.doubt || 0);
-    if (elSit) elSit.textContent = String((rec.summary && rec.summary.with_gw_signal) || 0);
+    if (elXpts) {
+      elXpts.textContent =
+        sum.xpts_total != null ? Number(sum.xpts_total).toFixed(1) : "—";
+    }
+    if (elRisk) {
+      elRisk.textContent = String(sum.risk_slots || 0);
+      elRisk.classList.toggle("is-alert", Number(sum.risk_slots || 0) > 0);
+    }
+    if (elStart) elStart.textContent = `${sum.with_gw_signal || 0}/${xi.length}`;
 
     const signalBadge = (sigName) => {
       if (sigName === "start") return `<span class="badge badge-mint">Titular</span>`;
@@ -768,6 +776,80 @@
         });
       });
     };
+
+    const capEl = document.getElementById("matchday-captain");
+    if (capEl) {
+      const cap = rec.captain;
+      if (!rec.captain_enabled || !cap) {
+        capEl.hidden = true;
+        capEl.innerHTML = "";
+      } else {
+        capEl.hidden = false;
+        const currentId = (rec.current && rec.current.captain_id) || null;
+        const isSet = String(currentId || "") === String(cap.player_id || "");
+        const alt = cap.alternative;
+        const mult = cap.multiplier ? `x${cap.multiplier}` : "x2";
+        const gain =
+          cap.expected_gain != null ? `+${Number(cap.expected_gain).toFixed(1)} pts` : "";
+        const status = isSet
+          ? `<span class="badge badge-mint">Ya puesto</span>`
+          : `<span class="badge badge-warning">Cambiar en Mister</span>`;
+        const altHtml = alt
+          ? `<p class="matchday-captain-alt">Alternativa: <button type="button" class="player-link" data-player-id="${escapeHtml(
+              String(alt.player_id || "")
+            )}">${escapeHtml(alt.name || "—")}</button>${
+              alt.expected_gain != null
+                ? ` · +${Number(alt.expected_gain).toFixed(1)} pts`
+                : ""
+            }</p>`
+          : "";
+        capEl.innerHTML = `<div class="matchday-captain-head">
+            <span class="matchday-captain-kicker">Capitán ${escapeHtml(mult)}</span>
+            ${status}
+          </div>
+          <p class="matchday-captain-name">
+            <button type="button" class="player-link" data-player-id="${escapeHtml(
+              String(cap.player_id || "")
+            )}">${escapeHtml(cap.name || "—")}</button>
+            <span class="matchday-captain-gain">${escapeHtml(gain)}</span>
+          </p>
+          <p class="matchday-captain-why">${escapeHtml(cap.why || "")}</p>
+          ${altHtml}`;
+        bindPlayerClicks(capEl);
+      }
+    }
+
+    const riskEl = document.getElementById("matchday-risk");
+    if (riskEl) {
+      const risky = Array.isArray(rec.risky_slots) ? rec.risky_slots : [];
+      if (!risky.length) {
+        riskEl.hidden = true;
+        riskEl.innerHTML = "";
+      } else {
+        riskEl.hidden = false;
+        const switchInfo = rec.formation_switch;
+        const items = risky
+          .map(
+            (r) => `<li>
+              <span class="badge badge-baja-ext">${escapeHtml(r.position || "")}</span>
+              <button type="button" class="player-link" data-player-id="${escapeHtml(
+                String(r.player_id || "")
+              )}">${escapeHtml(r.name || "—")}</button>
+              <span class="matchday-why text-xs text-slate-400">${escapeHtml(
+                r.reason || ""
+              )}</span>
+            </li>`
+          )
+          .join("");
+        const switchHtml = switchInfo
+          ? `<p class="matchday-risk-switch">${escapeHtml(switchInfo.why || "")}</p>`
+          : "";
+        riskEl.innerHTML = `<p class="matchday-risk-title">${risky.length} hueco(s) con cero probable</p>
+          <ul class="matchday-risk-list">${items}</ul>
+          ${switchHtml}`;
+        bindPlayerClicks(riskEl);
+      }
+    }
 
     const xiEl = document.getElementById("matchday-xi");
     if (xiEl) {
@@ -788,12 +870,22 @@
                 r.prob != null ? `${Math.round(Number(r.prob))}%` : "—";
               const src =
                 r.prob_source === "gw" ? "FF" : r.prob_source === "season" ? "hab." : "";
-              return `<div class="matchday-xi-card">
+              const capMark = r.is_captain
+                ? `<span class="matchday-cap-mark" title="Capitán">C</span>`
+                : "";
+              const xptsChip =
+                r.xpts != null
+                  ? `<span class="matchday-xpts-chip">${Number(r.xpts).toFixed(1)} xPts</span>`
+                  : "";
+              return `<div class="matchday-xi-card${r.slot_risk ? " is-risk" : ""}">
                 ${signalBadge(r.signal)}
                 <button type="button" class="player-link" data-player-id="${escapeHtml(
                   String(r.player_id || "")
-                )}">${escapeHtml(r.name || "—")}</button>
-                <span class="matchday-prob">${prob}${src ? ` · ${src}` : ""}</span>
+                )}">${escapeHtml(r.name || "—")}</button>${capMark}
+                <span class="matchday-metrics">${xptsChip}<span class="matchday-prob">${prob}${
+                  src ? ` · ${src}` : ""
+                }</span></span>
+                ${fixtureChip(r)}
                 <span class="matchday-why text-xs text-slate-400">${escapeHtml(
                   r.why || ""
                 )}</span>
@@ -823,12 +915,13 @@
             .slice(0, 5)
             .map((r) => {
               const prob = r.prob != null ? `${Math.round(Number(r.prob))}%` : "—";
+              const xpts = r.xpts != null ? `${Number(r.xpts).toFixed(1)} xPts · ` : "";
               return `<li class="matchday-advice-item">
                 <span class="badge badge-banca">${escapeHtml(r.position || "")}</span>
                 <button type="button" class="player-link" data-player-id="${escapeHtml(
                   String(r.player_id || "")
                 )}">${escapeHtml(r.name || "—")}</button>
-                <span class="matchday-prob">${prob}</span>
+                <span class="matchday-prob">${xpts}${prob}</span>
                 <span class="matchday-why text-xs text-slate-400">${escapeHtml(
                   r.why || ""
                 )}</span>
@@ -1465,6 +1558,16 @@
     const items = (playbook.checklist || [])
       .map((c) => {
         const done = c.status === "done";
+        const links = (c.related_player_ids || [])
+          .map((id) => {
+            const p = findPlayerRecord(id);
+            if (!p) return "";
+            return `<button type="button" class="player-link playbook-link" data-player-id="${escapeHtml(
+              String(id)
+            )}">${escapeHtml(p.name || String(id))}</button>`;
+          })
+          .filter(Boolean)
+          .join("");
         return `<li class="playbook-task${done ? " is-done" : ""}">
           <span class="badge ${prioCls[c.priority] || "badge-duda"}">${escapeHtml(
             c.priority || ""
@@ -1472,6 +1575,7 @@
           <div>
             <strong>${escapeHtml(c.title || "")}</strong>
             ${c.detail ? `<p>${escapeHtml(c.detail)}</p>` : ""}
+            ${links ? `<p class="playbook-links">${links}</p>` : ""}
           </div>
         </li>`;
       })
@@ -1541,6 +1645,7 @@
     if (!plan.length) {
       box.innerHTML =
         playbookHtml + `<p class="queue-empty">Sin acciones de mercado claras hoy.</p>`;
+      bindPlayerOpenClicks(box.querySelector(".playbook"), "market");
       return;
     }
 
@@ -1855,6 +1960,7 @@
         focusPlayer(btn.getAttribute("data-focus-id"), btn.getAttribute("data-focus-tab") || "market");
       });
     });
+    bindPlayerOpenClicks(box.querySelector(".playbook"), "market");
 
     const expandBtn = document.getElementById("queue-expand-btn");
     if (expandBtn) {
@@ -1880,7 +1986,7 @@
         ? "Sin jugadores en el mercado de hoy con estos filtros."
         : "Sin resultados con estos filtros.";
     if (!rows.length) {
-      tbody.innerHTML = `<tr><td colspan="${isFixedMarket() ? 10 : 11}" class="text-slate-500">${emptyMsg}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="${isFixedMarket() ? 11 : 12}" class="text-slate-500">${emptyMsg}</td></tr>`;
       if (cards) cards.innerHTML = `<p class="empty-state">${emptyMsg}</p>`;
       return;
     }
@@ -1895,6 +2001,7 @@
           <td>${posChip(p.position)}</td>
           <td>${externalStatusBadge(p)}</td>
           <td>${signalChips(p)} ${ffAvgLine(p)}</td>
+          <td>${gameweekCell(p)}</td>
           <td class="text-slate-300 text-xs">${escapeHtml(p.category_label || p.category || "")}</td>
           <td>${formatMoney(p.price)}</td>
           <td class="${d >= 0 ? "delta-up" : "delta-down"}">${
@@ -1935,12 +2042,15 @@
               ${externalStatusBadge(p)}
               ${ffAvgLine(p)}
               ${signalChips(p)}
+              ${fixtureChip(p)}
             </div>
             <div class="player-card-stats">
               <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
               <div><div class="stat-label">${isFixedMarket() ? "Precio fichaje" : "Puja rec."}</div><div class="stat-value text-mint-400">${formatMoney(p.puja_recomendada)}</div></div>
+              <div><div class="stat-label">xPts</div><div class="stat-value">${
+                p.xpts != null ? Number(p.xpts).toFixed(1) : "—"
+              }</div></div>
               <div><div class="stat-label">Δ / tendencia</div><div class="stat-value ${d >= 0 ? "delta-up" : "delta-down"}">${deltaLabel}</div></div>
-              <div><div class="stat-label">FotMob</div><div class="stat-value">${fotmobCell(p)}</div></div>
             </div>
           </article>`;
         })
@@ -2411,6 +2521,34 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  // "vs Barcelona · fuera · FDR 4.8": el partido concreto, no un número suelto
+  function fixtureChip(row) {
+    const r = row || {};
+    const rival = r.opponent_name || r.opponent || r.gw_opponent;
+    const fdr = r.fdr != null ? Number(r.fdr) : null;
+    if (!rival && fdr == null) return "";
+    const where = r.is_home === true ? "casa" : r.is_home === false ? "fuera" : "";
+    const tone = fdr == null ? "" : fdr <= 2.3 ? " is-easy" : fdr >= 3.7 ? " is-hard" : "";
+    const bits = [];
+    if (rival) bits.push(`vs ${rival}`);
+    if (where) bits.push(where);
+    if (fdr != null) bits.push(`FDR ${fdr.toFixed(1)}`);
+    return `<span class="fixture-chip${tone}" title="${escapeHtml(
+      r.fdr_why || ""
+    )}">${escapeHtml(bits.join(" · "))}</span>`;
+  }
+
+  // Celda de jornada: cuánto se espera de él y contra quién juega
+  function gameweekCell(p) {
+    const xpts =
+      p && p.xpts != null
+        ? `<span class="matchday-xpts-chip">${Number(p.xpts).toFixed(1)} xPts</span>`
+        : "";
+    const chip = fixtureChip(p);
+    if (!xpts && !chip) return `<span class="text-slate-600">—</span>`;
+    return `<div class="gw-cell">${xpts}${chip}</div>`;
   }
 
   function playerMonogram(name) {

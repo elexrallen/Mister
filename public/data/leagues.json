@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T02:15:51.923330+00:00",
+  "generated_at": "2026-08-16T02:59:33.413223+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,7 +10,7 @@
       "id_competition": 1,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-16T02:10:55.752649+00:00",
+      "generated_at": "2026-08-16T02:57:07.498974+00:00",
       "path": "leagues/mundo-deportivo-7412/latest_data.json",
       "balance": 50000000,
       "rank": 51,
@@ -57,7 +57,7 @@
       "id_competition": 1,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-16T02:11:42.349406+00:00",
+      "generated_at": "2026-08-16T02:57:42.962947+00:00",
       "path": "leagues/md-con-capitan-0216/latest_data.json",
       "balance": 50000000,
       "rank": 51,
@@ -106,7 +106,7 @@
       "id_competition": 3,
       "season_start": "2026-08-21",
       "default": false,
-      "generated_at": "2026-08-16T02:13:43.633990+00:00",
+      "generated_at": "2026-08-16T02:58:44.690491+00:00",
       "path": "leagues/premier/latest_data.json",
       "balance": 497000,
       "rank": 50,
@@ -157,7 +157,7 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-16T02:15:51.726595+00:00",
+      "generated_at": "2026-08-16T02:59:33.161170+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
       "balance": 12350842,
       "rank": 4,

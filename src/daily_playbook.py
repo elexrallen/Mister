@@ -116,6 +116,7 @@ def build_daily_playbook(
     diagnostico: dict[str, Any] | None = None,
     me: dict[str, Any] | None = None,
     league_rules: dict[str, Any] | None = None,
+    calibration: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Fase del día + checklist accionable, con el porqué de cada punto."""
     md = matchday or {}
@@ -142,6 +143,7 @@ def build_daily_playbook(
         *,
         priority: str = "Media",
         status: str = "todo",
+        related: list[Any] | None = None,
     ) -> None:
         checklist.append(
             {
@@ -150,6 +152,7 @@ def build_daily_playbook(
                 "detail": detail,
                 "priority": priority,
                 "status": status,
+                "related_player_ids": [str(pid) for pid in (related or []) if pid],
             }
         )
 
@@ -169,13 +172,56 @@ def build_daily_playbook(
         )
         warnings.append("El once recomendado no llega a 11 jugadores alineables.")
 
-    doubts = int((summary.get("signals") or {}).get("doubt") or 0)
-    if doubts and phase in ("confirmacion", "visperas", "dia_partido"):
+    risky = [r for r in (xi.get("risky_slots") or []) if isinstance(r, dict)]
+    if risky and phase != "post_jornada":
+        detail = "; ".join(
+            f"{r.get('name')} ({r.get('position')}): {r.get('reason')}" for r in risky[:3]
+        )
+        switch = xi.get("formation_switch") or {}
+        if switch.get("formation"):
+            detail = f"{detail}. {switch.get('why')}"
+        add(
+            "xi_ceros",
+            f"{len(risky)} hueco(s) del once con cero probable",
+            f"{detail}. Un jugador que no sale son 0 puntos: pesa más que cualquier fichaje.",
+            priority="Alta",
+            related=[r.get("player_id") for r in risky],
+        )
+        warnings.append(
+            f"{len(risky)} titular(es) del once recomendado tienen riesgo alto de no jugar."
+        )
+
+    doubts_rows = [
+        r
+        for r in (xi.get("xi") or [])
+        if isinstance(r, dict) and r.get("signal") == "doubt" and not r.get("slot_risk")
+    ]
+    if doubts_rows and phase in ("confirmacion", "visperas", "dia_partido"):
+        names = ", ".join(str(r.get("name")) for r in doubts_rows[:3])
         add(
             "xi_dudas",
-            f"{doubts} duda(s) en el once",
-            "Revisa las previas antes del cierre y sustituye a quien no aparezca confirmado.",
+            f"{len(doubts_rows)} duda(s) en el once",
+            f"{names}. Revisa las previas antes del cierre y sustituye a quien no aparezca confirmado.",
             priority="Alta" if phase != "confirmacion" else "Media",
+            related=[r.get("player_id") for r in doubts_rows],
+        )
+
+    ugly = [
+        r
+        for r in (xi.get("xi") or [])
+        if isinstance(r, dict) and (_f(r.get("fdr")) or 0.0) >= 4.2 and not r.get("slot_risk")
+    ]
+    if ugly and phase in ("confirmacion", "visperas", "dia_partido"):
+        names = ", ".join(
+            f"{r.get('name')} vs {r.get('opponent_name') or 'su rival'}" for r in ugly[:3]
+        )
+        add(
+            "xi_partido_feo",
+            f"{len(ugly)} titular(es) con partido muy exigente",
+            f"{names}. Juegan, pero el rival les recorta lo esperado: si tienes banquillo "
+            "con partido más amable, es un cambio barato.",
+            priority="Media",
+            related=[r.get("player_id") for r in ugly],
         )
 
     captain = xi.get("captain")
@@ -188,21 +234,29 @@ def build_daily_playbook(
                 "No hay puntos esperados suficientes para elegir capitán con criterio.",
                 priority="Media",
             )
-        elif str(current_cap or "") == str(captain.get("player_id") or ""):
-            add(
-                "capitan_ok",
-                f"Capitán: {captain.get('name')}",
-                captain.get("why") or "",
-                priority="Baja",
-                status="done",
-            )
         else:
-            add(
-                "capitan",
-                f"Poner capitán a {captain.get('name')}",
-                captain.get("why") or "",
-                priority="Alta" if phase in ("visperas", "dia_partido") else "Media",
-            )
+            alt = captain.get("alternative") or {}
+            detail = captain.get("why") or ""
+            if alt.get("name"):
+                detail = f"{detail}. Alternativa: {alt.get('name')} (+{alt.get('expected_gain')})"
+            related = [captain.get("player_id"), alt.get("player_id")]
+            if str(current_cap or "") == str(captain.get("player_id") or ""):
+                add(
+                    "capitan_ok",
+                    f"Capitán: {captain.get('name')}",
+                    detail,
+                    priority="Baja",
+                    status="done",
+                    related=related,
+                )
+            else:
+                add(
+                    "capitan",
+                    f"Poner capitán a {captain.get('name')}",
+                    detail,
+                    priority="Alta" if phase in ("visperas", "dia_partido") else "Media",
+                    related=related,
+                )
 
     # --- Dinero: en negativo no se puntúa ---
     if balance < 0 and phase in ("confirmacion", "visperas", "dia_partido"):
@@ -224,6 +278,7 @@ def build_daily_playbook(
                 f"{len(buys)} fichaje(s) en cola",
                 f"{names}. Es la parte del ciclo donde el precio aún no lleva prima de víspera.",
                 priority="Alta",
+                related=[a.get("player_id") or a.get("id") for a in buys],
             )
         if sells:
             names = ", ".join(str(a.get("name")) for a in sells[:3])
@@ -233,14 +288,17 @@ def build_daily_playbook(
                 f"{names}. El dinero de una venta tarda un ciclo en estar disponible: "
                 "listar hoy es poder fichar pasado mañana.",
                 priority="Media",
+                related=[a.get("player_id") or a.get("id") for a in sells],
             )
     elif phase == "confirmacion":
         if buys:
+            names = ", ".join(str(a.get("name")) for a in buys[:3])
             add(
                 "fichar_ultima_llamada",
                 "Última llamada para fichar",
-                f"{len(buys)} objetivo(s) en cola. A partir de aquí el mercado sube por las previas.",
+                f"{names}. A partir de aquí el mercado sube por las previas.",
                 priority="Media",
+                related=[a.get("player_id") or a.get("id") for a in buys],
             )
         add(
             "revisar_previas",
@@ -281,11 +339,37 @@ def build_daily_playbook(
             )
 
     if avoid and phase != "jornada_en_curso":
+        names = ", ".join(str(a.get("name")) for a in avoid[:3])
         add(
             "evitar",
             f"{len(avoid)} jugador(es) marcados como evitar",
-            "Lesión, sanción o alerta de titularidad: no los fiches aunque estén baratos.",
+            f"{names}. Lesión, sanción o alerta de titularidad: no los fiches aunque estén baratos.",
             priority="Baja",
+            related=[a.get("player_id") or a.get("id") for a in avoid],
+        )
+
+    # --- Balance del ciclo cerrado: ¿acertó el modelo? ---
+    last_closed = (calibration or {}).get("last_closed") or {}
+    if last_closed and phase in ("post_jornada", "ventana_compra"):
+        hits = last_closed.get("hits") or []
+        misses = (last_closed.get("overestimated") or []) + (
+            last_closed.get("underestimated") or []
+        )
+        misses.sort(key=lambda r: -abs(_f(r.get("error")) or 0.0))
+        detail = (calibration or {}).get("reading") or ""
+        if misses:
+            worst = ", ".join(
+                f"{m.get('name')} ({m.get('xpts')} esperados vs {m.get('real')} reales)"
+                for m in misses[:3]
+            )
+            detail = f"{detail}. Los mayores desvíos: {worst}"
+        add(
+            "balance_jornada",
+            f"Balance J{last_closed.get('jornada')}: error medio {last_closed.get('mae')} pts",
+            detail,
+            priority="Baja",
+            status="done",
+            related=[r.get("player_id") for r in (misses[:3] + hits[:3])],
         )
 
     # --- Estructura de plantilla ---
@@ -316,6 +400,17 @@ def build_daily_playbook(
         "gameweek_status": md.get("gameweek_status"),
         "checklist": checklist,
         "warnings": warnings,
+        "model_error": (
+            {
+                "status": (calibration or {}).get("status"),
+                "bias": (calibration or {}).get("bias"),
+                "mae": (calibration or {}).get("mae"),
+                "sample": (calibration or {}).get("sample"),
+                "reading": (calibration or {}).get("reading"),
+            }
+            if calibration
+            else None
+        ),
         "counts": {
             "buys": len(buys),
             "sells": len(sells),
@@ -342,7 +437,7 @@ def playbook_to_recommendations(playbook: dict[str, Any]) -> list[dict[str, Any]
                 "context": f"{phase_label} · {playbook.get('countdown_label')}",
                 "status": item.get("status") or "todo",
                 "suggested_action": None,
-                "related_player_ids": [],
+                "related_player_ids": item.get("related_player_ids") or [],
             }
         )
     return out

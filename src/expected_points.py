@@ -197,7 +197,10 @@ def expected_points(
 
     why = f"{p_play * 100:.0f}% jugar ({play_why}) x {base:.1f} pts/partido ({base_why})"
     if abs(fdr_mult - 1.0) >= 0.01:
-        why = f"{why} x {fdr_mult:.2f} rival"
+        rival = player.get("opponent_name") or "rival"
+        is_home = player.get("is_home")
+        where = " en casa" if is_home is True else (" fuera" if is_home is False else "")
+        why = f"{why} x {fdr_mult:.2f} vs {rival}{where}"
 
     return {
         "xpts": round(xpts, 2),

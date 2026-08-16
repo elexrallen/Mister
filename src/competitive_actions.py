@@ -798,6 +798,45 @@ def _xi_play_score(p: dict[str, Any]) -> tuple:
     return (score, play, signal, gw, lp, injured)
 
 
+# Probabilidad de jugar por debajo de la cual alinear a alguien es asumir un cero
+XI_RISK_P_PLAY = 0.45
+
+
+def _play_probability(item: dict[str, Any]) -> float | None:
+    """Probabilidad de jugar 0–1 del candidato, con la mejor señal disponible."""
+    try:
+        raw = item["player"].get("xpts_p_play")
+        if raw is not None:
+            return max(0.0, min(1.0, float(raw)))
+    except (TypeError, ValueError):
+        pass
+    for value in (item.get("gw"), item.get("lp")):
+        try:
+            if value is not None:
+                return max(0.0, min(1.0, float(value) / 100.0))
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _slot_risk(item: dict[str, Any]) -> tuple[bool, str | None]:
+    """
+    Un hueco es riesgo declarado cuando el que lo ocupa probablemente no juegue.
+    Preferimos decirlo a vender el once como cerrado: un cero cuesta más que
+    cualquier afinado de puntos esperados.
+    """
+    if item["injured"]:
+        return True, "Lesionado o sancionado: cero casi seguro"
+    if item["signal"] == "out":
+        return True, "Descartado en la previa de la jornada"
+    prob = _play_probability(item)
+    if prob is None:
+        return True, "Sin señal de titularidad: no sabemos si juega"
+    if prob < XI_RISK_P_PLAY:
+        return True, f"Solo {prob * 100:.0f}% de jugar"
+    return False, None
+
+
 def pick_captain(
     xi: list[dict[str, Any]],
     *,
@@ -833,9 +872,15 @@ def pick_captain(
             gain *= 0.5  # riesgo de cero al cuadrado
         scored.append((gain, p_play if p_play is not None else 0.0, row))
 
+    # Nunca capitanear un hueco de riesgo si hay alguien que sí va a jugar
+    safe = [t for t in scored if not t[2].get("slot_risk")]
+    if safe:
+        scored = safe
+
     if not scored:
         return None
-    scored.sort(key=lambda t: (-t[0], -t[1]))
+    # A ganancia igual manda quien seguro juega y, después, el partido más amable
+    scored.sort(key=lambda t: (-t[0], -t[1], -(_f(t[2], "fdr_multiplier") or 1.0)))
     gain, p_play, best = scored[0]
     alt = scored[1][2] if len(scored) > 1 else None
 
@@ -843,6 +888,9 @@ def pick_captain(
         f"+{gain:.1f} pts por el x{multiplier:g}"
         f" ({best.get('xpts')} esperados, {p_play * 100:.0f}% de jugar)"
     )
+    if best.get("opponent_name"):
+        where = "en casa" if best.get("is_home") else ("fuera" if best.get("is_home") is False else "")
+        why = f"{why} vs {best['opponent_name']}{(' ' + where) if where else ''}"
     return {
         "player_id": best.get("player_id"),
         "name": best.get("name"),
@@ -862,6 +910,67 @@ def pick_captain(
             }
             if alt
             else None
+        ),
+    }
+
+
+def _better_formation(
+    *,
+    risky_now: int,
+    current_shape: dict[str, int],
+    fill: Any,
+    row_out: Any,
+    current_rows: list[dict[str, Any]],
+    target: int,
+) -> dict[str, Any] | None:
+    """
+    Si el once obliga a alinear ceros probables, buscar una formación válida de
+    Mister que los evite tirando de otra línea. Devuelve None si no mejora.
+    """
+    if risky_now <= 0:
+        return None
+    seen: set[tuple] = {tuple(sorted(current_shape.items()))}
+    best: tuple | None = None
+    for name in getattr(config, "IDEAL_FORMATIONS", ()) or ():
+        cand_shape = _parse_formation(name)
+        key = tuple(sorted(cand_shape.items()))
+        if key in seen:
+            continue
+        seen.add(key)
+        rows = [row_out(item, slot=slot, role="xi") for slot, item in fill(cand_shape)]
+        if len(rows) < target:
+            continue
+        risk = sum(1 for r in rows if r.get("slot_risk"))
+        if risk >= risky_now:
+            continue
+        xpts = sum(float(r.get("xpts") or 0) for r in rows)
+        rank = (risk, -xpts)
+        if best is None or rank < best[0]:
+            best = (rank, name, rows, risk, xpts)
+    if not best:
+        return None
+
+    _, name, rows, risk, xpts = best
+
+    def _brief(r: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "player_id": r.get("player_id"),
+            "name": r.get("name"),
+            "position": r.get("position"),
+        }
+
+    current_ids = {str(r.get("player_id")) for r in current_rows}
+    new_ids = {str(r.get("player_id")) for r in rows}
+    return {
+        "formation": name,
+        "risk_slots_now": risky_now,
+        "risk_slots_after": risk,
+        "xpts_after": round(xpts, 2),
+        "adds": [_brief(r) for r in rows if str(r.get("player_id")) not in current_ids][:4],
+        "drops": [_brief(r) for r in current_rows if str(r.get("player_id")) not in new_ids][:4],
+        "why": (
+            f"Con {name} bajas de {risky_now} a {risk} hueco(s) de riesgo "
+            "tirando de una línea con más fondo."
         ),
     }
 
@@ -904,7 +1013,14 @@ def build_recommended_gw_xi(
     for row in scored:
         by_pos[row["position"]].append(row)
     for pos in by_pos:
-        by_pos[pos].sort(key=lambda x: (-x["score"], -float(x["gw"] or x["lp"] or 0)))
+        # A xPts iguales, rival blando y local delante
+        by_pos[pos].sort(
+            key=lambda x: (
+                -x["score"],
+                -float(x["player"].get("fdr_multiplier") or 1.0),
+                -float(x["gw"] or x["lp"] or 0),
+            )
+        )
 
     picked_ids: set[str] = set()
     xi: list[dict[str, Any]] = []
@@ -928,10 +1044,11 @@ def build_recommended_gw_xi(
             why = f"Titularidad habitual {lp:.0f}% (sin previa FF)"
         else:
             why = "Sin % — mejor disponible en plantilla"
-        if signal == "doubt" and role == "xi":
+        risk, risk_reason = _slot_risk(item) if role == "xi" else (False, None)
+        if risk and risk_reason:
+            why = f"{risk_reason} · {why}"
+        elif signal == "doubt" and role == "xi":
             why = f"Duda · {why}"
-        elif signal == "sit" and role == "xi":
-            why = f"Riesgo bajo % · {why}"
         return {
             "slot": slot,
             "player_id": p.get("id"),
@@ -940,9 +1057,13 @@ def build_recommended_gw_xi(
             "team": p.get("team"),
             "role": role,
             "signal": signal,
+            "slot_risk": risk,
+            "risk_reason": risk_reason,
             "prob": round(gw, 0) if gw is not None else (round(lp, 0) if lp is not None else None),
             "prob_source": "gw" if gw is not None else ("season" if lp is not None else None),
-            "opponent": opponent,
+            "opponent": opponent or p.get("opponent_name"),
+            "opponent_name": p.get("opponent_name"),
+            "is_home": p.get("is_home"),
             "in_lineup": bool(p.get("in_lineup")),
             "injured": bool(item["injured"]),
             "score": round(item["score"], 1),
@@ -950,46 +1071,58 @@ def build_recommended_gw_xi(
             "xpts_floor": p.get("xpts_floor"),
             "p_play": p.get("xpts_p_play"),
             "fdr": p.get("fdr"),
+            "fdr_label": p.get("fdr_label"),
+            "fdr_multiplier": p.get("fdr_multiplier"),
+            "fdr_why": p.get("fdr_why"),
             "why": why,
             "jornada": jornada,
         }
 
-    # 1) Cubrir cupos con mejores por posición (evitar out/lesión si hay alternativa)
-    for pos in ("GK", "DF", "MF", "FW"):
-        need = int(shape.get(pos, 0))
-        pool = by_pos.get(pos) or []
-        preferred = [x for x in pool if not x["injured"] and x["signal"] != "out"]
-        fallback = [x for x in pool if x not in preferred]
-        ordered = preferred + fallback
-        n = 0
-        for item in ordered:
-            if n >= need:
-                break
-            pid = str(item["player"].get("id") or "")
-            if not pid or pid in picked_ids:
-                continue
-            n += 1
-            picked_ids.add(pid)
-            xi.append(_row_out(item, slot=f"{pos}{n}", role="xi"))
+    def _fill(shape_map: dict[str, int]) -> list[tuple[str, dict[str, Any]]]:
+        """Reparte los cupos de una formación: sanos primero, lesionados al final."""
+        chosen: list[tuple[str, dict[str, Any]]] = []
+        used: set[str] = set()
+        for pos in ("GK", "DF", "MF", "FW"):
+            need = int(shape_map.get(pos, 0))
+            pool = by_pos.get(pos) or []
+            preferred = [x for x in pool if not x["injured"] and x["signal"] != "out"]
+            fallback = [x for x in pool if x not in preferred]
+            n = 0
+            for item in preferred + fallback:
+                if n >= need:
+                    break
+                pid = str(item["player"].get("id") or "")
+                if not pid or pid in used:
+                    continue
+                n += 1
+                used.add(pid)
+                chosen.append((f"{pos}{n}", item))
+        # Plantilla corta en una línea: completar con lo mejor que quede sano
+        target = sum(int(shape_map.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
+        if len(chosen) < target:
+            leftovers = [
+                x
+                for x in scored
+                if str(x["player"].get("id") or "") not in used and not x["injured"]
+            ]
+            leftovers.sort(key=lambda x: (-x["score"], 0 if x["position"] != "GK" else 1))
+            for item in leftovers:
+                if len(chosen) >= target:
+                    break
+                pid = str(item["player"].get("id") or "")
+                if pid in used:
+                    continue
+                used.add(pid)
+                pos = item["position"]
+                n = sum(1 for slot, _ in chosen if slot.startswith(pos)) + 1
+                chosen.append((f"{pos}{n}", item))
+        return chosen
 
-    # 2) Si faltan plazas (plantilla corta en una línea), rellenar con cualquier campo sobrante
     total_need = sum(int(shape.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
-    if len(xi) < total_need:
-        leftovers = [
-            x
-            for x in scored
-            if str(x["player"].get("id") or "") not in picked_ids and not x["injured"]
-        ]
-        leftovers.sort(key=lambda x: (-x["score"], 0 if x["position"] != "GK" else 1))
-        while len(xi) < total_need and leftovers:
-            item = leftovers.pop(0)
-            pid = str(item["player"].get("id") or "")
-            if pid in picked_ids:
-                continue
-            picked_ids.add(pid)
-            pos = item["position"]
-            n = sum(1 for r in xi if r["position"] == pos) + 1
-            xi.append(_row_out(item, slot=f"{pos}{n}", role="xi"))
+    chosen = _fill(shape)
+    for slot, item in chosen:
+        picked_ids.add(str(item["player"].get("id") or ""))
+        xi.append(_row_out(item, slot=slot, role="xi"))
 
     # Orden visual GK→DF→MF→FW
     order_pos = {"GK": 0, "DF": 1, "MF": 2, "FW": 3}
@@ -1026,6 +1159,28 @@ def build_recommended_gw_xi(
     elif formation:
         form_label = str(formation)
 
+    risky = [
+        {
+            "player_id": r.get("player_id"),
+            "name": r.get("name"),
+            "position": r.get("position"),
+            "slot": r.get("slot"),
+            "prob": r.get("prob"),
+            "p_play": r.get("p_play"),
+            "reason": r.get("risk_reason"),
+        }
+        for r in xi
+        if r.get("slot_risk")
+    ]
+    formation_switch = _better_formation(
+        risky_now=len(risky),
+        current_shape=shape,
+        fill=_fill,
+        row_out=_row_out,
+        current_rows=xi,
+        target=total_need,
+    )
+
     captain = None
     cap_rule = captain_rule if isinstance(captain_rule, dict) else {}
     if cap_rule.get("enabled"):
@@ -1053,12 +1208,16 @@ def build_recommended_gw_xi(
         "bench": bench,
         "captain": captain,
         "captain_enabled": bool(cap_rule.get("enabled")),
+        "risky_slots": risky,
+        "formation_switch": formation_switch,
         "summary": {
             "xi_count": len(xi),
             "xi_target": total_need,
             "complete": len(xi) >= total_need,
             "with_gw_signal": gw_n,
             "signals": signals,
+            "risk_slots": len(risky),
+            "safe_starters": len(xi) - len(risky),
             "xpts_total": round(total_xpts, 2) if total_xpts else None,
         },
     }
@@ -1379,8 +1538,26 @@ def wait_risk(
     return "low"
 
 
+# Fase de jornada del ciclo en curso; la fija data_engine al empezar cada liga.
+# Lejos del cierre el mercado construye patrimonio; pegado al cierre lo único
+# que importa es quién puntúa esta jornada.
+_MATCHDAY_PHASE = "ventana_compra"
+CLOSING_PHASES = ("confirmacion", "visperas", "dia_partido")
+
+
+def set_matchday_phase(phase: str | None) -> None:
+    global _MATCHDAY_PHASE
+    _MATCHDAY_PHASE = str(phase or "ventana_compra")
+
+
+def is_closing_phase() -> bool:
+    return _MATCHDAY_PHASE in CLOSING_PHASES
+
+
 def priority_score_buy(item: dict[str, Any]) -> int:
     score = 0
+    # Cerca del cierre, ser objetivo del board a tres semanas vale la mitad
+    board_w = 0.5 if is_closing_phase() else 1.0
     overstock_blocks = bool(item.get("overstocked")) and not (
         item.get("fills_coverage_gap")
         or item.get("fills_structural")
@@ -1388,11 +1565,11 @@ def priority_score_buy(item: dict[str, Any]) -> int:
     )
     # Jugador clave en mercado del día: por encima de cualquier parche
     if not overstock_blocks and item.get("is_key_market") and _is_daily_market_item(item):
-        score += 140
+        score += int(140 * board_w)
     elif not overstock_blocks and item.get("is_primary_target") and _is_daily_market_item(item):
-        score += 100
+        score += int(100 * board_w)
     elif not overstock_blocks and item.get("is_board_objective") and _is_daily_market_item(item):
-        score += 55
+        score += int(55 * board_w)
     if item.get("fills_need"):
         score += 35
     if item.get("fills_structural"):
@@ -1469,6 +1646,10 @@ def _xpts_bonus(item: dict[str, Any]) -> int:
     """
     Aporte de los puntos esperados al score de compra, normalizado a escala Mixto
     para que Premier (escala ~16) no infle el ranking.
+
+    En las fases pegadas al cierre el xPts (ya ajustado por rival y localía)
+    pasa a mandar: se compra para puntuar el sábado, no para revender en tres
+    semanas.
     """
     xpts = item.get("xpts")
     try:
@@ -1477,13 +1658,14 @@ def _xpts_bonus(item: dict[str, Any]) -> int:
         x = None
     if x is None:
         return 0
+    closing = is_closing_phase()
     scale = _avg_scale(item)
     normalized = x * (8.0 / scale) if scale else x
-    bonus = int(min(30, normalized * 4))
+    bonus = int(min(80 if closing else 30, normalized * (10 if closing else 4)))
     p_play = item.get("xpts_p_play")
     try:
         if p_play is not None and float(p_play) < 0.35:
-            bonus -= 20  # comprar a quien no va a jugar es tirar la jornada
+            bonus -= 50 if closing else 20  # comprar a quien no juega es tirar la jornada
     except (TypeError, ValueError):
         pass
     return bonus
@@ -3398,13 +3580,14 @@ def finalize_action_plan(
         if item.get("crowds_out_gaps"):
             need_boost -= 70
         daily_boost = 0
+        board_w = 0.5 if is_closing_phase() else 1.0
         if item.get("action") in ("buy_now", "wait", "avoid"):
             if _is_daily_market_item(item):
                 daily_boost = 120
                 if item.get("is_key_market"):
-                    daily_boost += 180  # clave del día por encima de parches
+                    daily_boost += int(180 * board_w)  # clave del día por encima de parches
                 elif item.get("is_primary_target"):
-                    daily_boost += 100
+                    daily_boost += int(100 * board_w)
             elif item.get("action") == "wait":
                 daily_boost = -80
         rival_boost = 0 if fixed else min(20, int(item.get("rival_demand") or 0) * 4)

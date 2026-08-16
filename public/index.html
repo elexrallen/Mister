@@ -130,18 +130,20 @@
           <span id="matchday-formation" class="matchday-stat-value">—</span>
         </div>
         <div>
-          <span class="matchday-stat-label">En once</span>
+          <span class="matchday-stat-label">xPts del once</span>
+          <span id="matchday-xpts" class="matchday-stat-value">—</span>
+        </div>
+        <div>
+          <span class="matchday-stat-label">Ceros en riesgo</span>
+          <span id="matchday-risk-count" class="matchday-stat-value">—</span>
+        </div>
+        <div>
+          <span class="matchday-stat-label">Con previa</span>
           <span id="matchday-start" class="matchday-stat-value">—</span>
         </div>
-        <div>
-          <span class="matchday-stat-label">Dudas</span>
-          <span id="matchday-doubt" class="matchday-stat-value">—</span>
-        </div>
-        <div>
-          <span class="matchday-stat-label">Señal FF</span>
-          <span id="matchday-sit" class="matchday-stat-value">—</span>
-        </div>
       </div>
+      <div id="matchday-captain" class="matchday-captain" aria-label="Capitán recomendado" hidden></div>
+      <div id="matchday-risk" class="matchday-risk" aria-label="Huecos de riesgo" hidden></div>
       <div id="matchday-xi" class="matchday-xi" aria-label="Once recomendado"></div>
       <ul id="matchday-bench" class="matchday-bench" aria-label="Alternativas banquillo"></ul>
     </section>
@@ -317,6 +319,7 @@
                 <th><button type="button" class="th-sort" data-list="market" data-key="position">Pos</button></th>
                 <th>Estado</th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="mister">Mister</button></th>
+                <th><button type="button" class="th-sort" data-list="market" data-key="xpts">Jornada</button></th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="category">Categoría</button></th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="price">Precio</button></th>
                 <th><button type="button" class="th-sort" data-list="market" data-key="delta">Δ5d</button></th>
