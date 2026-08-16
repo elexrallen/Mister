@@ -2292,11 +2292,14 @@ body {
 }
 
 .update-chip-wrap {
+  position: relative;
   grid-column: 2;
   grid-row: 1;
   flex-direction: row;
   align-items: center;
   gap: 0.35rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .update-chip {
@@ -2357,10 +2360,17 @@ body {
   position: absolute;
   top: calc(100% + 0.35rem);
   right: 0;
-  padding: 0.35rem 0.5rem;
+  left: auto;
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(18rem, calc(100vw - 2rem));
+  padding: 0.4rem 0.55rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  white-space: normal;
   background: #0a1018;
   border: 1px solid #24303d;
-  z-index: 5;
+  z-index: 40;
 }
 
 .tactical-main {

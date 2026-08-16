@@ -2843,7 +2843,8 @@
     if (wrap) wrap.classList.toggle("is-refreshing", state === "busy");
     if (btn) {
       btn.disabled = state === "busy";
-      btn.textContent = state === "busy" ? "Actualizando…" : "Actualizar";
+      const label = btn.querySelector("span");
+      if (label) label.textContent = state === "busy" ? "Actualizando…" : "Actualizar";
     }
     if (status) {
       if (!message) {
@@ -2907,7 +2908,7 @@
         await loadData(league);
         setRefreshUi(
           "error",
-          "Actualizacion manual no configurada. Define REFRESH_CONFIG_JSON en Actions y despliega el Worker (ver workers/refresh-proxy)."
+          "Actualización no configurada. Falta el Worker de refresh."
         );
         return;
       }
@@ -2962,7 +2963,8 @@
       if (wrap) wrap.classList.remove("is-refreshing");
       if (btn) {
         btn.disabled = false;
-        btn.textContent = "Actualizar";
+        const label = btn.querySelector("span");
+        if (label) label.textContent = "Actualizar";
       }
     }
   }
