@@ -3082,8 +3082,7 @@ body[data-view="squad"] #daily-plan-panel,
 body[data-view="squad"] #tactical-kpis,
 body[data-view="squad"] #today-opportunities-panel,
 body[data-view="squad"] #campaign-banner,
-body[data-view="squad"] #matchday-panel,
-body[data-view="squad"] #objectives-panel {
+body[data-view="squad"] #matchday-panel {
   display: none !important;
 }
 
