@@ -690,6 +690,22 @@ def resolve_team_label(team_id: str | None, fallback_name: str | None = None) ->
     return fb or label
 
 
+def mister_player_photo_url(player_id: str | int | None) -> str | None:
+    """URL pública estable del retrato oficial de Mister."""
+    pid = str(player_id or "").strip()
+    if not pid:
+        return None
+    return f"https://cdn-mister.mundodeportivo.com/file/cdn-common/players/{pid}.png"
+
+
+def mister_team_logo_url(team_id: str | int | None) -> str | None:
+    """URL pública estable del escudo oficial de Mister."""
+    tid = str(team_id or "").strip()
+    if not tid or tid in ("0", "1490"):
+        return None
+    return f"https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/{tid}.png"
+
+
 def parse_market_players(html: str) -> list[dict[str, Any]]:
     """
     Cards del mercado (orden real en HTML):
@@ -1224,12 +1240,16 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
     except (TypeError, ValueError):
         clause = None
     is_free = owner_id is None
+    photo_url = str(raw.get("photoUrl") or raw.get("photo_url") or "").strip()
+    team_logo_url = str(raw.get("teamLogoUrl") or raw.get("team_logo_url") or "").strip()
     return {
         "id": pid,
         "name": name,
         "position": _pos(raw.get("position")),
         "team": team_label(team_id) if team_id else "—",
         "team_id": team_id or None,
+        "photo_url": photo_url or mister_player_photo_url(pid),
+        "team_logo_url": team_logo_url or mister_team_logo_url(team_id),
         "price": value,
         "points": int(raw.get("points") or 0),
         "form": form,

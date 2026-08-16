@@ -454,21 +454,22 @@
   };
 
   function selectTab(id) {
-    document.querySelectorAll(".tab, .mobile-nav-btn").forEach((t) => {
-      const match = t.getAttribute("data-tab") === id;
+    const view = ["today", "market", "squad", "radar"].includes(id) ? id : "today";
+    document.body.dataset.view = view;
+    document.querySelectorAll(".tab, .mobile-nav-btn, .tactical-desktop-nav [data-tab]").forEach((t) => {
+      const match = t.getAttribute("data-tab") === view;
       t.classList.toggle("active", match);
       if (t.classList.contains("tab")) {
         t.setAttribute("aria-selected", match ? "true" : "false");
       }
     });
     document.querySelectorAll(".tab-panel").forEach((panel) => {
-      const match = panel.id === `tab-${id}`;
+      const match = panel.id === `tab-${view}`;
       panel.classList.toggle("active", match);
       panel.hidden = !match;
     });
-    const browse = document.getElementById("browse-section");
-    if (browse && window.matchMedia("(max-width: 767px)").matches) {
-      browse.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   }
 
@@ -1234,6 +1235,227 @@
     }
   }
 
+  const TACTICAL_ACTIONS = {
+    buy_now: { label: "Fichar", verb: "Puja por", cls: "is-buy" },
+    clause_bid: { label: "Cláusula", verb: "Ve a por", cls: "is-buy" },
+    sell: { label: "Vender", verb: "Vende a", cls: "is-sell" },
+    avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
+    wait: { label: "Esperar", verb: "Espera con", cls: "is-wait" },
+    scout: { label: "Vigilar", verb: "Sigue a", cls: "is-scout" },
+  };
+
+  function tacticalRecord(item) {
+    const source = findPlayerRecord(item && (item.player_id || item.id)) || {};
+    return {
+      ...source,
+      ...item,
+      team: item.team || source.team,
+      team_id: item.team_id || source.team_id,
+      photo_url: item.photo_url || source.photo_url,
+      team_logo_url: item.team_logo_url || source.team_logo_url,
+    };
+  }
+
+  function playerPhotoUrl(player) {
+    if (player && player.photo_url) return String(player.photo_url);
+    const id = player && (player.id || player.player_id);
+    return id
+      ? `https://cdn-mister.mundodeportivo.com/file/cdn-common/players/${encodeURIComponent(String(id))}.png`
+      : "";
+  }
+
+  function teamLogoUrl(player) {
+    if (player && player.team_logo_url) return String(player.team_logo_url);
+    const id = player && player.team_id;
+    return id
+      ? `https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/${encodeURIComponent(String(id))}.png`
+      : "";
+  }
+
+  function playerMedia(player, variant = "") {
+    const photo = playerPhotoUrl(player);
+    const logo = teamLogoUrl(player);
+    return `<span class="tactical-player-media ${escapeHtml(variant)}">
+      <span class="tactical-player-fallback" aria-hidden="true">${playerMonogram(player && player.name)}</span>
+      ${photo ? `<img class="tactical-player-photo" src="${escapeHtml(photo)}" alt="" loading="lazy" decoding="async" />` : ""}
+      ${logo ? `<img class="tactical-team-logo" src="${escapeHtml(logo)}" alt="" loading="lazy" decoding="async" />` : ""}
+    </span>`;
+  }
+
+  function bindAssetFallbacks(root) {
+    if (!root) return;
+    root.querySelectorAll(".tactical-player-photo, .tactical-team-logo").forEach((img) => {
+      if (img.dataset.boundError === "1") return;
+      img.dataset.boundError = "1";
+      img.addEventListener("error", () => {
+        img.classList.add("is-missing");
+        img.setAttribute("aria-hidden", "true");
+      });
+    });
+  }
+
+  function actionAmount(action) {
+    if (!action) return null;
+    if (action.action === "sell") {
+      return action.list_at ?? action.expected_proceeds ?? action.price;
+    }
+    if (action.action === "clause_bid") return action.clause ?? action.acquisition_cost;
+    return action.bid ?? action.puja_recomendada ?? action.price;
+  }
+
+  function actionConfidence(action) {
+    const priority = Number(action && action.priority_score);
+    if (Number.isFinite(priority) && priority > 0) {
+      return Math.round(Math.max(42, Math.min(97, priority)));
+    }
+    const lineup = Number(action && (action.lineup_pct ?? action.lineup_prob));
+    if (Number.isFinite(lineup) && lineup > 0) {
+      return Math.round(Math.max(38, Math.min(95, lineup)));
+    }
+    const risk = action && (action.wait_risk || action.sell_risk);
+    return risk === "low" ? 82 : risk === "high" ? 48 : 66;
+  }
+
+  function renderTacticalPlan(data) {
+    const heroRoot = document.getElementById("today-hero");
+    const listRoot = document.getElementById("action-queue");
+    const countRoot = document.getElementById("today-action-count");
+    if (!heroRoot || !listRoot) return;
+
+    const plan = (data.action_plan || []).map(tacticalRecord);
+    const executable = plan.filter((item) =>
+      ["buy_now", "clause_bid", "sell"].includes(item.action)
+    );
+    const ordered = executable.length
+      ? [...executable, ...plan.filter((item) => !executable.includes(item))]
+      : plan;
+
+    if (!ordered.length) {
+      heroRoot.innerHTML = `<div class="command-empty"><strong>Sin jugada urgente</strong><span>Tu equipo no necesita movimientos claros ahora.</span></div>`;
+      listRoot.innerHTML = "";
+      if (countRoot) countRoot.textContent = "0 acciones";
+      return;
+    }
+
+    const hero = ordered[0];
+    const heroMeta = TACTICAL_ACTIONS[hero.action] || TACTICAL_ACTIONS.wait;
+    const confidence = actionConfidence(hero);
+    const amount = actionAmount(hero);
+    heroRoot.innerHTML = `<article class="command-hero ${heroMeta.cls}">
+      <div class="command-copy">
+        <p class="command-label">Acción prioritaria</p>
+        <h3><span>${escapeHtml(heroMeta.verb)}</span> ${escapeHtml(hero.name || "")}</h3>
+        <div class="command-player-meta">
+          ${hero.position ? posChip(hero.position) : ""}
+          <span>${escapeHtml(hero.team || "Equipo por confirmar")}</span>
+        </div>
+        <p class="command-reason">${escapeHtml(hero.why || hero.package_note || "Movimiento recomendado por el motor competitivo.")}</p>
+        <div class="command-numbers">
+          ${amount != null ? `<div><span>Importe</span><strong>${formatMoney(amount)}</strong></div>` : ""}
+          <div><span>Confianza</span><strong>${confidence}%</strong></div>
+        </div>
+        <button type="button" class="command-cta" data-player-id="${escapeHtml(hero.player_id || hero.id)}">
+          <span>${escapeHtml(heroMeta.label)}</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+      </div>
+      <div class="command-visual">
+        <span class="command-confidence">${confidence}<small>%</small></span>
+        ${playerMedia(hero, "is-hero")}
+        <span class="pitch-markings" aria-hidden="true"></span>
+      </div>
+    </article>`;
+
+    const followUps = ordered.slice(1, 4);
+    listRoot.innerHTML = followUps.length
+      ? followUps
+          .map((item, index) => {
+            const meta = TACTICAL_ACTIONS[item.action] || TACTICAL_ACTIONS.wait;
+            const itemConfidence = actionConfidence(item);
+            const money = actionAmount(item);
+            const targetTab = item.action === "sell" ? "squad" : item.action === "clause_bid" || item.action === "scout" ? "radar" : "market";
+            return `<button type="button" class="tactical-action-row ${meta.cls}" data-player-id="${escapeHtml(
+              item.player_id || item.id
+            )}" data-focus-tab="${targetTab}">
+              <span class="tactical-action-rank">${String(index + 2).padStart(2, "0")}</span>
+              ${playerMedia(item, "is-row")}
+              <span class="tactical-action-main">
+                <span class="tactical-action-label">${escapeHtml(meta.label)}</span>
+                <strong>${escapeHtml(item.name || "")}</strong>
+                <small>${escapeHtml(item.team || item.why || "")}</small>
+              </span>
+              <span class="tactical-action-score">
+                <small>Confianza</small>
+                <strong>${itemConfidence}%</strong>
+                ${money != null ? `<span>${formatMoney(money)}</span>` : ""}
+              </span>
+            </button>`;
+          })
+          .join("")
+      : `<p class="queue-empty">No hay más acciones necesarias hoy.</p>`;
+    if (countRoot) countRoot.textContent = `${ordered.length} ${ordered.length === 1 ? "acción" : "acciones"}`;
+
+    [heroRoot, listRoot].forEach((root) => {
+      bindAssetFallbacks(root);
+      root.querySelectorAll("[data-player-id]").forEach((button) => {
+        button.addEventListener("click", () =>
+          focusPlayer(
+            button.getAttribute("data-player-id"),
+            button.getAttribute("data-focus-tab") || (hero.action === "sell" ? "squad" : "market")
+          )
+        );
+      });
+    });
+  }
+
+  function renderTodayOpportunities(data) {
+    const root = document.getElementById("today-opportunities");
+    if (!root) return;
+    const priorityOrder = { Alta: 0, Media: 1, Baja: 2 };
+    const all = (data.market_opportunities || []).filter(isDailyMarketPlayer);
+    const source = all.length ? all : data.market_opportunities || [];
+    const picks = [...source]
+      .sort((a, b) => {
+        const priority = (priorityOrder[a.priority] ?? 9) - (priorityOrder[b.priority] ?? 9);
+        if (priority !== 0) return priority;
+        return Number(b.priority_score || b.delta_5d || 0) - Number(a.priority_score || a.delta_5d || 0);
+      })
+      .slice(0, 2);
+
+    if (!picks.length) {
+      root.innerHTML = `<p class="queue-empty">No hay oportunidades pujables ahora.</p>`;
+      return;
+    }
+
+    root.innerHTML = picks
+      .map((raw) => {
+        const player = tacticalRecord(raw);
+        const delta = player.delta_5d != null ? Number(player.delta_5d) : null;
+        const direction = delta != null ? (delta >= 0 ? "up" : "down") : player.trend || "flat";
+        const trendText =
+          delta != null ? pct(delta) : direction === "up" ? "Subiendo" : direction === "down" ? "Bajando" : "Estable";
+        return `<article class="opportunity-card" data-player-id="${escapeHtml(player.id || player.player_id)}" tabindex="0" role="button">
+          <div class="opportunity-top">
+            ${playerMedia(player, "is-opportunity")}
+            <span class="opportunity-priority">${escapeHtml(player.priority || "Radar")}</span>
+          </div>
+          <div class="opportunity-identity">
+            <span>${escapeHtml(player.position || "—")}</span>
+            <h3>${escapeHtml(player.name || "")}</h3>
+            <p>${escapeHtml(player.team || "")}</p>
+          </div>
+          <div class="opportunity-values">
+            <div><span>Precio actual</span><strong>${formatMoney(player.price)}</strong></div>
+            <div class="trend-${escapeHtml(direction)}"><span>Tendencia 5d</span><strong>${escapeHtml(trendText)}</strong></div>
+          </div>
+          <div class="trend-track ${escapeHtml(direction)}" aria-hidden="true"><span></span></div>
+        </article>`;
+      })
+      .join("");
+    bindAssetFallbacks(root);
+    bindPlayerOpenClicks(root, "market");
+  }
+
   function renderActionQueue(data) {
     const box = document.getElementById("action-queue");
     if (!box) return;
@@ -1477,6 +1699,7 @@
         meta.title
       )} ${escapeHtml(a.name || "")}">
           <span class="queue-rank" aria-hidden="true">${escapeHtml(rankDisplay)}</span>
+          <span class="player-monogram queue-monogram" aria-hidden="true">${playerMonogram(a.name)}</span>
           <div class="queue-body">
             <div class="queue-primary">
               <div class="queue-headline">
@@ -1653,9 +1876,12 @@
             p.delta_5d != null ? pct(d) : p.trend === "up" ? "↑" : p.trend === "down" ? "↓" : "—";
           return `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
             <div class="player-card-top">
-              <div>
-                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
+              <div class="player-identity">
+                <span class="player-monogram" aria-hidden="true">${playerMonogram(p.name)}</span>
+                <div>
+                  <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
+                  <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
+                </div>
               </div>
               ${priorityBadge(p.priority)}
             </div>
@@ -2127,7 +2353,8 @@
     syncMarketModeUi(DATA);
     renderMeta(DATA);
     renderKpis(DATA);
-    renderActionQueue(DATA);
+    renderTacticalPlan(DATA);
+    renderTodayOpportunities(DATA);
     renderMarket();
     renderSquad();
     renderRadar();
@@ -2141,14 +2368,28 @@
       .replace(/"/g, "&quot;");
   }
 
+  function playerMonogram(name) {
+    const parts = String(name || "?")
+      .replace(/[.]/g, " ")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const letters = parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : (parts[0] || "?").slice(0, 2);
+    return escapeHtml(letters.toUpperCase());
+  }
+
   // ---- Tabs + móvil ----
   function initTabs() {
-    document.querySelectorAll(".tab, .mobile-nav-btn").forEach((btn) => {
+    document.querySelectorAll(".tab, .mobile-nav-btn, .tactical-desktop-nav [data-tab]").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-tab");
         if (id) selectTab(id);
       });
     });
+    document.querySelectorAll("[data-go-view]").forEach((btn) => {
+      btn.addEventListener("click", () => selectTab(btn.getAttribute("data-go-view") || "today"));
+    });
+    selectTab(document.body.dataset.view || "today");
   }
 
   function updateFiltersSummary() {

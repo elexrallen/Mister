@@ -15,6 +15,7 @@
 html {
   scroll-behavior: smooth;
   -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
 }
 
 body {
@@ -1892,5 +1893,1824 @@ main > section:nth-child(5) { animation-delay: 0.2s; }
   *::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tactical Command Center — visual system v46                                */
+/* -------------------------------------------------------------------------- */
+
+:root {
+  --bg-deep: #05080d;
+  --bg-panel: #0a1018;
+  --stroke: #24303d;
+  --mint: #d9ff00;
+  --ember: #ff9f1c;
+  --rose: #ff496c;
+  --glow: rgba(217, 255, 0, 0.11);
+  --acid: #d9ff00;
+  --cyan: #56dfff;
+  --muted: #82909f;
+  --surface: #0a1018;
+  --surface-raised: #0e1621;
+}
+
+body {
+  background: #05080d;
+  color: #eaf0f5;
+}
+
+.atmosphere {
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    radial-gradient(circle at 72% 8%, rgba(86, 223, 255, 0.055), transparent 25rem),
+    #05080d;
+  background-size: 32px 32px, 32px 32px, auto, auto;
+}
+
+.atmosphere::after {
+  opacity: 0.12;
+  mix-blend-mode: normal;
+}
+
+.site-header {
+  border-bottom: 1px solid #1d2732;
+  background: rgba(5, 8, 13, 0.94);
+}
+
+.tactical-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 2.65rem;
+  height: 2.65rem;
+  flex: 0 0 auto;
+  color: #05080d;
+  background: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 2rem;
+  font-style: italic;
+  font-weight: 900;
+  line-height: 1;
+  transform: skew(-7deg);
+  clip-path: polygon(8% 0, 100% 0, 90% 100%, 0 100%);
+}
+
+.brand-title,
+.font-display,
+.section-title,
+.kpi-value {
+  font-family: "Barlow Condensed", "Arial Narrow", sans-serif;
+}
+
+.brand-title {
+  color: #fff;
+  font-size: 1.65rem;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  line-height: 0.9;
+  text-transform: uppercase;
+}
+
+.brand-eyebrow {
+  margin: 0.3rem 0 0;
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.league-switcher {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  margin: 0;
+}
+
+.league-switcher select {
+  max-width: 100%;
+  color: #cfd8e2;
+  background-color: #0a1018;
+  background-image: linear-gradient(45deg, transparent 50%, var(--acid) 50%),
+    linear-gradient(135deg, var(--acid) 50%, transparent 50%);
+  border: 1px solid #283644;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.update-chip-wrap {
+  grid-column: 2;
+  grid-row: 1;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.update-chip {
+  gap: 0.4rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.update-dot {
+  width: 0.52rem;
+  height: 0.52rem;
+  background: var(--acid);
+  box-shadow: 0 0 0 3px rgba(217, 255, 0, 0.11);
+}
+
+.sync-label {
+  color: #aab5c0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.sync-time {
+  margin-top: 0.16rem;
+  color: var(--acid);
+  font-size: 0.6rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.btn-refresh {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  color: var(--acid);
+  background: #0d151e;
+  border: 1px solid #2d3c49;
+  border-radius: 0.25rem;
+}
+
+.btn-refresh svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.btn-refresh span {
+  display: none;
+}
+
+.refresh-status {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  right: 0;
+  padding: 0.35rem 0.5rem;
+  background: #0a1018;
+  border: 1px solid #24303d;
+  z-index: 5;
+}
+
+.tactical-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  padding-top: 1rem;
+}
+
+#daily-plan-panel { order: 1; }
+#tactical-kpis { order: 2; }
+#campaign-banner { order: 3; }
+#matchday-panel { order: 4; }
+#objectives-panel { order: 5; }
+.tactical-main > section[aria-label="Filtros"] { order: 6; }
+#browse-section { order: 7; }
+#load-error { order: 8; }
+
+.panel {
+  padding: 0.9rem;
+  background: var(--surface);
+  border: 1px solid #24303d;
+  border-radius: 0.35rem;
+  backdrop-filter: none;
+  box-shadow: none;
+}
+
+.panel-flush {
+  padding: 0;
+}
+
+.panel-head {
+  position: relative;
+  padding: 1rem 1rem 0.75rem;
+  border-bottom: 1px solid #24303d;
+}
+
+.panel-head::after {
+  content: "";
+  position: absolute;
+  left: 1rem;
+  bottom: -2px;
+  width: 4rem;
+  height: 3px;
+  background: var(--acid);
+  transform: skew(-25deg);
+}
+
+.section-kicker {
+  margin: 0 0 0.15rem;
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.section-title {
+  color: #f5f8fa;
+  font-size: 1.75rem;
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.section-hint {
+  color: #82909f;
+}
+
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  background: #24303d;
+  border: 0;
+}
+
+.kpi-card {
+  position: relative;
+  min-width: 0;
+  padding: 0.75rem 0.8rem;
+  background: #0a1018;
+  border: 0;
+  border-radius: 0;
+}
+
+.kpi-card::before {
+  content: "";
+  display: block;
+  width: 0.85rem;
+  height: 0.18rem;
+  margin-bottom: 0.45rem;
+  background: var(--cyan);
+}
+
+.kpi-card:first-child::before,
+.kpi-card:nth-child(3)::before {
+  background: var(--acid);
+}
+
+.kpi-label {
+  color: #82909f;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.kpi-value {
+  overflow: hidden;
+  color: #f4f7f9;
+  font-size: 1.4rem;
+  font-style: italic;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.action-queue-list {
+  gap: 0;
+  padding: 0.8rem;
+}
+
+.queue-package-hint,
+.queue-funding-hint {
+  margin-bottom: 0.65rem;
+  padding: 0.6rem 0.7rem;
+  color: #bdc7d0;
+  background: #0d151f;
+  border: 1px solid #273543;
+  border-left: 3px solid var(--acid);
+  border-radius: 0;
+}
+
+.queue-package-hint strong {
+  color: var(--acid);
+}
+
+.queue-section {
+  margin-top: 0.8rem;
+}
+
+.queue-section-title {
+  margin-bottom: 0.15rem;
+  color: #dbe3e9;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.14em;
+}
+
+.queue-section-hint {
+  color: #6f7d8a;
+}
+
+.queue-item {
+  position: relative;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 4rem;
+  margin-top: -1px;
+  padding: 0.65rem;
+  color: inherit;
+  background: #080e15;
+  border: 1px solid #24303d;
+  border-radius: 0;
+}
+
+.queue-item:hover {
+  background: #0d151e;
+  border-color: #3a4c5d;
+}
+
+.queue-item.is-top {
+  border-left: 3px solid var(--acid);
+}
+
+.queue-rank {
+  width: 2rem;
+  height: auto;
+  color: var(--acid);
+  background: transparent;
+  border-radius: 0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.45rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.queue-item.is-top .queue-rank {
+  color: var(--acid);
+  background: transparent;
+}
+
+.player-monogram {
+  display: grid;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  flex: 0 0 auto;
+  overflow: hidden;
+  color: #dfe6ec;
+  background:
+    linear-gradient(145deg, rgba(86, 223, 255, 0.14), transparent 55%),
+    #121d28;
+  border: 1px solid #314353;
+  border-radius: 0.2rem;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.9rem;
+  font-style: italic;
+  font-weight: 800;
+}
+
+.queue-action {
+  color: #93a1ae;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+}
+
+.queue-name {
+  color: #f7f9fa;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.12rem;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.queue-money {
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 800;
+}
+
+.queue-why {
+  color: #8795a2;
+}
+
+.queue-item.act-buy .queue-action,
+.queue-item.act-clause .queue-action { color: var(--acid); }
+.queue-item.act-sell .queue-action { color: #ffad38; }
+.queue-item.act-avoid .queue-action { color: #ff6683; }
+.queue-item.act-wait .queue-action,
+.queue-item.act-scout .queue-action { color: var(--cyan); }
+
+.queue-chips {
+  gap: 0.25rem;
+}
+
+.badge {
+  padding: 0.24rem 0.4rem;
+  border-radius: 0.12rem;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.badge-mint,
+.badge-titular {
+  color: var(--acid);
+  background: rgba(217, 255, 0, 0.08);
+  border-color: rgba(217, 255, 0, 0.25);
+}
+
+.queue-section:first-of-type .queue-item:first-of-type {
+  display: grid;
+  grid-template-columns: 4.75rem minmax(0, 1fr);
+  min-height: 9rem;
+  margin: 0 0 0.7rem;
+  padding: 1rem;
+  overflow: hidden;
+  background:
+    linear-gradient(115deg, rgba(217, 255, 0, 0.055), transparent 42%),
+    #081019;
+  border: 1px solid var(--acid);
+}
+
+.queue-section:first-of-type .queue-item:first-of-type::after {
+  content: "";
+  position: absolute;
+  right: -1.8rem;
+  top: -2.5rem;
+  width: 9rem;
+  height: 9rem;
+  opacity: 0.2;
+  border: 1px solid var(--cyan);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2.8rem #081019, inset 0 0 0 2.9rem var(--cyan);
+  pointer-events: none;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-rank {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.75rem;
+  z-index: 1;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-monogram {
+  width: 4.75rem;
+  height: 6.2rem;
+  color: var(--acid);
+  border-color: rgba(217, 255, 0, 0.45);
+  font-size: 1.6rem;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-body {
+  align-self: center;
+  z-index: 1;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-primary {
+  display: block;
+  padding-right: 1.3rem;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-action {
+  color: #aeb9c3;
+  font-size: 0.72rem;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-name {
+  color: var(--acid);
+  font-size: clamp(1.5rem, 7vw, 2.2rem);
+  line-height: 0.95;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-money {
+  display: block;
+  margin-top: 0.4rem;
+  font-size: 1.3rem;
+}
+
+.queue-section:first-of-type .queue-item:first-of-type .queue-why {
+  margin-top: 0.35rem;
+  color: #a7b2bc;
+}
+
+.queue-expand-btn {
+  color: #9aa7b3;
+  background: #080e15;
+  border: 1px solid #2b3947;
+  border-radius: 0;
+}
+
+.browse-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #26333f;
+}
+
+.market-scope {
+  margin-bottom: 0.7rem;
+}
+
+.scope-chip {
+  color: #8d9aa6;
+  background: #080e15;
+  border: 1px solid #2a3946;
+  border-radius: 0.2rem;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.scope-chip.active {
+  color: #05080d;
+  background: var(--acid);
+  border-color: var(--acid);
+}
+
+.list-sort,
+.filter-input,
+.sort-select,
+.sort-dir {
+  background-color: #080e15;
+  border-color: #283744;
+  border-radius: 0.2rem;
+}
+
+.sort-dir,
+.th-sort.is-active,
+.sort-mark {
+  color: var(--acid);
+}
+
+.player-card {
+  padding: 0.75rem;
+  background: #080e15;
+  border: 1px solid #263440;
+  border-radius: 0.25rem;
+}
+
+.player-card:hover {
+  border-color: #405364;
+  background: #0d151e;
+}
+
+.player-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.player-name-link {
+  color: #f3f6f8;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.05rem;
+  font-style: italic;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.player-card-stats {
+  gap: 1px;
+  margin-top: 0.7rem;
+  padding: 1px;
+  background: #22303c;
+  border: 0;
+}
+
+.player-card-stats > div {
+  padding: 0.55rem;
+  background: #0b121a;
+}
+
+.stat-label {
+  color: #74828e;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+}
+
+.stat-value {
+  color: #eef2f5;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.text-mint-400,
+.delta-up {
+  color: var(--acid) !important;
+}
+
+.delta-down {
+  color: #ff6683;
+}
+
+.tab-bar {
+  background: #080e15;
+  border-bottom-color: #263440;
+}
+
+.tab {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tab.active {
+  color: var(--acid);
+  border-bottom-color: var(--acid);
+}
+
+.campaign-banner,
+.matchday-panel,
+.objectives-panel,
+.health-panel,
+.pos-block {
+  background: #0a1018;
+  border-color: #263440;
+  border-radius: 0.3rem;
+}
+
+.campaign-countdown,
+.matchday-title,
+.objectives-title {
+  font-family: "Barlow Condensed", sans-serif;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.campaign-kicker,
+.objectives-kicker {
+  color: var(--acid);
+}
+
+.mobile-nav {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 0;
+  width: 100vw;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 0 calc(0.35rem + env(safe-area-inset-right, 0px))
+    calc(0.25rem + var(--safe-bottom)) calc(0.35rem + env(safe-area-inset-left, 0px));
+  background: rgba(5, 8, 13, 0.98);
+  border-top: 1px solid #2b3946;
+  backdrop-filter: none;
+}
+
+.mobile-nav-btn {
+  position: relative;
+  min-height: 3.75rem;
+  color: #74828e;
+  border-radius: 0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  min-width: 0;
+}
+
+.mobile-nav-btn.active {
+  color: var(--acid);
+  background: transparent;
+}
+
+.mobile-nav-btn.active::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 20%;
+  right: 20%;
+  height: 3px;
+  background: var(--acid);
+}
+
+.mobile-nav-btn .nav-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+#install-banner > .glass {
+  background: #0a1018;
+  border-color: #2b3946;
+  border-radius: 0.25rem;
+  backdrop-filter: none;
+}
+
+#install-banner .btn-primary {
+  color: #05080d;
+  background: var(--acid);
+  border-radius: 0.2rem;
+}
+
+@media (max-width: 420px) {
+  .update-chip .text-right {
+    display: none;
+  }
+
+  .queue-section:first-of-type .queue-item:first-of-type {
+    grid-template-columns: 4rem minmax(0, 1fr);
+    padding: 0.8rem;
+  }
+
+  .queue-section:first-of-type .queue-item:first-of-type .queue-monogram {
+    width: 4rem;
+    height: 5.5rem;
+  }
+
+  .queue-section:first-of-type .queue-item:first-of-type .queue-name {
+    font-size: 1.65rem;
+  }
+
+  .queue-section:first-of-type .queue-item:first-of-type .queue-money {
+    font-size: 1.15rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .tactical-header {
+    grid-template-columns: auto minmax(10rem, 1fr) auto;
+  }
+
+  .league-switcher {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: start;
+  }
+
+  .update-chip-wrap {
+    grid-column: 3;
+  }
+
+  .kpi-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .queue-section:first-of-type .queue-item:first-of-type {
+    grid-template-columns: 6.5rem minmax(0, 1fr);
+    min-height: 10rem;
+    padding: 1.2rem;
+  }
+
+  .queue-section:first-of-type .queue-item:first-of-type .queue-monogram {
+    width: 6.5rem;
+    height: 7.5rem;
+    font-size: 2rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .tactical-main {
+    gap: 1.25rem;
+    padding-top: 1.25rem;
+  }
+
+  .section-title {
+    font-size: 2rem;
+  }
+
+  .action-queue-list {
+    padding: 1rem;
+  }
+
+  .queue-item {
+    border-radius: 0;
+  }
+
+  .queue-name {
+    font-size: 1.2rem;
+  }
+
+  .queue-chips-more {
+    display: contents;
+  }
+
+  .data-table th {
+    color: #84919d;
+    background: #080e15;
+  }
+
+  .data-table td {
+    border-bottom-color: #1e2a35;
+  }
+}
+
+@media (min-width: 1024px) {
+  #daily-plan-panel .action-queue-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1.55fr) minmax(18rem, 0.9fr);
+    gap: 0.7rem 1rem;
+  }
+
+  #daily-plan-panel .queue-package-hint,
+  #daily-plan-panel .queue-funding-hint,
+  #daily-plan-panel .queue-liquidity-note {
+    grid-column: 1 / -1;
+  }
+
+  #daily-plan-panel .queue-section:first-of-type {
+    grid-column: 1;
+  }
+
+  #daily-plan-panel .queue-section:not(:first-of-type),
+  #daily-plan-panel .queue-expand-btn {
+    grid-column: 2;
+  }
+
+  #daily-plan-panel .queue-section:not(:first-of-type) {
+    margin-top: 0;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tactical Command Center — componentes estructurales v48                    */
+/* -------------------------------------------------------------------------- */
+
+body[data-view="today"] #campaign-banner,
+body[data-view="today"] #matchday-panel,
+body[data-view="today"] #objectives-panel,
+body[data-view="today"] .tactical-main > section[aria-label="Filtros"],
+body[data-view="today"] #browse-section {
+  display: none !important;
+}
+
+body[data-view="market"] #daily-plan-panel,
+body[data-view="market"] #tactical-kpis,
+body[data-view="market"] #today-opportunities-panel,
+body[data-view="market"] #campaign-banner,
+body[data-view="market"] #matchday-panel,
+body[data-view="market"] #objectives-panel,
+body[data-view="radar"] #daily-plan-panel,
+body[data-view="radar"] #tactical-kpis,
+body[data-view="radar"] #today-opportunities-panel,
+body[data-view="radar"] #campaign-banner,
+body[data-view="radar"] #matchday-panel,
+body[data-view="radar"] #objectives-panel,
+body[data-view="radar"] .tactical-main > section[aria-label="Filtros"],
+body[data-view="squad"] #daily-plan-panel,
+body[data-view="squad"] #tactical-kpis,
+body[data-view="squad"] #today-opportunities-panel,
+body[data-view="squad"] #campaign-banner,
+body[data-view="squad"] .tactical-main > section[aria-label="Filtros"] {
+  display: none !important;
+}
+
+body[data-view="today"] .tactical-main {
+  max-width: 72rem;
+  gap: 0.85rem;
+}
+
+body[data-view="today"] #daily-plan-panel {
+  order: 1;
+}
+
+body[data-view="today"] #tactical-kpis {
+  order: 2;
+}
+
+body[data-view="today"] #today-opportunities-panel {
+  order: 3;
+}
+
+.tactical-desktop-nav {
+  display: none;
+}
+
+.tactical-loading {
+  padding: 1.5rem;
+  color: #6f7d8a;
+  font-size: 0.8rem;
+}
+
+#install-banner {
+  position: fixed;
+  right: 0.75rem;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 0.75rem);
+  left: 0.75rem;
+  z-index: 50;
+}
+
+.hidden {
+  display: none !important;
+}
+
+#daily-plan-panel {
+  overflow: hidden;
+  background: #060b11;
+  border-color: #2a3743;
+}
+
+#daily-plan-panel .panel-head {
+  padding: 1.1rem 1rem 0.9rem;
+  background:
+    linear-gradient(90deg, rgba(217, 255, 0, 0.04), transparent 45%),
+    #080e15;
+}
+
+#daily-plan-panel .panel-head .section-title {
+  font-size: clamp(2rem, 9vw, 3rem);
+  letter-spacing: -0.03em;
+}
+
+.today-hero {
+  padding: 0.8rem;
+}
+
+.command-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(8.2rem, 0.88fr);
+  min-height: 23rem;
+  overflow: hidden;
+  background:
+    linear-gradient(110deg, #0d151e 0%, #0a1119 56%, #111d29 100%);
+  border: 1px solid var(--acid);
+}
+
+.command-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0.32;
+  background:
+    linear-gradient(135deg, transparent 0 72%, rgba(217, 255, 0, 0.1) 72% 72.5%, transparent 72.5%),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(255, 255, 255, 0.025) 31px 32px);
+  pointer-events: none;
+}
+
+.command-copy {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  padding: 1rem 0 1rem 1rem;
+}
+
+.command-label {
+  margin: 0 0 0.4rem;
+  color: #8f9da9;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.command-copy h3 {
+  max-width: 18rem;
+  margin: 0;
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(2rem, 10vw, 3.35rem);
+  font-style: italic;
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 0.83;
+  text-transform: uppercase;
+}
+
+.command-copy h3 span {
+  display: block;
+  margin-bottom: 0.26rem;
+  color: #f4f7f9;
+  font-size: 0.43em;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.command-player-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
+  color: #a6b1bb;
+  font-size: 0.72rem;
+}
+
+.command-player-meta .pos-chip {
+  color: #05080d;
+  background: var(--cyan);
+  border-radius: 0.1rem;
+}
+
+.command-reason {
+  display: -webkit-box;
+  max-width: 17rem;
+  margin: 0.65rem 0 0;
+  overflow: hidden;
+  color: #8d9aa6;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.command-numbers {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 0.85rem;
+  margin-top: auto;
+  padding-top: 0.85rem;
+}
+
+.command-numbers div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+
+.command-numbers span {
+  color: #71808d;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.command-numbers strong {
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.25rem;
+  font-style: italic;
+  line-height: 1;
+}
+
+.command-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  width: min(100%, 14rem);
+  min-height: 2.85rem;
+  margin-top: 0.75rem;
+  padding: 0.65rem 0.8rem;
+  color: #05080d;
+  background: var(--acid);
+  border: 0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.command-cta:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.command-visual {
+  position: relative;
+  min-width: 0;
+}
+
+.command-visual::after {
+  content: "";
+  position: absolute;
+  right: -3rem;
+  bottom: -3.5rem;
+  width: 12rem;
+  height: 12rem;
+  opacity: 0.22;
+  border: 1px solid var(--cyan);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 3.7rem #0d1721, inset 0 0 0 3.75rem var(--cyan);
+}
+
+.command-confidence {
+  position: absolute;
+  z-index: 4;
+  top: 0.8rem;
+  right: 0.8rem;
+  display: grid;
+  place-items: center;
+  width: 3rem;
+  height: 3rem;
+  color: var(--acid);
+  background: rgba(5, 8, 13, 0.78);
+  border: 1px solid rgba(217, 255, 0, 0.55);
+  border-radius: 50%;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.2rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.command-confidence small {
+  margin-top: -0.9rem;
+  margin-left: 1.3rem;
+  font-size: 0.48rem;
+}
+
+.tactical-player-media {
+  position: relative;
+  display: block;
+  flex: 0 0 auto;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(86, 223, 255, 0.17), transparent 52%),
+    #101a24;
+}
+
+.tactical-player-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(217, 255, 0, 0.55);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.4rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.tactical-player-photo {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  filter: saturate(0.92) contrast(1.04);
+}
+
+.tactical-player-photo.is-missing,
+.tactical-team-logo.is-missing {
+  display: none;
+}
+
+.tactical-team-logo {
+  position: absolute;
+  z-index: 4;
+  right: 0.35rem;
+  bottom: 0.35rem;
+  width: 1.65rem;
+  height: 1.65rem;
+  object-fit: contain;
+  padding: 0.2rem;
+  background: rgba(5, 8, 13, 0.86);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 50%;
+}
+
+.tactical-player-media.is-hero {
+  position: absolute;
+  inset: 2.2rem -1.6rem 0 -1.5rem;
+  overflow: visible;
+  background: transparent;
+}
+
+.tactical-player-media.is-hero .tactical-player-photo {
+  object-fit: contain;
+  object-position: center bottom;
+  filter: saturate(0.95) contrast(1.06) drop-shadow(-18px 8px 18px rgba(0, 0, 0, 0.45));
+}
+
+.tactical-player-media.is-hero .tactical-player-fallback {
+  font-size: 4rem;
+}
+
+.tactical-player-media.is-hero .tactical-team-logo {
+  right: 1.8rem;
+  bottom: 1.2rem;
+  width: 2.2rem;
+  height: 2.2rem;
+}
+
+.pitch-markings {
+  position: absolute;
+  z-index: 1;
+  inset: 20% -35% auto auto;
+  width: 10rem;
+  height: 10rem;
+  opacity: 0.2;
+  border: 1px solid var(--cyan);
+  border-radius: 50%;
+}
+
+.today-list-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0.8rem;
+  padding: 0.2rem 0.15rem 0.65rem;
+  border-bottom: 1px solid #283641;
+}
+
+.today-list-head h3 {
+  margin: 0;
+  color: #eff3f6;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+#today-action-count {
+  color: #768491;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+#daily-plan-panel .action-queue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0 0.8rem 0.85rem;
+}
+
+.tactical-action-row {
+  display: grid;
+  grid-template-columns: 2.25rem 3.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  min-width: 0;
+  min-height: 4.6rem;
+  margin-top: -1px;
+  padding: 0.55rem;
+  color: inherit;
+  text-align: left;
+  background: #080e15;
+  border: 1px solid #26343f;
+}
+
+.tactical-action-row:hover,
+.tactical-action-row:focus-visible {
+  z-index: 1;
+  background: #0d151e;
+  border-color: var(--cyan);
+  outline: none;
+}
+
+.tactical-action-row.is-buy { border-left: 3px solid var(--acid); }
+.tactical-action-row.is-sell { border-left: 3px solid #ffad38; }
+.tactical-action-row.is-wait,
+.tactical-action-row.is-scout { border-left: 3px solid var(--cyan); }
+.tactical-action-row.is-avoid { border-left: 3px solid #ff6683; }
+
+.tactical-action-rank {
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.45rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.tactical-player-media.is-row {
+  width: 3.2rem;
+  height: 3.35rem;
+  margin-right: 0.2rem;
+  overflow: visible;
+  border: 1px solid #354655;
+}
+
+.tactical-player-media.is-row .tactical-player-photo,
+.tactical-player-media.is-row .tactical-player-fallback {
+  overflow: hidden;
+  background: #101a24;
+}
+
+.tactical-player-media.is-row .tactical-team-logo {
+  right: -0.35rem;
+  bottom: -0.2rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  padding: 0.12rem;
+  border-width: 2px;
+}
+
+.tactical-action-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tactical-action-label {
+  color: var(--cyan);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.is-sell .tactical-action-label { color: #ffad38; }
+.is-buy .tactical-action-label { color: var(--acid); }
+.is-avoid .tactical-action-label { color: #ff6683; }
+
+.tactical-action-main strong {
+  overflow: hidden;
+  color: #f3f6f8;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.05rem;
+  font-style: italic;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tactical-action-main small {
+  overflow: hidden;
+  color: #73818d;
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tactical-action-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 3.8rem;
+}
+
+.tactical-action-score small {
+  color: #65737f;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.tactical-action-score strong {
+  color: var(--cyan);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.15rem;
+  font-style: italic;
+}
+
+.tactical-action-score span {
+  color: #8d9aa5;
+  font-size: 0.58rem;
+}
+
+body[data-view="today"] #tactical-kpis {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid #2a3743;
+}
+
+body[data-view="today"] #tactical-kpis .kpi-card:nth-child(4) {
+  display: none;
+}
+
+body[data-view="today"] #tactical-kpis .kpi-card {
+  min-height: 5.15rem;
+  padding: 0.8rem;
+}
+
+body[data-view="today"] #tactical-kpis .kpi-label {
+  margin: 0;
+}
+
+body[data-view="today"] #tactical-kpis .kpi-value {
+  margin-top: 0.25rem;
+  font-size: clamp(1.22rem, 6vw, 1.8rem);
+}
+
+.today-opportunities {
+  padding: 0.8rem;
+  background: #060b11;
+}
+
+.today-opportunities-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  padding: 0.15rem 0.15rem 0.7rem;
+  border-bottom: 1px solid #283641;
+}
+
+.tactical-link {
+  flex: 0 0 auto;
+  padding: 0.4rem 0;
+  color: var(--acid);
+  background: transparent;
+  border: 0;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.opportunity-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.opportunity-card {
+  min-width: 0;
+  overflow: hidden;
+  background: #080e15;
+  border: 1px solid #26343f;
+  cursor: pointer;
+}
+
+.opportunity-card:hover,
+.opportunity-card:focus-visible {
+  border-color: var(--acid);
+  outline: none;
+}
+
+.opportunity-top {
+  position: relative;
+  height: 7.1rem;
+  overflow: hidden;
+  background:
+    linear-gradient(145deg, rgba(86, 223, 255, 0.09), transparent 55%),
+    #101923;
+}
+
+.tactical-player-media.is-opportunity {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+}
+
+.tactical-player-media.is-opportunity .tactical-player-photo {
+  object-position: center bottom;
+}
+
+.tactical-player-media.is-opportunity .tactical-team-logo {
+  width: 1.45rem;
+  height: 1.45rem;
+}
+
+.opportunity-priority {
+  position: absolute;
+  z-index: 5;
+  top: 0.45rem;
+  left: 0.45rem;
+  padding: 0.2rem 0.38rem;
+  color: #05080d;
+  background: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.opportunity-identity {
+  padding: 0.55rem 0.6rem 0.35rem;
+}
+
+.opportunity-identity > span {
+  color: var(--cyan);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.opportunity-identity h3 {
+  overflow: hidden;
+  margin: 0.05rem 0 0;
+  color: #f4f7f9;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.opportunity-identity p {
+  overflow: hidden;
+  margin: 0.18rem 0 0;
+  color: #71808d;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opportunity-values {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.35rem;
+  padding: 0.35rem 0.6rem 0.55rem;
+}
+
+.opportunity-values div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.3rem;
+}
+
+.opportunity-values span {
+  color: #65737f;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.52rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.opportunity-values strong {
+  color: #edf2f5;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.84rem;
+  font-style: italic;
+}
+
+.opportunity-values .trend-up strong { color: var(--acid); }
+.opportunity-values .trend-down strong { color: #ff6683; }
+.opportunity-values .trend-flat strong { color: var(--cyan); }
+
+.trend-track {
+  height: 0.22rem;
+  margin: 0 0.6rem 0.65rem;
+  overflow: hidden;
+  background: #1d2a35;
+}
+
+.trend-track span {
+  display: block;
+  width: 68%;
+  height: 100%;
+  background: var(--cyan);
+}
+
+.trend-track.up span {
+  width: 88%;
+  background: var(--acid);
+}
+
+.trend-track.down span {
+  width: 38%;
+  background: #ff6683;
+}
+
+.command-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0.8rem;
+  padding: 1.2rem;
+  color: #84929e;
+  background: #0a1119;
+  border: 1px solid #2b3946;
+}
+
+.command-empty strong {
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.35rem;
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+@media (max-width: 374px) {
+  .command-hero {
+    grid-template-columns: minmax(0, 1.2fr) minmax(6.5rem, 0.8fr);
+  }
+
+  .command-copy {
+    padding-left: 0.75rem;
+  }
+
+  .command-reason {
+    -webkit-line-clamp: 2;
+  }
+
+  .tactical-action-row {
+    grid-template-columns: 1.85rem 2.7rem minmax(0, 1fr);
+  }
+
+  .tactical-player-media.is-row {
+    width: 2.7rem;
+    height: 3rem;
+  }
+
+  .tactical-action-score {
+    display: none;
+  }
+}
+
+@media (min-width: 640px) {
+  .command-hero {
+    grid-template-columns: minmax(0, 1fr) minmax(17rem, 0.75fr);
+    min-height: 25rem;
+  }
+
+  .command-copy {
+    padding: 1.5rem;
+  }
+
+  .command-copy h3 {
+    max-width: 27rem;
+    font-size: 4rem;
+  }
+
+  .command-reason {
+    max-width: 28rem;
+    font-size: 0.8rem;
+  }
+
+  .opportunity-top {
+    height: 10rem;
+  }
+
+  .opportunity-values {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  #install-banner {
+    right: 1.5rem;
+    bottom: 1.5rem;
+    left: auto;
+    width: min(24rem, calc(100vw - 3rem));
+  }
+
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 35;
+  }
+
+  .tactical-header {
+    grid-template-columns: auto auto minmax(20rem, 1fr) auto;
+  }
+
+  .league-switcher {
+    grid-column: 2;
+  }
+
+  .tactical-desktop-nav {
+    grid-column: 3;
+    display: flex;
+    justify-content: center;
+    gap: 0.2rem;
+  }
+
+  .tactical-desktop-nav button {
+    position: relative;
+    padding: 0.65rem 0.8rem;
+    color: #73818e;
+    background: transparent;
+    border: 0;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .tactical-desktop-nav button.active {
+    color: var(--acid);
+  }
+
+  .tactical-desktop-nav button.active::after {
+    content: "";
+    position: absolute;
+    right: 0.8rem;
+    bottom: 0.3rem;
+    left: 0.8rem;
+    height: 2px;
+    background: var(--acid);
+  }
+
+  .update-chip-wrap {
+    grid-column: 4;
+  }
+
+  body[data-view="today"] #daily-plan-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(19rem, 0.75fr);
+  }
+
+  #daily-plan-panel .panel-head {
+    grid-column: 1 / -1;
+  }
+
+  .today-hero {
+    grid-column: 1;
+    grid-row: 2 / span 2;
+    padding: 1rem;
+  }
+
+  .today-list-head {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: end;
+    margin: 1rem 1rem 0;
+  }
+
+  #daily-plan-panel .action-queue-list {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: start;
+    padding: 0 1rem 1rem 0;
+  }
+
+  .command-hero {
+    min-height: 28rem;
+  }
+
+  .command-copy h3 {
+    font-size: clamp(3.4rem, 6vw, 5rem);
+  }
+
+  .tactical-action-row {
+    grid-template-columns: 2rem 3rem minmax(0, 1fr) auto;
+    min-height: 5.25rem;
+  }
+
+  .tactical-player-media.is-row {
+    width: 3rem;
+    height: 3.7rem;
+  }
+
+  body[data-view="today"] #tactical-kpis .kpi-card {
+    min-height: 6rem;
+    padding: 1rem 1.1rem;
+  }
+
+  .opportunity-grid {
+    gap: 0.8rem;
+  }
+
+  .opportunity-card {
+    display: grid;
+    grid-template-columns: minmax(10rem, 0.7fr) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .opportunity-top {
+    grid-row: 1 / -1;
+    height: 12rem;
+  }
+
+  .opportunity-identity,
+  .opportunity-values {
+    align-self: end;
+  }
+
+  .trend-track {
+    align-self: start;
+  }
+
+  #browse-section .desktop-tabs {
+    display: none;
   }
 }

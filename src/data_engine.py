@@ -23,7 +23,12 @@ from typing import Any
 import requests
 
 import config
-from mister_client import fetch_live_league, enrich_players_with_clauses
+from mister_client import (
+    enrich_players_with_clauses,
+    fetch_live_league,
+    mister_player_photo_url,
+    mister_team_logo_url,
+)
 from external_data import enrich_players_with_external, enrich_players_with_ff_production
 from fotmob_service import enrich_players_with_fotmob
 from scrapers.ff_points import resolve_avg_scale, scale_threshold
@@ -80,6 +85,36 @@ log = logging.getLogger("data_engine")
 # ---------------------------------------------------------------------------
 # Utilidades I/O
 # ---------------------------------------------------------------------------
+
+def attach_mister_assets(
+    rows: list[dict[str, Any]],
+    *,
+    player_index: dict[str, dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Añade retrato y escudo oficiales sin hacer depender la UI del caché local."""
+    idx = player_index or {}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        pid = str(row.get("id") or row.get("player_id") or "").strip()
+        source = idx.get(pid) or {}
+        team_id = str(row.get("team_id") or source.get("team_id") or "").strip()
+        if team_id and not row.get("team_id"):
+            row["team_id"] = team_id
+        if not row.get("team") and source.get("team"):
+            row["team"] = source.get("team")
+        row["photo_url"] = (
+            row.get("photo_url")
+            or source.get("photo_url")
+            or mister_player_photo_url(pid)
+        )
+        row["team_logo_url"] = (
+            row.get("team_logo_url")
+            or source.get("team_logo_url")
+            or mister_team_logo_url(team_id)
+        )
+    return rows
+
 
 def load_json(path: Path) -> dict[str, Any]:
     with path.open(encoding="utf-8") as fh:
@@ -2566,6 +2601,28 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         max_squad=config.league_max_squad(league_cfg),
     )
 
+    # Recursos visuales oficiales. El índice del pool completa team_id/escudo
+    # para acciones que solo conservan player_id, sin obligar al frontend a
+    # conocer la forma de la respuesta privada de Mister.
+    asset_sources: list[dict[str, Any]] = [
+        *full_pool,
+        *squad,
+        *opportunities,
+    ]
+    for rival in rivals:
+        asset_sources.extend(rival.get("squad") or [])
+    attach_mister_assets(asset_sources)
+    asset_index = {
+        str(player.get("id") or player.get("player_id")): player
+        for player in asset_sources
+        if player.get("id") or player.get("player_id")
+    }
+    attach_mister_assets(squad, player_index=asset_index)
+    attach_mister_assets(opportunities, player_index=asset_index)
+    attach_mister_assets(action_plan, player_index=asset_index)
+    attach_mister_assets(rival_upgrades, player_index=asset_index)
+    attach_mister_assets(free_agents, player_index=asset_index)
+
     matchday_meta = external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None
     gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
     recommended_xi = build_recommended_gw_xi(
@@ -2573,6 +2630,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         formation=me.get("formation"),
         matchday=matchday_meta or {},
     )
+    attach_mister_assets(gw_xi_advice, player_index=asset_index)
+    attach_mister_assets(recommended_xi.get("players") or [], player_index=asset_index)
 
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
     bal = float(me.get("balance") or 0)
