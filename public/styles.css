@@ -4348,3 +4348,263 @@ body[data-view="radar"] .tactical-main {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
+
+/* -------------------------------------------------------------------------- */
+/* Modal de motivo — plan de hoy                                              */
+/* -------------------------------------------------------------------------- */
+
+body.action-detail-open {
+  overflow: hidden;
+}
+
+.action-detail-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+}
+
+.action-detail-modal[hidden] {
+  display: none !important;
+}
+
+.action-detail-backdrop {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: rgba(2, 5, 9, 0.72);
+  cursor: pointer;
+}
+
+.action-detail-sheet {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: min(100%, 28rem);
+  max-height: min(88vh, 40rem);
+  margin: 0;
+  padding: 1rem 1rem calc(1rem + env(safe-area-inset-bottom));
+  overflow: auto;
+  background: #080e15;
+  border: 1px solid #2a3946;
+  border-bottom: 0;
+  border-radius: 0.75rem 0.75rem 0 0;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.action-detail-head {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.action-detail-media {
+  min-width: 0;
+}
+
+.tactical-player-media.is-detail {
+  width: 4.2rem;
+  height: 4.9rem;
+  overflow: visible;
+  border: 1px solid #354655;
+}
+
+.tactical-player-media.is-detail .tactical-team-logo {
+  right: -0.3rem;
+  bottom: -0.15rem;
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.action-detail-kicker {
+  margin: 0;
+  color: var(--cyan);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.action-detail-title {
+  margin: 0.15rem 0 0;
+  overflow: hidden;
+  color: #f3f6f8;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.45rem;
+  font-style: italic;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.action-detail-sub {
+  margin: 0.2rem 0 0;
+  color: #7f8d99;
+  font-size: 0.72rem;
+}
+
+.action-detail-x {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  color: #9aa7b3;
+  background: #0d151e;
+  border: 1px solid #2d3c49;
+  border-radius: 0.2rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.action-detail-x:hover,
+.action-detail-x:focus-visible {
+  color: var(--acid);
+  border-color: var(--acid);
+  outline: none;
+}
+
+.action-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.action-detail-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  background: #22303c;
+}
+
+.action-detail-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.45rem 0.4rem;
+  background: #0b121a;
+}
+
+.action-detail-stats span {
+  color: #74828e;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.action-detail-stats strong {
+  color: #eef2f5;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1rem;
+  font-style: italic;
+  font-weight: 800;
+}
+
+.action-detail-stats strong.is-acid {
+  color: var(--acid);
+}
+
+.action-detail-why-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-height: 0;
+}
+
+.action-detail-why-label {
+  margin: 0;
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.action-detail-why {
+  margin: 0;
+  max-height: 12rem;
+  overflow: auto;
+  padding: 0.65rem 0.7rem;
+  color: #c5d0d8;
+  background: #0a1119;
+  border: 1px solid #263440;
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+.action-detail-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  margin-top: 0.15rem;
+}
+
+.action-detail-btn {
+  min-height: 2.75rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid transparent;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.action-detail-btn.is-primary {
+  color: #05080d;
+  background: var(--acid);
+  border-color: var(--acid);
+}
+
+.action-detail-btn.is-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.action-detail-btn.is-ghost {
+  color: #d7e0e7;
+  background: #0d151e;
+  border-color: #2d3c49;
+}
+
+.action-detail-btn.is-ghost:hover,
+.action-detail-btn.is-ghost:focus-visible {
+  border-color: var(--cyan);
+  outline: none;
+}
+
+.action-detail-btn.is-primary:hover:not(:disabled),
+.action-detail-btn.is-primary:focus-visible:not(:disabled) {
+  filter: brightness(1.05);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+@media (min-width: 768px) {
+  .action-detail-modal {
+    align-items: center;
+    padding: 1.5rem;
+  }
+
+  .action-detail-sheet {
+    max-height: min(82vh, 36rem);
+    border-radius: 0.35rem;
+    border-bottom: 1px solid #2a3946;
+  }
+}

@@ -489,10 +489,10 @@
     }
   }
 
-  function focusPlayer(playerId, tab) {
+  function focusPlayer(playerId, tab, { openSource = true } = {}) {
     if (!playerId) return;
     // Click en jugador → abrir ficha FF / fuente; si no hay URL, resaltar en la app
-    if (openPlayerSource(playerId)) return;
+    if (openSource && openPlayerSource(playerId)) return;
     selectTab(tab || "market");
     const sel = `.tactical-card[data-player-id="${CSS.escape(String(playerId))}"], .player-card[data-player-id="${CSS.escape(String(playerId))}"], tr[data-player-id="${CSS.escape(String(playerId))}"]`;
     const row = document.querySelector(sel);
@@ -1451,6 +1451,138 @@
     return risk === "low" ? 82 : risk === "high" ? 48 : 66;
   }
 
+  /** @type {any | null} */
+  let actionDetailItem = null;
+  /** @type {string} */
+  let actionDetailTab = "market";
+
+  function actionDetailFocusTab(item) {
+    if (!item) return "market";
+    if (item.action === "sell") return "squad";
+    if (item.action === "clause_bid" || item.action === "scout") return "radar";
+    return "market";
+  }
+
+  function closeActionDetail() {
+    const modal = document.getElementById("action-detail-modal");
+    if (!modal) return;
+    modal.hidden = true;
+    modal.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("action-detail-open");
+    actionDetailItem = null;
+  }
+
+  function openActionDetail(item) {
+    const modal = document.getElementById("action-detail-modal");
+    if (!modal || !item) return;
+    const rec = tacticalRecord(item);
+    actionDetailItem = rec;
+    actionDetailTab = actionDetailFocusTab(rec);
+    const meta = TACTICAL_ACTIONS[rec.action] || TACTICAL_ACTIONS.wait;
+    const confidence = actionConfidence(rec);
+    const money = actionAmount(rec);
+    const risk = rec.wait_risk || rec.sell_risk;
+    const riskLabel = risk === "high" ? "Alto" : risk === "low" ? "Bajo" : risk === "medium" ? "Medio" : null;
+
+    const mediaEl = document.getElementById("action-detail-media");
+    const kickerEl = document.getElementById("action-detail-kicker");
+    const titleEl = document.getElementById("action-detail-title");
+    const subEl = document.getElementById("action-detail-sub");
+    const metaEl = document.getElementById("action-detail-meta");
+    const statsEl = document.getElementById("action-detail-stats");
+    const whyEl = document.getElementById("action-detail-why");
+    const ffBtn = document.getElementById("action-detail-ff");
+
+    if (mediaEl) {
+      mediaEl.innerHTML = playerMedia(rec, "is-detail");
+      bindAssetFallbacks(mediaEl);
+    }
+    if (kickerEl) kickerEl.textContent = meta.label || "Acción";
+    if (titleEl) titleEl.textContent = rec.name || "Jugador";
+    if (subEl) {
+      const bits = [rec.position, rec.team].filter(Boolean);
+      subEl.textContent = bits.join(" · ") || "—";
+    }
+    if (metaEl) {
+      const urgLabel =
+        rec.urgency === "high"
+          ? "Urgente"
+          : rec.urgency === "medium"
+            ? "Media"
+            : rec.urgency === "low"
+              ? "Baja"
+              : rec.urgency
+                ? String(rec.urgency)
+                : "";
+      metaEl.innerHTML = [
+        sellReasonBadge(rec.sell_reason),
+        urgLabel ? `<span class="badge badge-duda">${escapeHtml(urgLabel)}</span>` : "",
+        riskLabel ? `<span class="badge badge-baja">Riesgo ${riskLabel}</span>` : "",
+        sellSettlementBadge(rec),
+      ]
+        .filter(Boolean)
+        .join("");
+    }
+    if (statsEl) {
+      statsEl.innerHTML =
+        `<div><span>Confianza</span><strong>${confidence}%</strong></div>` +
+        (money != null ? `<div><span>Importe</span><strong class="is-acid">${formatMoney(money)}</strong></div>` : "") +
+        (rec.priority_score != null
+          ? `<div><span>Score</span><strong>${Math.round(Number(rec.priority_score))}</strong></div>`
+          : "");
+    }
+    if (whyEl) {
+      whyEl.textContent =
+        rec.why || rec.package_note || "Movimiento recomendado por el motor competitivo.";
+    }
+    if (ffBtn) {
+      const hasSource = Boolean(playerSourceUrl(rec) || playerSourceUrl(findPlayerRecord(rec.player_id || rec.id)));
+      ffBtn.disabled = !hasSource;
+      ffBtn.title = hasSource ? "Abrir ficha en Futbol Fantasy / fuente" : "Sin ficha externa disponible";
+    }
+
+    modal.hidden = false;
+    modal.setAttribute("aria-hidden", "false");
+    document.body.classList.add("action-detail-open");
+    const closeBtn = modal.querySelector("[data-action-detail-close]");
+    if (closeBtn) closeBtn.focus();
+  }
+
+  function initActionDetailModal() {
+    const modal = document.getElementById("action-detail-modal");
+    if (!modal || modal.dataset.bound === "1") return;
+    modal.dataset.bound = "1";
+    modal.querySelectorAll("[data-action-detail-close]").forEach((el) => {
+      el.addEventListener("click", () => closeActionDetail());
+    });
+    const ffBtn = document.getElementById("action-detail-ff");
+    const appBtn = document.getElementById("action-detail-app");
+    if (ffBtn) {
+      ffBtn.addEventListener("click", () => {
+        if (!actionDetailItem) return;
+        const opened =
+          openPlayerSource(actionDetailItem) ||
+          openPlayerSource(actionDetailItem.player_id || actionDetailItem.id);
+        if (!opened) {
+          ffBtn.disabled = true;
+          ffBtn.title = "Sin ficha externa disponible";
+        }
+      });
+    }
+    if (appBtn) {
+      appBtn.addEventListener("click", () => {
+        if (!actionDetailItem) return;
+        const id = actionDetailItem.player_id || actionDetailItem.id;
+        const tab = actionDetailTab;
+        closeActionDetail();
+        focusPlayer(id, tab, { openSource: false });
+      });
+    }
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && modal && !modal.hidden) closeActionDetail();
+    });
+  }
+
   function renderTacticalPlan(data) {
     const heroRoot = document.getElementById("today-hero");
     const listRoot = document.getElementById("action-queue");
@@ -1508,8 +1640,8 @@
             const meta = TACTICAL_ACTIONS[item.action] || TACTICAL_ACTIONS.wait;
             const itemConfidence = actionConfidence(item);
             const money = actionAmount(item);
-            const targetTab = item.action === "sell" ? "squad" : item.action === "clause_bid" || item.action === "scout" ? "radar" : "market";
-            return `<button type="button" class="tactical-action-row ${meta.cls}" data-player-id="${escapeHtml(
+            const targetTab = actionDetailFocusTab(item);
+            return `<button type="button" class="tactical-action-row ${meta.cls}" data-action-index="${index}" data-player-id="${escapeHtml(
               item.player_id || item.id
             )}" data-focus-tab="${targetTab}">
               <span class="tactical-action-rank">${String(index + 2).padStart(2, "0")}</span>
@@ -1517,7 +1649,7 @@
               <span class="tactical-action-main">
                 <span class="tactical-action-label">${escapeHtml(meta.label)}</span>
                 <strong>${escapeHtml(item.name || "")}</strong>
-                <small>${escapeHtml(item.team || item.why || "")}</small>
+                <small>${escapeHtml(item.team || "")}</small>
               </span>
               <span class="tactical-action-score">
                 <small>Confianza</small>
@@ -1530,15 +1662,21 @@
       : `<p class="queue-empty">No hay más acciones necesarias hoy.</p>`;
     if (countRoot) countRoot.textContent = `${ordered.length} ${ordered.length === 1 ? "acción" : "acciones"}`;
 
-    [heroRoot, listRoot].forEach((root) => {
-      bindAssetFallbacks(root);
-      root.querySelectorAll("[data-player-id]").forEach((button) => {
-        button.addEventListener("click", () =>
-          focusPlayer(
-            button.getAttribute("data-player-id"),
-            button.getAttribute("data-focus-tab") || (hero.action === "sell" ? "squad" : "market")
-          )
-        );
+    bindAssetFallbacks(heroRoot);
+    bindAssetFallbacks(listRoot);
+    heroRoot.querySelectorAll("[data-player-id]").forEach((button) => {
+      button.addEventListener("click", () =>
+        focusPlayer(
+          button.getAttribute("data-player-id"),
+          button.getAttribute("data-focus-tab") || actionDetailFocusTab(hero)
+        )
+      );
+    });
+    listRoot.querySelectorAll(".tactical-action-row").forEach((button) => {
+      button.addEventListener("click", () => {
+        const idx = Number(button.getAttribute("data-action-index"));
+        const item = followUps[idx];
+        if (item) openActionDetail(item);
       });
     });
   }
@@ -3020,6 +3158,7 @@
     initLeagueSwitcher();
     initSortControls();
     initRefreshButton();
+    initActionDetailModal();
     initPwa();
     loadData();
   });

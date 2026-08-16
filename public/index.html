@@ -35,7 +35,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=53" />
+  <link rel="stylesheet" href="./styles.css?v=54" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -475,6 +475,36 @@
     Mister Fantasy Advisor · Decisiones diarias
   </footer>
 
-  <script src="./app.js?v=53" defer></script>
+  <div id="action-detail-modal" class="action-detail-modal" hidden aria-hidden="true">
+    <button type="button" class="action-detail-backdrop" data-action-detail-close aria-label="Cerrar"></button>
+    <div
+      class="action-detail-sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="action-detail-title"
+    >
+      <header class="action-detail-head">
+        <div id="action-detail-media" class="action-detail-media"></div>
+        <div class="action-detail-identity min-w-0">
+          <p id="action-detail-kicker" class="action-detail-kicker"></p>
+          <h2 id="action-detail-title" class="action-detail-title"></h2>
+          <p id="action-detail-sub" class="action-detail-sub"></p>
+        </div>
+        <button type="button" class="action-detail-x" data-action-detail-close aria-label="Cerrar">×</button>
+      </header>
+      <div id="action-detail-meta" class="action-detail-meta"></div>
+      <div id="action-detail-stats" class="action-detail-stats"></div>
+      <section class="action-detail-why-block" aria-labelledby="action-detail-why-label">
+        <h3 id="action-detail-why-label" class="action-detail-why-label">Motivo</h3>
+        <p id="action-detail-why" class="action-detail-why"></p>
+      </section>
+      <footer class="action-detail-actions">
+        <button type="button" id="action-detail-ff" class="action-detail-btn is-primary">Ver en FF</button>
+        <button type="button" id="action-detail-app" class="action-detail-btn is-ghost">Ver en la app</button>
+      </footer>
+    </div>
+  </div>
+
+  <script src="./app.js?v=54" defer></script>
 </body>
 </html>
