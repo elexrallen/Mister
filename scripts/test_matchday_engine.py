@@ -18,6 +18,7 @@ from competitive_actions import (  # noqa: E402
     set_matchday_phase,
 )
 from daily_playbook import build_daily_playbook  # noqa: E402
+from league_rules import captain_multiplier_for_price, resolve_captain_rule  # noqa: E402
 from model_calibration import build_calibration  # noqa: E402
 from expected_points import expected_points, probability_of_playing  # noqa: E402
 from external_data import _derive_chollo  # noqa: E402
@@ -27,7 +28,6 @@ from fixture_difficulty import (  # noqa: E402
     build_team_strength,
     fdr_for,
 )
-from league_rules import resolve_captain_rule  # noqa: E402
 from mister_client import (  # noqa: E402
     normalize_sw_player,
     parse_streak_values,
@@ -363,14 +363,46 @@ def test_xpts_scales_with_provider() -> None:
 
 def _xi() -> list[dict]:
     return [
-        {"player_id": "1", "name": "Estrella", "position": "FW", "xpts": 9.0, "p_play": 0.95},
-        {"player_id": "2", "name": "Titular fijo", "position": "MF", "xpts": 7.0, "p_play": 0.96},
-        {"player_id": "3", "name": "Portero", "position": "GK", "xpts": 5.0, "p_play": 0.9},
+        {
+            "player_id": "1",
+            "name": "Estrella",
+            "position": "FW",
+            "xpts": 9.0,
+            "p_play": 0.95,
+            "price": 6_000_000,
+        },
+        {
+            "player_id": "2",
+            "name": "Titular fijo",
+            "position": "MF",
+            "xpts": 7.0,
+            "p_play": 0.96,
+            "price": 6_000_000,
+        },
+        {
+            "player_id": "3",
+            "name": "Portero",
+            "position": "GK",
+            "xpts": 5.0,
+            "p_play": 0.9,
+            "price": 6_000_000,
+        },
     ]
 
 
+def test_captain_multiplier_for_price_tiers() -> None:
+    assert captain_multiplier_for_price(2_300_000) == 3.0
+    assert captain_multiplier_for_price(4_999_999) == 3.0
+    assert captain_multiplier_for_price(5_000_000) == 2.0
+    assert captain_multiplier_for_price(9_999_999) == 2.0
+    assert captain_multiplier_for_price(10_000_000) == 1.5
+    assert captain_multiplier_for_price(19_500_000) == 1.5
+    assert captain_multiplier_for_price(None) == 2.0
+    assert captain_multiplier_for_price(0) == 2.0
+
+
 def test_captain_picks_highest_expected_gain() -> None:
-    cap = pick_captain(_xi(), multiplier=2.0)
+    cap = pick_captain(_xi(), multiplier=2.0, mode="fixed")
     assert cap is not None
     assert cap["player_id"] == "1", cap
     assert cap["expected_gain"] == 9.0, cap
@@ -381,45 +413,94 @@ def test_captain_picks_highest_expected_gain() -> None:
 def test_captain_avoids_risky_starter() -> None:
     xi = _xi()
     xi[0]["p_play"] = 0.5  # duda seria: el x2 se penaliza a la mitad
-    cap = pick_captain(xi, multiplier=2.0)
+    cap = pick_captain(xi, multiplier=2.0, mode="fixed")
     assert cap is not None
     assert cap["player_id"] == "2", cap
 
 
 def test_captain_scales_with_multiplier() -> None:
-    x2 = pick_captain(_xi(), multiplier=2.0)
-    x3 = pick_captain(_xi(), multiplier=3.0)
+    x2 = pick_captain(_xi(), multiplier=2.0, mode="fixed")
+    x3 = pick_captain(_xi(), multiplier=3.0, mode="fixed")
     assert x2 is not None and x3 is not None
     assert x3["expected_gain"] == 18.0, x3
     assert x3["expected_gain"] > x2["expected_gain"]
 
 
+def test_captain_by_market_value_prefers_cheap_x3() -> None:
+    """Saka-like x1.5 no debe ganar a un barato con mejor gain a x3."""
+    xi = [
+        {
+            "player_id": "saka",
+            "name": "Saka",
+            "position": "MF",
+            "xpts": 8.86,
+            "p_play": 0.95,
+            "price": 19_500_000,
+        },
+        {
+            "player_id": "cheap",
+            "name": "Mitchell",
+            "position": "DF",
+            "xpts": 5.0,
+            "p_play": 0.95,
+            "price": 2_300_000,
+        },
+    ]
+    cap = pick_captain(xi, mode="by_market_value")
+    assert cap is not None
+    assert cap["player_id"] == "cheap", cap
+    assert cap["multiplier"] == 3.0, cap
+    assert cap["expected_gain"] == 10.0, cap  # 5 * (3-1)
+    # Saka: 8.86 * 0.5 = 4.43
+
+
+def test_captain_expensive_gets_x15() -> None:
+    xi = [
+        {
+            "player_id": "saka",
+            "name": "Saka",
+            "position": "MF",
+            "xpts": 8.86,
+            "p_play": 0.95,
+            "price": 19_500_000,
+        },
+    ]
+    cap = pick_captain(xi, mode="by_market_value")
+    assert cap is not None
+    assert cap["multiplier"] == 1.5, cap
+    assert abs(cap["expected_gain"] - 4.43) < 0.01, cap
+    assert "x1.5" in cap["why"]
+
+
 def test_captain_disabled_returns_none() -> None:
-    assert pick_captain(_xi(), multiplier=1.0) is None
-    assert pick_captain([], multiplier=2.0) is None
+    assert pick_captain(_xi(), multiplier=1.0, mode="fixed") is None
+    assert pick_captain([], multiplier=2.0, mode="fixed") is None
     # Sin xPts calculados no se capitanea a ciegas
-    assert pick_captain([{"player_id": "9", "name": "Sin xpts"}], multiplier=2.0) is None
+    assert pick_captain([{"player_id": "9", "name": "Sin xpts"}], mode="by_market_value") is None
 
 
 def test_captain_rule_from_fg_cfg() -> None:
     rule = resolve_captain_rule(fg_cfg={"LEAGUE_CAPTAIN_ENABLED": 1})
     assert rule["enabled"] is True
     assert rule["known"] is True
-    assert rule["multiplier"] == 2.0
+    assert rule["mode"] == "by_market_value"
+    assert rule["multiplier"] is None
     assert rule["source"] == "fg_cfg"
-    assert rule["multiplier_source"] == "default"
+    assert rule["multiplier_source"] == "by_market_value"
 
 
 def test_captain_rule_admin_and_override() -> None:
     admin = resolve_captain_rule(admin_settings={"is_captain_enabled": 0})
     assert admin["enabled"] is False
     assert admin["multiplier"] == 1.0, admin
+    assert admin["mode"] == "off"
 
     override = resolve_captain_rule(
         fg_cfg={"LEAGUE_CAPTAIN_ENABLED": 1},
         league_cfg={"captain_enabled": True, "captain_multiplier": 3},
     )
     assert override["enabled"] is True
+    assert override["mode"] == "fixed"
     assert override["multiplier"] == 3.0
     assert override["source"] == "override"
 
@@ -428,6 +509,7 @@ def test_captain_rule_unknown_defaults_to_off() -> None:
     rule = resolve_captain_rule()
     assert rule["enabled"] is False
     assert rule["known"] is False
+    assert rule["mode"] == "off"
 
 
 # ---------------------------------------------------------------------------
@@ -672,9 +754,12 @@ def main() -> None:
         test_xpts_without_any_signal_is_conservative,
         test_xpts_injured_is_near_zero,
         test_xpts_scales_with_provider,
+        test_captain_multiplier_for_price_tiers,
         test_captain_picks_highest_expected_gain,
         test_captain_avoids_risky_starter,
         test_captain_scales_with_multiplier,
+        test_captain_by_market_value_prefers_cheap_x3,
+        test_captain_expensive_gets_x15,
         test_captain_disabled_returns_none,
         test_captain_rule_from_fg_cfg,
         test_captain_rule_admin_and_override,

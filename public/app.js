@@ -799,16 +799,23 @@
         const currentId = (rec.current && rec.current.captain_id) || null;
         const isSet = String(currentId || "") === String(cap.player_id || "");
         const alt = cap.alternative;
-        const mult = cap.multiplier ? `x${cap.multiplier}` : "x2";
+        const mult =
+          cap.multiplier != null && cap.multiplier !== ""
+            ? `x${cap.multiplier}`
+            : "—";
         const gain =
           cap.expected_gain != null ? `+${Number(cap.expected_gain).toFixed(1)} pts` : "";
         const status = isSet
           ? `<span class="badge badge-mint">Ya puesto</span>`
           : `<span class="badge badge-warning">Cambiar en Mister</span>`;
+        const altMult =
+          alt && alt.multiplier != null && alt.multiplier !== ""
+            ? ` · x${alt.multiplier}`
+            : "";
         const altHtml = alt
           ? `<p class="matchday-captain-alt">Alternativa: <button type="button" class="player-link" data-player-id="${escapeHtml(
               String(alt.player_id || "")
-            )}">${escapeHtml(alt.name || "—")}</button>${
+            )}">${escapeHtml(alt.name || "—")}</button>${altMult}${
               alt.expected_gain != null
                 ? ` · +${Number(alt.expected_gain).toFixed(1)} pts`
                 : ""

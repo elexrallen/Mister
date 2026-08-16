@@ -11,6 +11,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import config
+from league_rules import captain_multiplier_for_price
 from scrapers.ff_points import resolve_avg_scale, scale_threshold
 
 # Día antes de jornada: no endeudarse (Mister: saldo negativo → no puntúa).
@@ -840,17 +841,30 @@ def _slot_risk(item: dict[str, Any]) -> tuple[bool, str | None]:
 def pick_captain(
     xi: list[dict[str, Any]],
     *,
-    multiplier: float = 2.0,
+    multiplier: float | None = None,
+    mode: str = "by_market_value",
 ) -> dict[str, Any] | None:
     """
-    Capitán = quien más puntos añade al multiplicar: `xpts * (multiplier - 1)`.
+    Capitán = quien más puntos añade al multiplicar: `xpts * (mult - 1)`.
+
+    Por defecto el multiplicador es por valor de mercado (Mister):
+    <5M → x3, 5–10M → x2, ≥10M → x1.5. Con `mode="fixed"` se usa `multiplier`
+    uniforme para todo el XI.
 
     Un capitán que no juega es el error más caro del juego, así que la
     probabilidad de jugar corta antes que el techo: por debajo de 0.6 no se
     capitanea salvo que no haya nadie mejor.
     """
-    if not xi or multiplier <= 1:
+    if not xi:
         return None
+    fixed = mode == "fixed"
+    if fixed:
+        try:
+            fixed_mult = float(multiplier) if multiplier is not None else 0.0
+        except (TypeError, ValueError):
+            fixed_mult = 0.0
+        if fixed_mult <= 1:
+            return None
 
     def _f(row: dict[str, Any], key: str) -> float | None:
         try:
@@ -859,33 +873,47 @@ def pick_captain(
         except (TypeError, ValueError):
             return None
 
-    scored: list[tuple[float, float, dict[str, Any]]] = []
+    def _row_mult(row: dict[str, Any]) -> float:
+        if fixed:
+            return float(fixed_mult)
+        existing = _f(row, "captain_multiplier")
+        if existing is not None and existing > 1:
+            return existing
+        price = row.get("price")
+        if price is None:
+            price = row.get("market_value")
+        return captain_multiplier_for_price(price)
+
+    scored: list[tuple[float, float, float, dict[str, Any]]] = []
     for row in xi:
         if row.get("injured"):
             continue
         xpts = _f(row, "xpts")
         if xpts is None:
             continue
+        mult = _row_mult(row)
+        if mult <= 1:
+            continue
         p_play = _f(row, "p_play")
-        gain = xpts * (float(multiplier) - 1.0)
+        gain = xpts * (mult - 1.0)
         if p_play is not None and p_play < 0.6:
             gain *= 0.5  # riesgo de cero al cuadrado
-        scored.append((gain, p_play if p_play is not None else 0.0, row))
+        scored.append((gain, p_play if p_play is not None else 0.0, mult, row))
 
     # Nunca capitanear un hueco de riesgo si hay alguien que sí va a jugar
-    safe = [t for t in scored if not t[2].get("slot_risk")]
+    safe = [t for t in scored if not t[3].get("slot_risk")]
     if safe:
         scored = safe
 
     if not scored:
         return None
     # A ganancia igual manda quien seguro juega y, después, el partido más amable
-    scored.sort(key=lambda t: (-t[0], -t[1], -(_f(t[2], "fdr_multiplier") or 1.0)))
-    gain, p_play, best = scored[0]
-    alt = scored[1][2] if len(scored) > 1 else None
+    scored.sort(key=lambda t: (-t[0], -t[1], -(_f(t[3], "fdr_multiplier") or 1.0)))
+    gain, p_play, best_mult, best = scored[0]
+    alt_t = scored[1] if len(scored) > 1 else None
 
     why = (
-        f"+{gain:.1f} pts por el x{multiplier:g}"
+        f"+{gain:.1f} pts por el x{best_mult:g}"
         f" ({best.get('xpts')} esperados, {p_play * 100:.0f}% de jugar)"
     )
     if best.get("opponent_name"):
@@ -898,17 +926,19 @@ def pick_captain(
         "team": best.get("team"),
         "xpts": best.get("xpts"),
         "p_play": best.get("p_play"),
-        "multiplier": float(multiplier),
+        "price": best.get("price") if best.get("price") is not None else best.get("market_value"),
+        "multiplier": float(best_mult),
         "expected_gain": round(gain, 2),
         "why": why,
         "alternative": (
             {
-                "player_id": alt.get("player_id"),
-                "name": alt.get("name"),
-                "xpts": alt.get("xpts"),
-                "expected_gain": round(scored[1][0], 2),
+                "player_id": alt_t[3].get("player_id"),
+                "name": alt_t[3].get("name"),
+                "xpts": alt_t[3].get("xpts"),
+                "multiplier": float(alt_t[2]),
+                "expected_gain": round(alt_t[0], 2),
             }
-            if alt
+            if alt_t
             else None
         ),
     }
@@ -1074,6 +1104,12 @@ def build_recommended_gw_xi(
             "fdr_label": p.get("fdr_label"),
             "fdr_multiplier": p.get("fdr_multiplier"),
             "fdr_why": p.get("fdr_why"),
+            "price": _money(p.get("price") or p.get("market_value")) or None,
+            "captain_multiplier": captain_multiplier_for_price(
+                p.get("price") or p.get("market_value")
+            )
+            if (p.get("price") or p.get("market_value"))
+            else None,
             "why": why,
             "jornada": jornada,
         }
@@ -1184,7 +1220,13 @@ def build_recommended_gw_xi(
     captain = None
     cap_rule = captain_rule if isinstance(captain_rule, dict) else {}
     if cap_rule.get("enabled"):
-        captain = pick_captain(xi, multiplier=float(cap_rule.get("multiplier") or 2.0))
+        mode = str(cap_rule.get("mode") or "by_market_value")
+        fixed = cap_rule.get("multiplier")
+        try:
+            fixed_f = float(fixed) if fixed is not None else None
+        except (TypeError, ValueError):
+            fixed_f = None
+        captain = pick_captain(xi, multiplier=fixed_f, mode=mode)
         if captain:
             for row in xi:
                 row["is_captain"] = row.get("player_id") == captain.get("player_id")

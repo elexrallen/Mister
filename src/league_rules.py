@@ -137,14 +137,40 @@ def compute_factors(rules: dict[str, Any]) -> list[str]:
         factors.append("public_balances")
     captain = rules.get("captain")
     if isinstance(captain, dict) and captain.get("enabled"):
-        factors.append(f"captain_x{captain.get('multiplier')}")
+        mode = captain.get("mode") or "by_market_value"
+        if mode == "fixed":
+            factors.append(f"captain_x{captain.get('multiplier')}")
+        else:
+            factors.append("captain_by_value")
     return factors
 
 
-# Mister no publica el multiplicador en ningún endpoint (solo el literal
-# "Capitán x{multiplier}" en las traducciones). x2 es el valor del juego;
-# se puede sobreescribir por liga con `captain_multiplier` en LEAGUE_OVERRIDES.
-DEFAULT_CAPTAIN_MULTIPLIER = 2.0
+# Mister: multiplicador dinámico por valor de mercado (blog oficial).
+# Override fijo opcional con `captain_multiplier` en LEAGUE_OVERRIDES / admin / fg_cfg.
+CAPTAIN_PRICE_TIERS: tuple[tuple[float, float], ...] = (
+    (5_000_000.0, 3.0),   # >0 y <5M → x3
+    (10_000_000.0, 2.0),  # >=5M y <10M → x2
+)
+CAPTAIN_PRICE_TOP_MULTIPLIER = 1.5  # >=10M → x1.5
+DEFAULT_CAPTAIN_MULTIPLIER = 2.0  # solo fallback si falta precio en modo by_value
+
+
+def captain_multiplier_for_price(price: Any) -> float:
+    """
+    Multiplicador de capitán según valor de mercado Mister:
+    <5M → x3, 5–10M → x2, ≥10M → x1.5.
+    Sin precio válido → x2 (tramo medio conservador).
+    """
+    try:
+        p = float(price) if price is not None else 0.0
+    except (TypeError, ValueError):
+        p = 0.0
+    if p <= 0:
+        return DEFAULT_CAPTAIN_MULTIPLIER
+    for ceiling, mult in CAPTAIN_PRICE_TIERS:
+        if p < ceiling:
+            return mult
+    return CAPTAIN_PRICE_TOP_MULTIPLIER
 
 
 def resolve_captain_rule(
@@ -154,7 +180,10 @@ def resolve_captain_rule(
     league_cfg: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
-    Capitán de la liga: activado y multiplicador.
+    Capitán de la liga: activado y modo de multiplicador.
+
+    Por defecto Mister usa multiplicador por valor de mercado (`by_market_value`).
+    Un `captain_multiplier` explícito fuerza modo `fixed` (tests / overrides).
 
     `is_captain_enabled` llega en /ajax/sw/admin (solo si eres admin) y
     `LEAGUE_CAPTAIN_ENABLED` en el `_FG_cfg` del HTML (siempre disponible).
@@ -175,8 +204,8 @@ def resolve_captain_rule(
         enabled = _truthy(fgc.get("LEAGUE_CAPTAIN_ENABLED"))
         source = "fg_cfg"
 
-    multiplier = DEFAULT_CAPTAIN_MULTIPLIER
-    mult_source = "default"
+    fixed_mult: float | None = None
+    mult_source = "by_market_value"
     for candidate, src in (
         (cfg.get("captain_multiplier"), "override"),
         (admin.get("captain_multiplier"), "admin"),
@@ -187,16 +216,37 @@ def resolve_captain_rule(
         except (TypeError, ValueError):
             v = None
         if v and v > 1:
-            multiplier = v
+            fixed_mult = v
             mult_source = src
             break
 
+    if not enabled:
+        return {
+            "enabled": False,
+            "known": enabled is not None,
+            "mode": "off",
+            "multiplier": 1.0,
+            "source": source,
+            "multiplier_source": mult_source if fixed_mult else "off",
+        }
+
+    if fixed_mult is not None:
+        return {
+            "enabled": True,
+            "known": enabled is not None,
+            "mode": "fixed",
+            "multiplier": fixed_mult,
+            "source": source,
+            "multiplier_source": mult_source,
+        }
+
     return {
-        "enabled": bool(enabled),
+        "enabled": True,
         "known": enabled is not None,
-        "multiplier": multiplier if enabled else 1.0,
+        "mode": "by_market_value",
+        "multiplier": None,
         "source": source,
-        "multiplier_source": mult_source,
+        "multiplier_source": "by_market_value",
     }
 
 

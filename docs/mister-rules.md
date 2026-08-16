@@ -41,20 +41,31 @@ La URL de scrape (LaLiga vs Premier) sigue la competición; el provider ajusta u
 | Cláusulas | `clauses` | Si off → no `clause_bid` |
 | Cesiones | `loans` | Si off → no asumir liquidez por loan |
 | Ritmo mercado | `market_speed` / `market_stay` | `market_urgency`; mercado rápido promueve `wait`→`buy_now` |
-| Capitán | `captain` (`is_captain_enabled` + multiplicador) | Factor `captain_x{n}`; `recommended_xi.captain` elegido por `xpts` |
+| Capitán | `captain` (`is_captain_enabled` + modo) | Factor `captain_by_value` (o `captain_x{n}` si override fijo); `recommended_xi.captain` por ganancia esperada |
 | Texto admin | `custom_rules` | Factor `custom_rules_text` (visible en JSON) |
 
 ### Capitán
 
-Mister no expone el multiplicador como número en ningún endpoint; los textos de
-la interfaz lo describen como doble puntuación, así que el advisor asume **x2**
-salvo que `admin_settings` o un override de `LEAGUE_OVERRIDES` digan otra cosa.
+Mister ajusta el multiplicador según el **valor de mercado** del jugador
+(justo antes de la jornada):
+
+| Valor | Multiplicador |
+|-------|---------------|
+| `>0` y `<5M` | **x3** |
+| `≥5M` y `<10M` | **x2** |
+| `≥10M` | **x1.5** |
+
+El advisor usa ese modo (`by_market_value`) por defecto. Solo si
+`admin_settings`, `_FG_cfg` o un override de `LEAGUE_OVERRIDES` fijan
+`captain_multiplier` se fuerza modo `fixed` uniforme.
+
 La detección de si la liga tiene capitán activo se lee, por este orden, de
 `league_cfg`, `admin_settings` y `_FG_cfg`.
 
-El capitán se elige maximizando `xpts × (multiplicador − 1)` y se desempata por
-probabilidad de jugar: un capitán que no salta al campo es el error más caro del
-juego, así que ante xPts parecidos gana siempre el titular más seguro.
+El capitán se elige maximizando `xpts × (multiplicador − 1)` con el
+multiplicador de cada jugador, y se desempata por probabilidad de jugar: un
+capitán que no salta al campo es el error más caro del juego, así que ante
+xPts parecidos gana siempre el titular más seguro.
 
 ## Dónde se ve en el JSON
 
@@ -71,12 +82,13 @@ juego, así que ante xPts parecidos gana siempre el titular más seguro.
     "captain": {
       "enabled": true,
       "known": true,
-      "multiplier": 2.0,
+      "mode": "by_market_value",
+      "multiplier": null,
       "source": "fg_cfg",
-      "multiplier_source": "default"
+      "multiplier_source": "by_market_value"
     },
     "source": "fg_user",
-    "factors": ["scoring_mixto", "auction_urgency", "clause_bids", "max_squad_25", "normal_market_cycle"]
+    "factors": ["scoring_mixto", "auction_urgency", "clause_bids", "max_squad_25", "normal_market_cycle", "captain_by_value"]
   }
 }
 ```
