@@ -87,60 +87,54 @@ def _lineup_pct(p: dict[str, Any]) -> float | None:
     return None
 
 
-def _production(p: dict[str, Any]) -> float | None:
-    if p.get("production_score") is not None:
-        try:
-            return float(p["production_score"])
-        except (TypeError, ValueError):
-            pass
-    ext = p.get("external") or {}
-    if ext.get("production_score") is not None:
-        try:
-            return float(ext["production_score"])
-        except (TypeError, ValueError):
-            return None
+def _ff_prior_avg(p: dict[str, Any]) -> float | None:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        if not source:
+            continue
+        for key in ("ff_prior_avg", "prior_avg"):
+            if source.get(key) is not None:
+                try:
+                    v = float(source[key])
+                    if v > 0:
+                        return v
+                except (TypeError, ValueError):
+                    pass
     return None
 
 
-def _ff_avg(p: dict[str, Any]) -> float | None:
-    for key in ("ff_mister_avg", "mister_avg", "form"):
-        if p.get(key) is not None:
-            try:
-                v = float(p[key])
-                if v > 0:
-                    return v
-            except (TypeError, ValueError):
-                pass
-    ext = p.get("external") or {}
-    if ext.get("ff_mister_avg") is not None:
-        try:
-            v = float(ext["ff_mister_avg"])
-            return v if v > 0 else None
-        except (TypeError, ValueError):
-            return None
+def _ff_prior_apps(p: dict[str, Any]) -> int:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        if not source:
+            continue
+        for key in ("ff_prior_apps", "prior_apps"):
+            if source.get(key) is not None:
+                try:
+                    return max(0, int(source[key]))
+                except (TypeError, ValueError):
+                    pass
+    return 0
+
+
+def _ff_prior_points(p: dict[str, Any]) -> float | None:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        if not source:
+            continue
+        for key in ("ff_prior_points", "prior_points"):
+            if source.get(key) is not None:
+                try:
+                    v = float(source[key])
+                    if v > 0:
+                        return v
+                except (TypeError, ValueError):
+                    pass
+    avg = _ff_prior_avg(p)
+    apps = _ff_prior_apps(p)
+    if avg is not None and apps > 0:
+        return round(avg * apps, 1)
     return None
 
 
-def _ff_points(p: dict[str, Any]) -> float | None:
-    for key in ("ff_mister_points", "points"):
-        if p.get(key) is not None:
-            try:
-                v = float(p[key])
-                if v > 0:
-                    return v
-            except (TypeError, ValueError):
-                pass
-    ext = p.get("external") or {}
-    if ext.get("ff_mister_points") is not None:
-        try:
-            v = float(ext["ff_mister_points"])
-            return v if v > 0 else None
-        except (TypeError, ValueError):
-            return None
-    return None
-
-
-def _ff_apps(p: dict[str, Any]) -> int:
+def _ff_current_apps(p: dict[str, Any]) -> int:
     for key in ("ff_apps", "apps"):
         if p.get(key) is not None:
             try:
@@ -154,6 +148,83 @@ def _ff_apps(p: dict[str, Any]) -> int:
         except (TypeError, ValueError):
             pass
     return 0
+
+
+def _ff_avg(p: dict[str, Any]) -> float | None:
+    cur = None
+    for key in ("ff_mister_avg", "mister_avg", "form"):
+        if p.get(key) is not None:
+            try:
+                v = float(p[key])
+                if v > 0:
+                    cur = v
+                    break
+            except (TypeError, ValueError):
+                pass
+    if cur is None:
+        ext = p.get("external") or {}
+        if ext.get("ff_mister_avg") is not None:
+            try:
+                v = float(ext["ff_mister_avg"])
+                if v > 0:
+                    cur = v
+            except (TypeError, ValueError):
+                pass
+    prior = _ff_prior_avg(p)
+    # Temporada en curso con muestra corta: prior es más fiable
+    if prior is not None and (_ff_current_apps(p) < 8 or cur is None):
+        return prior
+    return cur if cur is not None else prior
+
+
+def _ff_points(p: dict[str, Any]) -> float | None:
+    cur = None
+    for key in ("ff_mister_points", "points"):
+        if p.get(key) is not None:
+            try:
+                v = float(p[key])
+                if v > 0:
+                    cur = v
+                    break
+            except (TypeError, ValueError):
+                pass
+    if cur is None:
+        ext = p.get("external") or {}
+        if ext.get("ff_mister_points") is not None:
+            try:
+                v = float(ext["ff_mister_points"])
+                if v > 0:
+                    cur = v
+            except (TypeError, ValueError):
+                pass
+    prior = _ff_prior_points(p)
+    if prior is not None and (_ff_current_apps(p) < 8 or cur is None):
+        return prior
+    return cur if cur is not None else prior
+
+
+def _ff_apps(p: dict[str, Any]) -> int:
+    cur = _ff_current_apps(p)
+    # Muestra corta de la temporada actual: usar PJ de la anterior
+    if cur >= 8:
+        return cur
+    prior = _ff_prior_apps(p)
+    return prior if prior > cur else cur
+
+
+def _production(p: dict[str, Any]) -> float | None:
+    if p.get("production_score") is not None:
+        try:
+            return float(p["production_score"])
+        except (TypeError, ValueError):
+            pass
+    ext = p.get("external") or {}
+    if ext.get("production_score") is not None:
+        try:
+            return float(ext["production_score"])
+        except (TypeError, ValueError):
+            return None
+    return None
 
 
 def _hist_floors(position: str, *, avg_scale: float = 8.0) -> tuple[float, float]:
@@ -441,7 +512,8 @@ def _normalize_player(
     delta = _delta_5d(p, price_series)
     price_m = max(slot_cost / 1_000_000.0, 0.4)
     apps = _ff_apps(p)
-    sample_thin = bool(p.get("sample_thin")) or (0 < apps < 8)
+    # No confiar en sample_thin del scrape si ya hay PJ de temporada anterior
+    sample_thin = 0 < apps < 8
     ext = p.get("external") or {}
     clause_val = p.get("clause") if clause_known else None
     return {
