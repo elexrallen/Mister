@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T10:09:16.579677+00:00",
+  "generated_at": "2026-08-16T11:05:13.395482+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -106,7 +106,7 @@
       "id_competition": 3,
       "season_start": "2026-08-21",
       "default": false,
-      "generated_at": "2026-08-16T07:58:29.686255+00:00",
+      "generated_at": "2026-08-16T11:05:13.280295+00:00",
       "path": "leagues/premier/latest_data.json",
       "balance": 497000,
       "rank": 50,
@@ -125,7 +125,7 @@
         "fast_market",
         "salaries",
         "custom_rules_text",
-        "captain_x2.0"
+        "captain_by_value"
       ],
       "rules": {
         "provider": "mr",
@@ -144,7 +144,7 @@
           "fast_market",
           "salaries",
           "custom_rules_text",
-          "captain_x2.0"
+          "captain_by_value"
         ],
         "source": "fg_user+admin"
       }
