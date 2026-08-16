@@ -902,6 +902,7 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
             "points_trend": points_trend_from_gw(gw),
             "injury": "injured" in body.lower() or "lesionado" in body.lower(),
             "in_lineup": True,
+            "from_lineup_only": True,
             "trend": None,
             "price_delta_5d": None,
             "data_quality": {
@@ -935,6 +936,7 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
             # Completar precio / scoring si el del once no lo tenía
             for p in players:
                 if p["id"] == pid:
+                    p["from_lineup_only"] = False
                     if not p.get("price"):
                         p["price"] = price
                         p["trend"] = trend_from_arrow(under)
@@ -967,6 +969,7 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
             "points_trend": scoring.get("points_trend") or "unknown",
             "injury": bool(re.search(r"st-injured|#injured|lesionado", head, re.I)),
             "in_lineup": False,
+            "from_lineup_only": False,
             "trend": trend_from_arrow(under),
             "price_delta_5d": None,
             "data_quality": {
@@ -1404,6 +1407,43 @@ POOL_ONLY_FIELDS = (
     "next_is_home",
     "clause_rank",
 )
+
+
+def reconcile_squad_with_pool(
+    squad: list[dict[str, Any]],
+    pool: list[dict[str, Any]],
+    my_uc: str | None,
+) -> list[dict[str, Any]]:
+    """
+    El HTML de /team deja vendidos en el once guardado (lineup-player).
+    El pool /ajax/sw/players es la autoridad de ownership (id_uc / is_mine).
+    """
+    if not squad or not pool:
+        return squad
+    by_id = {str(p.get("id")): p for p in pool if p.get("id")}
+    my = str(my_uc or "")
+    kept: list[dict[str, Any]] = []
+    dropped: list[str] = []
+    for p in squad:
+        src = by_id.get(str(p.get("id")))
+        if not src:
+            kept.append(p)
+            continue
+        owner = src.get("owner_id")
+        owner_s = str(owner) if owner not in (None, "", 0, "0") else ""
+        is_mine = bool(src.get("is_mine")) or (bool(my) and owner_s == my)
+        owned_by_other = bool(owner_s) and owner_s != my
+        ghost_xi = bool(p.get("from_lineup_only")) and not is_mine
+        if is_mine:
+            kept.append(p)
+            continue
+        if owned_by_other or ghost_xi:
+            dropped.append(str(p.get("name") or p.get("id")))
+            continue
+        kept.append(p)
+    if dropped:
+        log.info("Plantilla: fuera %s vendido(s)/once fantasma: %s", len(dropped), ", ".join(dropped))
+    return kept
 
 
 def apply_pool_fields_to_players(
@@ -1931,6 +1971,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         rivals = apply_pool_squads_to_rivals(rivals, full_pool, my_uc)
         # El HTML no pinta streak/prev_value/match_info: se completan del pool.
         pool_by_id = {str(p.get("id")): p for p in full_pool}
+        squad = reconcile_squad_with_pool(squad, full_pool, my_uc)
         pool_fields_filled = apply_pool_fields_to_players(squad, pool_by_id)
         pool_fields_filled += apply_pool_fields_to_players(market, pool_by_id)
         log.info("Campos de jornada desde pool: %s jugadores", pool_fields_filled)
