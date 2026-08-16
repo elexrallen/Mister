@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <rect width="64" height="64" fill="#05080d"/>
+  <g transform="translate(32 32) skewX(-8) translate(-32 -32)">
+    <polygon points="10,8 58,8 54,56 6,56" fill="#d9ff00"/>
+    <text x="32" y="46" text-anchor="middle" fill="#05080d" font-family="Arial Black, Arial Narrow, sans-serif" font-size="38" font-style="italic" font-weight="900">M</text>
+  </g>
+</svg>

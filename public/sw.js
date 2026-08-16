@@ -4,7 +4,7 @@
  * - Network-first (con fallback a cache) para data/latest_data.json
  */
 
-const CACHE_VERSION = "mfa-v51";
+const CACHE_VERSION = "mfa-v52";
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const DATA_CACHE = `${CACHE_VERSION}-data`;
 
@@ -14,6 +14,8 @@ const SHELL_ASSETS = [
   "./app.js",
   "./styles.css",
   "./manifest.webmanifest",
+  "./icons/favicon.svg",
+  "./icons/icon-32.png",
   "./icons/icon-192.png",
   "./icons/icon-512.png",
 ];
