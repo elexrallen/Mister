@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T02:04:30.091244+00:00",
+  "generated_at": "2026-08-16T02:15:51.718212+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 67 · 1,792,500 € · buy · starter · Δ 7%",
-      "added_at": "2026-08-16T02:04:30.059057+00:00"
+      "added_at": "2026-08-16T02:15:51.687461+00:00"
     },
     {
       "slot": "DF4",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 43 · 4,165,500 € · buy · starter · Δ -100%",
-      "added_at": "2026-08-16T02:04:30.070530+00:00"
+      "added_at": "2026-08-16T02:15:51.697985+00:00"
     },
     {
       "slot": "MF4",
@@ -902,7 +902,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 41 · 1,209,000 € · buy · starter · Δ 11%",
-      "added_at": "2026-08-16T02:04:30.049432+00:00"
+      "added_at": "2026-08-16T02:15:51.677883+00:00"
     },
     {
       "slot": "MF5",
@@ -950,7 +950,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 76 · 24,502,000 € · buy · starter · Δ -0%",
-      "added_at": "2026-08-16T02:04:30.052742+00:00"
+      "added_at": "2026-08-16T02:15:51.681232+00:00"
     },
     {
       "slot": "FW2",
