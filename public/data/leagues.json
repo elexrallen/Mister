@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T00:57:07.526013+00:00",
+  "generated_at": "2026-08-16T01:10:05.998164+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,41 +10,43 @@
       "id_competition": 1,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-16T00:53:52.816292+00:00",
+      "generated_at": "2026-08-16T01:03:20.672085+00:00",
       "path": "leagues/mundo-deportivo-7412/latest_data.json",
-      "balance": 12500000,
-      "rank": 3,
+      "balance": 50000000,
+      "rank": 51,
       "market_mode": "fixed",
       "max_squad": 22,
       "provider": "mix",
       "provider_label": "Mixto",
-      "clauses": true,
+      "clauses": false,
       "loans": false,
       "factors": [
         "scoring_mixto",
         "fixed_price_market",
-        "clause_bids",
+        "no_clauses",
         "no_loans",
         "max_squad_22",
-        "normal_market_cycle"
+        "fast_market",
+        "custom_rules_text"
       ],
       "rules": {
         "provider": "mix",
         "provider_label": "Mixto",
         "max_squad": 22,
         "market_mode": "fixed",
-        "clauses": true,
+        "clauses": false,
         "loans": false,
-        "market_speed": 1,
+        "market_speed": 3,
         "factors": [
           "scoring_mixto",
           "fixed_price_market",
-          "clause_bids",
+          "no_clauses",
           "no_loans",
           "max_squad_22",
-          "normal_market_cycle"
+          "fast_market",
+          "custom_rules_text"
         ],
-        "source": "config"
+        "source": "fg_user+admin"
       }
     },
     {
@@ -55,23 +57,24 @@
       "id_competition": 1,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-16T00:54:26.946474+00:00",
+      "generated_at": "2026-08-16T01:06:06.010938+00:00",
       "path": "leagues/md-con-capitan-0216/latest_data.json",
-      "balance": 12500000,
-      "rank": 3,
+      "balance": 50000000,
+      "rank": 51,
       "market_mode": "auction",
       "max_squad": 25,
       "provider": "mix",
       "provider_label": "Mixto",
       "clauses": true,
-      "loans": false,
+      "loans": true,
       "factors": [
         "scoring_mixto",
         "auction_urgency",
         "clause_bids",
-        "no_loans",
+        "loans_liquidity",
         "max_squad_25",
-        "normal_market_cycle"
+        "normal_market_cycle",
+        "custom_rules_text"
       ],
       "rules": {
         "provider": "mix",
@@ -79,17 +82,18 @@
         "max_squad": 25,
         "market_mode": "auction",
         "clauses": true,
-        "loans": false,
+        "loans": true,
         "market_speed": 1,
         "factors": [
           "scoring_mixto",
           "auction_urgency",
           "clause_bids",
-          "no_loans",
+          "loans_liquidity",
           "max_squad_25",
-          "normal_market_cycle"
+          "normal_market_cycle",
+          "custom_rules_text"
         ],
-        "source": "config"
+        "source": "fg_user+admin"
       }
     },
     {
@@ -100,41 +104,45 @@
       "id_competition": 3,
       "season_start": "2026-08-21",
       "default": false,
-      "generated_at": "2026-08-16T00:54:58.790273+00:00",
+      "generated_at": "2026-08-16T01:08:06.826985+00:00",
       "path": "leagues/premier/latest_data.json",
-      "balance": 12500000,
-      "rank": 3,
+      "balance": 497000,
+      "rank": 50,
       "market_mode": "fixed",
       "max_squad": 22,
-      "provider": "mix",
-      "provider_label": "Mixto",
-      "clauses": true,
+      "provider": "mr",
+      "provider_label": "SofaScore",
+      "clauses": false,
       "loans": false,
       "factors": [
-        "scoring_mixto",
+        "scoring_sofascore",
         "fixed_price_market",
-        "clause_bids",
+        "no_clauses",
         "no_loans",
         "max_squad_22",
-        "normal_market_cycle"
+        "fast_market",
+        "salaries",
+        "custom_rules_text"
       ],
       "rules": {
-        "provider": "mix",
-        "provider_label": "Mixto",
+        "provider": "mr",
+        "provider_label": "SofaScore",
         "max_squad": 22,
         "market_mode": "fixed",
-        "clauses": true,
+        "clauses": false,
         "loans": false,
-        "market_speed": 1,
+        "market_speed": 3,
         "factors": [
-          "scoring_mixto",
+          "scoring_sofascore",
           "fixed_price_market",
-          "clause_bids",
+          "no_clauses",
           "no_loans",
           "max_squad_22",
-          "normal_market_cycle"
+          "fast_market",
+          "salaries",
+          "custom_rules_text"
         ],
-        "source": "config"
+        "source": "fg_user+admin"
       }
     },
     {
@@ -145,7 +153,7 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-16T00:57:07.362190+00:00",
+      "generated_at": "2026-08-16T01:10:05.834429+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
       "balance": 12350842,
       "rank": 4,

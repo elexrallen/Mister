@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T00:57:07.354144+00:00",
+  "generated_at": "2026-08-16T01:10:05.824879+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -433,7 +433,7 @@
       "ep_score": 63.9,
       "price": 1000000.0,
       "status": "buy",
-      "delta_5d": -0.1385,
+      "delta_5d": -1.0,
       "value_note": "falling",
       "value_ratio": 63.9,
       "lineup_prob": 74.0,
@@ -443,7 +443,7 @@
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 64 · 1,000,000 € · buy · bench · Δ -14%",
+      "why": "EP 64 · 1,000,000 € · buy · bench · Δ -100%",
       "added_at": "2026-08-16T00:57:07.035921+00:00"
     },
     {
@@ -638,7 +638,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 88 · 9,720,000 € · buy · starter · tándem mismo club · Δ -2%",
-      "added_at": "2026-08-16T00:57:07.274991+00:00"
+      "added_at": "2026-08-16T00:57:06.997034+00:00"
     },
     {
       "slot": "GK2",
@@ -662,7 +662,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 9 · 1,000,000 € · buy · bench · tándem mismo club · Δ 6%",
-      "added_at": "2026-08-16T00:57:07.275004+00:00"
+      "added_at": "2026-08-16T00:57:06.997043+00:00"
     },
     {
       "slot": "DF1",
@@ -686,7 +686,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 78 · 11,273,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-16T00:57:07.280348+00:00"
+      "added_at": "2026-08-16T00:57:07.012812+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 77 · 1,581,330 € · buy · starter · Δ 0%",
-      "added_at": "2026-08-16T00:57:07.276738+00:00"
+      "added_at": "2026-08-16T00:57:07.002362+00:00"
     },
     {
       "slot": "DF3",
@@ -723,8 +723,8 @@
       "ep_score": 76.8,
       "price": 10527000.0,
       "status": "buy",
-      "delta_5d": 0.0199,
-      "value_note": "stable",
+      "delta_5d": -1.0,
+      "value_note": "falling",
       "value_ratio": 7.3,
       "lineup_prob": 100.0,
       "ff_mister_points": 147.0,
@@ -733,8 +733,8 @@
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 77 · 10,527,000 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-16T00:57:07.282562+00:00"
+      "why": "EP 77 · 10,527,000 € · buy · starter · Δ -100%",
+      "added_at": "2026-08-16T01:10:05.736804+00:00"
     },
     {
       "slot": "DF4",
@@ -758,7 +758,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 71 · 1,792,500 € · buy · starter · Δ 7%",
-      "added_at": "2026-08-16T00:57:07.288740+00:00"
+      "added_at": "2026-08-16T01:10:05.744165+00:00"
     },
     {
       "slot": "DF5",
@@ -782,7 +782,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 64 · 1,423,000 € · keep · starter · Δ 11%",
-      "added_at": "2026-08-16T00:57:07.275720+00:00"
+      "added_at": "2026-08-16T00:57:06.998300+00:00"
     },
     {
       "slot": "DF6",
@@ -795,7 +795,7 @@
       "ep_score": 63.9,
       "price": 1000000.0,
       "status": "buy",
-      "delta_5d": -0.1385,
+      "delta_5d": -1.0,
       "value_note": "falling",
       "value_ratio": 63.9,
       "lineup_prob": 74.0,
@@ -805,8 +805,8 @@
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 64 · 1,000,000 € · buy · bench · Δ -14%",
-      "added_at": "2026-08-16T00:57:07.314326+00:00"
+      "why": "EP 64 · 1,000,000 € · buy · bench · Δ -100%",
+      "added_at": "2026-08-16T00:57:07.035921+00:00"
     },
     {
       "slot": "MF1",
@@ -830,7 +830,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 71 · 1,581,330 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-16T00:57:07.277392+00:00"
+      "added_at": "2026-08-16T00:57:07.006906+00:00"
     },
     {
       "slot": "MF2",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,209,000 € · buy · starter · Δ 11%",
-      "added_at": "2026-08-16T00:57:07.277090+00:00"
+      "added_at": "2026-08-16T00:57:07.004779+00:00"
     },
     {
       "slot": "MF3",
@@ -878,7 +878,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 42 · 1,829,000 € · keep · starter · Δ 11%",
-      "added_at": "2026-08-16T00:57:07.277634+00:00"
+      "added_at": "2026-08-16T00:57:07.008309+00:00"
     },
     {
       "slot": "MF4",
@@ -902,7 +902,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 1,581,330 € · buy · bench · Δ 1%",
-      "added_at": "2026-08-16T00:57:07.314416+00:00"
+      "added_at": "2026-08-16T00:57:07.036018+00:00"
     },
     {
       "slot": "FW1",
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 70 · 10,918,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-16T00:57:07.296338+00:00"
+      "added_at": "2026-08-16T00:57:07.009210+00:00"
     },
     {
       "slot": "FW2",
@@ -950,7 +950,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 6,657,000 € · buy · starter · Δ 5%",
-      "added_at": "2026-08-16T00:57:07.277887+00:00"
+      "added_at": "2026-08-16T00:57:07.008783+00:00"
     },
     {
       "slot": "FW3",
@@ -974,7 +974,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 68 · 1,581,330 € · buy · bench · Δ -0%",
-      "added_at": "2026-08-16T00:57:07.314444+00:00"
+      "added_at": "2026-08-16T00:57:07.036047+00:00"
     }
   ],
   "moves": {
@@ -1184,7 +1184,7 @@
         "ep_score": 63.9,
         "price": 1000000.0,
         "status": "buy",
-        "delta_5d": -0.1385,
+        "delta_5d": -1.0,
         "value_note": "falling",
         "value_ratio": 63.9,
         "lineup_prob": 74.0,
@@ -1194,7 +1194,7 @@
         "on_daily_market": false,
         "owned": false,
         "gk_tandem": false,
-        "why": "EP 64 · 1,000,000 € · buy · bench · Δ -14%",
+        "why": "EP 64 · 1,000,000 € · buy · bench · Δ -100%",
         "added_at": "2026-08-16T00:57:07.035921+00:00"
       },
       {
@@ -1686,308 +1686,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "GK1",
-      "position": "GK",
-      "role": "starter",
-      "player_id": "p041",
-      "name": "Joan García",
-      "team": "Barcelona",
-      "team_id": null,
-      "ep_score": 89.6,
-      "price": 7500000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 11.95,
-      "lineup_prob": 80.0,
-      "ff_mister_points": 198.0,
-      "ff_mister_avg": 6.6,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 90 · 7,500,000 € · buy · starter",
-      "added_at": "2026-08-16T00:55:30.912077+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "GK2",
-      "position": "GK",
-      "role": "bench",
-      "player_id": "p002",
-      "name": "Álex Remiro",
-      "team": "Real Sociedad",
-      "team_id": null,
-      "ep_score": 73.7,
-      "price": 4200000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 17.55,
-      "lineup_prob": 90.0,
-      "ff_mister_points": 140.0,
-      "ff_mister_avg": 3.78,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": true,
-      "gk_tandem": false,
-      "why": "EP 74 · 4,200,000 € · keep · bench",
-      "added_at": "2026-08-16T00:55:30.913044+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF1",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "p005",
-      "name": "Pau Cubarsí",
-      "team": "Barcelona",
-      "team_id": null,
-      "ep_score": 74.2,
-      "price": 10500000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 7.07,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 176.0,
-      "ff_mister_avg": 5.68,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": true,
-      "gk_tandem": false,
-      "why": "EP 74 · 10,500,000 € · keep · starter",
-      "added_at": "2026-08-16T00:55:30.912252+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF2",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "p015",
-      "name": "Óscar Mingueza",
-      "team": "Celta",
-      "team_id": null,
-      "ep_score": 60.6,
-      "price": 3900000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 15.54,
-      "lineup_prob": 72.0,
-      "ff_mister_points": 125.0,
-      "ff_mister_avg": 3.68,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": true,
-      "gk_tandem": false,
-      "why": "EP 61 · 3,900,000 € · keep · starter",
-      "added_at": "2026-08-16T00:55:30.912142+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF3",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "p042",
-      "name": "Dean Huijsen",
-      "team": "Real Madrid",
-      "team_id": null,
-      "ep_score": 42.0,
-      "price": 9000000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 4.67,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 96.0,
-      "ff_mister_avg": 3.43,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 42 · 9,000,000 € · buy · starter",
-      "added_at": "2026-08-16T00:55:30.912198+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF4",
-      "position": "DF",
-      "role": "bench",
-      "player_id": "p043",
-      "name": "Jules Koundé",
-      "team": "Barcelona",
-      "team_id": null,
-      "ep_score": 37.3,
-      "price": 8800000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 4.24,
-      "lineup_prob": 50.0,
-      "ff_mister_points": 121.0,
-      "ff_mister_avg": 4.03,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 37 · 8,800,000 € · buy · bench",
-      "added_at": "2026-08-16T00:55:30.913075+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF1",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "p008",
-      "name": "Fede Valverde",
-      "team": "Real Madrid",
-      "team_id": null,
-      "ep_score": 72.2,
-      "price": 14800000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 4.88,
-      "lineup_prob": 93.0,
-      "ff_mister_points": 160.0,
-      "ff_mister_avg": 4.85,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": true,
-      "gk_tandem": false,
-      "why": "EP 72 · 14,800,000 € · keep · starter",
-      "added_at": "2026-08-16T00:55:30.912385+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF2",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "p007",
-      "name": "Pedri",
-      "team": "Barcelona",
-      "team_id": null,
-      "ep_score": 62.9,
-      "price": 15200000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 4.14,
-      "lineup_prob": 60.0,
-      "ff_mister_points": 209.0,
-      "ff_mister_avg": 7.21,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": true,
-      "gk_tandem": false,
-      "why": "EP 63 · 15,200,000 € · keep · bench",
-      "added_at": "2026-08-16T00:55:30.913172+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW1",
-      "position": "FW",
-      "role": "starter",
-      "player_id": "p050",
-      "name": "Kylian Mbappé",
-      "team": "Real Madrid",
-      "team_id": null,
-      "ep_score": 76.8,
-      "price": 25000000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 3.07,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 238.0,
-      "ff_mister_avg": 7.68,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 77 · 25,000,000 € · buy · starter",
-      "added_at": "2026-08-16T00:55:30.912710+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW2",
-      "position": "FW",
-      "role": "starter",
-      "player_id": "p020",
-      "name": "Vinícius Júnior",
-      "team": "Real Madrid",
-      "team_id": null,
-      "ep_score": 76.1,
-      "price": 21000000.0,
-      "status": "dropped",
-      "delta_5d": 0.04,
-      "value_note": "stable",
-      "value_ratio": 3.62,
-      "lineup_prob": 90.0,
-      "ff_mister_points": 214.0,
-      "ff_mister_avg": 5.94,
-      "hist_ok": false,
-      "on_daily_market": true,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 76 · 21,000,000 € · buy · starter · Δ 4%",
-      "added_at": "2026-08-16T00:55:30.912828+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW3",
-      "position": "FW",
-      "role": "starter",
-      "player_id": "p052",
-      "name": "Raphinha",
-      "team": "Barcelona",
-      "team_id": null,
-      "ep_score": 74.5,
-      "price": 13500000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 5.52,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 177.0,
-      "ff_mister_avg": 8.05,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 74 · 13,500,000 € · buy · starter",
-      "added_at": "2026-08-16T00:55:30.912567+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW4",
-      "position": "FW",
-      "role": "bench",
-      "player_id": "p012",
-      "name": "Ante Budimir",
-      "team": "Osasuna",
-      "team_id": null,
-      "ep_score": 73.4,
-      "price": 7400000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 9.92,
-      "lineup_prob": 90.0,
-      "ff_mister_points": 200.0,
-      "ff_mister_avg": 5.41,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": true,
-      "gk_tandem": false,
-      "why": "EP 73 · 7,400,000 € · keep · bench",
-      "added_at": "2026-08-16T00:55:30.913117+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 49512.0
