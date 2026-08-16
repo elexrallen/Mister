@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T11:15:17.723483+00:00",
+  "generated_at": "2026-08-16T11:27:35.044320+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -614,7 +614,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 67 · 5,672,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-16T11:15:17.715496+00:00"
+      "added_at": "2026-08-16T11:15:17.575755+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 5,159,000 € · buy · starter · Δ 5%",
-      "added_at": "2026-08-16T11:15:17.711460+00:00"
+      "added_at": "2026-08-16T11:15:17.566543+00:00"
     },
     {
       "slot": "DF6",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 5,318,000 € · buy · bench · Δ 1%",
-      "added_at": "2026-08-16T11:05:13.171686+00:00"
+      "added_at": "2026-08-16T11:27:35.042664+00:00"
     },
     {
       "slot": "MF1",
@@ -830,7 +830,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 8,398,000 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-16T11:15:17.713954+00:00"
+      "added_at": "2026-08-16T11:27:35.034476+00:00"
     },
     {
       "slot": "MF5",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,638,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-16T11:05:13.176842+00:00"
+      "added_at": "2026-08-16T11:27:35.042777+00:00"
     },
     {
       "slot": "FW1",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,959,000 € · buy · bench · Δ 15%",
-      "added_at": "2026-08-16T11:05:13.176923+00:00"
+      "added_at": "2026-08-16T11:27:35.042803+00:00"
     }
   ],
   "moves": {
@@ -1440,83 +1440,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF5",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "61026",
-      "name": "Michael Kayode",
-      "team": "Brentford",
-      "team_id": "619",
-      "ep_score": 39.8,
-      "price": 5318000.0,
-      "status": "dropped",
-      "delta_5d": 0.0112,
-      "value_note": "stable",
-      "value_ratio": 7.48,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 204.0,
-      "ff_mister_avg": 5.51,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 40 · 5,318,000 € · buy · starter · Δ 1%",
-      "added_at": "2026-08-16T11:05:13.171686+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF4",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "48471",
-      "name": "Brenden Aaronson",
-      "team": "Leeds",
-      "team_id": "502",
-      "ep_score": 40.0,
-      "price": 1638000.0,
-      "status": "dropped",
-      "delta_5d": 0.1592,
-      "value_note": "rising",
-      "value_ratio": 24.42,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 201.0,
-      "ff_mister_avg": 5.43,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 40 · 1,638,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-16T11:05:13.176842+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW2",
-      "position": "FW",
-      "role": "bench",
-      "player_id": "52112",
-      "name": "Dango Ouattara",
-      "team": "Brentford",
-      "team_id": "619",
-      "ep_score": 40.5,
-      "price": 1959000.0,
-      "status": "dropped",
-      "delta_5d": 0.1524,
-      "value_note": "rising",
-      "value_ratio": 20.67,
-      "lineup_prob": 84.0,
-      "ff_mister_points": 205.0,
-      "ff_mister_avg": 6.41,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 40 · 1,959,000 € · buy · bench · Δ 15%",
-      "added_at": "2026-08-16T11:05:13.176923+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 497000.0
