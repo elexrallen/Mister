@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T11:27:35.044320+00:00",
+  "generated_at": "2026-08-16T20:43:50.085599+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -45,6 +45,22 @@
       "complete": false
     },
     {
+      "formation": "4-5-1",
+      "formation_raw": "4-5-1",
+      "shape": {
+        "GK": 1,
+        "DF": 4,
+        "MF": 5,
+        "FW": 1
+      },
+      "ep_sum_starters": 425.4,
+      "ep_sum": 433.6,
+      "cost_sum": 61675000.0,
+      "starters": 10,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
       "formation": "5-4-1",
       "formation_raw": "5-4-1",
       "shape": {
@@ -56,22 +72,6 @@
       "ep_sum_starters": 425.1,
       "ep_sum": 580.8,
       "cost_sum": 57885000.0,
-      "starters": 10,
-      "starters_target": 11,
-      "complete": false
-    },
-    {
-      "formation": "4-5-1",
-      "formation_raw": "4-5-1",
-      "shape": {
-        "GK": 1,
-        "DF": 4,
-        "MF": 5,
-        "FW": 1
-      },
-      "ep_sum_starters": 425.1,
-      "ep_sum": 473.3,
-      "cost_sum": 61021750.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -117,9 +117,9 @@
         "MF": 5,
         "FW": 2
       },
-      "ep_sum_starters": 384.7,
-      "ep_sum": 499.9,
-      "cost_sum": 61534750.0,
+      "ep_sum_starters": 385.0,
+      "ep_sum": 434.3,
+      "cost_sum": 61741000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -183,9 +183,9 @@
         "MF": 5,
         "FW": 1
       },
-      "ep_sum_starters": 425.1,
-      "ep_sum": 473.3,
-      "cost_sum": 61021750.0,
+      "ep_sum_starters": 425.4,
+      "ep_sum": 433.6,
+      "cost_sum": 61675000.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -231,9 +231,9 @@
         "MF": 5,
         "FW": 2
       },
-      "ep_sum_starters": 384.7,
-      "ep_sum": 499.9,
-      "cost_sum": 61534750.0,
+      "ep_sum_starters": 385.0,
+      "ep_sum": 434.3,
+      "cost_sum": 61741000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 5,318,000 € · buy · bench · Δ 1%",
-      "added_at": "2026-08-16T11:27:35.042664+00:00"
+      "added_at": "2026-08-16T20:43:50.083974+00:00"
     },
     {
       "slot": "MF1",
@@ -830,7 +830,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 8,398,000 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-16T11:27:35.034476+00:00"
+      "added_at": "2026-08-16T20:43:50.076564+00:00"
     },
     {
       "slot": "MF5",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,638,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-16T11:27:35.042777+00:00"
+      "added_at": "2026-08-16T20:43:50.084070+00:00"
     },
     {
       "slot": "FW1",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,959,000 € · buy · bench · Δ 15%",
-      "added_at": "2026-08-16T11:27:35.042803+00:00"
+      "added_at": "2026-08-16T20:43:50.084094+00:00"
     }
   ],
   "moves": {
