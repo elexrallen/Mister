@@ -2528,12 +2528,36 @@
   function updateLeagueChrome(data) {
     const league = (data && data.league) || {};
     const sources = (data && data.sources) || {};
+    const rules = league.rules || {};
     const comp =
       league.competition || sources.competition || (LEAGUES_INDEX && LEAGUES_INDEX.leagues
         ? (LEAGUES_INDEX.leagues.find((L) => L.slug === currentLeagueSlug) || {}).competition
         : null);
     const label = document.getElementById("league-competition-label");
     if (label) label.textContent = comp || league.name || "Liga privada";
+
+    const rulesEl = document.getElementById("league-rules-summary");
+    if (rulesEl) {
+      const mode = rules.market_mode || league.market_mode || "";
+      const provider = rules.provider_label || rules.provider || league.provider_label || "";
+      const maxSquad = rules.max_squad || league.max_squad;
+      const bits = [];
+      if (provider) bits.push(provider);
+      if (mode === "fixed") bits.push("precio fijo");
+      else if (mode === "auction") bits.push("subasta");
+      if (maxSquad) bits.push(`plantilla ${maxSquad}`);
+      if (rules.clauses === false) bits.push("sin cláusulas");
+      else if (rules.clauses === true) bits.push("cláusulas");
+      if (rules.loans === true) bits.push("cesiones");
+      if (bits.length) {
+        rulesEl.textContent = bits.join(" · ");
+        rulesEl.hidden = false;
+        rulesEl.title = (rules.factors || []).join(", ");
+      } else {
+        rulesEl.textContent = "";
+        rulesEl.hidden = true;
+      }
+    }
   }
 
   async function loadLeaguesIndex() {

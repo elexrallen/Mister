@@ -168,13 +168,19 @@ Resumen:
    **Actualizar** y deja que compruebe durante varios minutos si aparece un
    snapshot nuevo.
 
-También puedes lanzar el workflow a mano con input `league` (`all` / `laliga-patio` / `premier`), o vía `repository_dispatch` type `refresh-data`.
+También puedes lanzar el workflow a mano con input `league` (`all`, un slug o `id_community`), o vía `repository_dispatch` type `refresh-data`.
 
 ### 4) Si solo carga mock
 
 1. Comprueba que el JWT no haya caducado (vuelve a copiar `token` + `x-auth`).
 2. En Network, anota las URLs reales de **mercado / plantilla / clasificación** y dime los paths (`/ajax/...`) para añadirlos a `AJAX_CANDIDATES`.
 3. Auth OK se confirma si `/ajax/balance` responde 200 con JSON.
+
+## Multi-liga y normas Mister
+
+El motor **descubre** las comunidades de tu cuenta (`_FG_user.communities`) y, por cada una, lee las **normas** (`provider`, `team_limit`, cláusulas, cesiones, ritmo de mercado). Overrides opcionales en `LEAGUE_OVERRIDES` (`src/config.py`).
+
+Guía de aprendizaje: [`docs/mister-rules.md`](docs/mister-rules.md).
 
 ## Despliegue en GitHub + GitHub Pages
 

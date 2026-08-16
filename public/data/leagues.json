@@ -1,19 +1,96 @@
 {
-  "generated_at": "2026-08-16T00:23:35.201527+00:00",
+  "generated_at": "2026-08-16T00:57:07.526013+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
-      "slug": "laliga-patio",
-      "name": "Liga del patio",
+      "slug": "mundo-deportivo-7412",
+      "name": "MUNDO DEPORTIVO",
       "competition": "LaLiga",
-      "id_community": "2500716",
+      "id_community": "467412",
       "id_competition": 1,
-      "season_start": "2026-08-15",
-      "default": true,
-      "generated_at": "2026-08-16T00:21:29.972953+00:00",
-      "path": "leagues/laliga-patio/latest_data.json",
-      "balance": 12350842,
-      "rank": 4
+      "season_start": null,
+      "default": false,
+      "generated_at": "2026-08-16T00:53:52.816292+00:00",
+      "path": "leagues/mundo-deportivo-7412/latest_data.json",
+      "balance": 12500000,
+      "rank": 3,
+      "market_mode": "fixed",
+      "max_squad": 22,
+      "provider": "mix",
+      "provider_label": "Mixto",
+      "clauses": true,
+      "loans": false,
+      "factors": [
+        "scoring_mixto",
+        "fixed_price_market",
+        "clause_bids",
+        "no_loans",
+        "max_squad_22",
+        "normal_market_cycle"
+      ],
+      "rules": {
+        "provider": "mix",
+        "provider_label": "Mixto",
+        "max_squad": 22,
+        "market_mode": "fixed",
+        "clauses": true,
+        "loans": false,
+        "market_speed": 1,
+        "factors": [
+          "scoring_mixto",
+          "fixed_price_market",
+          "clause_bids",
+          "no_loans",
+          "max_squad_22",
+          "normal_market_cycle"
+        ],
+        "source": "config"
+      }
+    },
+    {
+      "slug": "md-con-capitan-0216",
+      "name": "MD con CAPITÁN",
+      "competition": "LaLiga",
+      "id_community": "2510216",
+      "id_competition": 1,
+      "season_start": null,
+      "default": false,
+      "generated_at": "2026-08-16T00:54:26.946474+00:00",
+      "path": "leagues/md-con-capitan-0216/latest_data.json",
+      "balance": 12500000,
+      "rank": 3,
+      "market_mode": "auction",
+      "max_squad": 25,
+      "provider": "mix",
+      "provider_label": "Mixto",
+      "clauses": true,
+      "loans": false,
+      "factors": [
+        "scoring_mixto",
+        "auction_urgency",
+        "clause_bids",
+        "no_loans",
+        "max_squad_25",
+        "normal_market_cycle"
+      ],
+      "rules": {
+        "provider": "mix",
+        "provider_label": "Mixto",
+        "max_squad": 25,
+        "market_mode": "auction",
+        "clauses": true,
+        "loans": false,
+        "market_speed": 1,
+        "factors": [
+          "scoring_mixto",
+          "auction_urgency",
+          "clause_bids",
+          "no_loans",
+          "max_squad_25",
+          "normal_market_cycle"
+        ],
+        "source": "config"
+      }
     },
     {
       "slug": "premier",
@@ -23,10 +100,87 @@
       "id_competition": 3,
       "season_start": "2026-08-21",
       "default": false,
-      "generated_at": "2026-08-16T00:23:35.026611+00:00",
+      "generated_at": "2026-08-16T00:54:58.790273+00:00",
       "path": "leagues/premier/latest_data.json",
-      "balance": 497000,
-      "rank": 50
+      "balance": 12500000,
+      "rank": 3,
+      "market_mode": "fixed",
+      "max_squad": 22,
+      "provider": "mix",
+      "provider_label": "Mixto",
+      "clauses": true,
+      "loans": false,
+      "factors": [
+        "scoring_mixto",
+        "fixed_price_market",
+        "clause_bids",
+        "no_loans",
+        "max_squad_22",
+        "normal_market_cycle"
+      ],
+      "rules": {
+        "provider": "mix",
+        "provider_label": "Mixto",
+        "max_squad": 22,
+        "market_mode": "fixed",
+        "clauses": true,
+        "loans": false,
+        "market_speed": 1,
+        "factors": [
+          "scoring_mixto",
+          "fixed_price_market",
+          "clause_bids",
+          "no_loans",
+          "max_squad_22",
+          "normal_market_cycle"
+        ],
+        "source": "config"
+      }
+    },
+    {
+      "slug": "laliga-patio",
+      "name": "Liga del patio",
+      "competition": "LaLiga",
+      "id_community": "2500716",
+      "id_competition": 1,
+      "season_start": "2026-08-15",
+      "default": true,
+      "generated_at": "2026-08-16T00:57:07.362190+00:00",
+      "path": "leagues/laliga-patio/latest_data.json",
+      "balance": 12350842,
+      "rank": 4,
+      "market_mode": "auction",
+      "max_squad": 25,
+      "provider": "mix",
+      "provider_label": "Mixto",
+      "clauses": true,
+      "loans": true,
+      "factors": [
+        "scoring_mixto",
+        "auction_urgency",
+        "clause_bids",
+        "loans_liquidity",
+        "max_squad_25",
+        "normal_market_cycle"
+      ],
+      "rules": {
+        "provider": "mix",
+        "provider_label": "Mixto",
+        "max_squad": 25,
+        "market_mode": "auction",
+        "clauses": true,
+        "loans": true,
+        "market_speed": 1,
+        "factors": [
+          "scoring_mixto",
+          "auction_urgency",
+          "clause_bids",
+          "loans_liquidity",
+          "max_squad_25",
+          "normal_market_cycle"
+        ],
+        "source": "fg_user+admin"
+      }
     }
   ]
 }

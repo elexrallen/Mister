@@ -453,6 +453,7 @@ def fetch_ff_mister_points(
     *,
     competition: str = "laliga",
     use_cache: bool = True,
+    mister_provider: str | None = None,
 ) -> dict[str, Any]:
     """
     Devuelve:
@@ -462,9 +463,13 @@ def fetch_ff_mister_points(
         records: flat list (latest season first),
         fetched_at
       }
+
+    mister_provider ajusta avg_scale / label sobre el scrape de la competición
+    (mix→~8 Mixto, mr→~16 SofaScore/RPG) sin inventar medias.
     """
     comp = (competition or "laliga").strip().lower()
     prof = _profile(comp)
+    provider = (mister_provider or "").strip().lower()
     seasons = list(seasons) if seasons else default_ff_seasons()
     if use_cache:
         cached = _load_cache(comp)
@@ -476,7 +481,7 @@ def fetch_ff_mister_points(
                     comp,
                     cached.get("fetched_at"),
                 )
-                return cached
+                return _apply_provider_overlay(dict(cached), provider)
             log.info(
                 "FF points [%s] caché obsoleta (seasons %s ≠ %s) → rescrape",
                 comp,
@@ -536,7 +541,52 @@ def fetch_ff_mister_points(
     }
     if payload["status"] != "fail":
         _save_cache(comp, payload)
-    return payload
+    return _apply_provider_overlay(payload, provider)
+
+
+PROVIDER_SCALE_HINTS: dict[str, dict[str, Any]] = {
+    "mix": {"avg_scale": 8.0, "label": "Mister Mixto"},
+    "mix2": {"avg_scale": 8.0, "label": "Mister Mixto 2"},
+    "as": {"avg_scale": 8.0, "label": "Cronistas AS"},
+    "marca": {"avg_scale": 8.0, "label": "Cronistas MARCA"},
+    "marca_stats": {"avg_scale": 8.0, "label": "MARCA + Stats"},
+    "md": {"avg_scale": 8.0, "label": "Cronistas MD"},
+    "cls": {"avg_scale": 8.0, "label": "Clásico"},
+    "mr": {"avg_scale": 16.0, "label": "SofaScore"},
+}
+
+
+def _apply_provider_overlay(payload: dict[str, Any], provider: str) -> dict[str, Any]:
+    """Ajusta escala/label según provider Mister sin re-scrapear."""
+    if not provider:
+        return payload
+    out = dict(payload)
+    out["mister_provider"] = provider
+    hint = PROVIDER_SCALE_HINTS.get(provider)
+    if not hint:
+        return out
+    try:
+        out["avg_scale"] = float(hint.get("avg_scale") or out.get("avg_scale") or 8.0)
+    except (TypeError, ValueError):
+        pass
+    if hint.get("label"):
+        out["scoring"] = str(hint["label"])
+    # Recalcular top_floor relativo a la nueva escala si había floor de competición
+    try:
+        base_scale = float(
+            COMPETITION_PROFILES.get(str(out.get("competition") or "laliga"), {}).get("avg_scale")
+            or 8.0
+        )
+        old_floor = float(out.get("top_floor") or 5.5)
+        new_scale = float(out["avg_scale"])
+        if base_scale > 0 and abs(new_scale - base_scale) > 0.01:
+            out["top_floor"] = round(old_floor * (new_scale / base_scale), 2)
+            thr = out.get("threshold")
+            if thr is not None:
+                out["threshold"] = round(float(thr) * (new_scale / base_scale), 2)
+    except (TypeError, ValueError):
+        pass
+    return out
 
 
 __all__ = [
@@ -556,4 +606,5 @@ __all__ = [
     "MIXTO_AVG_SCALE",
     "DEFAULT_SEASONS",
     "COMPETITION_PROFILES",
+    "PROVIDER_SCALE_HINTS",
 ]

@@ -25,10 +25,16 @@ import requests
 
 import config
 from mister_client import (
+    discover_leagues,
     enrich_players_with_clauses,
     fetch_live_league,
     mister_player_photo_url,
     mister_team_logo_url,
+)
+from league_rules import (
+    ff_hint_for_provider,
+    merge_rules_into_league_cfg,
+    normalize_rules,
 )
 from external_data import enrich_players_with_external, enrich_players_with_ff_production
 from fotmob_service import enrich_players_with_fotmob
@@ -1212,6 +1218,7 @@ def build_action_plan(
     target_board: dict[str, Any] | None = None,
     funding_info: dict[str, Any] | None = None,
     max_squad: int | None = None,
+    league_rules: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Fuente de verdad diaria:
@@ -1221,6 +1228,13 @@ def build_action_plan(
     """
     plan: list[dict[str, Any]] = []
     price_series = price_series or {}
+    rules = league_rules if isinstance(league_rules, dict) else {}
+    clauses_ok = bool(rules.get("clauses", True))
+    loans_ok = bool(rules.get("loans", False))
+    try:
+        market_urgency = float(rules.get("market_urgency") or 1.0)
+    except (TypeError, ValueError):
+        market_urgency = 1.0
     balance = float(me.get("balance") or 0)
     max_debt_raw = me.get("max_debt")
     try:
@@ -1236,6 +1250,11 @@ def build_action_plan(
     hours_to_jornada = (diagnostico_plantilla or {}).get("hours_to_jornada")
     matchday_ctx = (diagnostico_plantilla or {}).get("matchday")
     fixed = (market_mode or "auction") == "fixed"
+    if max_squad is None:
+        try:
+            max_squad = int(rules.get("max_squad") or 0) or None
+        except (TypeError, ValueError):
+            max_squad = None
     if max_squad is None:
         max_squad = int(
             getattr(config, "MAX_SQUAD_SIZE_PREMIER", 22)
@@ -1926,7 +1945,37 @@ def build_action_plan(
                 existing["why"] += f" · rivales top con gap: {', '.join(t['team_name'] for t in top[:2])}"
                 existing["urgency"] = "medium"
 
-    return finalize_action_plan(
+    # Mercado rápido: wait con alto riesgo → buy_now (si finanzas OK)
+    if market_urgency >= 1.15 and not fixed:
+        promoted: list[dict[str, Any]] = []
+        for item in plan:
+            if item.get("action") != "wait":
+                promoted.append(item)
+                continue
+            risk = item.get("wait_risk")
+            bf = item.get("budget_fit")
+            on_daily = bool(item.get("on_daily_market"))
+            if (
+                risk == "high"
+                and on_daily
+                and bf in ("comfortable", "tight")
+                and not item.get("solvency_blocked")
+            ):
+                row = dict(item)
+                row["action"] = "buy_now"
+                row["urgency"] = "high"
+                why = (row.get("why") or "").strip()
+                row["why"] = (
+                    f"mercado rápido (speed={rules.get('market_speed')}): actuar ya; {why}"
+                    if why
+                    else f"mercado rápido (speed={rules.get('market_speed')}): actuar ya"
+                )
+                promoted.append(row)
+            else:
+                promoted.append(item)
+        plan = promoted
+
+    finalized = finalize_action_plan(
         plan,
         balance=balance,
         funding_info=funding,
@@ -1935,6 +1984,41 @@ def build_action_plan(
         squad_size=len(me.get("squad") or []),
         max_squad=max_squad,
     )
+    action_plan, daily_package = finalized
+
+    # Sin cláusulas en la liga: no emitir clause_bid
+    if not clauses_ok:
+        cleaned: list[dict[str, Any]] = []
+        for item in action_plan:
+            if item.get("action") != "clause_bid":
+                cleaned.append(item)
+                continue
+            row = dict(item)
+            row["action"] = "scout"
+            why = (row.get("why") or "").strip()
+            row["why"] = (
+                f"cláusulas desactivadas en esta liga; {why}" if why else "cláusulas desactivadas en esta liga"
+            )
+            cleaned.append(row)
+        action_plan = cleaned
+
+    if isinstance(daily_package, dict):
+        daily_package = dict(daily_package)
+        daily_package["league_rules"] = {
+            "provider": rules.get("provider"),
+            "market_mode": market_mode,
+            "max_squad": max_squad,
+            "clauses": clauses_ok,
+            "loans": loans_ok,
+            "market_urgency": market_urgency,
+            "factors": list(rules.get("factors") or []),
+        }
+        if not loans_ok:
+            notes = list(daily_package.get("notes") or [])
+            notes.append("Cesiones desactivadas: no cuentes con liquidez por loan.")
+            daily_package["notes"] = notes
+
+    return action_plan, daily_package
 
 
 # ---------------------------------------------------------------------------
@@ -1961,6 +2045,22 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         community_id=str(league_cfg.get("id_community") or "") or None
     )
     live_meta = league.pop("_live_meta", {}) if isinstance(league, dict) else {}
+    # Normas Mister: FG_user (+ admin best-effort)
+    external_key_early = config.external_competition_key(
+        league_cfg=league_cfg,
+        id_competition=id_competition_i,
+    )
+    league_rules = normalize_rules(
+        live_meta.get("fg_user_rules") if isinstance(live_meta.get("fg_user_rules"), dict) else None,
+        admin_data=live_meta.get("admin_settings")
+        if isinstance(live_meta.get("admin_settings"), dict)
+        else None,
+        league_cfg=league_cfg,
+        external_key=external_key_early,
+    )
+    league_cfg = merge_rules_into_league_cfg(league_cfg, league_rules)
+    market_mode = config.league_market_mode(league_cfg)
+    fixed_market = market_mode == "fixed"
     # Catálogo completo para plantilla ideal; no se persiste en latest_data.json
     full_pool: list[dict[str, Any]] = []
     if isinstance(league, dict):
@@ -2046,6 +2146,32 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         league_cfg=league_cfg,
         id_competition=id_competition_i,
     )
+    # Re-normalizar rules con external definitivo
+    league_rules = normalize_rules(
+        live_meta.get("fg_user_rules") if isinstance(live_meta.get("fg_user_rules"), dict) else None,
+        admin_data=live_meta.get("admin_settings")
+        if isinstance(live_meta.get("admin_settings"), dict)
+        else None,
+        league_cfg=league_cfg,
+        external_key=external_key,
+    )
+    league_cfg = merge_rules_into_league_cfg(league_cfg, league_rules)
+    market_mode = config.league_market_mode(league_cfg)
+    fixed_market = market_mode == "fixed"
+    ff_hint = ff_hint_for_provider(
+        league_rules.get("provider"),
+        competition=external_key,
+    )
+    log.info(
+        "Normas [%s]: provider=%s mode=%s max_squad=%s clauses=%s factors=%s source=%s",
+        slug,
+        league_rules.get("provider"),
+        market_mode,
+        league_rules.get("max_squad"),
+        league_rules.get("clauses"),
+        league_rules.get("factors"),
+        league_rules.get("source"),
+    )
     if external_key:
         squad_teams = list({str(p.get("team") or "") for p in squad if p.get("team")})
         universe_ext, external_meta = enrich_players_with_external(
@@ -2086,7 +2212,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     squad = universe_ext[:n_squad]
     market_ext = universe_ext[n_squad:]
 
-    # Producción FF (Mister Mixto LaLiga / Fantasy RPG Premier)
+    # Producción FF (según competición + provider Mister)
     pre_phase = detect_points_phase(list(squad) + list(market_ext))
     if external_key:
         universe_ff, ff_meta = enrich_players_with_ff_production(
@@ -2094,13 +2220,15 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             points_phase=pre_phase,
             market_universe=market_ext,
             competition=external_key,
+            mister_provider=str(league_rules.get("provider") or ""),
         )
         external_meta["ff_points"] = ff_meta.get("ff_points", "fail")
         external_meta["ff_matched"] = ff_meta.get("matched", 0)
         external_meta["ff_tops"] = ff_meta.get("top_count", 0)
         external_meta["ff_threshold"] = ff_meta.get("threshold")
-        external_meta["ff_scoring"] = ff_meta.get("scoring")
-        external_meta["ff_avg_scale"] = ff_meta.get("avg_scale")
+        external_meta["ff_scoring"] = ff_meta.get("scoring") or ff_hint.get("label")
+        external_meta["ff_avg_scale"] = ff_meta.get("avg_scale") or ff_hint.get("avg_scale")
+        external_meta["mister_provider"] = league_rules.get("provider")
         squad = universe_ff[:n_squad]
         market_ext = universe_ff[n_squad:]
     else:
@@ -2110,6 +2238,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta["ff_threshold"] = None
         external_meta["ff_scoring"] = None
         external_meta["ff_avg_scale"] = None
+        external_meta["mister_provider"] = league_rules.get("provider")
     me = {**me_raw, "squad": squad}
     log.info(
         "External match %s/%s (FF=%s JP=%s Com=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
@@ -2219,15 +2348,17 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             points_phase=points_phase,
             market_universe=market_ext,
             competition=external_key,
+            mister_provider=str(league_rules.get("provider") or ""),
         )
         by_id = {str(p.get("id")): p for p in rival_ff if p.get("id")}
         for r in rivals:
             r["squad"] = [by_id.get(str(p.get("id")), p) for p in (r.get("squad") or [])]
 
 
-    # Cláusulas: enriquecer top jugadores de plantillas rivales (solo auction)
+    # Cláusulas: enriquecer top rivales solo si la liga las tiene activas (auction)
     clause_meta: dict[str, Any] = {"clauses": "skip", "known": 0}
-    if not fixed_market:
+    clauses_enabled = bool(league_rules.get("clauses")) and not fixed_market
+    if clauses_enabled:
         clause_targets: list[dict[str, Any]] = []
         seen_clause: set[str] = set()
         for r in rivals:
@@ -2262,6 +2393,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 for p in sorted(new_squad, key=lambda x: -float(x.get("price") or 0))[:5]
             ]
     else:
+        if not league_rules.get("clauses"):
+            clause_meta = {"clauses": "disabled_by_rules", "known": 0}
         for r in rivals:
             sq = r.get("squad") or []
             r["key_players"] = [
@@ -2573,6 +2706,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 missing_ff,
                 competition=external_key,
                 market_universe=board_candidates,
+                mister_provider=str(league_rules.get("provider") or ""),
             )
             by_ff = {str(p.get("id") or ""): p for p in filled_ff if p.get("id")}
             for i, c in enumerate(board_candidates):
@@ -2618,6 +2752,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         target_board=target_board,
         funding_info=funding_info,
         max_squad=config.league_max_squad(league_cfg),
+        league_rules=league_rules,
     )
 
     # Recursos visuales oficiales. El índice del pool completa team_id/escudo
@@ -2746,6 +2881,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     league_out["market_mode"] = market_mode
     league_out["season_start"] = season_start
+    league_out["max_squad"] = league_rules.get("max_squad") or config.league_max_squad(league_cfg)
+    league_out["rules"] = league_rules
+    league_out["provider"] = league_rules.get("provider")
+    league_out["provider_label"] = league_rules.get("provider_label")
 
     now = datetime.now(timezone.utc)
     payload = {
@@ -2760,6 +2899,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "competition": league_out.get("competition"),
             "id_competition": league_out.get("id_competition"),
             "market_mode": market_mode,
+            "provider": league_rules.get("provider"),
+            "rules_source": league_rules.get("source"),
+            "factors": list(league_rules.get("factors") or []),
             "external": {
                 "futbolfantasy": external_meta.get("futbolfantasy", "fail"),
                 "jornadaperfecta": external_meta.get("jornadaperfecta", "fail"),
@@ -2976,10 +3118,10 @@ def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -
     for e in entries:
         if e.get("slug"):
             by_slug[str(e["slug"])] = e
-    # Orden del registro LEAGUES; el resto al final
+    # Orden del catálogo efectivo; el resto al final
     ordered: list[dict[str, Any]] = []
     seen: set[str] = set()
-    for L in config.LEAGUES:
+    for L in config.get_effective_leagues():
         slug = str(L["slug"])
         if slug in by_slug:
             ordered.append(by_slug[slug])
@@ -3010,8 +3152,23 @@ def main(argv: list[str] | None = None) -> int:
     log.info("=== Mister Fantasy Advisor — data engine ===")
     log.info("USE_MISTER_MOCK=%s USE_PERF_SEED=%s", config.USE_MISTER_MOCK, config.USE_PERF_SEED)
 
-    if str(args.league).strip().lower() in ("all", "*"):
-        targets = [dict(L) for L in config.LEAGUES]
+    discovered: list[dict[str, Any]] = []
+    if not config.USE_MISTER_MOCK:
+        try:
+            discovered = discover_leagues()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("discover_leagues falló: %s — uso overrides/fallback", exc)
+            discovered = []
+    resolved = config.resolve_leagues(discovered or None)
+    config.set_effective_leagues(resolved)
+    log.info(
+        "Catálogo ligas (%s): %s",
+        "discovery" if discovered else "overrides/fallback",
+        ", ".join(f"{L['slug']}#{L.get('id_community')}" for L in resolved),
+    )
+
+    if str(args.league).strip().lower() in ("all", "*", ""):
+        targets = [dict(L) for L in config.get_effective_leagues()]
         merge_index = False
     else:
         targets = [config.get_league(str(args.league))]
@@ -3023,10 +3180,11 @@ def main(argv: list[str] | None = None) -> int:
         log.info("--- Liga %s (%s) ---", slug, L.get("name"))
         payload = build_payload(L)
         path = write_outputs(payload, league_cfg=L)
+        rules = (payload.get("league") or {}).get("rules") or {}
         index_entries.append(
             {
                 "slug": slug,
-                "name": L.get("name"),
+                "name": L.get("name") or (payload.get("league") or {}).get("name"),
                 "competition": (payload.get("league") or {}).get("competition") or L.get("competition"),
                 "id_community": L.get("id_community"),
                 "id_competition": L.get("id_competition"),
@@ -3036,6 +3194,24 @@ def main(argv: list[str] | None = None) -> int:
                 "path": f"leagues/{slug}/latest_data.json",
                 "balance": (payload.get("me") or {}).get("balance"),
                 "rank": (payload.get("me") or {}).get("rank"),
+                "market_mode": rules.get("market_mode") or L.get("market_mode"),
+                "max_squad": rules.get("max_squad") or L.get("max_squad"),
+                "provider": rules.get("provider"),
+                "provider_label": rules.get("provider_label"),
+                "clauses": rules.get("clauses"),
+                "loans": rules.get("loans"),
+                "factors": list(rules.get("factors") or []),
+                "rules": {
+                    "provider": rules.get("provider"),
+                    "provider_label": rules.get("provider_label"),
+                    "max_squad": rules.get("max_squad"),
+                    "market_mode": rules.get("market_mode"),
+                    "clauses": rules.get("clauses"),
+                    "loans": rules.get("loans"),
+                    "market_speed": rules.get("market_speed"),
+                    "factors": list(rules.get("factors") or []),
+                    "source": rules.get("source"),
+                },
             }
         )
         log.info(

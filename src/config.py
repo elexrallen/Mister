@@ -27,33 +27,213 @@ LATEST_DATA_PATH = DATA_DIR / "latest_data.json"
 LEAGUES_DIR = DATA_DIR / "leagues"
 LEAGUES_INDEX_PATH = DATA_DIR / "leagues.json"
 
-# Registro multi-liga (misma cuenta Mister, varias comunidades)
-LEAGUES: list[dict] = [
-    {
+# id_competition Mister → metadatos de competición / scrapers externos
+COMPETITION_MAP: dict[int, dict] = {
+    1: {
+        "external": "laliga",
+        "competition": "LaLiga",
+        "default_max_squad": 25,
+        "default_market_mode": "auction",
+    },
+    3: {
+        "external": "premier",
+        "competition": "Premier League",
+        "default_max_squad": 22,
+        "default_market_mode": "fixed",
+    },
+}
+
+# Overrides opcionales keyed por id_community (ganan sobre discovery salvo
+# campos que Mister aporta en vivo: provider/team_limit se fusionan en rules).
+LEAGUE_OVERRIDES: dict[str, dict] = {
+    "2500716": {
         "slug": "laliga-patio",
         "name": "Liga del patio",
-        "id_community": "2500716",
-        "id_competition": 1,
-        "competition": "LaLiga",
-        "external": "laliga",
-        "market_mode": "auction",
-        "max_squad": 25,
         "season_start": "2026-08-15",
         "default": True,
     },
-    {
+    "906674": {
         "slug": "premier",
         "name": "PREMIER LEAGUE",
-        "id_community": "906674",
-        "id_competition": 3,
-        "competition": "Premier League",
-        "external": "premier",
-        "market_mode": "fixed",
-        "max_squad": 22,
         "season_start": "2026-08-21",
         "default": False,
     },
-]
+}
+
+# Catálogo efectivo del run (se rellena con discovery + overrides).
+# Sin auth: fallback estático para mock / clone sin secrets.
+_effective_leagues: list[dict] | None = None
+
+
+def _slugify_league(name: str, id_community: str) -> str:
+    import re
+    import unicodedata
+
+    nk = unicodedata.normalize("NFKD", name or "")
+    ascii_name = "".join(c for c in nk if not unicodedata.combining(c))
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")
+    if not slug:
+        slug = "liga"
+    cid = str(id_community or "").strip()
+    suffix = cid[-4:] if len(cid) >= 4 else cid or "x"
+    return f"{slug}-{suffix}"
+
+
+def competition_meta(id_competition: int | None) -> dict:
+    if id_competition is None:
+        return {}
+    try:
+        return dict(COMPETITION_MAP.get(int(id_competition)) or {})
+    except (TypeError, ValueError):
+        return {}
+
+
+def _fallback_leagues_from_overrides() -> list[dict]:
+    """Catálogo offline: overrides + COMPETITION_MAP (sin discovery Mister)."""
+    out: list[dict] = []
+    for cid, ov in LEAGUE_OVERRIDES.items():
+        row = dict(ov)
+        row["id_community"] = str(cid)
+        cid_i = None
+        try:
+            cid_i = int(row.get("id_competition") or 0) or None
+        except (TypeError, ValueError):
+            cid_i = None
+        # Inferir competición conocida por override histórico
+        if cid_i is None:
+            if str(row.get("slug") or "").startswith("premier") or cid == "906674":
+                cid_i = 3
+            elif cid == "2500716":
+                cid_i = 1
+        meta = competition_meta(cid_i)
+        row.setdefault("id_competition", cid_i)
+        row.setdefault("competition", meta.get("competition"))
+        row.setdefault("external", meta.get("external"))
+        row.setdefault("max_squad", meta.get("default_max_squad") or 25)
+        row.setdefault("market_mode", meta.get("default_market_mode") or "auction")
+        row.setdefault("slug", _slugify_league(str(row.get("name") or "liga"), cid))
+        row.setdefault("default", False)
+        out.append(row)
+    if not out:
+        out.append(
+            {
+                "slug": "demo",
+                "name": "Demo",
+                "id_community": "0",
+                "id_competition": 1,
+                "competition": "LaLiga",
+                "external": "laliga",
+                "market_mode": "auction",
+                "max_squad": 25,
+                "season_start": "2026-08-15",
+                "default": True,
+            }
+        )
+    if not any(L.get("default") for L in out):
+        out[0]["default"] = True
+    return out
+
+
+def resolve_leagues(discovered: list[dict] | None = None) -> list[dict]:
+    """
+    Fusiona comunidades descubiertas en Mister con LEAGUE_OVERRIDES.
+    Discovery aporta id/name/competition; overrides aportan slug/season_start/default
+    y pueden forzar market_mode / external / max_squad.
+    """
+    if not discovered:
+        return _fallback_leagues_from_overrides()
+
+    out: list[dict] = []
+    seen_cid: set[str] = set()
+    for raw in discovered:
+        if not isinstance(raw, dict):
+            continue
+        cid = str(raw.get("id_community") or raw.get("id") or "").strip()
+        if not cid or cid in seen_cid:
+            continue
+        seen_cid.add(cid)
+        ov = dict(LEAGUE_OVERRIDES.get(cid) or {})
+        try:
+            id_comp = int(raw.get("id_competition") if raw.get("id_competition") is not None else ov.get("id_competition"))
+        except (TypeError, ValueError):
+            id_comp = None
+        meta = competition_meta(id_comp)
+        name = str(ov.get("name") or raw.get("name") or f"Liga {cid}")
+        slug = str(ov.get("slug") or "").strip() or _slugify_league(name, cid)
+        row: dict = {
+            "slug": slug,
+            "name": name,
+            "id_community": cid,
+            "id_competition": id_comp,
+            "competition": ov.get("competition") or raw.get("competition") or meta.get("competition"),
+            "external": ov.get("external") or meta.get("external"),
+            "season_start": ov.get("season_start"),
+            "default": bool(ov.get("default", False)),
+            "mode": raw.get("mode"),
+            "type": raw.get("type"),
+            "code": raw.get("code"),
+        }
+        # market_mode / max_squad: override forzado > discovery > COMPETITION_MAP
+        if ov.get("market_mode"):
+            row["market_mode"] = ov["market_mode"]
+        elif raw.get("market_mode"):
+            row["market_mode"] = raw["market_mode"]
+        else:
+            row["market_mode"] = meta.get("default_market_mode") or "auction"
+        if ov.get("max_squad") is not None:
+            row["max_squad"] = ov["max_squad"]
+        elif raw.get("max_squad") is not None:
+            row["max_squad"] = raw["max_squad"]
+        elif raw.get("team_limit") is not None:
+            row["max_squad"] = raw["team_limit"]
+        else:
+            row["max_squad"] = meta.get("default_max_squad") or 25
+        out.append(row)
+
+    # Overrides de comunidades no vistas en discovery (p.ej. mock parcial)
+    for cid, ov in LEAGUE_OVERRIDES.items():
+        if cid in seen_cid:
+            continue
+        # Solo añadir si el override es "completo" lo bastante para mock
+        if not ov.get("slug"):
+            continue
+        extra = _fallback_leagues_from_overrides()
+        for L in extra:
+            if str(L.get("id_community")) == cid:
+                out.append(L)
+                break
+
+    if not out:
+        return _fallback_leagues_from_overrides()
+    if not any(L.get("default") for L in out):
+        out[0]["default"] = True
+    # Una sola default
+    seen_default = False
+    for L in out:
+        if L.get("default"):
+            if seen_default:
+                L["default"] = False
+            else:
+                seen_default = True
+    return out
+
+
+def set_effective_leagues(leagues: list[dict]) -> list[dict]:
+    """Fija el catálogo del proceso y refresca DEFAULT_LEAGUE_SLUG."""
+    global _effective_leagues, LEAGUES, DEFAULT_LEAGUE_SLUG
+    resolved = [dict(L) for L in leagues if isinstance(L, dict) and L.get("slug")]
+    if not resolved:
+        resolved = _fallback_leagues_from_overrides()
+    _effective_leagues = resolved
+    LEAGUES = resolved
+    DEFAULT_LEAGUE_SLUG = default_league_slug()
+    return list(resolved)
+
+
+def get_effective_leagues() -> list[dict]:
+    if _effective_leagues is not None:
+        return [dict(L) for L in _effective_leagues]
+    return [dict(L) for L in LEAGUES]
 
 
 def league_market_mode(league_cfg: dict | None = None) -> str:
@@ -64,25 +244,32 @@ def league_market_mode(league_cfg: dict | None = None) -> str:
 
 def get_league(slug: str | None = None) -> dict:
     """Resuelve liga por slug; default si slug vacío/desconocido."""
+    catalog = get_effective_leagues()
     wanted = (slug or "").strip() or os.environ.get("MISTER_LEAGUE_SLUG", "").strip()
     if wanted:
-        for L in LEAGUES:
+        for L in catalog:
             if L["slug"] == wanted or str(L["id_community"]) == wanted:
                 return dict(L)
-    for L in LEAGUES:
+    for L in catalog:
         if L.get("default"):
             return dict(L)
-    return dict(LEAGUES[0])
+    return dict(catalog[0])
 
 
 def default_league_slug() -> str:
     env = os.environ.get("MISTER_LEAGUE_SLUG", "").strip()
+    catalog = get_effective_leagues() if _effective_leagues is not None else None
+    if catalog is None:
+        # Durante import inicial LEAGUES aún es el fallback
+        catalog = list(LEAGUES) if LEAGUES else _fallback_leagues_from_overrides()
     if env:
-        return get_league(env)["slug"]
-    for L in LEAGUES:
+        for L in catalog:
+            if L["slug"] == env or str(L.get("id_community")) == env:
+                return str(L["slug"])
+    for L in catalog:
         if L.get("default"):
             return str(L["slug"])
-    return str(LEAGUES[0]["slug"])
+    return str(catalog[0]["slug"])
 
 
 def league_data_path(slug: str) -> Path:
@@ -91,6 +278,10 @@ def league_data_path(slug: str) -> Path:
 
 def league_history_dir(slug: str) -> Path:
     return LEAGUES_DIR / slug / "history"
+
+
+# Catálogo inicial (mock / hasta discovery en runtime)
+LEAGUES: list[dict] = _fallback_leagues_from_overrides()
 
 
 def _load_dotenv(path: Path) -> None:
@@ -218,15 +409,16 @@ PACKAGE_HEDGE_BID_RATIO = 0.85
 # Solvencia pre-jornada: ≤48h → no endeudarse (saldo negativo = no puntúa)
 SOLVENCY_STRICT_HOURS = 48
 SOLVENCY_D1_BUFFER_HOURS = 24
-# Cupo máximo de plantilla Mister (fichajes / hedges no pueden superar plazas libres)
+# Cupo máximo de plantilla Mister (fallback si no hay team_limit)
 MAX_SQUAD_SIZE_LALIGA = 25
 MAX_SQUAD_SIZE_PREMIER = 22
 # id_competition Mister → clave de scrapers externos (FF/JP)
 LALIGA_COMPETITION_ID = 1
 PREMIER_COMPETITION_ID = 3
 EXTERNAL_BY_COMPETITION_ID: dict[int, str] = {
-    LALIGA_COMPETITION_ID: "laliga",
-    PREMIER_COMPETITION_ID: "premier",
+    cid: str(meta["external"])
+    for cid, meta in COMPETITION_MAP.items()
+    if meta.get("external")
 }
 
 

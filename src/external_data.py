@@ -559,11 +559,13 @@ def enrich_players_with_ff_production(
     points_phase: str = "preseason",
     market_universe: list[dict[str, Any]] | None = None,
     competition: str = "laliga",
+    mister_provider: str | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Añade medias FF (Mister Mixto / Fantasy RPG) + is_top_ff + production_score.
     Fail-soft: si scrape falla, intenta fallback TOP por percentil de precio de mercado.
     competition: `laliga` | `premier`.
+    mister_provider: código Mister (`mix`, `mr`, …) para escala/label preferidos.
     """
     comp = (competition or "laliga").strip().lower() or "laliga"
     meta: dict[str, Any] = {
@@ -575,15 +577,22 @@ def enrich_players_with_ff_production(
         "competition": comp,
         "scoring": None,
         "avg_scale": None,
+        "mister_provider": (mister_provider or "").strip().lower() or None,
     }
-    bundle = fetch_ff_mister_points(competition=comp)
+    bundle = fetch_ff_mister_points(
+        competition=comp,
+        mister_provider=mister_provider,
+    )
     meta["ff_points"] = bundle.get("status") or "fail"
     meta["threshold"] = bundle.get("threshold")
     meta["scoring"] = bundle.get("scoring")
     avg_scale = float(bundle.get("avg_scale") or 8.0)
     meta["avg_scale"] = avg_scale
     top_floor = float(bundle.get("top_floor") or 5.5)
-    scoring_label = str(bundle.get("scoring") or ("Fantasy RPG" if comp == "premier" else "Mister Mixto"))
+    scoring_label = str(
+        bundle.get("scoring")
+        or ("Fantasy RPG" if comp == "premier" else "Mister Mixto")
+    )
 
     seasons = bundle.get("seasons") or default_ff_seasons()
     by_season = bundle.get("by_season") or {}

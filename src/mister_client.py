@@ -1370,6 +1370,142 @@ def fetch_balance() -> dict[str, Any]:
     return {}
 
 
+def discover_leagues() -> list[dict[str, Any]]:
+    """
+    Lista comunidades a las que la cuenta está inscrita vía `_FG_user.communities`.
+    Fail-soft: [] si no hay auth o el HTML no trae communities.
+    """
+    if not (config.MISTER_TOKEN or config.MISTER_COOKIE):
+        return []
+    html = ""
+    for path in ("/team", "/feed", "/market"):
+        try:
+            html = fetch_html(path)
+            refresh_x_auth_from_html(html)
+            if html:
+                break
+        except Exception as exc:  # noqa: BLE001
+            log.warning("discover_leagues GET %s falló: %s", path, exc)
+    if not html:
+        return []
+    fg_user = _extract_js_object(html, "_FG_user") or {}
+    communities = fg_user.get("communities")
+    out: list[dict[str, Any]] = []
+    if isinstance(communities, dict):
+        items = list(communities.values())
+    elif isinstance(communities, list):
+        items = communities
+    else:
+        items = []
+
+    # Si no hay mapa communities, al menos la comunidad activa
+    if not items and fg_user.get("id_community"):
+        items = [
+            {
+                "id": fg_user.get("id_community"),
+                "name": fg_user.get("community"),
+                "id_competition": fg_user.get("id_competition"),
+                "mode": fg_user.get("mode"),
+                "code": fg_user.get("code"),
+            }
+        ]
+
+    active_cid = str(fg_user.get("id_community") or "")
+    for raw in items:
+        if not isinstance(raw, dict):
+            continue
+        cid = str(raw.get("id") or raw.get("id_community") or "").strip()
+        if not cid:
+            continue
+        try:
+            id_comp = int(raw["id_competition"]) if raw.get("id_competition") is not None else None
+        except (TypeError, ValueError):
+            id_comp = None
+        # Normas de la comunidad activa vienen en el FG_user raíz
+        row: dict[str, Any] = {
+            "id_community": cid,
+            "name": raw.get("name") or raw.get("community") or f"Liga {cid}",
+            "id_competition": id_comp,
+            "mode": raw.get("mode"),
+            "code": raw.get("code"),
+            "direct_transfer": raw.get("direct_transfer"),
+            "balance": raw.get("balance"),
+        }
+        if cid == active_cid:
+            row["type"] = fg_user.get("type")
+            row["provider"] = fg_user.get("provider")
+            row["team_limit"] = fg_user.get("team_limit")
+            row["max_squad"] = fg_user.get("team_limit")
+            row["clauses"] = fg_user.get("clauses")
+            row["loans"] = fg_user.get("loans")
+            row["market_speed"] = fg_user.get("market_speed")
+            row["competition"] = fg_user.get("competition")
+            # Inferencia temprana de market_mode
+            try:
+                from league_rules import infer_market_mode
+
+                row["market_mode"] = infer_market_mode(
+                    league_type=str(fg_user.get("type") or ""),
+                    mode=str(fg_user.get("mode") or raw.get("mode") or ""),
+                    direct_transfer=raw.get("direct_transfer"),
+                )
+            except Exception:  # noqa: BLE001
+                pass
+        out.append(row)
+
+    log.info("discover_leagues: %s comunidades", len(out))
+    return out
+
+
+def fetch_admin_settings() -> dict[str, Any] | None:
+    """
+    POST /ajax/sw/admin — panel de normas (/feed#admin).
+    Fail-soft: None si no eres admin o el endpoint falla.
+    """
+    try:
+        raw = ajax_post("/ajax/sw/admin", {"post": "admin"}, timeout=20)
+    except Exception as exc:  # noqa: BLE001
+        log.info("ajax/sw/admin no disponible: %s", exc)
+        return None
+    if not isinstance(raw, dict):
+        return None
+    data = raw.get("data") if isinstance(raw.get("data"), dict) else raw
+    if not isinstance(data, dict) or not data:
+        log.info("ajax/sw/admin sin data usable")
+        return None
+    log.info("ajax/sw/admin OK keys=%s", list(data.keys())[:12])
+    return data
+
+
+def fg_user_rules_snapshot(fg_user: dict[str, Any] | None) -> dict[str, Any]:
+    """Campos de normas presentes en `_FG_user` (para league_rules.normalize_rules)."""
+    if not isinstance(fg_user, dict):
+        return {}
+    keys = (
+        "provider",
+        "team_limit",
+        "type",
+        "mode",
+        "clauses",
+        "loans",
+        "loans_floor",
+        "market_speed",
+        "market_stay",
+        "salaries",
+        "live_changes",
+        "show_balances",
+        "custom_rules",
+        "admin",
+        "purchase_clauses",
+        "purchase_rescind",
+        "id_competition",
+        "competition",
+        "id_community",
+        "community",
+    )
+    return {k: fg_user[k] for k in keys if k in fg_user}
+
+
 def switch_community(id_community: str | int) -> dict[str, Any]:
     """
     Cambia la comunidad activa de la sesión Mister.
@@ -1447,6 +1583,9 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     fg_cfg = _extract_js_object(market_html or team_html, "_FG_cfg") or {}
     # Asegurar auth fresco antes del pool /ajax/sw/players (crítico multi-liga).
     apply_x_auth_from_cfg(fg_cfg)
+
+    admin_data = fetch_admin_settings()
+    rules_fg = fg_user_rules_snapshot(fg_user)
 
     bal_src: dict[str, Any] = {}
     if isinstance(balance_data, dict) and balance_data:
@@ -1609,9 +1748,15 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "id_community": str(community),
             "competition": competition or None,
             "id_competition": id_competition_i,
-            "id_uc": my_uc or None,
+                        "id_uc": my_uc or None,
             "source": "mister_html+ajax_balance+sw_players",
             "honest_mode": True,
             "notes": notes,
+            "fg_user_rules": rules_fg,
+            "admin_settings": admin_data,
+            "provider": fg_user.get("provider"),
+            "team_limit": fg_user.get("team_limit"),
+            "league_type": fg_user.get("type"),
+            "league_mode": fg_user.get("mode"),
         },
     }

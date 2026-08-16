@@ -20,14 +20,10 @@ on:
   workflow_dispatch:
     inputs:
       league:
-        description: Liga a regenerar
+        description: "Liga a regenerar (all, slug o id_community)"
         required: true
         default: all
-        type: choice
-        options:
-          - all
-          - laliga-patio
-          - premier
+        type: string
 
 permissions:
   contents: write
@@ -60,13 +56,7 @@ jobs:
           if [ -z "$LEAGUE" ]; then
             LEAGUE="all"
           fi
-          case "$LEAGUE" in
-            all|laliga-patio|premier) ;;
-            *)
-              echo "Liga desconocida '$LEAGUE' → all"
-              LEAGUE="all"
-              ;;
-          esac
+          # Sin whitelist fija: discovery en runtime resuelve slugs/ids
           echo "league=$LEAGUE" >> "$GITHUB_OUTPUT"
           echo "Regenerando liga: $LEAGUE"
 

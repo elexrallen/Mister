@@ -273,7 +273,10 @@ footer,
 }
 
 .league-switcher {
-  display: inline-block;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
   margin-top: 0.55rem;
 }
 
@@ -298,6 +301,16 @@ footer,
 .league-switcher select:focus-visible {
   outline: 2px solid rgba(45, 212, 191, 0.55);
   outline-offset: 2px;
+}
+
+.league-rules-summary {
+  margin: 0.35rem 0 0;
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(148, 163, 184, 0.95);
+  max-width: min(100%, 22rem);
+  line-height: 1.35;
 }
 
 .sr-only {
@@ -2000,6 +2013,10 @@ body {
   grid-column: 1 / -1;
   grid-row: 2;
   margin: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
 }
 
 .league-switcher select {
