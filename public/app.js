@@ -399,6 +399,20 @@
     return "—";
   };
 
+  const formPlain = (p) => {
+    const mister = p.form != null ? Number(p.form) : p.mister_avg != null ? Number(p.mister_avg) : null;
+    const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+    if (mister != null && !Number.isNaN(mister) && mister > 0) return Number(mister).toFixed(1);
+    if (ff != null && !Number.isNaN(Number(ff))) return Number(ff).toFixed(1);
+    return "—";
+  };
+
+  const fotmobPlain = (p) => {
+    const fm = p.fotmob_stats || {};
+    const rating = fm.rating_promedio ?? (p.external && p.external.recent_rating);
+    return rating == null ? "—" : Number(rating).toFixed(1);
+  };
+
   const ffAvgAppsBadge = (p) => {
     const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
     if (ff == null) return "";
@@ -480,10 +494,7 @@
     // Click en jugador → abrir ficha FF / fuente; si no hay URL, resaltar en la app
     if (openPlayerSource(playerId)) return;
     selectTab(tab || "market");
-    const preferCards = window.matchMedia("(max-width: 767px)").matches;
-    const sel = preferCards
-      ? `.player-card[data-player-id="${CSS.escape(String(playerId))}"], tr[data-player-id="${CSS.escape(String(playerId))}"]`
-      : `tr[data-player-id="${CSS.escape(String(playerId))}"], .player-card[data-player-id="${CSS.escape(String(playerId))}"]`;
+    const sel = `.tactical-card[data-player-id="${CSS.escape(String(playerId))}"], .player-card[data-player-id="${CSS.escape(String(playerId))}"], tr[data-player-id="${CSS.escape(String(playerId))}"]`;
     const row = document.querySelector(sel);
     if (row) {
       row.classList.add("row-highlight");
@@ -1374,6 +1385,38 @@
     </span>`;
   }
 
+  function tacticalStat(label, value, cls = "") {
+    return `<div><span>${escapeHtml(label)}</span><strong class="${escapeHtml(cls)}">${value}</strong></div>`;
+  }
+
+  function tacticalCard(player, opts = {}) {
+    const rec = tacticalRecord(player);
+    const id = rec.id || rec.player_id || "";
+    const clickable = Boolean(id) && opts.clickable !== false;
+    return `<article class="tactical-card ${opts.cls || ""} ${clickable ? "is-clickable" : ""}"${
+      clickable
+        ? ` data-player-id="${escapeHtml(id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente"`
+        : ""
+    }>
+      ${opts.media || playerMedia(rec, "is-card")}
+      <div class="tactical-card-body">
+        <div class="tactical-card-head">
+          <span class="tactical-card-kicker">${opts.kicker || escapeHtml(rec.position || "")}</span>
+          ${opts.badge || ""}
+        </div>
+        <strong class="tactical-card-name">${escapeHtml(opts.name || rec.name || "")}</strong>
+        <small class="tactical-card-sub">${opts.sub || escapeHtml(rec.team || "")}</small>
+        ${opts.meta ? `<div class="tactical-card-meta">${opts.meta}</div>` : ""}
+        ${opts.stats ? `<div class="tactical-card-stats">${opts.stats}</div>` : ""}
+        ${opts.note ? `<p class="tactical-card-note">${opts.note}</p>` : ""}
+      </div>
+    </article>`;
+  }
+
+  function tacticalRankMedia(rank) {
+    return `<span class="tactical-rank-media" aria-hidden="true">${escapeHtml(String(rank ?? "—"))}</span>`;
+  }
+
   function bindAssetFallbacks(root) {
     if (!root) return;
     root.querySelectorAll(".tactical-player-photo, .tactical-team-logo").forEach((img) => {
@@ -1452,13 +1495,13 @@
         </button>
       </div>
       <div class="command-visual">
-        <span class="command-confidence">${confidence}<small>%</small></span>
+        <span class="command-confidence">${confidence}%</span>
         ${playerMedia(hero, "is-hero")}
         <span class="pitch-markings" aria-hidden="true"></span>
       </div>
     </article>`;
 
-    const followUps = ordered.slice(1, 4);
+    const followUps = ordered.slice(1);
     listRoot.innerHTML = followUps.length
       ? followUps
           .map((item, index) => {
@@ -2023,41 +2066,24 @@
     if (cards) {
       cards.innerHTML = rows
         .map((p) => {
+          const rec = tacticalRecord(p);
           const d = Number(p.delta_5d || 0);
           const deltaLabel =
             p.delta_5d != null ? pct(d) : p.trend === "up" ? "↑" : p.trend === "down" ? "↓" : "—";
-          return `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
-            <div class="player-card-top">
-              <div class="player-identity">
-                <span class="player-monogram" aria-hidden="true">${playerMonogram(p.name)}</span>
-                <div>
-                  <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
-                  <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
-                </div>
-              </div>
-              ${priorityBadge(p.priority)}
-            </div>
-            <div class="player-card-meta">
-              ${posChip(p.position)}
-              ${externalStatusBadge(p)}
-              ${ffAvgLine(p)}
-              ${signalChips(p)}
-              ${fixtureChip(p)}
-            </div>
-            <div class="player-card-stats">
-              <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
-              <div><div class="stat-label">${isFixedMarket() ? "Precio fichaje" : "Puja rec."}</div><div class="stat-value text-mint-400">${formatMoney(p.puja_recomendada)}</div></div>
-              <div><div class="stat-label">xPts</div><div class="stat-value">${
-                p.xpts != null ? Number(p.xpts).toFixed(1) : "—"
-              }</div></div>
-              <div><div class="stat-label">Δ / tendencia</div><div class="stat-value ${d >= 0 ? "delta-up" : "delta-down"}">${deltaLabel}</div></div>
-            </div>
-          </article>`;
+          return tacticalCard(rec, {
+            kicker: escapeHtml(p.position || "—"),
+            badge: priorityBadge(p.priority),
+            sub: escapeHtml(p.team || ""),
+            meta: `${externalStatusBadge(p)}${ffAvgLine(p)}${signalChips(p)}${fixtureChip(p)}`,
+            stats:
+              tacticalStat("Precio", formatMoney(p.price)) +
+              tacticalStat(isFixedMarket() ? "Fichaje" : "Puja", formatMoney(p.puja_recomendada), "is-acid") +
+              tacticalStat("Δ5d", deltaLabel, d >= 0 ? "delta-up" : "delta-down") +
+              tacticalStat("xPts", p.xpts != null ? Number(p.xpts).toFixed(1) : "—"),
+          });
         })
         .join("");
-      cards.querySelectorAll(".player-card").forEach((el) => {
-        /* bound via bindPlayerOpenClicks */
-      });
+      bindAssetFallbacks(cards);
     }
     bindPlayerOpenClicks(tbody, "market");
     bindPlayerOpenClicks(cards, "market");
@@ -2290,28 +2316,45 @@
           .join("")
       : `<tr><td colspan="7" class="text-slate-500">Sin resultados.</td></tr>`;
     if (cards) {
-      cards.innerHTML = rows.length
-        ? rows
-            .map(
-              (p) => `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
-            <div class="player-card-top">
-              <div>
-                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
-              </div>
-              ${posChip(p.position)}
-            </div>
-            <div class="player-card-meta">${externalStatusBadge(p)} ${ffAvgLine(p)} ${signalChips(p)}</div>
-            <div class="player-card-stats">
-              <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
-              <div><div class="stat-label">Forma</div><div class="stat-value">${formCell(p)}</div></div>
-              <div><div class="stat-label">Alineación</div><div class="stat-value">${p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"}</div></div>
-              <div><div class="stat-label">FotMob</div><div class="stat-value">${fotmobCell(p)}</div></div>
-            </div>
-          </article>`
-            )
+      const lineLabels = { GK: "Portería", DF: "Defensa", MF: "Medio", FW: "Delantera" };
+      const grouped = { GK: [], DF: [], MF: [], FW: [] };
+      rows.forEach((p) => {
+        (grouped[p.position] || grouped.MF).push(p);
+      });
+      const sections = ["GK", "DF", "MF", "FW"].filter((pos) => grouped[pos].length);
+      cards.innerHTML = sections.length
+        ? sections
+            .map((pos) => {
+              const list = grouped[pos];
+              return `<section class="tactical-line-group">
+                <header class="tactical-line-head">
+                  <h3>${lineLabels[pos]}</h3>
+                  <span>${list.length}</span>
+                </header>
+                <div class="tactical-card-grid">${list
+                  .map((p) => {
+                    const rec = tacticalRecord(p);
+                    return tacticalCard(rec, {
+                      kicker: escapeHtml(p.position || "—"),
+                      badge: externalStatusBadge(p),
+                      sub: escapeHtml(p.team || ""),
+                      meta: `${ffAvgLine(p)}${signalChips(p)}`,
+                      stats:
+                        tacticalStat("Precio", formatMoney(p.price)) +
+                        tacticalStat("Forma", formPlain(p)) +
+                        tacticalStat(
+                          "Once",
+                          p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"
+                        ) +
+                        tacticalStat("FotMob", fotmobPlain(p)),
+                    });
+                  })
+                  .join("")}</div>
+              </section>`;
+            })
             .join("")
         : `<p class="empty-state">Sin resultados.</p>`;
+      bindAssetFallbacks(cards);
       bindPlayerOpenClicks(cards, "squad");
     }
     bindPlayerOpenClicks(tbody, "squad");
@@ -2355,34 +2398,30 @@
     if (upCards) {
       upCards.innerHTML = ups.length
         ? ups
-            .map(
-              (u) => `<article class="player-card is-clickable" data-player-id="${escapeHtml(u.player_id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
-            <div class="player-card-top">
-              <div>
-                <div class="font-medium text-white player-name-link">${escapeHtml(u.name)}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(u.owner_team || "")} · #${u.owner_rank ?? "—"}</div>
-                ${u.compared_to ? `<div class="text-xs text-mint-500/80 mt-0.5">Mejora a ${escapeHtml(u.compared_to)}</div>` : ""}
-              </div>
-              <span class="badge ${u.action === "clause_bid" ? "badge-mint" : "badge-duda"}">${
-                u.action === "clause_bid" ? "Cláusula" : "Vigilar"
-              }</span>
-            </div>
-            <div class="player-card-meta">
-              ${posChip(u.position)}
-              ${scoringLine(u)}
-              ${pointsTrendBadge(u.points_trend)}
-            </div>
-            <div class="player-card-stats">
-              <div><div class="stat-label">Valor</div><div class="stat-value">${formatMoney(u.market_value)}</div></div>
-              <div><div class="stat-label">Cláusula</div><div class="stat-value">${
-                u.clause_known && u.clause != null ? formatMoney(u.clause) : "—"
-              }</div></div>
-            </div>
-            ${u.why ? `<p class="text-xs text-slate-400 mt-2">${escapeHtml(u.why)}</p>` : ""}
-          </article>`
-            )
+            .map((u) => {
+              const rec = tacticalRecord({ ...u, id: u.player_id, team: u.owner_team });
+              return tacticalCard(rec, {
+                kicker: escapeHtml(u.position || "—"),
+                badge: `<span class="badge ${u.action === "clause_bid" ? "badge-mint" : "badge-duda"}">${
+                  u.action === "clause_bid" ? "Cláusula" : "Vigilar"
+                }</span>`,
+                sub: escapeHtml(`${u.owner_team || "Rival"} · #${u.owner_rank ?? "—"}`),
+                meta: `${scoringLine(u)}${pointsTrendBadge(u.points_trend)}${
+                  u.compared_to ? `<span class="tactical-card-compare">Mejora a ${escapeHtml(u.compared_to)}</span>` : ""
+                }`,
+                stats:
+                  tacticalStat("Valor", formatMoney(u.market_value)) +
+                  tacticalStat(
+                    "Cláusula",
+                    u.clause_known && u.clause != null ? formatMoney(u.clause) : "—",
+                    "is-acid"
+                  ),
+                note: u.why ? escapeHtml(u.why) : "",
+              });
+            })
             .join("")
         : `<p class="empty-state">Sin upgrades claros en rivales hoy.</p>`;
+      bindAssetFallbacks(upCards);
     }
 
     const freeBody = document.querySelector("#table-free tbody");
@@ -2415,27 +2454,26 @@
     if (freeCards) {
       freeCards.innerHTML = free.length
         ? free
-            .map(
-              (p) => `<article class="player-card is-clickable" data-player-id="${escapeHtml(p.id)}" role="button" tabindex="0" title="Abrir ficha FF / fuente">
-            <div class="player-card-top">
-              <div>
-                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(p.team || "")}</div>
-              </div>
-              ${posChip(p.position)}
-            </div>
-            <div class="player-card-stats">
-              <div><div class="stat-label">Precio</div><div class="stat-value">${formatMoney(p.price)}</div></div>
-              <div><div class="stat-label">PPG</div><div class="stat-value">${p.avg_ppg != null ? Number(p.avg_ppg).toFixed(1) : "—"}</div></div>
-              <div><div class="stat-label">Fiabilidad</div><div class="stat-value">${p.reliability != null ? Number(p.reliability).toFixed(2) : "—"}</div></div>
-              <div><div class="stat-label">ROI / M€</div><div class="stat-value text-mint-400">${
-                p.roi_ppg_per_million != null ? Number(p.roi_ppg_per_million).toFixed(2) : "—"
-              }</div></div>
-            </div>
-          </article>`
-            )
+            .map((p) => {
+              const rec = tacticalRecord(p);
+              return tacticalCard(rec, {
+                kicker: escapeHtml(p.position || "—"),
+                badge: `<span class="badge badge-mint">Libre</span>`,
+                sub: escapeHtml(p.team || ""),
+                stats:
+                  tacticalStat("Precio", formatMoney(p.price)) +
+                  tacticalStat("PPG", p.avg_ppg != null ? Number(p.avg_ppg).toFixed(1) : "—") +
+                  tacticalStat("Fiab.", p.reliability != null ? Number(p.reliability).toFixed(2) : "—") +
+                  tacticalStat(
+                    "ROI / M€",
+                    p.roi_ppg_per_million != null ? Number(p.roi_ppg_per_million).toFixed(2) : "—",
+                    "is-acid"
+                  ),
+              });
+            })
             .join("")
         : `<p class="empty-state">${freeEmpty}</p>`;
+      bindAssetFallbacks(freeCards);
     }
 
     bindPlayerOpenClicks(upBody, "radar");
@@ -2474,30 +2512,35 @@
     if (rivalsCards) {
       rivalsCards.innerHTML = rivals.length
         ? rivals
-            .map(
-              (r) => `<article class="player-card">
-            <div class="player-card-top">
-              <div>
-                <div class="font-medium text-white">#${r.rank ?? "—"} · ${escapeHtml(r.team_name || "")}</div>
-                <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(r.manager || "")}</div>
-              </div>
-              <span class="badge badge-baja">${escapeHtml(r.activity || "—")}</span>
-            </div>
-            <div class="player-card-stats">
-              <div><div class="stat-label">Puntos</div><div class="stat-value">${r.points ?? "—"}</div></div>
-              <div><div class="stat-label">Caja / valor</div><div class="stat-value text-mint-400">${
-                r.liquidity_estimated != null
-                  ? formatMoney(r.liquidity_estimated)
-                  : r.squad_value != null
-                    ? formatMoney(r.squad_value)
-                    : "—"
-              }</div></div>
-            </div>
-            <div class="player-card-meta mt-2">
-              ${(r.position_gaps || []).length ? (r.position_gaps || []).map(posChip).join(" ") : '<span class="text-slate-600 text-xs">Sin carencias</span>'}
-            </div>
-          </article>`
-            )
+            .map((r) => {
+              const gaps = r.position_gaps || [];
+              return tacticalCard(
+                { name: r.team_name || r.manager, id: r.player_id },
+                {
+                  cls: "is-manager",
+                  clickable: Boolean(r.player_id),
+                  media: tacticalRankMedia(r.rank),
+                  name: r.team_name || "Equipo",
+                  kicker: "Manager",
+                  badge: `<span class="badge badge-baja">${escapeHtml(r.activity || "—")}</span>`,
+                  sub: escapeHtml(r.manager || ""),
+                  meta: gaps.length
+                    ? gaps.map(posChip).join("")
+                    : `<span class="tactical-card-empty-gaps">Sin carencias</span>`,
+                  stats:
+                    tacticalStat("Puntos", r.points ?? "—") +
+                    tacticalStat(
+                      "Caja",
+                      r.liquidity_estimated != null
+                        ? formatMoney(r.liquidity_estimated)
+                        : r.squad_value != null
+                          ? formatMoney(r.squad_value)
+                          : "—",
+                      "is-acid"
+                    ),
+                }
+              );
+            })
             .join("")
         : `<p class="empty-state">Sin datos de rivales.</p>`;
     }
@@ -2572,7 +2615,8 @@
     document.querySelectorAll("[data-go-view]").forEach((btn) => {
       btn.addEventListener("click", () => selectTab(btn.getAttribute("data-go-view") || "today"));
     });
-    selectTab(document.body.dataset.view || "today");
+    const viewParam = new URLSearchParams(window.location.search).get("view");
+    selectTab(viewParam || document.body.dataset.view || "today");
   }
 
   function updateFiltersSummary() {

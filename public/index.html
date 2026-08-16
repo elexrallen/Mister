@@ -33,7 +33,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=50" />
+  <link rel="stylesheet" href="./styles.css?v=51" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -294,10 +294,10 @@
       </div>
 
       <div id="tab-market" class="tab-panel active p-3 md:p-6" role="tabpanel">
-        <div class="browse-heading">
+        <div class="browse-heading tactical-view-head">
           <div>
             <p class="section-kicker">Radar de fichajes</p>
-            <h2 class="section-title">Oportunidades</h2>
+            <h2 class="section-title">Mercado</h2>
           </div>
         </div>
         <div class="market-scope" role="group" aria-label="Ámbito del mercado">
@@ -335,11 +335,12 @@
       </div>
 
       <div id="tab-squad" class="tab-panel p-3 md:p-6" role="tabpanel" hidden>
-        <section class="health-panel mb-6" aria-labelledby="health-title">
+        <section class="health-panel tactical-health mb-6" aria-labelledby="health-title">
           <div class="health-head">
             <div>
-              <h3 id="health-title" class="font-display text-base md:text-lg text-white">Salud y estructura del equipo</h3>
-              <p class="section-hint">Titulares + alternativas por línea · objetivo 15 (2/5/5/3) para el 15 ago</p>
+              <p class="section-kicker">Estructura</p>
+              <h3 id="health-title" class="section-title">Salud táctica</h3>
+              <p class="section-hint">Titulares + alternativas por línea · objetivo 15 (2/5/5/3)</p>
             </div>
             <div class="health-score" id="health-score" title="Salud de plantilla">—</div>
           </div>
@@ -370,7 +371,15 @@
       </div>
 
       <div id="tab-radar" class="tab-panel p-3 md:p-6" role="tabpanel" hidden>
-        <h3 class="font-display text-base md:text-lg mb-3 text-white">Objetivos en rivales</h3>
+        <header class="tactical-view-head">
+          <div>
+            <p class="section-kicker">Frente a la liga</p>
+            <h2 class="section-title">Rivales</h2>
+          </div>
+        </header>
+        <section class="tactical-block" aria-labelledby="upgrades-title">
+        <h3 id="upgrades-title" class="tactical-block-title">Objetivos</h3>
+        <p class="section-hint">Cláusula o vigilar en plantillas rivales</p>
         <div class="list-sort" data-list="upgrades" aria-label="Ordenar objetivos"></div>
         <div id="upgrade-cards" class="card-list mb-6"></div>
         <div class="table-wrap desktop-only mb-8">
@@ -391,7 +400,10 @@
             <tbody></tbody>
           </table>
         </div>
-        <h3 class="font-display text-base md:text-lg mb-3 text-white">Libres TOP</h3>
+        </section>
+        <section class="tactical-block" aria-labelledby="free-title">
+        <h3 id="free-title" class="tactical-block-title">Libres TOP</h3>
+        <p class="section-hint">Mejor ROI entre agentes libres</p>
         <div class="list-sort" data-list="free" aria-label="Ordenar libres"></div>
         <div id="free-cards" class="card-list mb-6"></div>
         <div class="table-wrap desktop-only mb-8">
@@ -409,7 +421,10 @@
             <tbody></tbody>
           </table>
         </div>
-        <h3 class="font-display text-base md:text-lg mb-3 text-white">Rivales</h3>
+        </section>
+        <section class="tactical-block" aria-labelledby="rivals-title">
+        <h3 id="rivals-title" class="tactical-block-title">Clasificación</h3>
+        <p class="section-hint">Managers, liquidez y carencias</p>
         <div class="list-sort" data-list="rivals" aria-label="Ordenar rivales"></div>
         <div id="rivals-cards" class="card-list mb-4"></div>
         <div class="table-wrap desktop-only">
@@ -428,6 +443,7 @@
             <tbody></tbody>
           </table>
         </div>
+        </section>
       </div>
     </section>
 
@@ -457,6 +473,6 @@
     Mister Fantasy Advisor · Decisiones diarias
   </footer>
 
-  <script src="./app.js?v=50" defer></script>
+  <script src="./app.js?v=51" defer></script>
 </body>
 </html>

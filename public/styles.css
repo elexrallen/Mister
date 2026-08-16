@@ -3072,7 +3072,8 @@ body[data-view="squad"] #daily-plan-panel,
 body[data-view="squad"] #tactical-kpis,
 body[data-view="squad"] #today-opportunities-panel,
 body[data-view="squad"] #campaign-banner,
-body[data-view="squad"] .tactical-main > section[aria-label="Filtros"] {
+body[data-view="squad"] #matchday-panel,
+body[data-view="squad"] #objectives-panel {
   display: none !important;
 }
 
@@ -3306,24 +3307,23 @@ body[data-view="today"] #today-opportunities-panel {
   z-index: 4;
   top: 0.8rem;
   right: 0.8rem;
-  display: grid;
-  place-items: center;
-  width: 3rem;
-  height: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.15rem;
+  height: 3.15rem;
   color: var(--acid);
-  background: rgba(5, 8, 13, 0.78);
+  background: rgba(5, 8, 13, 0.88);
   border: 1px solid rgba(217, 255, 0, 0.55);
   border-radius: 50%;
+  box-shadow: 0 0 0 5px rgba(5, 8, 13, 0.42);
   font-family: "Barlow Condensed", sans-serif;
-  font-size: 1.2rem;
+  font-size: 0.92rem;
   font-style: italic;
   font-weight: 900;
-}
-
-.command-confidence small {
-  margin-top: -0.9rem;
-  margin-left: 1.3rem;
-  font-size: 0.48rem;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .tactical-player-media {
@@ -3380,7 +3380,7 @@ body[data-view="today"] #today-opportunities-panel {
 
 .tactical-player-media.is-hero {
   position: absolute;
-  inset: 2.2rem -1.6rem 0 -1.5rem;
+  inset: 2.2rem 3.35rem 0 -1.5rem;
   overflow: visible;
   background: transparent;
 }
@@ -3988,5 +3988,353 @@ body[data-view="today"] #tactical-kpis .kpi-value {
 
   #browse-section .desktop-tabs {
     display: none;
+  }
+
+  #daily-plan-panel .action-queue-list {
+    max-height: min(26rem, 68vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Tarjetas tácticas — Mercado / Plantilla / Rivales                          */
+/* -------------------------------------------------------------------------- */
+
+.tactical-view-head {
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #26333f;
+}
+
+.tactical-block {
+  margin-bottom: 1.15rem;
+}
+
+.tactical-block-title {
+  margin: 0 0 0.15rem;
+  color: #f3f6f8;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.2rem;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.tactical-card {
+  display: grid;
+  grid-template-columns: 4.35rem minmax(0, 1fr);
+  gap: 0.7rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.65rem;
+  color: inherit;
+  text-align: left;
+  background: #080e15;
+  border: 1px solid #263440;
+  border-radius: 0.2rem;
+}
+
+.tactical-card.is-clickable {
+  cursor: pointer;
+}
+
+.tactical-card:hover,
+.tactical-card:focus-visible,
+.tactical-card.row-highlight {
+  background: #0d151e;
+  border-color: var(--cyan);
+  outline: none;
+}
+
+.tactical-player-media.is-card {
+  width: 4.35rem;
+  height: 5.05rem;
+  overflow: visible;
+  border: 1px solid #354655;
+}
+
+.tactical-player-media.is-card .tactical-player-photo,
+.tactical-player-media.is-card .tactical-player-fallback {
+  overflow: hidden;
+  background: #101a24;
+}
+
+.tactical-player-media.is-card .tactical-team-logo {
+  right: -0.35rem;
+  bottom: -0.2rem;
+  width: 1.2rem;
+  height: 1.2rem;
+  padding: 0.12rem;
+  border-width: 2px;
+}
+
+.tactical-rank-media {
+  display: grid;
+  place-items: center;
+  width: 4.35rem;
+  height: 5.05rem;
+  color: var(--acid);
+  background:
+    radial-gradient(circle at 50% 30%, rgba(217, 255, 0, 0.12), transparent 58%),
+    #101a24;
+  border: 1px solid #354655;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.85rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+.tactical-card-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tactical-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.tactical-card-kicker {
+  color: var(--cyan);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tactical-card-name {
+  overflow: hidden;
+  color: #f3f6f8;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.12rem;
+  font-style: italic;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.tactical-card-sub {
+  overflow: hidden;
+  color: #73818d;
+  font-size: 0.68rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tactical-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.28rem;
+  margin-top: 0.35rem;
+}
+
+.tactical-card-compare,
+.tactical-card-empty-gaps {
+  color: #7f8d99;
+  font-size: 0.62rem;
+}
+
+.tactical-card-compare {
+  color: var(--acid);
+}
+
+.tactical-card-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 0.5rem;
+  background: #22303c;
+}
+
+.tactical-card-stats > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0.08rem;
+  min-width: 0;
+  padding: 0.38rem 0.32rem;
+  background: #0b121a;
+}
+
+.tactical-card-stats span {
+  color: #74828e;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.52rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.tactical-card-stats strong {
+  overflow: hidden;
+  color: #eef2f5;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tactical-card-stats strong.is-acid,
+.tactical-card-stats .delta-up {
+  color: var(--acid);
+}
+
+.tactical-card-note {
+  display: -webkit-box;
+  margin: 0.4rem 0 0;
+  overflow: hidden;
+  color: #7d8b97;
+  font-size: 0.65rem;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tactical-line-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.tactical-line-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 0.15rem 0.1rem;
+  border-bottom: 1px solid #283641;
+}
+
+.tactical-line-head h3 {
+  margin: 0;
+  color: #eff3f6;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.05rem;
+  font-style: italic;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.tactical-line-head span {
+  color: var(--acid);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.tactical-card-grid,
+#market-cards.card-list,
+#upgrade-cards.card-list,
+#free-cards.card-list,
+#rivals-cards.card-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+#squad-cards.card-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.tactical-health,
+#tab-squad .health-panel {
+  padding: 1rem;
+  background: #060b11;
+  border: 1px solid #263440;
+  border-radius: 0.25rem;
+}
+
+#tab-squad .health-score {
+  width: 3.4rem;
+  height: 3.4rem;
+  min-width: 3.4rem;
+  border-radius: 50%;
+  color: var(--acid);
+  background: rgba(5, 8, 13, 0.82);
+  border: 1px solid rgba(217, 255, 0, 0.45);
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: 1.15rem;
+  font-style: italic;
+  font-weight: 900;
+}
+
+#tab-squad .health-score.health-mid {
+  color: #ffad38;
+  border-color: rgba(255, 173, 56, 0.5);
+}
+
+#tab-squad .health-score.health-bad {
+  color: #ff6683;
+  border-color: rgba(255, 102, 131, 0.5);
+}
+
+#tab-squad .line-chip,
+#tab-squad .pos-block,
+#tab-squad .tip-card {
+  background: #080e15;
+  border-color: #263440;
+  border-radius: 0.2rem;
+}
+
+#tab-squad .line-chip-top span:first-child,
+#tab-squad .pos-block .font-semibold {
+  font-family: "Barlow Condensed", sans-serif;
+  font-style: italic;
+  text-transform: uppercase;
+}
+
+body[data-view="market"] .tactical-main,
+body[data-view="squad"] .tactical-main,
+body[data-view="radar"] .tactical-main {
+  max-width: 72rem;
+}
+
+@media (max-width: 430px) {
+  .tactical-card-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  body[data-view="market"] .card-list,
+  body[data-view="squad"] .card-list,
+  body[data-view="radar"] .card-list,
+  body[data-view="squad"] .tactical-card-grid {
+    display: grid !important;
+  }
+
+  body[data-view="squad"] #squad-cards.card-list {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  body[data-view="market"] .table-wrap.desktop-only,
+  body[data-view="squad"] .table-wrap.desktop-only,
+  body[data-view="radar"] .table-wrap.desktop-only {
+    display: none !important;
+  }
+
+  #market-cards.card-list,
+  #upgrade-cards.card-list,
+  #free-cards.card-list,
+  #rivals-cards.card-list,
+  .tactical-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1100px) {
+  #market-cards.card-list,
+  #upgrade-cards.card-list,
+  #free-cards.card-list,
+  #rivals-cards.card-list,
+  .tactical-card-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
