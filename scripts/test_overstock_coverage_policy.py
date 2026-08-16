@@ -421,7 +421,7 @@ def test_jp_does_not_set_habitual_lineup_prob() -> None:
             "source": "jornadaperfecta",
         }
     ]
-    merged = _merge_source_records(ff, jp, [], [])
+    merged = _merge_source_records(ff, jp)
     assert len(merged) == 1, merged
     rec = merged[0]
     assert rec.get("lineup_prob") == 40, rec
@@ -429,7 +429,7 @@ def test_jp_does_not_set_habitual_lineup_prob() -> None:
     assert rec.get("gw_starter") is True, rec
 
     # Solo JP: sin % habitual (ficha/apps después)
-    only_jp = _merge_source_records([], jp, [], [])
+    only_jp = _merge_source_records([], jp)
     assert len(only_jp) == 1
     assert only_jp[0].get("lineup_prob") is None, only_jp[0]
     assert only_jp[0].get("gw_lineup_prob") == 85, only_jp[0]

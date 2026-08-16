@@ -927,6 +927,91 @@ button.player-link:hover {
   color: #94a3b8;
 }
 
+.playbook {
+  margin: 0 0 0.75rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(129, 140, 248, 0.3);
+  background: linear-gradient(180deg, rgba(129, 140, 248, 0.12), rgba(15, 23, 42, 0.2));
+}
+
+.playbook-head {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.playbook-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.playbook-gw {
+  padding: 0.1rem 0.45rem;
+  border-radius: 0.4rem;
+  background: rgba(129, 140, 248, 0.25);
+  color: #c7d2fe;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.playbook-countdown {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: #a5b4fc;
+}
+
+.playbook-focus {
+  margin: 0.4rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: #cbd5e1;
+}
+
+.playbook-warning {
+  margin: 0.4rem 0 0;
+  padding: 0.35rem 0.55rem;
+  border-radius: 0.5rem;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  font-size: 0.75rem;
+  color: #fecaca;
+}
+
+.playbook-tasks {
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.playbook-task {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+}
+
+.playbook-task strong {
+  display: block;
+  font-size: 0.8rem;
+  color: #e2e8f0;
+}
+
+.playbook-task p {
+  margin: 0.15rem 0 0;
+  font-size: 0.73rem;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
+.playbook-task.is-done {
+  opacity: 0.6;
+}
+
 .queue-package-hint {
   margin: 0 0 0.65rem;
   padding: 0.55rem 0.75rem;

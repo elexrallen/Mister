@@ -1,0 +1,135 @@
+{
+  "status": "ok",
+  "data": {
+    "id": 36048,
+    "name": "Nahuel Tenaglia",
+    "id_team": 48,
+    "position": 2,
+    "ts_pic": 1759711458,
+    "gameweek": "J1",
+    "type": "regular",
+    "id_player": 36048,
+    "id_gameweek": 3968,
+    "id_match": 37155,
+    "rating_as": 3,
+    "points_as": 15,
+    "as_graded_date": "2026-08-15 21:33:24",
+    "rating_marca": 2,
+    "points_marca": 11,
+    "marca_graded_date": "2026-08-15 22:08:03",
+    "rating_md": 2,
+    "points_md": 11,
+    "md_graded_date": "2026-08-15 21:48:49",
+    "points_mr": 16,
+    "mr_graded_date": "2026-08-15 21:48:44",
+    "points_mix": 13,
+    "mix_graded_date": "2026-08-15 22:30:32",
+    "rating_ss": 8.8,
+    "points_cls": null,
+    "points_mix2": 15,
+    "mix2_graded_date": "2026-08-15 22:30:44",
+    "rating_marca_stats": 13,
+    "points_marca_stats": 15,
+    "marca_stats_graded_date": "2026-08-15 22:09:38",
+    "marca_stats_rating_detailed": "{\"totalPass\":{\"value\":61,\"rating\":0},\"accuratePass\":{\"value\":52,\"rating\":0},\"totalLongBalls\":{\"value\":10,\"rating\":0},\"accurateLongBalls\":{\"value\":5,\"rating\":0},\"goalAssist\":{\"value\":0,\"rating\":0},\"accurateOwnHalfPasses\":{\"value\":30,\"rating\":0},\"totalOwnHalfPasses\":{\"value\":30,\"rating\":0},\"accurateOppositionHalfPasses\":{\"value\":22,\"rating\":0},\"totalOppositionHalfPasses\":{\"value\":31,\"rating\":0},\"aerialLost\":{\"value\":2,\"rating\":0},\"aerialWon\":{\"value\":3,\"rating\":0},\"duelLost\":{\"value\":6,\"rating\":0},\"duelWon\":{\"value\":8,\"rating\":0},\"challengeLost\":{\"value\":2,\"rating\":0},\"dispossessed\":{\"value\":1,\"rating\":0},\"totalContest\":{\"value\":1,\"rating\":0},\"wonContest\":{\"value\":1,\"rating\":0},\"onTargetScoringAttempt\":{\"value\":1,\"rating\":0},\"blockedScoringAttempt\":{\"value\":2,\"rating\":0},\"goals\":{\"value\":1,\"rating\":6},\"totalClearance\":{\"value\":7,\"rating\":2},\"ballRecovery\":{\"value\":6,\"rating\":0},\"lastManTackle\":{\"value\":1,\"rating\":0},\"totalTackle\":{\"value\":2,\"rating\":0},\"wonTackle\":{\"value\":2,\"rating\":0},\"unsuccessfulTouch\":{\"value\":2,\"rating\":0},\"wasFouled\":{\"value\":2,\"rating\":0},\"fouls\":{\"value\":1,\"rating\":0},\"minutesPlayed\":{\"value\":90,\"rating\":2},\"touches\":{\"value\":82,\"rating\":0},\"rating\":{\"value\":8.8,\"rating\":0},\"possessionLostCtrl\":{\"value\":12,\"rating\":-1},\"expectedGoals\":{\"value\":0.2964,\"rating\":0},\"expectedGoalsOnTarget\":{\"value\":0.4938,\"rating\":0},\"expectedAssists\":{\"value\":0.0438911,\"rating\":0},\"totalBallCarriesDistance\":{\"value\":213.14118287077,\"rating\":0},\"ballCarriesCount\":{\"value\":21,\"rating\":0},\"totalProgression\":{\"value\":156.99954967191,\"rating\":0},\"bestBallCarryProgression\":{\"value\":22.810465498955,\"rating\":0},\"totalProgressiveBallCarriesDistance\":{\"value\":73.503918451359,\"rating\":0},\"progressiveBallCarriesCount\":{\"value\":3,\"rating\":0},\"ratingVersions\":{\"value\":{\"original\":8.8,\"alternative\":8.2},\"rating\":0},\"totalShots\":{\"value\":3,\"rating\":0},\"shotValueNormalized\":{\"value\":0.45,\"rating\":0},\"passValueNormalized\":{\"value\":0.31,\"rating\":0},\"dribbleValueNormalized\":{\"value\":0.16,\"rating\":0},\"defensiveValueNormalized\":{\"value\":0.71,\"rating\":0},\"statisticsType\":{\"value\":{\"sportSlug\":\"football\",\"statisticsType\":\"player\"},\"rating\":0},\"ownGoals\":{\"value\":0,\"rating\":0},\"keyPass\":{\"value\":0,\"rating\":0},\"goalsAgainst\":{\"value\":0,\"rating\":3},\"penaltyMiss\":{\"value\":0,\"rating\":0},\"penaltySave\":{\"value\":0,\"rating\":0},\"penaltyWon\":{\"value\":0,\"rating\":0},\"penaltyConceded\":{\"value\":0,\"rating\":0},\"yellowCard\":{\"value\":0,\"rating\":0},\"doubleYellowCard\":{\"value\":0,\"rating\":0},\"redCard\":{\"value\":0,\"rating\":0},\"saves\":{\"value\":0,\"rating\":0},\"bigChanceCreated\":{\"value\":0,\"rating\":0},\"totalInterceptions\":{\"value\":8,\"rating\":1},\"marca\":{\"value\":\"2.0\",\"rating\":\"2.0\"}}",
+    "updated": "2026-08-15 22:30:44",
+    "match_team_id": 48,
+    "id_home": 48,
+    "id_away": 9,
+    "goals_home": 3,
+    "goals_away": 0,
+    "status": "played",
+    "home": "Alavés",
+    "away": "Getafe",
+    "id_competition": 1,
+    "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/36048.png?version=20251006024418",
+    "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/48.png?version=",
+    "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/48.png?version=",
+    "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/9.png?version=",
+    "providers": {
+      "as": {
+        "key": "as",
+        "icon": "spade",
+        "rating": 3,
+        "points": 15,
+        "livePoints": null,
+        "base": 10,
+        "parent": [],
+        "mixValue": {
+          "mix": 25,
+          "mix2": 25
+        },
+        "icons": "<svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#spade'></use></svg> <svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#spade'></use></svg> <svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#spade'></use></svg> "
+      },
+      "marca": {
+        "key": "marca",
+        "icon": "star-filled",
+        "rating": 2,
+        "points": 11,
+        "livePoints": null,
+        "base": 6,
+        "parent": [],
+        "mixValue": {
+          "mix": 25,
+          "mix2": 25
+        },
+        "icons": "<svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#star-filled'></use></svg> <svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#star-filled'></use></svg> "
+      },
+      "mr": {
+        "key": "mr",
+        "icon": "",
+        "rating": 8.8,
+        "points": 16,
+        "livePoints": null,
+        "base": 11,
+        "parent": [],
+        "mixValue": {
+          "mix": 25,
+          "mix2": 50
+        },
+        "icons": "8,8"
+      },
+      "md": {
+        "key": "md",
+        "icon": "star-filled",
+        "rating": 2,
+        "points": 11,
+        "livePoints": null,
+        "base": 6,
+        "parent": [],
+        "mixValue": {
+          "mix": 25,
+          "mix2": 25
+        },
+        "icons": "<svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#star-filled'></use></svg> <svg class='' width='12' height='12'><use href='/img/mister/sprite-2025.svg?1784120337#star-filled'></use></svg> "
+      }
+    },
+    "events": {
+      "goal": {
+        "count": 1,
+        "points": 5,
+        "icon": "<svg class='' width='10' height='10'><use href='/img/mister/sprite-2025.svg?1784120337#events-goal'></use></svg> "
+      }
+    },
+    "stats": "{\"totalPass\":61,\"accuratePass\":52,\"totalLongBalls\":10,\"accurateLongBalls\":5,\"goalAssist\":0,\"accurateOwnHalfPasses\":31,\"totalOwnHalfPasses\":31,\"accurateOppositionHalfPasses\":21,\"totalOppositionHalfPasses\":30,\"aerialLost\":3,\"aerialWon\":2,\"duelLost\":7,\"duelWon\":7,\"challengeLost\":2,\"dispossessed\":1,\"totalContest\":1,\"wonContest\":1,\"onTargetScoringAttempt\":1,\"blockedScoringAttempt\":2,\"goals\":1,\"totalClearance\":6,\"ballRecovery\":6,\"lastManTackle\":1,\"totalTackle\":2,\"wonTackle\":2,\"unsuccessfulTouch\":2,\"wasFouled\":2,\"fouls\":1,\"minutesPlayed\":90,\"touches\":81,\"rating\":8.6,\"possessionLostCtrl\":12,\"expectedGoals\":0.3096,\"expectedGoalsOnTarget\":0.3675,\"expectedAssists\":0.0325238,\"totalBallCarriesDistance\":218.35888519588,\"ballCarriesCount\":22,\"totalProgression\":162.17798323383,\"bestBallCarryProgression\":22.810465498955,\"totalProgressiveBallCarriesDistance\":73.503918451359,\"progressiveBallCarriesCount\":3,\"ratingVersions\":{\"original\":8.6,\"alternative\":8.1},\"totalShots\":3,\"shotValueNormalized\":0.45,\"passValueNormalized\":0.31,\"dribbleValueNormalized\":0.17,\"defensiveValueNormalized\":0.73,\"statisticsType\":{\"sportSlug\":\"football\",\"statisticsType\":\"player\"}}",
+    "marca_stats_rating_detailed_filtered": "{\"goalAssist\":{\"value\":0,\"rating\":0},\"wonContest\":{\"value\":1,\"rating\":0},\"onTargetScoringAttempt\":{\"value\":1,\"rating\":0},\"goals\":{\"value\":1,\"rating\":6},\"totalClearance\":{\"value\":7,\"rating\":2},\"minutesPlayed\":{\"value\":90,\"rating\":2},\"possessionLostCtrl\":{\"value\":12,\"rating\":-1},\"ownGoals\":{\"value\":0,\"rating\":0},\"keyPass\":{\"value\":0,\"rating\":0},\"goalsAgainst\":{\"value\":0,\"rating\":3},\"penaltyMiss\":{\"value\":0,\"rating\":0},\"penaltySave\":{\"value\":0,\"rating\":0},\"penaltyWon\":{\"value\":0,\"rating\":0},\"penaltyConceded\":{\"value\":0,\"rating\":0},\"yellowCard\":{\"value\":0,\"rating\":0},\"doubleYellowCard\":{\"value\":0,\"rating\":0},\"redCard\":{\"value\":0,\"rating\":0},\"saves\":{\"value\":0,\"rating\":0},\"bigChanceCreated\":{\"value\":0,\"rating\":0},\"totalInterceptions\":{\"value\":8,\"rating\":1},\"marca\":{\"value\":\"2.0\",\"rating\":\"2.0\"}}",
+    "points": 13,
+    "livePoints": null,
+    "mainProvider": {
+      "key": "mix",
+      "icon": "",
+      "rating": null,
+      "points": 13,
+      "livePoints": null,
+      "base": 0,
+      "parent": [
+        "as",
+        "marca",
+        "mr",
+        "md"
+      ],
+      "icons": "Sin calificar"
+    },
+    "value": 7018000
+  }
+}

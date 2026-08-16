@@ -23,6 +23,7 @@ from typing import Any
 import requests
 
 import config
+import mister_gameweek
 
 log = logging.getLogger("mister_client")
 
@@ -481,8 +482,43 @@ def parse_streak_gw_points(html_chunk: str) -> list[int] | None:
     return nums or None
 
 
-def points_trend_from_gw(gw: list[int] | None) -> str:
+def parse_streak_values(raw: Any) -> list[int | None] | None:
+    """
+    `streak` de /ajax/sw/players: [8, "-", 7] → [8, None, 7].
+    None = jornada sin jugar (dato, no ausencia de dato).
+    """
+    if not isinstance(raw, list) or not raw:
+        return None
+    out: list[int | None] = []
+    for item in raw:
+        if item is None:
+            out.append(None)
+            continue
+        if isinstance(item, (int, float)):
+            out.append(int(item))
+            continue
+        text = str(item).strip().replace(",", ".")
+        if text in ("-", "–", "—", "", "?"):
+            out.append(None)
+        elif re.fullmatch(r"-?\d+", text):
+            out.append(int(text))
+        elif re.fullmatch(r"-?\d+\.\d+", text):
+            out.append(int(float(text)))
+        else:
+            out.append(None)
+    return out if any(v is not None for v in out) else out
+
+
+def played_gw_points(gw: list[int | None] | None) -> list[int]:
+    """Solo jornadas disputadas (descarta los None de 'no jugó')."""
+    if not gw:
+        return []
+    return [int(v) for v in gw if v is not None]
+
+
+def points_trend_from_gw(gw: list[int | None] | None) -> str:
     """up|down|flat|unknown a partir de últimas jornadas numéricas."""
+    gw = played_gw_points(gw)
     if not gw or len(gw) < 2:
         return "unknown"
     if len(gw) >= 4:
@@ -1242,6 +1278,29 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
     is_free = owner_id is None
     photo_url = str(raw.get("photoUrl") or raw.get("photo_url") or "").strip()
     team_logo_url = str(raw.get("teamLogoUrl") or raw.get("team_logo_url") or "").strip()
+
+    gw_points = parse_streak_values(raw.get("streak"))
+    try:
+        gw_points_sum = int(raw.get("streak_sum")) if raw.get("streak_sum") is not None else None
+    except (TypeError, ValueError):
+        gw_points_sum = None
+    try:
+        prev_value = int(raw.get("prev_value")) if raw.get("prev_value") is not None else None
+    except (TypeError, ValueError):
+        prev_value = None
+    delta_1d = None
+    if prev_value and value:
+        delta_1d = round((value - prev_value) / float(prev_value), 6)
+    try:
+        clause_rank = int(raw.get("clausesRank")) if raw.get("clausesRank") is not None else None
+    except (TypeError, ValueError):
+        clause_rank = None
+
+    match_info = raw.get("match_info") if isinstance(raw.get("match_info"), dict) else {}
+    rival_id = match_info.get("rival_team_id")
+    next_opponent_id = str(rival_id) if rival_id not in (None, "", 0, "0") else None
+    next_is_home = bool(match_info.get("is_home")) if match_info else None
+
     return {
         "id": pid,
         "name": name,
@@ -1255,8 +1314,16 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         "form": form,
         "mister_avg": form,
         "injury": injury,
-        "trend": None,
+        "trend": ("up" if (delta_1d or 0) > 0 else "down" if (delta_1d or 0) < 0 else None),
         "price_delta_5d": None,
+        "price_delta_1d": delta_1d,
+        "prev_market_value": prev_value,
+        "recent_gw_points": gw_points,
+        "gw_points_sum": gw_points_sum,
+        "points_trend": points_trend_from_gw(gw_points),
+        "next_opponent_team_id": next_opponent_id,
+        "next_is_home": next_is_home,
+        "clause_rank": clause_rank,
         "seller": "free" if is_free else "owned",
         "owner_id": owner_id,
         "owner_name": (str(raw.get("uc_name")).strip() if raw.get("uc_name") else None),
@@ -1269,6 +1336,7 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
             "price": "mister",
             "ownership": "mister_sw_players",
             "clause": "mister" if clause is not None else "missing",
+            "gw_points": "mister_sw_players" if gw_points else "missing",
         },
     }
 
@@ -1326,6 +1394,53 @@ def fetch_full_player_pool() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     return players, meta
 
 
+#  Campos que solo trae el pool AJAX (el HTML de /market y /team no los pinta)
+POOL_ONLY_FIELDS = (
+    "recent_gw_points",
+    "gw_points_sum",
+    "prev_market_value",
+    "price_delta_1d",
+    "next_opponent_team_id",
+    "next_is_home",
+    "clause_rank",
+)
+
+
+def apply_pool_fields_to_players(
+    players: list[dict[str, Any]],
+    pool: list[dict[str, Any]] | dict[str, dict[str, Any]],
+) -> int:
+    """
+    Completa in-place jugadores parseados del HTML con los campos ricos del pool
+    (/ajax/sw/players): puntos por jornada, valor previo, rival de la próxima.
+    """
+    if not players or not pool:
+        return 0
+    by_id = pool if isinstance(pool, dict) else {str(p.get("id")): p for p in pool}
+    filled = 0
+    for p in players:
+        src = by_id.get(str(p.get("id")))
+        if not src:
+            continue
+        touched = False
+        for key in POOL_ONLY_FIELDS:
+            val = src.get(key)
+            if val in (None, [], {}) or p.get(key) not in (None, [], {}):
+                continue
+            p[key] = val
+            touched = True
+        if src.get("recent_gw_points") and p.get("points_trend") in (None, "unknown"):
+            p["points_trend"] = points_trend_from_gw(src["recent_gw_points"])
+        if p.get("trend") is None and src.get("trend"):
+            p["trend"] = src["trend"]
+        if touched:
+            dq = dict(p.get("data_quality") or {})
+            dq["gw_points"] = "mister_sw_players"
+            p["data_quality"] = dq
+            filled += 1
+    return filled
+
+
 def apply_pool_squads_to_rivals(
     rivals: list[dict[str, Any]],
     pool: list[dict[str, Any]],
@@ -1358,6 +1473,130 @@ def apply_pool_squads_to_rivals(
             row["data_quality"] = dq
         out.append(row)
     return out
+
+
+def fetch_gameweek_bundle(
+    feed_html: str,
+    *,
+    id_competition: Any = None,
+    competition: str | None = None,
+) -> dict[str, Any]:
+    """
+    Jornada + calendario desde Mister (autoridad de fechas, rival y puntos).
+    Fail-soft: si el AJAX cae, se usan los fixtures del propio HTML del feed.
+    """
+    gw_id = mister_gameweek.parse_feed_gameweek_id(feed_html)
+    bundle: dict[str, Any] = {
+        "gameweek_id": gw_id,
+        "matchday": {"status": "unavailable", "source": "mister", "fixtures": []},
+        "schedule": [],
+        "preview": {},
+        "points": {},
+        "my_lineup": {},
+        "table": {},
+        "team_schedule": {},
+        "status": "unavailable",
+    }
+    if not gw_id:
+        log.info("Feed sin bloque de jornada; sin datos de gameweek Mister")
+        return bundle
+
+    gw_data = mister_gameweek.fetch_gameweek(ajax_post, gw_id)
+    if gw_data:
+        bundle["matchday"] = mister_gameweek.build_matchday(
+            gw_data, team_label=team_label, competition=competition
+        )
+        bundle["schedule"] = mister_gameweek.gameweek_schedule(gw_data)
+        bundle["preview"] = mister_gameweek.extract_preview(gw_data)
+        bundle["preview_teams"] = sorted(mister_gameweek.preview_coverage(gw_data))
+        bundle["points"] = mister_gameweek.extract_gw_points(gw_data)
+        bundle["my_lineup"] = mister_gameweek.extract_my_lineup(gw_data)
+        bundle["status"] = "ok"
+    else:
+        fixtures = mister_gameweek.parse_feed_fixtures(feed_html)
+        if fixtures:
+            bundle["matchday"] = {
+                "status": "partial",
+                "source": "mister_feed_html",
+                "gameweek_id": gw_id,
+                "competition": competition,
+                "fixtures_count": len(fixtures),
+                "fixtures": [
+                    {
+                        "id": fx["id"],
+                        "home": team_label(fx["home_id"]),
+                        "away": team_label(fx["away_id"]),
+                        "home_id": fx["home_id"],
+                        "away_id": fx["away_id"],
+                        "kickoff": mister_gameweek._iso_from_ts(fx["kickoff_ts"]),
+                        "kickoff_ts": fx["kickoff_ts"],
+                        "status": fx.get("status"),
+                    }
+                    for fx in fixtures
+                ],
+            }
+            bundle["status"] = "partial"
+
+    comp = mister_gameweek.fetch_competition(ajax_post, id_competition)
+    if comp:
+        bundle["table"] = mister_gameweek.build_standings_table(comp)
+        jornada = (bundle.get("matchday") or {}).get("jornada")
+        bundle["team_schedule"] = mister_gameweek.build_team_schedule(
+            comp, from_jornada=jornada if isinstance(jornada, int) else None
+        )
+    return bundle
+
+
+def apply_gameweek_to_players(
+    players: list[dict[str, Any]],
+    bundle: dict[str, Any],
+) -> int:
+    """
+    Vuelca en los jugadores las señales de jornada de Mister:
+    once probable (`preview`), puntos reales y rival con localía.
+    """
+    preview = bundle.get("preview") or {}
+    points = bundle.get("points") or {}
+    if not preview and not points:
+        return 0
+    preview_teams = set(bundle.get("preview_teams") or [])
+    touched = 0
+    seen: set[int] = set()
+    for p in players:
+        if id(p) in seen:
+            continue
+        seen.add(id(p))
+        pid = str(p.get("id") or "")
+        if not pid:
+            continue
+        pv = preview.get(pid)
+        pts = points.get(pid)
+        has_preview_of_his_match = str(p.get("team_id") or "") in preview_teams
+        if not pv and not pts and not has_preview_of_his_match:
+            continue
+        if pv:
+            p["gw_probable_xi"] = True
+            p["gw_confirmed"] = bool(pv.get("gw_confirmed"))
+            p["gw_fixture_id"] = pv.get("gw_fixture_id")
+            p["gw_kickoff"] = pv.get("gw_kickoff")
+            p["gw_is_home"] = pv.get("gw_is_home")
+            opp_id = pv.get("gw_opponent_id")
+            if opp_id:
+                p["next_opponent_team_id"] = opp_id
+                p["gw_opponent_id"] = opp_id
+                if not p.get("gw_opponent"):
+                    p["gw_opponent"] = team_label(opp_id)
+            if pv.get("gw_is_home") is not None:
+                p["next_is_home"] = pv["gw_is_home"]
+        elif has_preview_of_his_match:
+            # Hay previa de su partido y no aparece: suplencia real, no falta de dato.
+            p["gw_probable_xi"] = False
+        if pts:
+            p["gw_points"] = pts.get("points")
+            p["gw_played"] = bool(pts.get("played"))
+            p["gw_match_status"] = pts.get("status")
+        touched += 1
+    return touched
 
 
 def fetch_balance() -> dict[str, Any]:
@@ -1506,6 +1745,23 @@ def fg_user_rules_snapshot(fg_user: dict[str, Any] | None) -> dict[str, Any]:
     return {k: fg_user[k] for k in keys if k in fg_user}
 
 
+def fg_cfg_snapshot(fg_cfg: dict[str, Any] | None) -> dict[str, Any]:
+    """Flags de `_FG_cfg` que el motor sí usa (capitán, ventana de mercado)."""
+    if not isinstance(fg_cfg, dict):
+        return {}
+    keys = (
+        "season",
+        "market_date",
+        "market_lock",
+        "id_competition",
+        "provider",
+        "FEATURE_CAPTAIN_ENABLED",
+        "LEAGUE_CAPTAIN_ENABLED",
+        "CAPTAIN_MULTIPLIER",
+    )
+    return {k: fg_cfg[k] for k in keys if k in fg_cfg}
+
+
 def switch_community(id_community: str | int) -> dict[str, Any]:
     """
     Cambia la comunidad activa de la sesión Mister.
@@ -1562,7 +1818,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             switch_community(target_cid)
 
     balance_data = fetch_balance()
-    market_html = team_html = standings_html = ""
+    market_html = team_html = standings_html = feed_html = ""
     try:
         market_html = fetch_html("/market")
     except Exception as exc:  # noqa: BLE001
@@ -1575,6 +1831,10 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         standings_html = fetch_html("/standings")
     except Exception as exc:  # noqa: BLE001
         log.warning("GET /standings falló: %s", exc)
+    try:
+        feed_html = fetch_html("/feed")
+    except Exception as exc:  # noqa: BLE001
+        log.warning("GET /feed falló: %s", exc)
 
     if not market_html and not team_html and not balance_data:
         return None
@@ -1586,6 +1846,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
 
     admin_data = fetch_admin_settings()
     rules_fg = fg_user_rules_snapshot(fg_user)
+    rules_cfg = fg_cfg_snapshot(fg_cfg)
 
     bal_src: dict[str, Any] = {}
     if isinstance(balance_data, dict) and balance_data:
@@ -1659,12 +1920,30 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     full_pool, pool_meta = fetch_full_player_pool()
     free_pool: list[dict[str, Any]] = []
     free_note = "unavailable"
+    pool_fields_filled = 0
     if full_pool:
         free_pool = [p for p in full_pool if not p.get("owner_id")]
         free_note = str(pool_meta.get("source") or "mister_sw_players")
         rivals = apply_pool_squads_to_rivals(rivals, full_pool, my_uc)
+        # El HTML no pinta streak/prev_value/match_info: se completan del pool.
+        pool_by_id = {str(p.get("id")): p for p in full_pool}
+        pool_fields_filled = apply_pool_fields_to_players(squad, pool_by_id)
+        pool_fields_filled += apply_pool_fields_to_players(market, pool_by_id)
+        log.info("Campos de jornada desde pool: %s jugadores", pool_fields_filled)
     else:
         free_pool, free_note = fetch_free_agents_best_effort()
+
+    gameweek = fetch_gameweek_bundle(
+        feed_html,
+        id_competition=fg_user.get("id_competition"),
+        competition=str(fg_user.get("competition") or "") or None,
+    )
+    if gameweek.get("preview") or gameweek.get("points"):
+        n_gw = apply_gameweek_to_players(
+            list(squad) + list(market) + list(full_pool),
+            gameweek,
+        )
+        log.info("Señales de jornada Mister aplicadas a %s jugadores", n_gw)
 
     squad_value = sum(int(p.get("price") or 0) for p in squad)
     # Mister muestra en /standings el valor oficial de plantilla; la suma HTML
@@ -1703,6 +1982,10 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             f"Pool completo Mister (/ajax/sw/players): {pool_meta.get('pool_size')} "
             f"(libres={pool_meta.get('free_count')}, owned={pool_meta.get('owned_count')})"
         )
+        notes.append(
+            "Puntos por jornada / valor previo / rival: pool Mister "
+            f"({pool_fields_filled} jugadores completados)"
+        )
     elif free_pool:
         notes.append(f"Libres detectados vía {free_note}: {len(free_pool)}")
     else:
@@ -1734,6 +2017,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         "owned_across_league": sorted(owned),
         "pool_top": free_pool,
         "pool_all": full_pool,
+        "gameweek": gameweek,
         "_live_meta": {
             "balance_ok": bool(balance_data or bal),
             "team_ok": bool(squad),
@@ -1745,6 +2029,10 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "pool_size": int(pool_meta.get("pool_size") or 0) if full_pool else 0,
             "pool_free_count": int(pool_meta.get("free_count") or len(free_pool)),
             "pool_owned_count": int(pool_meta.get("owned_count") or 0) if full_pool else 0,
+            "pool_fields_filled": pool_fields_filled,
+            "gameweek_source": gameweek.get("status"),
+            "gameweek_id": gameweek.get("gameweek_id"),
+            "competition_calendar_ok": bool(gameweek.get("team_schedule")),
             "id_community": str(community),
             "competition": competition or None,
             "id_competition": id_competition_i,
@@ -1753,6 +2041,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "honest_mode": True,
             "notes": notes,
             "fg_user_rules": rules_fg,
+            "fg_cfg_rules": rules_cfg,
             "admin_settings": admin_data,
             "provider": fg_user.get("provider"),
             "team_limit": fg_user.get("team_limit"),

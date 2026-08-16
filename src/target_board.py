@@ -227,11 +227,33 @@ def _hist_quality(p: dict[str, Any]) -> tuple[float | None, bool]:
     return round(max(0.0, min(100.0, hist)), 1), reliable
 
 
+def _xpts_pct(p: dict[str, Any]) -> float | None:
+    """xPts de la jornada llevado a 0–100 (una media del provider ≈ 100)."""
+    raw = p.get("xpts")
+    try:
+        x = float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+    if x is None:
+        return None
+    scale = 8.0
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        try:
+            v = float((source or {}).get("ff_avg_scale"))
+        except (TypeError, ValueError):
+            continue
+        if v > 0:
+            scale = v
+            break
+    return max(0.0, min(100.0, (x / scale) * 100.0))
+
+
 def ep_score(p: dict[str, Any]) -> float:
     """Puntaje esperado 0–100 para plantilla ideal.
 
     Histórico = media/puntos Mister vs umbrales por posición (no el production_score 0–100).
     Titularidad pesa; % bajo castiga. Chollos con media 3 no parecen cracks.
+    Los xPts de la jornada matizan sin mandar: el ideal es plurijornada.
     """
     hist, _reliable = _hist_quality(p)
     lp = _lineup_pct(p)
@@ -261,6 +283,9 @@ def ep_score(p: dict[str, Any]) -> float:
             raw *= 0.88
     if hist is not None and hist < 50:
         raw = min(raw, 42.0)
+    xp = _xpts_pct(p)
+    if xp is not None:
+        raw = raw * 0.85 + xp * 0.15
     return round(raw, 1)
 
 

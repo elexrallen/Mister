@@ -1,0 +1,4815 @@
+{
+  "status": "ok",
+  "data": {
+    "id_manager": 15399168,
+    "id_match": null,
+    "gameweeks": [
+      {
+        "id": 3968,
+        "gameweek": 1,
+        "type": "regular",
+        "season": "26/27",
+        "status": "ongoing",
+        "firstMatchDate": "2026-08-15 19:30:00",
+        "lastMatchDate": "2026-08-27 21:00:00",
+        "isLive": true,
+        "secondsRemainingToStart": -28335,
+        "formattedRemainingTime": "52m"
+      },
+      {
+        "id": 4043,
+        "gameweek": 2,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-08-20 21:00:00",
+        "lastMatchDate": "2026-08-24 21:30:00",
+        "isLive": false,
+        "secondsRemainingToStart": 409065,
+        "formattedRemainingTime": "4 días"
+      },
+      {
+        "id": 4044,
+        "gameweek": 3,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-08-28 19:00:00",
+        "lastMatchDate": "2026-08-31 21:30:00",
+        "isLive": false,
+        "secondsRemainingToStart": 1093065,
+        "formattedRemainingTime": "12 días"
+      },
+      {
+        "id": 4045,
+        "gameweek": 4,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-09-04 21:00:00",
+        "lastMatchDate": "2026-09-07 21:30:00",
+        "isLive": false,
+        "secondsRemainingToStart": 1705065,
+        "formattedRemainingTime": "19 días"
+      },
+      {
+        "id": 4046,
+        "gameweek": 5,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-09-13 21:00:00",
+        "lastMatchDate": "2026-09-13 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 2482665,
+        "formattedRemainingTime": "28 días"
+      },
+      {
+        "id": 4047,
+        "gameweek": 6,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-09-16 21:00:00",
+        "lastMatchDate": "2026-09-16 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 2741865,
+        "formattedRemainingTime": "1 mes"
+      },
+      {
+        "id": 4048,
+        "gameweek": 7,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-09-20 21:00:00",
+        "lastMatchDate": "2026-09-20 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 3087465,
+        "formattedRemainingTime": "1 mes"
+      },
+      {
+        "id": 4049,
+        "gameweek": 8,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-10-11 21:00:00",
+        "lastMatchDate": "2026-10-11 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 4901865,
+        "formattedRemainingTime": "1 mes"
+      },
+      {
+        "id": 4050,
+        "gameweek": 9,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-10-18 21:00:00",
+        "lastMatchDate": "2026-10-18 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 5506665,
+        "formattedRemainingTime": "2 meses"
+      },
+      {
+        "id": 4051,
+        "gameweek": 10,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-10-25 20:00:00",
+        "lastMatchDate": "2026-10-25 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 6111465,
+        "formattedRemainingTime": "2 meses"
+      },
+      {
+        "id": 4052,
+        "gameweek": 11,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-11-01 20:00:00",
+        "lastMatchDate": "2026-11-01 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 6716265,
+        "formattedRemainingTime": "2 meses"
+      },
+      {
+        "id": 4053,
+        "gameweek": 12,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-11-08 20:00:00",
+        "lastMatchDate": "2026-11-08 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 7321065,
+        "formattedRemainingTime": "2 meses"
+      },
+      {
+        "id": 4054,
+        "gameweek": 13,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-11-22 20:00:00",
+        "lastMatchDate": "2026-11-22 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 8530665,
+        "formattedRemainingTime": "3 meses"
+      },
+      {
+        "id": 4055,
+        "gameweek": 14,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-11-29 20:00:00",
+        "lastMatchDate": "2026-11-29 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 9135465,
+        "formattedRemainingTime": "3 meses"
+      },
+      {
+        "id": 4056,
+        "gameweek": 15,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-12-06 20:00:00",
+        "lastMatchDate": "2026-12-06 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 9740265,
+        "formattedRemainingTime": "3 meses"
+      },
+      {
+        "id": 4057,
+        "gameweek": 16,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-12-13 20:00:00",
+        "lastMatchDate": "2026-12-13 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 10345065,
+        "formattedRemainingTime": "3 meses"
+      },
+      {
+        "id": 4058,
+        "gameweek": 17,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2026-12-20 20:00:00",
+        "lastMatchDate": "2026-12-20 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 10949865,
+        "formattedRemainingTime": "4 meses"
+      },
+      {
+        "id": 4059,
+        "gameweek": 18,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-01-03 20:00:00",
+        "lastMatchDate": "2027-01-03 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 12159465,
+        "formattedRemainingTime": "4 meses"
+      },
+      {
+        "id": 4060,
+        "gameweek": 19,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-01-10 20:00:00",
+        "lastMatchDate": "2027-01-10 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 12764265,
+        "formattedRemainingTime": "4 meses"
+      },
+      {
+        "id": 4061,
+        "gameweek": 20,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-01-17 20:00:00",
+        "lastMatchDate": "2027-01-17 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 13369065,
+        "formattedRemainingTime": "5 meses"
+      },
+      {
+        "id": 4062,
+        "gameweek": 21,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-01-24 20:00:00",
+        "lastMatchDate": "2027-01-24 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 13973865,
+        "formattedRemainingTime": "5 meses"
+      },
+      {
+        "id": 4063,
+        "gameweek": 22,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-01-31 20:00:00",
+        "lastMatchDate": "2027-01-31 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 14578665,
+        "formattedRemainingTime": "5 meses"
+      },
+      {
+        "id": 4064,
+        "gameweek": 23,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-02-07 20:00:00",
+        "lastMatchDate": "2027-02-07 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 15183465,
+        "formattedRemainingTime": "5 meses"
+      },
+      {
+        "id": 4065,
+        "gameweek": 24,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-02-14 20:00:00",
+        "lastMatchDate": "2027-02-14 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 15788265,
+        "formattedRemainingTime": "5 meses"
+      },
+      {
+        "id": 4066,
+        "gameweek": 25,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-02-21 20:00:00",
+        "lastMatchDate": "2027-02-21 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 16393065,
+        "formattedRemainingTime": "6 meses"
+      },
+      {
+        "id": 4067,
+        "gameweek": 26,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-02-28 20:00:00",
+        "lastMatchDate": "2027-02-28 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 16997865,
+        "formattedRemainingTime": "6 meses"
+      },
+      {
+        "id": 4068,
+        "gameweek": 27,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-03-07 20:00:00",
+        "lastMatchDate": "2027-03-07 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 17602665,
+        "formattedRemainingTime": "6 meses"
+      },
+      {
+        "id": 4069,
+        "gameweek": 28,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-03-14 20:00:00",
+        "lastMatchDate": "2027-03-14 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 18207465,
+        "formattedRemainingTime": "6 meses"
+      },
+      {
+        "id": 4070,
+        "gameweek": 29,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-03-21 20:00:00",
+        "lastMatchDate": "2027-03-21 20:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 18812265,
+        "formattedRemainingTime": "7 meses"
+      },
+      {
+        "id": 4071,
+        "gameweek": 30,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-04-04 21:00:00",
+        "lastMatchDate": "2027-04-04 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 20021865,
+        "formattedRemainingTime": "7 meses"
+      },
+      {
+        "id": 4072,
+        "gameweek": 31,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-04-11 21:00:00",
+        "lastMatchDate": "2027-04-11 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 20626665,
+        "formattedRemainingTime": "7 meses"
+      },
+      {
+        "id": 4073,
+        "gameweek": 32,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-04-18 21:00:00",
+        "lastMatchDate": "2027-04-18 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 21231465,
+        "formattedRemainingTime": "8 meses"
+      },
+      {
+        "id": 4074,
+        "gameweek": 33,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-04-21 21:00:00",
+        "lastMatchDate": "2027-04-21 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 21490665,
+        "formattedRemainingTime": "8 meses"
+      },
+      {
+        "id": 4075,
+        "gameweek": 34,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-05-02 21:00:00",
+        "lastMatchDate": "2027-05-02 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 22441065,
+        "formattedRemainingTime": "8 meses"
+      },
+      {
+        "id": 4076,
+        "gameweek": 35,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-05-09 21:00:00",
+        "lastMatchDate": "2027-05-09 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 23045865,
+        "formattedRemainingTime": "8 meses"
+      },
+      {
+        "id": 4077,
+        "gameweek": 36,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-05-16 21:00:00",
+        "lastMatchDate": "2027-05-16 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 23650665,
+        "formattedRemainingTime": "9 meses"
+      },
+      {
+        "id": 4078,
+        "gameweek": 37,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-05-23 21:00:00",
+        "lastMatchDate": "2027-05-23 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 24255465,
+        "formattedRemainingTime": "9 meses"
+      },
+      {
+        "id": 4079,
+        "gameweek": 38,
+        "type": "regular",
+        "season": "26/27",
+        "status": "unstarted",
+        "firstMatchDate": "2027-05-30 21:00:00",
+        "lastMatchDate": "2027-05-30 21:00:00",
+        "isLive": false,
+        "secondsRemainingToStart": 24860265,
+        "formattedRemainingTime": "9 meses"
+      }
+    ],
+    "gameweekStatus": {
+      "id": 3968,
+      "gameweek": 1,
+      "type": "regular",
+      "season": null,
+      "ignored": 0,
+      "status": "ongoing",
+      "firstMatchDate": "2026-08-15 19:30:00",
+      "lastMatchDate": "2026-08-27 21:00:00",
+      "isLive": true,
+      "secondsRemainingToStart": -28335,
+      "formattedRemainingTime": "52m"
+    },
+    "games": [
+      {
+        "id": 37155,
+        "id_gameweek": 3968,
+        "id_home": 48,
+        "id_away": 9,
+        "goals_home": 3,
+        "goals_away": 0,
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "played",
+        "date": {
+          "ts": 1786815000,
+          "text": "Fin",
+          "format": "'Fin'",
+          "splitted": {
+            "date": "Fin",
+            "time": "19:30",
+            "format": "'Fin'"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421047,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": "2026-08-15 21:32:47",
+        "marca_graded_date": "2026-08-15 22:29:52",
+        "sofascore_graded_date": "2026-08-15 21:47:44",
+        "mundodeportivo_graded_date": "2026-08-15 21:47:43",
+        "mixtos_graded_date": "2026-08-15 22:29:52",
+        "classic_graded_date": null,
+        "mixtos2_graded_date": "2026-08-15 22:29:52",
+        "marca_stats_graded_date": "2026-08-15 22:29:16",
+        "finished_at": "2026-08-15 21:31:07",
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": "[{\"name\":\"Ball possession\",\"home\":\"52%\",\"away\":\"48%\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":52,\"awayValue\":48,\"renderType\":2,\"key\":\"ballPossession\"},{\"name\":\"Expected goals\",\"home\":\"1.83\",\"away\":\"0.24\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":1.83,\"awayValue\":0.24,\"renderType\":1,\"key\":\"expectedGoals\"},{\"name\":\"Big chances\",\"home\":\"3\",\"away\":\"0\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":3,\"awayValue\":0,\"renderType\":1,\"key\":\"bigChanceCreated\"},{\"name\":\"Total shots\",\"home\":\"18\",\"away\":\"6\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":18,\"awayValue\":6,\"renderType\":1,\"key\":\"totalShotsOnGoal\"},{\"name\":\"Goalkeeper saves\",\"home\":\"2\",\"away\":\"5\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":2,\"awayValue\":5,\"renderType\":1,\"key\":\"goalkeeperSaves\"},{\"name\":\"Corner kicks\",\"home\":\"5\",\"away\":\"3\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":5,\"awayValue\":3,\"renderType\":1,\"key\":\"cornerKicks\"},{\"name\":\"Fouls\",\"home\":\"16\",\"away\":\"13\",\"compareCode\":1,\"statisticsType\":\"negative\",\"valueType\":\"event\",\"homeValue\":16,\"awayValue\":13,\"renderType\":1,\"key\":\"fouls\"},{\"name\":\"Passes\",\"home\":\"353\",\"away\":\"339\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":353,\"awayValue\":339,\"renderType\":1,\"key\":\"passes\"},{\"name\":\"Tackles\",\"home\":\"18\",\"away\":\"12\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":18,\"awayValue\":12,\"renderType\":1,\"key\":\"totalTackle\"},{\"name\":\"Free kicks\",\"home\":\"13\",\"away\":\"16\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":13,\"awayValue\":16,\"renderType\":1,\"key\":\"freeKicks\"},{\"name\":\"Yellow cards\",\"home\":\"4\",\"away\":\"3\",\"compareCode\":1,\"statisticsType\":\"negative\",\"valueType\":\"event\",\"homeValue\":4,\"awayValue\":3,\"renderType\":1,\"key\":\"yellowCards\"},{\"name\":\"Red cards\",\"home\":\"0\",\"away\":\"1\",\"compareCode\":2,\"statisticsType\":\"negative\",\"valueType\":\"event\",\"homeValue\":0,\"awayValue\":1,\"renderType\":1,\"key\":\"redCards\"},{\"name\":\"Average rating\",\"home\":\"7.87\",\"away\":\"5.58\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":7.87,\"awayValue\":5.58,\"renderType\":1,\"key\":\"avgRating\",\"avgRatingVersion\":2}]",
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Alavés",
+        "away": "Getafe",
+        "confirmed_lineups": 22,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/48.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/9.png?version="
+      },
+      {
+        "id": 37161,
+        "id_gameweek": 3968,
+        "id_home": 17,
+        "id_away": 14,
+        "goals_home": 2,
+        "goals_away": 1,
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "played",
+        "date": {
+          "ts": 1786822200,
+          "text": "Fin",
+          "format": "'Fin'",
+          "splitted": {
+            "date": "Fin",
+            "time": "21:30",
+            "format": "'Fin'"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421052,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": "2026-08-15 23:47:28",
+        "marca_graded_date": "2026-08-16 00:05:50",
+        "sofascore_graded_date": "2026-08-16 00:02:49",
+        "mundodeportivo_graded_date": "2026-08-16 00:19:16",
+        "mixtos_graded_date": "2026-08-16 00:20:53",
+        "classic_graded_date": null,
+        "mixtos2_graded_date": "2026-08-16 00:07:46",
+        "marca_stats_graded_date": "2026-08-16 00:07:46",
+        "finished_at": "2026-08-15 23:46:44",
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": "[{\"name\":\"Ball possession\",\"home\":\"49%\",\"away\":\"51%\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":49,\"awayValue\":51,\"renderType\":2,\"key\":\"ballPossession\"},{\"name\":\"Expected goals\",\"home\":\"2.30\",\"away\":\"2.00\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":2.3,\"awayValue\":2,\"renderType\":1,\"key\":\"expectedGoals\"},{\"name\":\"Big chances\",\"home\":\"2\",\"away\":\"3\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":2,\"awayValue\":3,\"renderType\":1,\"key\":\"bigChanceCreated\"},{\"name\":\"Total shots\",\"home\":\"13\",\"away\":\"6\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":13,\"awayValue\":6,\"renderType\":1,\"key\":\"totalShotsOnGoal\"},{\"name\":\"Goalkeeper saves\",\"home\":\"2\",\"away\":\"2\",\"compareCode\":3,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":2,\"awayValue\":2,\"renderType\":1,\"key\":\"goalkeeperSaves\"},{\"name\":\"Corner kicks\",\"home\":\"1\",\"away\":\"2\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":1,\"awayValue\":2,\"renderType\":1,\"key\":\"cornerKicks\"},{\"name\":\"Fouls\",\"home\":\"18\",\"away\":\"18\",\"compareCode\":3,\"statisticsType\":\"negative\",\"valueType\":\"event\",\"homeValue\":18,\"awayValue\":18,\"renderType\":1,\"key\":\"fouls\"},{\"name\":\"Passes\",\"home\":\"318\",\"away\":\"336\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":318,\"awayValue\":336,\"renderType\":1,\"key\":\"passes\"},{\"name\":\"Tackles\",\"home\":\"20\",\"away\":\"18\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":20,\"awayValue\":18,\"renderType\":1,\"key\":\"totalTackle\"},{\"name\":\"Free kicks\",\"home\":\"16\",\"away\":\"18\",\"compareCode\":2,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":16,\"awayValue\":18,\"renderType\":1,\"key\":\"freeKicks\"},{\"name\":\"Yellow cards\",\"home\":\"4\",\"away\":\"4\",\"compareCode\":3,\"statisticsType\":\"negative\",\"valueType\":\"event\",\"homeValue\":4,\"awayValue\":4,\"renderType\":1,\"key\":\"yellowCards\"},{\"name\":\"Red cards\",\"home\":\"1\",\"away\":\"0\",\"compareCode\":1,\"statisticsType\":\"negative\",\"valueType\":\"event\",\"homeValue\":1,\"awayValue\":0,\"renderType\":1,\"key\":\"redCards\"},{\"name\":\"Average rating\",\"home\":\"7.26\",\"away\":\"6.58\",\"compareCode\":1,\"statisticsType\":\"positive\",\"valueType\":\"event\",\"homeValue\":7.26,\"awayValue\":6.58,\"renderType\":1,\"key\":\"avgRating\",\"avgRatingVersion\":2}]",
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Sevilla",
+        "away": "Rayo Vallecano",
+        "confirmed_lineups": 22,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png?version="
+      },
+      {
+        "id": 37160,
+        "id_gameweek": 3968,
+        "id_home": 1490,
+        "id_away": 20,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1786892400,
+          "text": "Hoy 17:00",
+          "format": "'Hoy' H:mm",
+          "splitted": {
+            "date": "Hoy",
+            "time": "17:00",
+            "format": "'Hoy'"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421061,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Racing de Santander",
+        "away": "Villarreal",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1490.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/20.png?version="
+      },
+      {
+        "id": 37157,
+        "id_gameweek": 3968,
+        "id_home": 8,
+        "id_away": 12,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1786899600,
+          "text": "Hoy 19:00",
+          "format": "'Hoy' H:mm",
+          "splitted": {
+            "date": "Hoy",
+            "time": "19:00",
+            "format": "'Hoy'"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421053,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Espanyol",
+        "away": "Levante",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/8.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png?version="
+      },
+      {
+        "id": 37156,
+        "id_gameweek": 3968,
+        "id_home": 6,
+        "id_away": 23,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1786993200,
+          "text": "lun 21:00",
+          "format": "EEE H:mm",
+          "splitted": {
+            "date": "lun",
+            "time": "21:00",
+            "format": "EEE"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421050,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Deportivo da Coruña",
+        "away": "Elche",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/23.png?version="
+      },
+      {
+        "id": 37151,
+        "id_gameweek": 3968,
+        "id_home": 2,
+        "id_away": 13,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1787166000,
+          "text": "mié 21:00",
+          "format": "EEE H:mm",
+          "splitted": {
+            "date": "mié",
+            "time": "21:00",
+            "format": "EEE"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421055,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Atlético",
+        "away": "Málaga",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/2.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/13.png?version="
+      },
+      {
+        "id": 37162,
+        "id_gameweek": 3968,
+        "id_home": 19,
+        "id_away": 4,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1787684400,
+          "text": "25 ago 21:00",
+          "format": "d MMM H:mm",
+          "splitted": {
+            "date": "25 ago",
+            "time": "21:00",
+            "format": "d MMM"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421049,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Valencia",
+        "away": "Betis",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/19.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/4.png?version="
+      },
+      {
+        "id": 37159,
+        "id_gameweek": 3968,
+        "id_home": 15,
+        "id_away": 16,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1787770800,
+          "text": "26 ago 21:00",
+          "format": "d MMM H:mm",
+          "splitted": {
+            "date": "26 ago",
+            "time": "21:00",
+            "format": "d MMM"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421051,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Real Madrid",
+        "away": "Real Sociedad",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/15.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/16.png?version="
+      },
+      {
+        "id": 37152,
+        "id_gameweek": 3968,
+        "id_home": 5,
+        "id_away": 50,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1787855400,
+          "text": "27 ago 20:30",
+          "format": "d MMM H:mm",
+          "splitted": {
+            "date": "27 ago",
+            "time": "20:30",
+            "format": "d MMM"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16815992,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Celta",
+        "away": "Osasuna",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/5.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/50.png?version="
+      },
+      {
+        "id": 37158,
+        "id_gameweek": 3968,
+        "id_home": 3,
+        "id_away": 1,
+        "goals_home": "-",
+        "goals_away": "-",
+        "goals_home_penalty": null,
+        "goals_away_penalty": null,
+        "status": "fixture",
+        "date": {
+          "ts": 1787857200,
+          "text": "27 ago 21:00",
+          "format": "d MMM H:mm",
+          "splitted": {
+            "date": "27 ago",
+            "time": "21:00",
+            "format": "d MMM"
+          }
+        },
+        "id_gsm": null,
+        "id_sofa": 16421059,
+        "id_besoccer": null,
+        "id_sportmonks": null,
+        "as_graded_date": null,
+        "marca_graded_date": null,
+        "sofascore_graded_date": null,
+        "mundodeportivo_graded_date": null,
+        "mixtos_graded_date": null,
+        "classic_graded_date": null,
+        "mixtos2_graded_date": null,
+        "marca_stats_graded_date": null,
+        "finished_at": null,
+        "processed_at": null,
+        "gameweeks": null,
+        "stats": null,
+        "tv": null,
+        "minute": null,
+        "ignored": 0,
+        "gameweek": "Jornada 1",
+        "type": "regular",
+        "home": "Barcelona",
+        "away": "Athletic Club",
+        "confirmed_lineups": 0,
+        "pulse": false,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/3.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png?version="
+      }
+    ],
+    "gameweek_user": {
+      "negative": false,
+      "points": 6,
+      "rank": 4
+    },
+    "preview": {
+      "37151": {
+        "players": {
+          "2": [
+            {
+              "id": 31,
+              "name": "Jan Oblak",
+              "short": "Jan Oblak",
+              "position": 1,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 71021,
+              "name": "Alejandro Grimaldo",
+              "short": "A. Grimaldo",
+              "position": 2,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 64459,
+              "name": "Dávid Hancko",
+              "short": "Dávid Hancko",
+              "position": 2,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 35434,
+              "name": "Marc Pubill",
+              "short": "Marc Pubill",
+              "position": 2,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 561,
+              "name": "Marcos Llorente",
+              "short": "Marcos Llorente",
+              "position": 2,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 22502,
+              "name": "Alex Baena",
+              "short": "Alex Baena",
+              "position": 3,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 29222,
+              "name": "Giuliano Simeone",
+              "short": "G. Simeone",
+              "position": 3,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 71176,
+              "name": "Morten Hjulmand",
+              "short": "Morten Hjulmand",
+              "position": 3,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 51135,
+              "name": "Pablo Barrios",
+              "short": "Pablo Barrios",
+              "position": 3,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 68676,
+              "name": "Ademola Lookman",
+              "short": "Ademola Lookman",
+              "position": 4,
+              "id_team": 2,
+              "confirmed": 0
+            },
+            {
+              "id": 59476,
+              "name": "Julián Álvarez",
+              "short": "J. Álvarez",
+              "position": 4,
+              "id_team": 2,
+              "confirmed": 0
+            }
+          ],
+          "13": [
+            {
+              "id": 71011,
+              "name": "Alfonso Herrero",
+              "short": "Alfonso Herrero",
+              "position": 1,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 71004,
+              "name": "Carlos Puga",
+              "short": "Carlos Puga",
+              "position": 2,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 1737,
+              "name": "Einar Galilea",
+              "short": "Einar Galilea",
+              "position": 2,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 64038,
+              "name": "José Salinas",
+              "short": "José Salinas",
+              "position": 2,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 70999,
+              "name": "Dani Lorenzo",
+              "short": "Dani Lorenzo",
+              "position": 3,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 70996,
+              "name": "David Larrubia",
+              "short": "David Larrubia",
+              "position": 3,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 70998,
+              "name": "Izan Merino",
+              "short": "Izan Merino",
+              "position": 3,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 22595,
+              "name": "Joaquín Muñoz",
+              "short": "Joaquín Muñoz",
+              "position": 3,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 71000,
+              "name": "Rafa Rodriguez",
+              "short": "Rafa Rodriguez",
+              "position": 3,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 71002,
+              "name": "Ramón Enríquez",
+              "short": "R. Enríquez",
+              "position": 3,
+              "id_team": 13,
+              "confirmed": 0
+            },
+            {
+              "id": 70992,
+              "name": "Chupete",
+              "short": "Chupete",
+              "position": 4,
+              "id_team": 13,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37152": {
+        "players": {
+          "5": [
+            {
+              "id": 63705,
+              "name": "Ionuț Radu",
+              "short": "Ionuț Radu",
+              "position": 1,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 55088,
+              "name": "Carl Starfelt",
+              "short": "Carl Starfelt",
+              "position": 2,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 59506,
+              "name": "Javi Rodríguez",
+              "short": "Javi Rodríguez",
+              "position": 2,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 64160,
+              "name": "Javi Rueda",
+              "short": "Javi Rueda",
+              "position": 2,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 49382,
+              "name": "Marcos Alonso",
+              "short": "Marcos Alonso",
+              "position": 2,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 23664,
+              "name": "Sergio Carreira",
+              "short": "Sergio Carreira",
+              "position": 2,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 18531,
+              "name": "Aleix Febas",
+              "short": "Aleix Febas",
+              "position": 3,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 55439,
+              "name": "Hugo González",
+              "short": "Hugo González",
+              "position": 3,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 65674,
+              "name": "Miguel Román",
+              "short": "Miguel Román",
+              "position": 3,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 48194,
+              "name": "Williot Swedberg",
+              "short": "W. Swedberg",
+              "position": 3,
+              "id_team": 5,
+              "confirmed": 0
+            },
+            {
+              "id": 35059,
+              "name": "Ferran Jutglà",
+              "short": "Ferran Jutglà",
+              "position": 4,
+              "id_team": 5,
+              "confirmed": 0
+            }
+          ],
+          "50": [
+            {
+              "id": 17615,
+              "name": "Sergio Herrera",
+              "short": "Sergio Herrera",
+              "position": 1,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 58986,
+              "name": "Abel Bretones",
+              "short": "Abel Bretones",
+              "position": 2,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 15756,
+              "name": "Alejandro Catena",
+              "short": "A. Catena",
+              "position": 2,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 58438,
+              "name": "Flavien Boyomo",
+              "short": "Flavien Boyomo",
+              "position": 2,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 67942,
+              "name": "Íñigo Arguibide",
+              "short": "Í. Arguibide",
+              "position": 2,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 22527,
+              "name": "Aimar Oroz",
+              "short": "Aimar Oroz",
+              "position": 3,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 52371,
+              "name": "Iker Muñoz",
+              "short": "Iker Muñoz",
+              "position": 3,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 19527,
+              "name": "Jon Moncayola",
+              "short": "Jon Moncayola",
+              "position": 3,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 58436,
+              "name": "Raúl Moro",
+              "short": "Raúl Moro",
+              "position": 3,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 270,
+              "name": "Rubén García",
+              "short": "Rubén García",
+              "position": 3,
+              "id_team": 50,
+              "confirmed": 0
+            },
+            {
+              "id": 18004,
+              "name": "Ante Budimir",
+              "short": "Ante Budimir",
+              "position": 4,
+              "id_team": 50,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37155": {
+        "players": {
+          "9": [
+            {
+              "id": 609,
+              "name": "David Soria",
+              "short": "David Soria",
+              "position": 1,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 28621,
+              "name": "Abdel Abqar",
+              "short": "Abdel Abqar",
+              "position": 2,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 71502,
+              "name": "Andrés García",
+              "short": "Andrés García",
+              "position": 2,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 8171,
+              "name": "Dakonam Djené",
+              "short": "Dakonam Djené",
+              "position": 2,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 64151,
+              "name": "Davinchi",
+              "short": "Davinchi",
+              "position": 2,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 48960,
+              "name": "Kiko Femenía",
+              "short": "Kiko Femenía",
+              "position": 2,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 68498,
+              "name": "Zaid Romero",
+              "short": "Zaid Romero",
+              "position": 2,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 58125,
+              "name": "Mario Martín",
+              "short": "Mario Martín",
+              "position": 3,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 78750,
+              "name": "Orel Mangala",
+              "short": "Orel Mangala",
+              "position": 3,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 48203,
+              "name": "Ramón Terrats",
+              "short": "Ramón Terrats",
+              "position": 3,
+              "id_team": 9,
+              "confirmed": 1
+            },
+            {
+              "id": 68495,
+              "name": "Martín Satriano",
+              "short": "M. Satriano",
+              "position": 4,
+              "id_team": 9,
+              "confirmed": 1
+            }
+          ],
+          "48": [
+            {
+              "id": 7893,
+              "name": "Antonio Sivera",
+              "short": "Antonio Sivera",
+              "position": 1,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 118,
+              "name": "Jonny Otto",
+              "short": "Jonny Otto",
+              "position": 2,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 36048,
+              "name": "Nahuel Tenaglia",
+              "short": "Nahuel Tenaglia",
+              "position": 2,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 68652,
+              "name": "Ville Koski",
+              "short": "Ville Koski",
+              "position": 2,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 53143,
+              "name": "Abde Rebbach",
+              "short": "Abde Rebbach",
+              "position": 3,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 68606,
+              "name": "Ángel Pérez",
+              "short": "Ángel Pérez",
+              "position": 3,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 25867,
+              "name": "Antonio Blanco",
+              "short": "Antonio Blanco",
+              "position": 3,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 392,
+              "name": "Denis Suárez",
+              "short": "Denis Suárez",
+              "position": 3,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 29169,
+              "name": "Pablo Ibáñez",
+              "short": "Pablo Ibáñez",
+              "position": 3,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 68361,
+              "name": "Aitor Mañas",
+              "short": "Aitor Mañas",
+              "position": 4,
+              "id_team": 48,
+              "confirmed": 1
+            },
+            {
+              "id": 59641,
+              "name": "Toni Martínez",
+              "short": "Toni Martínez",
+              "position": 4,
+              "id_team": 48,
+              "confirmed": 1
+            }
+          ]
+        },
+        "confirmed": 11
+      },
+      "37156": {
+        "players": {
+          "6": [
+            {
+              "id": 30444,
+              "name": "Leo Román",
+              "short": "Leo Román",
+              "position": 1,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 71795,
+              "name": "Angeliño",
+              "short": "Angeliño",
+              "position": 2,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 71139,
+              "name": "Bright Ede",
+              "short": "Bright Ede",
+              "position": 2,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 70948,
+              "name": "Lucas Noubi",
+              "short": "Lucas Noubi",
+              "position": 2,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 7011,
+              "name": "Ximo Navarro",
+              "short": "Ximo Navarro",
+              "position": 2,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 70945,
+              "name": "Diego Villares",
+              "short": "Diego Villares",
+              "position": 3,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 71154,
+              "name": "Lorenzo Amatucci",
+              "short": "L. Amatucci",
+              "position": 3,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 28780,
+              "name": "Luismi Cruz",
+              "short": "Luismi Cruz",
+              "position": 3,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 29223,
+              "name": "Mario Soriano",
+              "short": "Mario Soriano",
+              "position": 3,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 70941,
+              "name": "Bil Nsongo",
+              "short": "Bil Nsongo",
+              "position": 4,
+              "id_team": 6,
+              "confirmed": 0
+            },
+            {
+              "id": 36410,
+              "name": "Pierre-Emerick Aubameyang",
+              "short": "P. Aubameyang",
+              "position": 4,
+              "id_team": 6,
+              "confirmed": 0
+            }
+          ],
+          "23": [
+            {
+              "id": 28395,
+              "name": "Matías Dituro",
+              "short": "Matías Dituro",
+              "position": 1,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 68716,
+              "name": "Buba Sangaré",
+              "short": "Buba Sangaré",
+              "position": 2,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 63865,
+              "name": "David Affengruber",
+              "short": "D. Affengruber",
+              "position": 2,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 25630,
+              "name": "Victor Chust",
+              "short": "Victor Chust",
+              "position": 2,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 65269,
+              "name": "Ali Houary",
+              "short": "Ali Houary",
+              "position": 3,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 65136,
+              "name": "Fede Redondo",
+              "short": "Fede Redondo",
+              "position": 3,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 20141,
+              "name": "Germán Valera",
+              "short": "Germán Valera",
+              "position": 3,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 36046,
+              "name": "Gonzalo Villar",
+              "short": "Gonzalo Villar",
+              "position": 3,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 63871,
+              "name": "Marc Aguado",
+              "short": "Marc Aguado",
+              "position": 3,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 20449,
+              "name": "Fer Niño",
+              "short": "Fer Niño",
+              "position": 4,
+              "id_team": 23,
+              "confirmed": 0
+            },
+            {
+              "id": 68593,
+              "name": "Lucas Cepeda",
+              "short": "Lucas Cepeda",
+              "position": 4,
+              "id_team": 23,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37157": {
+        "players": {
+          "8": [
+            {
+              "id": 7025,
+              "name": "Marko Dmitrović",
+              "short": "M. Dmitrović",
+              "position": 1,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 11472,
+              "name": "Leandro Cabrera",
+              "short": "Leandro Cabrera",
+              "position": 2,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 29163,
+              "name": "Omar El Hilali",
+              "short": "Omar El Hilali",
+              "position": 2,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 71140,
+              "name": "Quilindschy Hartman",
+              "short": "Q. Hartman",
+              "position": 2,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 7784,
+              "name": "Unai Núñez",
+              "short": "Unai Núñez",
+              "position": 2,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 71061,
+              "name": "Álex Calatrava",
+              "short": "Álex Calatrava",
+              "position": 3,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 6034,
+              "name": "Edu Expósito",
+              "short": "Edu Expósito",
+              "position": 3,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 66706,
+              "name": "Javi Hernandez",
+              "short": "Javi Hernandez",
+              "position": 3,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 64468,
+              "name": "Tyrhys Dolan",
+              "short": "Tyrhys Dolan",
+              "position": 3,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 23172,
+              "name": "Urko González",
+              "short": "Urko González",
+              "position": 3,
+              "id_team": 8,
+              "confirmed": 0
+            },
+            {
+              "id": 60888,
+              "name": "Roberto Fernández",
+              "short": "R. Fernández",
+              "position": 4,
+              "id_team": 8,
+              "confirmed": 0
+            }
+          ],
+          "12": [
+            {
+              "id": 28612,
+              "name": "Mathew Ryan",
+              "short": "Mathew Ryan",
+              "position": 1,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 33053,
+              "name": "Adrián de la Fuente",
+              "short": "A. de la Fuente",
+              "position": 2,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 1719,
+              "name": "Aïssa Mandi",
+              "short": "Aïssa Mandi",
+              "position": 2,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 20131,
+              "name": "Manu Sánchez",
+              "short": "Manu Sánchez",
+              "position": 2,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 69281,
+              "name": "Nacho Pérez",
+              "short": "Nacho Pérez",
+              "position": 2,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 28777,
+              "name": "Carlos Álvarez",
+              "short": "Carlos Álvarez",
+              "position": 3,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 70923,
+              "name": "Enzo Bardeli",
+              "short": "Enzo Bardeli",
+              "position": 3,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 55045,
+              "name": "Hugo Sotelo",
+              "short": "Hugo Sotelo",
+              "position": 3,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 52117,
+              "name": "Jon Ander Olasagasti",
+              "short": "J. Ander Olasagasti",
+              "position": 3,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 28779,
+              "name": "Iván Romero",
+              "short": "Iván Romero",
+              "position": 4,
+              "id_team": 12,
+              "confirmed": 0
+            },
+            {
+              "id": 68359,
+              "name": "Kareem Tunde",
+              "short": "Kareem Tunde",
+              "position": 4,
+              "id_team": 12,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37158": {
+        "players": {
+          "1": [
+            {
+              "id": 14811,
+              "name": "Unai Simón",
+              "short": "Unai Simón",
+              "position": 1,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 28773,
+              "name": "Aitor Paredes",
+              "short": "Aitor Paredes",
+              "position": 2,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 27865,
+              "name": "Jesús Areso",
+              "short": "Jesús Areso",
+              "position": 2,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 4753,
+              "name": "Yeray Álvarez",
+              "short": "Yeray Álvarez",
+              "position": 2,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 361,
+              "name": "Yuri Berchiche",
+              "short": "Yuri Berchiche",
+              "position": 2,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 71639,
+              "name": "Beñat Gerenabarrena",
+              "short": "B. Gerenabarrena",
+              "position": 3,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 27425,
+              "name": "Iñigo Ruiz De Galarreta",
+              "short": "I. Ruiz De Galarreta",
+              "position": 3,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 14789,
+              "name": "Oihan Sancet",
+              "short": "Oihan Sancet",
+              "position": 3,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 14791,
+              "name": "Gorka Guruzeta",
+              "short": "Gorka Guruzeta",
+              "position": 4,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 29,
+              "name": "Iñaki Williams",
+              "short": "Iñaki Williams",
+              "position": 4,
+              "id_team": 1,
+              "confirmed": 0
+            },
+            {
+              "id": 24789,
+              "name": "Nico Williams",
+              "short": "Nico Williams",
+              "position": 4,
+              "id_team": 1,
+              "confirmed": 0
+            }
+          ],
+          "3": [
+            {
+              "id": 29166,
+              "name": "Joan Garcia",
+              "short": "Joan Garcia",
+              "position": 1,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 29205,
+              "name": "Alejandro Balde",
+              "short": "Alejandro Balde",
+              "position": 2,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 27333,
+              "name": "Eric García",
+              "short": "Eric García",
+              "position": 2,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 59533,
+              "name": "Gerard Martín",
+              "short": "Gerard Martín",
+              "position": 2,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 56926,
+              "name": "Pau Cubarsi",
+              "short": "Pau Cubarsi",
+              "position": 2,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 29235,
+              "name": "Gavi",
+              "short": "Gavi",
+              "position": 3,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 59484,
+              "name": "Marc Bernal",
+              "short": "Marc Bernal",
+              "position": 3,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 22547,
+              "name": "Pedri",
+              "short": "Pedri",
+              "position": 3,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 70638,
+              "name": "Anthony Gordon",
+              "short": "Anthony Gordon",
+              "position": 4,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 52375,
+              "name": "Lamine Yamal",
+              "short": "Lamine Yamal",
+              "position": 4,
+              "id_team": 3,
+              "confirmed": 0
+            },
+            {
+              "id": 48657,
+              "name": "Raphinha",
+              "short": "Raphinha",
+              "position": 4,
+              "id_team": 3,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37159": {
+        "players": {
+          "15": [
+            {
+              "id": 14670,
+              "name": "Thibaut Courtois",
+              "short": "T. Courtois",
+              "position": 1,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 40147,
+              "name": "Antonio Rüdiger",
+              "short": "A. Rüdiger",
+              "position": 2,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 71124,
+              "name": "Denzel Dumfries",
+              "short": "Denzel Dumfries",
+              "position": 2,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 70922,
+              "name": "Ibrahima Konaté",
+              "short": "I. Konaté",
+              "position": 2,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 15107,
+              "name": "Marc Cucurella",
+              "short": "Marc Cucurella",
+              "position": 2,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 40166,
+              "name": "Aurélien Tchouaméni",
+              "short": "A. Tchouaméni",
+              "position": 3,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 7024,
+              "name": "Fede Valverde",
+              "short": "Fede Valverde",
+              "position": 3,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 53114,
+              "name": "Jude Bellingham",
+              "short": "Jude Bellingham",
+              "position": 3,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 58954,
+              "name": "Kylian Mbappé",
+              "short": "Kylian Mbappé",
+              "position": 4,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 12900,
+              "name": "Vinícius Júnior",
+              "short": "V. Júnior",
+              "position": 4,
+              "id_team": 15,
+              "confirmed": 0
+            },
+            {
+              "id": 62904,
+              "name": "Yan Diomande",
+              "short": "Yan Diomande",
+              "position": 4,
+              "id_team": 15,
+              "confirmed": 0
+            }
+          ],
+          "16": [
+            {
+              "id": 6032,
+              "name": "Alex Remiro",
+              "short": "Alex Remiro",
+              "position": 1,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 5917,
+              "name": "Igor Zubeldia",
+              "short": "Igor Zubeldia",
+              "position": 2,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 56925,
+              "name": "Jon Aramburu",
+              "short": "Jon Aramburu",
+              "position": 2,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 59623,
+              "name": "Jon Martin",
+              "short": "Jon Martin",
+              "position": 2,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 22956,
+              "name": "Sergio Gómez",
+              "short": "Sergio Gómez",
+              "position": 2,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 15342,
+              "name": "Ander Barrenetxea",
+              "short": "A. Barrenetxea",
+              "position": 3,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 28776,
+              "name": "Beñat Turrientes",
+              "short": "B. Turrientes",
+              "position": 3,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 4888,
+              "name": "Carlos Soler",
+              "short": "Carlos Soler",
+              "position": 3,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 15566,
+              "name": "Yangel Herrera",
+              "short": "Yangel Herrera",
+              "position": 3,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 10967,
+              "name": "Gonçalo Guedes",
+              "short": "Gonçalo Guedes",
+              "position": 4,
+              "id_team": 16,
+              "confirmed": 0
+            },
+            {
+              "id": 564,
+              "name": "Mikel Oyarzabal",
+              "short": "Mikel Oyarzabal",
+              "position": 4,
+              "id_team": 16,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37160": {
+        "players": {
+          "20": [
+            {
+              "id": 71649,
+              "name": "Péter Gulácsi",
+              "short": "Péter Gulácsi",
+              "position": 1,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 55743,
+              "name": "Carlos Romero",
+              "short": "Carlos Romero",
+              "position": 2,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 23369,
+              "name": "Juan Foyth",
+              "short": "Juan Foyth",
+              "position": 2,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 65347,
+              "name": "Renato Veiga",
+              "short": "Renato Veiga",
+              "position": 2,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 54832,
+              "name": "Santiago Mouriño",
+              "short": "S. Mouriño",
+              "position": 2,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 53098,
+              "name": "Alberto Moleiro",
+              "short": "Alberto Moleiro",
+              "position": 3,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 52162,
+              "name": "Pape Gueye",
+              "short": "Pape Gueye",
+              "position": 3,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 12946,
+              "name": "Santi Comesaña",
+              "short": "Santi Comesaña",
+              "position": 3,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 65704,
+              "name": "Georges Mikautadze",
+              "short": "G. Mikautadze",
+              "position": 4,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 476,
+              "name": "Gerard Moreno",
+              "short": "Gerard Moreno",
+              "position": 4,
+              "id_team": 20,
+              "confirmed": 0
+            },
+            {
+              "id": 59382,
+              "name": "Nicolas Pépé",
+              "short": "Nicolas Pépé",
+              "position": 4,
+              "id_team": 20,
+              "confirmed": 0
+            }
+          ],
+          "1490": [
+            {
+              "id": 70925,
+              "name": "Simon Eriksson",
+              "short": "Simon Eriksson",
+              "position": 1,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 70938,
+              "name": "Álvaro Mantilla",
+              "short": "Á. Mantilla",
+              "position": 2,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 71037,
+              "name": "Facundo González",
+              "short": "F. González",
+              "position": 2,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 70935,
+              "name": "Jorge Salinas",
+              "short": "Jorge Salinas",
+              "position": 2,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 71791,
+              "name": "Pedro Felipe",
+              "short": "Pedro Felipe",
+              "position": 2,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 70930,
+              "name": "Gustavo Puerta",
+              "short": "Gustavo Puerta",
+              "position": 3,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 22604,
+              "name": "Iñigo Vicente",
+              "short": "Iñigo Vicente",
+              "position": 3,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 70931,
+              "name": "Maguette Gueye",
+              "short": "Maguette Gueye",
+              "position": 3,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 364,
+              "name": "Sergio Canales",
+              "short": "Sergio Canales",
+              "position": 3,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 27516,
+              "name": "Andrés Martín",
+              "short": "Andrés Martín",
+              "position": 4,
+              "id_team": 1490,
+              "confirmed": 0
+            },
+            {
+              "id": 4886,
+              "name": "Asier Villalibre",
+              "short": "A. Villalibre",
+              "position": 4,
+              "id_team": 1490,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      },
+      "37161": {
+        "players": {
+          "14": [
+            {
+              "id": 56583,
+              "name": "Augusto Batalla",
+              "short": "Augusto Batalla",
+              "position": 1,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 25621,
+              "name": "Andrei Rațiu",
+              "short": "Andrei Rațiu",
+              "position": 2,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 1713,
+              "name": "Florian Lejeune",
+              "short": "Florian Lejeune",
+              "position": 2,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 28619,
+              "name": "Iván Balliu",
+              "short": "Iván Balliu",
+              "position": 2,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 14911,
+              "name": "Álvaro García",
+              "short": "Álvaro García",
+              "position": 3,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 27517,
+              "name": "Isi Palazón",
+              "short": "Isi Palazón",
+              "position": 3,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 17989,
+              "name": "Jorge de Frutos",
+              "short": "Jorge de Frutos",
+              "position": 3,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 27518,
+              "name": "Óscar Valentín",
+              "short": "Ó. Valentín",
+              "position": 3,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 29403,
+              "name": "Pathé Ciss",
+              "short": "Pathé Ciss",
+              "position": 3,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 24,
+              "name": "Unai López",
+              "short": "Unai López",
+              "position": 3,
+              "id_team": 14,
+              "confirmed": 1
+            },
+            {
+              "id": 29402,
+              "name": "Randy Nteka",
+              "short": "Randy Nteka",
+              "position": 4,
+              "id_team": 14,
+              "confirmed": 1
+            }
+          ],
+          "17": [
+            {
+              "id": 65111,
+              "name": "Odysseas Vlachodimos",
+              "short": "O. Vlachodimos",
+              "position": 1,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 70917,
+              "name": "Arouna Sangante",
+              "short": "Arouna Sangante",
+              "position": 2,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 64382,
+              "name": "Gabriel Suazo",
+              "short": "Gabriel Suazo",
+              "position": 2,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 24792,
+              "name": "Juan Iglesias",
+              "short": "Juan Iglesias",
+              "position": 2,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 49424,
+              "name": "Kike Salas",
+              "short": "Kike Salas",
+              "position": 2,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 68248,
+              "name": "Oso",
+              "short": "Oso",
+              "position": 2,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 5916,
+              "name": "Jon Guridi",
+              "short": "Jon Guridi",
+              "position": 3,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 56628,
+              "name": "Lucien Agoumé",
+              "short": "Lucien Agoumé",
+              "position": 3,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 71640,
+              "name": "Miguel Sierra",
+              "short": "Miguel Sierra",
+              "position": 3,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 71792,
+              "name": "Nico Guillén",
+              "short": "Nico Guillén",
+              "position": 3,
+              "id_team": 17,
+              "confirmed": 1
+            },
+            {
+              "id": 56632,
+              "name": "Isaac Romero",
+              "short": "Isaac Romero",
+              "position": 4,
+              "id_team": 17,
+              "confirmed": 1
+            }
+          ]
+        },
+        "confirmed": 11
+      },
+      "37162": {
+        "players": {
+          "4": [
+            {
+              "id": 53111,
+              "name": "Álvaro Valles",
+              "short": "Álvaro Valles",
+              "position": 1,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 27520,
+              "name": "Fran García",
+              "short": "Fran García",
+              "position": 2,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 31496,
+              "name": "Héctor Bellerín",
+              "short": "H. Bellerín",
+              "position": 2,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 63,
+              "name": "Marc Bartra",
+              "short": "Marc Bartra",
+              "position": 2,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 59499,
+              "name": "Natan Souza",
+              "short": "Natan Souza",
+              "position": 2,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 340,
+              "name": "Isco",
+              "short": "Isco",
+              "position": 3,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 3728,
+              "name": "Marc Roca",
+              "short": "Marc Roca",
+              "position": 3,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 557,
+              "name": "Pablo Fornals",
+              "short": "Pablo Fornals",
+              "position": 3,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 19727,
+              "name": "Rodrigo Riquelme",
+              "short": "R. Riquelme",
+              "position": 3,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 61013,
+              "name": "Antony Santos",
+              "short": "Antony Santos",
+              "position": 4,
+              "id_team": 4,
+              "confirmed": 0
+            },
+            {
+              "id": 12915,
+              "name": "Cucho Hernández",
+              "short": "C. Hernández",
+              "position": 4,
+              "id_team": 4,
+              "confirmed": 0
+            }
+          ],
+          "19": [
+            {
+              "id": 213,
+              "name": "Stole Dimitrievski",
+              "short": "S. Dimitrievski",
+              "position": 1,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 55738,
+              "name": "César Tárrega",
+              "short": "César Tárrega",
+              "position": 2,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 28791,
+              "name": "Jesús Vázquez",
+              "short": "Jesús Vázquez",
+              "position": 2,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 432,
+              "name": "José Luis Gayà",
+              "short": "J. Luis Gayà",
+              "position": 2,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 71038,
+              "name": "Justin De Haas",
+              "short": "Justin De Haas",
+              "position": 2,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 65090,
+              "name": "Filip Ugrinic",
+              "short": "Filip Ugrinic",
+              "position": 3,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 20346,
+              "name": "Guido Rodríguez",
+              "short": "G. Rodríguez",
+              "position": 3,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 52372,
+              "name": "Javi Guerra",
+              "short": "Javi Guerra",
+              "position": 3,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 22601,
+              "name": "Pepelu",
+              "short": "Pepelu",
+              "position": 3,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 71138,
+              "name": "Ryunosuke Sato",
+              "short": "Ryunosuke Sato",
+              "position": 3,
+              "id_team": 19,
+              "confirmed": 0
+            },
+            {
+              "id": 11866,
+              "name": "Hugo Duro",
+              "short": "Hugo Duro",
+              "position": 4,
+              "id_team": 19,
+              "confirmed": 0
+            }
+          ]
+        },
+        "confirmed": 0
+      }
+    },
+    "players": {
+      "37155": {
+        "all": {
+          "9": [
+            {
+              "id": 609,
+              "name": "David Soria",
+              "position": 1,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "David Soria",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 28621,
+              "name": "Abdel Abqar",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Abdel Abqar",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 71502,
+              "name": "Andrés García",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Andrés García",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 81
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 8171,
+              "name": "Dakonam Djené",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Dakonam Djené",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 81
+                },
+                {
+                  "category": "yellow",
+                  "minute": 76
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 64151,
+              "name": "Davinchi",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 0,
+              "played": 1,
+              "status": "played",
+              "short": "Davinchi",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 46
+                },
+                {
+                  "category": "yellow",
+                  "minute": 10
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 48960,
+              "name": "Kiko Femenía",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": -8,
+              "played": 1,
+              "status": "played",
+              "short": "Kiko Femenía",
+              "events": [
+                {
+                  "category": "red",
+                  "minute": 42
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 68498,
+              "name": "Zaid Romero",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Zaid Romero",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 58125,
+              "name": "Mario Martín",
+              "position": 3,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Mario Martín",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 66
+                },
+                {
+                  "category": "yellow",
+                  "minute": 23
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 78750,
+              "name": "Orel Mangala",
+              "position": 3,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Orel Mangala",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 48203,
+              "name": "Ramón Terrats",
+              "position": 3,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Ramón Terrats",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 68495,
+              "name": "Martín Satriano",
+              "position": 4,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Martín Satriano",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 73
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 6044,
+              "name": "Enes Ünal",
+              "position": 4,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Enes Ünal",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 46
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 58128,
+              "name": "Alberto Risco",
+              "position": 3,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Alberto Risco",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 66
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 71141,
+              "name": "Jean Ives Valou",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 1,
+              "played": 1,
+              "status": "played",
+              "short": "Jean Ives Valou",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 73
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 71790,
+              "name": "Saba Sazonov",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Saba Sazonov",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 81
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 68497,
+              "name": "Sebastián Boselli",
+              "position": 2,
+              "id_team": 9,
+              "id_match": 37155,
+              "points": 1,
+              "played": 1,
+              "status": "played",
+              "short": "Sebastián Boselli",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 81
+                }
+              ],
+              "livePoints": null
+            }
+          ],
+          "48": [
+            {
+              "id": 7893,
+              "name": "Antonio Sivera",
+              "position": 1,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 5,
+              "played": 1,
+              "status": "played",
+              "short": "Antonio Sivera",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 118,
+              "name": "Jonny Otto",
+              "position": 2,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "Jonny Otto",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 36048,
+              "name": "Nahuel Tenaglia",
+              "position": 2,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 13,
+              "played": 1,
+              "status": "played",
+              "short": "Nahuel Tenaglia",
+              "events": [
+                {
+                  "category": "goal",
+                  "minute": 73
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 68652,
+              "name": "Ville Koski",
+              "position": 2,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Ville Koski",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 53143,
+              "name": "Abde Rebbach",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "Abde Rebbach",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 94
+                },
+                {
+                  "category": "yellow",
+                  "minute": 66
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 68606,
+              "name": "Ángel Pérez",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "Ángel Pérez",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 65
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 25867,
+              "name": "Antonio Blanco",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Antonio Blanco",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 94
+                },
+                {
+                  "category": "yellow",
+                  "minute": 85
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 392,
+              "name": "Denis Suárez",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Denis Suárez",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 57
+                },
+                {
+                  "category": "yellow",
+                  "minute": 48
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 29169,
+              "name": "Pablo Ibáñez",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Pablo Ibáñez",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 68361,
+              "name": "Aitor Mañas",
+              "position": 4,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Aitor Mañas",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 57
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 59641,
+              "name": "Toni Martínez",
+              "position": 4,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Toni Martínez",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 71503,
+              "name": "Mikel Rodriguez",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 10,
+              "played": 1,
+              "status": "played",
+              "short": "Mikel Rodriguez",
+              "events": [
+                {
+                  "category": "goal",
+                  "minute": 94
+                },
+                {
+                  "category": "sub_in",
+                  "minute": 57
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 3060,
+              "name": "Mariano Díaz",
+              "position": 4,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 13,
+              "played": 1,
+              "status": "played",
+              "short": "Mariano Díaz",
+              "events": [
+                {
+                  "category": "assist",
+                  "minute": 73
+                },
+                {
+                  "category": "assist",
+                  "minute": 94
+                },
+                {
+                  "category": "goal",
+                  "minute": 91
+                },
+                {
+                  "category": "sub_in",
+                  "minute": 57
+                },
+                {
+                  "category": "yellow",
+                  "minute": 92
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 64411,
+              "name": "Youssef Enríquez",
+              "position": 2,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Youssef Enríquez",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 65
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 16868,
+              "name": "Ander Guevara",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 1,
+              "played": 1,
+              "status": "played",
+              "short": "Ander Guevara",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 94
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 5920,
+              "name": "Carles Aleñá",
+              "position": 3,
+              "id_team": 48,
+              "id_match": 37155,
+              "points": 1,
+              "played": 1,
+              "status": "played",
+              "short": "Carles Aleñá",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 94
+                }
+              ],
+              "livePoints": null
+            }
+          ]
+        },
+        "league": {
+          "48": {
+            "Adriano de Dios Muñoz": [
+              {
+                "id": 68606,
+                "name": "Ángel Pérez",
+                "position": 3,
+                "id_team": 48,
+                "id_match": 37155,
+                "points": 4,
+                "played": 1,
+                "status": "played",
+                "short": "Ángel Pérez",
+                "events": [
+                  {
+                    "category": "sub_out",
+                    "minute": 65
+                  }
+                ],
+                "livePoints": null
+              }
+            ],
+            "Jony": [
+              {
+                "id": 53143,
+                "name": "Abde Rebbach",
+                "position": 3,
+                "id_team": 48,
+                "id_match": 37155,
+                "points": 4,
+                "played": 1,
+                "status": "played",
+                "short": "Abde Rebbach",
+                "events": [
+                  {
+                    "category": "sub_out",
+                    "minute": 94
+                  },
+                  {
+                    "category": "yellow",
+                    "minute": 66
+                  }
+                ],
+                "livePoints": null
+              }
+            ],
+            "Ruben": [
+              {
+                "id": 36048,
+                "name": "Nahuel Tenaglia",
+                "position": 2,
+                "id_team": 48,
+                "id_match": 37155,
+                "points": 13,
+                "played": 1,
+                "status": "played",
+                "short": "Nahuel Tenaglia",
+                "events": [
+                  {
+                    "category": "goal",
+                    "minute": 73
+                  }
+                ],
+                "livePoints": null
+              }
+            ]
+          },
+          "9": {
+            "Emilio A. Guillen Ramos": [
+              {
+                "id": 8171,
+                "name": "Dakonam Djené",
+                "position": 2,
+                "id_team": 9,
+                "id_match": 37155,
+                "points": 2,
+                "played": 1,
+                "status": "played",
+                "short": "Dakonam Djené",
+                "events": [
+                  {
+                    "category": "sub_out",
+                    "minute": 81
+                  },
+                  {
+                    "category": "yellow",
+                    "minute": 76
+                  }
+                ],
+                "livePoints": null
+              }
+            ],
+            "Ruben": [
+              {
+                "id": 48203,
+                "name": "Ramón Terrats",
+                "position": 3,
+                "id_team": 9,
+                "id_match": 37155,
+                "points": 3,
+                "played": 1,
+                "status": "played",
+                "short": "Ramón Terrats",
+                "events": false,
+                "livePoints": null
+              }
+            ]
+          }
+        }
+      },
+      "37161": {
+        "all": {
+          "14": [
+            {
+              "id": 56583,
+              "name": "Augusto Batalla",
+              "position": 1,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Augusto Batalla",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 25621,
+              "name": "Andrei Rațiu",
+              "position": 2,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Andrei Rațiu",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 1713,
+              "name": "Florian Lejeune",
+              "position": 2,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Florian Lejeune",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 28619,
+              "name": "Iván Balliu",
+              "position": 2,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Iván Balliu",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 14911,
+              "name": "Álvaro García",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 10,
+              "played": 1,
+              "status": "played",
+              "short": "Álvaro García",
+              "events": [
+                {
+                  "category": "goal",
+                  "minute": 4
+                },
+                {
+                  "category": "sub_out",
+                  "minute": 70
+                },
+                {
+                  "category": "yellow",
+                  "minute": 67
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 27517,
+              "name": "Isi Palazón",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 6,
+              "played": 1,
+              "status": "played",
+              "short": "Isi Palazón",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 64
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 17989,
+              "name": "Jorge de Frutos",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Jorge de Frutos",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 27518,
+              "name": "Óscar Valentín",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Óscar Valentín",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 78
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 29403,
+              "name": "Pathé Ciss",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Pathé Ciss",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 24,
+              "name": "Unai López",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "Unai López",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 78
+                },
+                {
+                  "category": "yellow",
+                  "minute": 75
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 29402,
+              "name": "Randy Nteka",
+              "position": 4,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Randy Nteka",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 65
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 17290,
+              "name": "Sergio Camello",
+              "position": 4,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Sergio Camello",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 64
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 65727,
+              "name": "Alemão",
+              "position": 4,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Alemão",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 65
+                },
+                {
+                  "category": "yellow",
+                  "minute": 102
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 49296,
+              "name": "Fran Pérez",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Fran Pérez",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 70
+                },
+                {
+                  "category": "yellow",
+                  "minute": 76
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 58958,
+              "name": "Pelayo Fernández",
+              "position": 2,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Pelayo Fernández",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 78
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 59395,
+              "name": "Pedro Díaz",
+              "position": 3,
+              "id_team": 14,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Pedro Díaz",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 78
+                }
+              ],
+              "livePoints": null
+            }
+          ],
+          "17": [
+            {
+              "id": 65111,
+              "name": "Odysseas Vlachodimos",
+              "position": 1,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "O. Vlachodimos",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 70917,
+              "name": "Arouna Sangante",
+              "position": 2,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 0,
+              "played": 1,
+              "status": "played",
+              "short": "Arouna Sangante",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 64382,
+              "name": "Gabriel Suazo",
+              "position": 2,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Gabriel Suazo",
+              "events": [
+                {
+                  "category": "yellow",
+                  "minute": 81
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 24792,
+              "name": "Juan Iglesias",
+              "position": 2,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "Juan Iglesias",
+              "events": false,
+              "livePoints": null
+            },
+            {
+              "id": 49424,
+              "name": "Kike Salas",
+              "position": 2,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": -4,
+              "played": 1,
+              "status": "played",
+              "short": "Kike Salas",
+              "events": [
+                {
+                  "category": "red",
+                  "minute": 88
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 68248,
+              "name": "Oso",
+              "position": 2,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 3,
+              "played": 1,
+              "status": "played",
+              "short": "Oso",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 78
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 5916,
+              "name": "Jon Guridi",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 8,
+              "played": 1,
+              "status": "played",
+              "short": "Jon Guridi",
+              "events": [
+                {
+                  "category": "penalty",
+                  "minute": 52
+                },
+                {
+                  "category": "sub_out",
+                  "minute": 82
+                },
+                {
+                  "category": "yellow",
+                  "minute": 60
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 56628,
+              "name": "Lucien Agoumé",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 5,
+              "played": 1,
+              "status": "played",
+              "short": "Lucien Agoumé",
+              "events": [
+                {
+                  "category": "yellow",
+                  "minute": 102
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 71640,
+              "name": "Miguel Sierra",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 6,
+              "played": 1,
+              "status": "played",
+              "short": "Miguel Sierra",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 70
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 71792,
+              "name": "Nico Guillén",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Nico Guillén",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 46
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 56632,
+              "name": "Isaac Romero",
+              "position": 4,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 1,
+              "played": 1,
+              "status": "played",
+              "short": "Isaac Romero",
+              "events": [
+                {
+                  "category": "sub_out",
+                  "minute": 46
+                },
+                {
+                  "category": "yellow",
+                  "minute": 48
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 59042,
+              "name": "Peque Fernández",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 10,
+              "played": 1,
+              "status": "played",
+              "short": "Peque Fernández",
+              "events": [
+                {
+                  "category": "penalty",
+                  "minute": 97
+                },
+                {
+                  "category": "sub_in",
+                  "minute": 46
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 523868,
+              "name": "Robbie Ure",
+              "position": 4,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 7,
+              "played": 1,
+              "status": "played",
+              "short": "Robbie Ure",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 46
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 60872,
+              "name": "Rubén Vargas",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Rubén Vargas",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 70
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 58467,
+              "name": "Chidera Ejuke",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 2,
+              "played": 1,
+              "status": "played",
+              "short": "Chidera Ejuke",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 78
+                }
+              ],
+              "livePoints": null
+            },
+            {
+              "id": 52404,
+              "name": "Manu Bueno",
+              "position": 3,
+              "id_team": 17,
+              "id_match": 37161,
+              "points": 4,
+              "played": 1,
+              "status": "played",
+              "short": "Manu Bueno",
+              "events": [
+                {
+                  "category": "sub_in",
+                  "minute": 82
+                }
+              ],
+              "livePoints": null
+            }
+          ]
+        },
+        "league": {
+          "17": {
+            "Adriano de Dios Muñoz": [
+              {
+                "id": 60872,
+                "name": "Rubén Vargas",
+                "position": 3,
+                "id_team": 17,
+                "id_match": 37161,
+                "points": 2,
+                "played": 1,
+                "status": "played",
+                "short": "Rubén Vargas",
+                "events": [
+                  {
+                    "category": "sub_in",
+                    "minute": 70
+                  }
+                ],
+                "livePoints": null
+              }
+            ],
+            "Emilio A. Guillen Ramos": [
+              {
+                "id": 49424,
+                "name": "Kike Salas",
+                "position": 2,
+                "id_team": 17,
+                "id_match": 37161,
+                "points": -4,
+                "played": 1,
+                "status": "played",
+                "short": "Kike Salas",
+                "events": [
+                  {
+                    "category": "red",
+                    "minute": 88
+                  }
+                ],
+                "livePoints": null
+              },
+              {
+                "id": 56628,
+                "name": "Lucien Agoumé",
+                "position": 3,
+                "id_team": 17,
+                "id_match": 37161,
+                "points": 5,
+                "played": 1,
+                "status": "played",
+                "short": "Lucien Agoumé",
+                "events": [
+                  {
+                    "category": "yellow",
+                    "minute": 102
+                  }
+                ],
+                "livePoints": null
+              },
+              {
+                "id": 70917,
+                "name": "Arouna Sangante",
+                "position": 2,
+                "id_team": 17,
+                "id_match": 37161,
+                "points": 0,
+                "played": 1,
+                "status": "played",
+                "short": "Arouna Sangante",
+                "events": false,
+                "livePoints": null
+              }
+            ],
+            "Francisco": [
+              {
+                "id": 71792,
+                "name": "Nico Guillén",
+                "position": 3,
+                "id_team": 17,
+                "id_match": 37161,
+                "points": 2,
+                "played": 1,
+                "status": "played",
+                "short": "Nico Guillén",
+                "events": [
+                  {
+                    "category": "sub_out",
+                    "minute": 46
+                  }
+                ],
+                "livePoints": null
+              }
+            ],
+            "Ruben": [
+              {
+                "id": 56632,
+                "name": "Isaac Romero",
+                "position": 4,
+                "id_team": 17,
+                "id_match": 37161,
+                "points": 1,
+                "played": 1,
+                "status": "played",
+                "short": "Isaac Romero",
+                "events": [
+                  {
+                    "category": "sub_out",
+                    "minute": 46
+                  },
+                  {
+                    "category": "yellow",
+                    "minute": 48
+                  }
+                ],
+                "livePoints": null
+              }
+            ]
+          },
+          "14": {
+            "Emilio A. Guillen Ramos": [
+              {
+                "id": 29403,
+                "name": "Pathé Ciss",
+                "position": 3,
+                "id_team": 14,
+                "id_match": 37161,
+                "points": 3,
+                "played": 1,
+                "status": "played",
+                "short": "Pathé Ciss",
+                "events": false,
+                "livePoints": null
+              }
+            ],
+            "Francisco": [
+              {
+                "id": 24,
+                "name": "Unai López",
+                "position": 3,
+                "id_team": 14,
+                "id_match": 37161,
+                "points": 4,
+                "played": 1,
+                "status": "played",
+                "short": "Unai López",
+                "events": [
+                  {
+                    "category": "sub_out",
+                    "minute": 78
+                  },
+                  {
+                    "category": "yellow",
+                    "minute": 75
+                  }
+                ],
+                "livePoints": null
+              }
+            ],
+            "Jony": [
+              {
+                "id": 56583,
+                "name": "Augusto Batalla",
+                "position": 1,
+                "id_team": 14,
+                "id_match": 37161,
+                "points": 2,
+                "played": 1,
+                "status": "played",
+                "short": "Augusto Batalla",
+                "events": false,
+                "livePoints": null
+              }
+            ]
+          }
+        }
+      }
+    },
+    "lineupSize": 11,
+    "lineup": {
+      "positions": {
+        "1": {
+          "1": {
+            "id": 59581,
+            "name": "Luiz Júnior",
+            "points": "?",
+            "slot": 1,
+            "captain": 0,
+            "position": 1,
+            "id_team": 20,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759709482,
+            "played": 0,
+            "match_id": null,
+            "match_status": null,
+            "short": "L. Júnior",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/59581.png?version=20251006021122",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/20.png?version=",
+            "livePoints": null
+          }
+        },
+        "2": {
+          "2": {
+            "id": 70917,
+            "name": "Arouna Sangante",
+            "points": 0,
+            "slot": 2,
+            "captain": 0,
+            "position": 2,
+            "id_team": 17,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1781616706,
+            "played": 1,
+            "match_id": 37161,
+            "match_status": "played",
+            "short": "A. Sangante",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/70917.png?version=20260616153146",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png?version=",
+            "livePoints": null
+          },
+          "3": {
+            "id": 49424,
+            "name": "Kike Salas",
+            "points": -4,
+            "slot": 3,
+            "captain": 0,
+            "position": 2,
+            "id_team": 17,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759707503,
+            "played": 1,
+            "match_id": 37161,
+            "match_status": "played",
+            "short": "K. Salas",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/49424.png?version=20251006013823",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png?version=",
+            "livePoints": null
+          },
+          "4": {
+            "id": 59506,
+            "name": "Javi Rodríguez",
+            "points": "?",
+            "slot": 4,
+            "captain": 0,
+            "position": 2,
+            "id_team": 5,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759513968,
+            "played": 0,
+            "match_id": null,
+            "match_status": null,
+            "short": "J. Rodríguez",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/59506.png?version=20251003195248",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/5.png?version=",
+            "livePoints": null
+          },
+          "5": {
+            "id": 8171,
+            "name": "Dakonam Djené",
+            "points": 2,
+            "slot": 5,
+            "captain": 0,
+            "position": 2,
+            "id_team": 9,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759514364,
+            "played": 1,
+            "match_id": 37155,
+            "match_status": "played",
+            "short": "D. Djené",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/8171.png?version=20251003195924",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/9.png?version=",
+            "livePoints": null
+          }
+        },
+        "3": {
+          "6": {
+            "id": 364,
+            "name": "Sergio Canales",
+            "points": "?",
+            "slot": 6,
+            "captain": 0,
+            "position": 3,
+            "id_team": 1490,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1782145968,
+            "played": 0,
+            "match_id": null,
+            "match_status": null,
+            "short": "S. Canales",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/364.png?version=20260622183248",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1490.png?version=",
+            "livePoints": null
+          },
+          "7": {
+            "id": 29403,
+            "name": "Pathé Ciss",
+            "points": 3,
+            "slot": 7,
+            "captain": 0,
+            "position": 3,
+            "id_team": 14,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759611433,
+            "played": 1,
+            "match_id": 37161,
+            "match_status": "played",
+            "short": "P. Ciss",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29403.png?version=20251004225713",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png?version=",
+            "livePoints": null
+          },
+          "8": {
+            "id": 56628,
+            "name": "Lucien Agoumé",
+            "points": 5,
+            "slot": 8,
+            "captain": 0,
+            "position": 3,
+            "id_team": 17,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759707547,
+            "played": 1,
+            "match_id": 37161,
+            "match_status": "played",
+            "short": "L. Agoumé",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56628.png?version=20251006013907",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png?version=",
+            "livePoints": null
+          },
+          "9": {
+            "id": 71061,
+            "name": "Álex Calatrava",
+            "points": "?",
+            "slot": 9,
+            "captain": 0,
+            "position": 3,
+            "id_team": 8,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1782988429,
+            "played": 0,
+            "match_id": null,
+            "match_status": null,
+            "short": "Á. Calatrava",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/71061.png?version=20260702123349",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/8.png?version=",
+            "livePoints": null
+          },
+          "10": {
+            "id": 340,
+            "name": "Isco",
+            "points": "?",
+            "slot": 10,
+            "captain": 0,
+            "position": 3,
+            "id_team": 4,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1759513510,
+            "played": 0,
+            "match_id": null,
+            "match_status": null,
+            "short": "Isco",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/340.png?version=20251003194510",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/4.png?version=",
+            "livePoints": null
+          }
+        },
+        "4": {
+          "11": {
+            "id": 36410,
+            "name": "Pierre-Emerick Aubameyang",
+            "points": "?",
+            "slot": 11,
+            "captain": 0,
+            "position": 4,
+            "id_team": 6,
+            "team_active": 1,
+            "status": null,
+            "ts_pic": 1784358785,
+            "played": 0,
+            "match_id": null,
+            "match_status": null,
+            "short": "P. Aubameyang",
+            "best_xi": false,
+            "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/36410.png?version=20260718091305",
+            "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png?version=",
+            "livePoints": null
+          }
+        }
+      },
+      "count": 11
+    },
+    "bench": [
+      {
+        "id": 56924,
+        "name": "Etta Eyong",
+        "position": 4,
+        "id_team": 12,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1761933203,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "E. Eyong",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56924.png?version=20251031185323",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png?version="
+      },
+      {
+        "id": 71509,
+        "name": "Kevin Sánchez",
+        "position": 4,
+        "id_team": 6,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1784218843,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "K. Sánchez",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/71509.png?version=20260716182043",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png?version="
+      },
+      {
+        "id": 65090,
+        "name": "Filip Ugrinic",
+        "position": 3,
+        "id_team": 19,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1754728607,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "F. Ugrinic",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/65090.png?version=20250809103647",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/19.png?version="
+      },
+      {
+        "id": 63871,
+        "name": "Marc Aguado",
+        "position": 3,
+        "id_team": 23,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1750146902,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "M. Aguado",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/63871.png?version=20250617095502",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/23.png?version="
+      },
+      {
+        "id": 28621,
+        "name": "Abdel Abqar",
+        "position": 2,
+        "id_team": 9,
+        "team_active": 1,
+        "avg": 2,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1759514293,
+        "points": 2,
+        "played": 1,
+        "match_status": "played",
+        "livePoints": null,
+        "short": "A. Abqar",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/28621.png?version=20251003195813",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/9.png?version="
+      },
+      {
+        "id": 58986,
+        "name": "Abel Bretones",
+        "position": 2,
+        "id_team": 50,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1759711665,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "A. Bretones",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/58986.png?version=20251006024745",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/50.png?version="
+      },
+      {
+        "id": 65179,
+        "name": "Andrés Castrín",
+        "position": 2,
+        "id_team": 17,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1755449390,
+        "points": "-",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "A. Castrín",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/65179.png?version=20250817184950",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png?version="
+      },
+      {
+        "id": 65476,
+        "name": "Clemens Riedel",
+        "position": 2,
+        "id_team": 8,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1756191962,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "C. Riedel",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/65476.png?version=20250826090602",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/8.png?version="
+      },
+      {
+        "id": 20131,
+        "name": "Manu Sánchez",
+        "position": 2,
+        "id_team": 12,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1759610387,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "M. Sánchez",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/20131.png?version=20251004223947",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png?version="
+      },
+      {
+        "id": 59089,
+        "name": "Alex Padilla",
+        "position": 1,
+        "id_team": 1,
+        "team_active": 1,
+        "avg": 0,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1721153599,
+        "points": "?",
+        "played": 0,
+        "match_status": null,
+        "livePoints": null,
+        "short": "A. Padilla",
+        "best_xi": false,
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/59089.png?version=20240716201319",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png?version="
+      }
+    ],
+    "best_lineup": {
+      "selection": {
+        "formation": "1-3-5-2",
+        "score": 90,
+        "marketValue": 36005000,
+        "cards": [
+          {
+            "cardId": 7893,
+            "position": 1,
+            "score": 5,
+            "marketValue": 7581000,
+            "cardName": "Antonio Sivera",
+            "teamId": 48,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/7893.png?version=1759711163",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/48.png?version=1670244188"
+          },
+          {
+            "cardId": 36048,
+            "position": 2,
+            "score": 13,
+            "marketValue": 6749000,
+            "cardName": "Nahuel Tenaglia",
+            "teamId": 48,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/36048.png?version=1759711458",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/48.png?version=1670244188"
+          },
+          {
+            "cardId": 24792,
+            "position": 2,
+            "score": 4,
+            "marketValue": 5920000,
+            "cardName": "Juan Iglesias",
+            "teamId": 17,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/24792.png?version=1759514517",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/17.png?version=1670242669"
+          },
+          {
+            "cardId": 118,
+            "position": 2,
+            "score": 4,
+            "marketValue": 1549000,
+            "cardName": "Jonny Otto",
+            "teamId": 48,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/118.png?version=1751472750",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/48.png?version=1670244188"
+          },
+          {
+            "cardId": 14911,
+            "position": 3,
+            "score": 10,
+            "marketValue": 6206000,
+            "cardName": "Álvaro García",
+            "teamId": 14,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/14911.png?version=1759610611",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/14.png?version=1670242669"
+          },
+          {
+            "cardId": 59042,
+            "position": 3,
+            "score": 10,
+            "marketValue": 680000,
+            "cardName": "Peque Fernández",
+            "teamId": 17,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/59042.png?version=1759707864",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/17.png?version=1670242669"
+          },
+          {
+            "cardId": 71503,
+            "position": 3,
+            "score": 10,
+            "marketValue": 182000,
+            "cardName": "Mikel Rodriguez",
+            "teamId": 48,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/71503.png?version=1784198048",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/48.png?version=1670244188"
+          },
+          {
+            "cardId": 5916,
+            "position": 3,
+            "score": 8,
+            "marketValue": 1575000,
+            "cardName": "Jon Guridi",
+            "teamId": 17,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/5916.png?version=1759711411",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/17.png?version=1670242669"
+          },
+          {
+            "cardId": 27517,
+            "position": 3,
+            "score": 6,
+            "marketValue": 4105000,
+            "cardName": "Isi Palazón",
+            "teamId": 14,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/27517.png?version=1759611289",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/14.png?version=1670242669"
+          },
+          {
+            "cardId": 3060,
+            "position": 4,
+            "score": 13,
+            "marketValue": 458000,
+            "cardName": "Mariano Díaz",
+            "teamId": 48,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/3060.png?version=1703154439",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/48.png?version=1670244188"
+          },
+          {
+            "cardId": 523868,
+            "position": 4,
+            "score": 7,
+            "marketValue": 1000000,
+            "cardName": "Robbie Ure",
+            "teamId": 17,
+            "cardAvatarUrl": "https://s3.forge.fans/file/cdn-common/players/523868.png?version=1786442779",
+            "teamBadgeUrl": "https://s3.forge.fans/file/cdn-common/teams/17.png?version=1670242669"
+          }
+        ]
+      }
+    },
+    "isAjax": true,
+    "ads": {
+      "sky_left": "<ins data-ad-type='roba1' data-ad-device='md' data-ad-sizes='[[300,250],[300,300],[300,600]]' data-ad-lazy='false' data-ad-keys='{}' data-name='roba1'></ins>",
+      "sky_right": "<ins data-ad-type='roba2' data-ad-device='md' data-ad-sizes='[[300,250],[300,300],[300,600]]' data-ad-lazy='false' data-ad-keys='{}' data-name='roba2'></ins>",
+      "irr": "<ins data-ad-type='roba' data-ad-device='xs' data-ad-sizes='[[300,250],[300,300],[300,600],[320,100],[320,50]]' data-ad-lazy='false' data-ad-keys='{}' data-name='roba'></ins>",
+      "roba": "<ins data-ad-type='roba1' data-ad-device='xs' data-ad-sizes='[\"fluid\",[300,300],[300,250],[300,600]]' data-ad-keys='{}' data-ad-lazy='false' data-event-scroll-xs='' data-name='roba1'></ins>",
+      "market_1": "<ins data-ad-type='roba1' data-ad-device='xs' data-ad-sizes='[\"fluid\",[300,300],[300,250],[300,600]]' data-ad-keys='{}' data-ad-lazy='false' data-event-scroll-xs='' data-name='roba1'></ins>",
+      "market_2": "<ins data-ad-type='roba2' data-ad-device='xs' data-ad-sizes='[\"fluid\",[300,300],[300,250],[300,600]]' data-ad-keys='{}' data-ad-lazy='false' data-event-scroll-xs='' data-name='roba2'></ins>",
+      "market_3": "<ins data-ad-type='roba3' data-ad-device='xs' data-ad-sizes='[\"fluid\",[300,300],[300,250],[300,600]]' data-ad-keys='{}' data-ad-lazy='false' data-event-scroll-xs='' data-name='roba3'></ins>",
+      "market_4": "<ins data-ad-type='roba4' data-ad-device='xs' data-ad-sizes='[\"fluid\",[300,300],[300,250],[300,600]]' data-ad-keys='{}' data-ad-lazy='false' data-event-scroll-xs='' data-name='roba4'></ins>",
+      "market_5": "<ins data-ad-type='roba5' data-ad-device='xs' data-ad-sizes='[\"fluid\",[300,300],[300,250],[300,600]]' data-ad-keys='{}' data-ad-lazy='false' data-event-scroll-xs='' data-name='roba5'></ins>",
+      "bottom": "<ins data-ad-type='mega' data-ad-device='xs' data-ad-sizes='[[320,50],[320,100]]' data-ad-lazy='false' data-ad-keys='{}'></ins>",
+      "sw_bottom": "<ins data-ad-type='mega' data-ad-device='xs' data-ad-sizes='[[320,50],[320,100]]' data-ad-lazy='false' data-ad-keys='{}'></ins>"
+    }
+  }
+}

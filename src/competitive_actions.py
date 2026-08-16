@@ -383,9 +383,9 @@ def _fotmob_rating(p: dict[str, Any]) -> float | None:
         except (TypeError, ValueError):
             return None
     ext = p.get("external") or {}
-    if ext.get("sofascore_avg_5") is not None:
+    if ext.get("recent_rating") is not None:
         try:
-            return float(ext["sofascore_avg_5"])
+            return float(ext["recent_rating"])
         except (TypeError, ValueError):
             return None
     return None
@@ -738,7 +738,7 @@ def _gw_prob_pct(p: dict[str, Any]) -> float | None:
 def _xi_play_score(p: dict[str, Any]) -> tuple:
     """
     Ranking para el once de jornada desde plantilla propia.
-    Prioriza señal GW; si no hay, titularidad habitual + producción.
+    Con xPts calculados manda el puntos esperados; si no, señal GW / titularidad.
     """
     gw = _gw_prob_pct(p)
     lp = _lineup_pct(p)
@@ -765,16 +765,105 @@ def _xi_play_score(p: dict[str, Any]) -> tuple:
         play = 25.0  # desconocido: relleno solo si hace falta
         signal = "unknown"
 
-    avg = _mister_avg(p) or 0.0
-    pts = 0.0
+    p_play = None
     try:
-        pts = float(p.get("ff_mister_points") or p.get("points") or 0)
+        raw_pp = p.get("xpts_p_play")
+        p_play = float(raw_pp) if raw_pp is not None else None
     except (TypeError, ValueError):
+        p_play = None
+    if p_play is not None and not injured and not gw_out:
+        play = p_play * 100.0
+        signal = "start" if p_play >= 0.70 else ("doubt" if p_play >= 0.40 else "sit")
+
+    xpts = None
+    try:
+        raw_x = p.get("xpts")
+        xpts = float(raw_x) if raw_x is not None else None
+    except (TypeError, ValueError):
+        xpts = None
+
+    if xpts is not None and not injured and not gw_out:
+        scale = _avg_scale(p) or 8.0
+        # xPts normalizados a escala Mixto y llevados al rango del score previo
+        score = (xpts * (8.0 / scale)) * 12.0
+    else:
+        avg = _mister_avg(p) or 0.0
         pts = 0.0
-    rating = _fotmob_rating(p) or 0.0
-    # Score: probabilidad efectiva + desempates de calidad
-    score = play + min(12.0, avg * 1.2) + min(8.0, pts / 40.0) + min(5.0, rating)
+        try:
+            pts = float(p.get("ff_mister_points") or p.get("points") or 0)
+        except (TypeError, ValueError):
+            pts = 0.0
+        rating = _fotmob_rating(p) or 0.0
+        score = play + min(12.0, avg * 1.2) + min(8.0, pts / 40.0) + min(5.0, rating)
     return (score, play, signal, gw, lp, injured)
+
+
+def pick_captain(
+    xi: list[dict[str, Any]],
+    *,
+    multiplier: float = 2.0,
+) -> dict[str, Any] | None:
+    """
+    Capitán = quien más puntos añade al multiplicar: `xpts * (multiplier - 1)`.
+
+    Un capitán que no juega es el error más caro del juego, así que la
+    probabilidad de jugar corta antes que el techo: por debajo de 0.6 no se
+    capitanea salvo que no haya nadie mejor.
+    """
+    if not xi or multiplier <= 1:
+        return None
+
+    def _f(row: dict[str, Any], key: str) -> float | None:
+        try:
+            v = row.get(key)
+            return float(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    scored: list[tuple[float, float, dict[str, Any]]] = []
+    for row in xi:
+        if row.get("injured"):
+            continue
+        xpts = _f(row, "xpts")
+        if xpts is None:
+            continue
+        p_play = _f(row, "p_play")
+        gain = xpts * (float(multiplier) - 1.0)
+        if p_play is not None and p_play < 0.6:
+            gain *= 0.5  # riesgo de cero al cuadrado
+        scored.append((gain, p_play if p_play is not None else 0.0, row))
+
+    if not scored:
+        return None
+    scored.sort(key=lambda t: (-t[0], -t[1]))
+    gain, p_play, best = scored[0]
+    alt = scored[1][2] if len(scored) > 1 else None
+
+    why = (
+        f"+{gain:.1f} pts por el x{multiplier:g}"
+        f" ({best.get('xpts')} esperados, {p_play * 100:.0f}% de jugar)"
+    )
+    return {
+        "player_id": best.get("player_id"),
+        "name": best.get("name"),
+        "position": best.get("position"),
+        "team": best.get("team"),
+        "xpts": best.get("xpts"),
+        "p_play": best.get("p_play"),
+        "multiplier": float(multiplier),
+        "expected_gain": round(gain, 2),
+        "why": why,
+        "alternative": (
+            {
+                "player_id": alt.get("player_id"),
+                "name": alt.get("name"),
+                "xpts": alt.get("xpts"),
+                "expected_gain": round(scored[1][0], 2),
+            }
+            if alt
+            else None
+        ),
+    }
 
 
 def build_recommended_gw_xi(
@@ -782,6 +871,7 @@ def build_recommended_gw_xi(
     *,
     formation: str | None = None,
     matchday: dict[str, Any] | None = None,
+    captain_rule: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Once recomendado (11) para la siguiente jornada usando SOLO la plantilla actual.
@@ -825,8 +915,11 @@ def build_recommended_gw_xi(
         lp = item["lp"]
         signal = item["signal"]
         opponent = p.get("gw_opponent") or (p.get("external") or {}).get("gw_opponent")
+        xpts = p.get("xpts")
         if item["injured"]:
             why = "Lesionado/sancionado — solo si no hay alternativa"
+        elif xpts is not None:
+            why = f"{float(xpts):.1f} pts esperados · {p.get('xpts_why') or ''}".strip(" ·")
         elif gw is not None:
             why = f"FF jornada {gw:.0f}%"
             if opponent:
@@ -853,6 +946,10 @@ def build_recommended_gw_xi(
             "in_lineup": bool(p.get("in_lineup")),
             "injured": bool(item["injured"]),
             "score": round(item["score"], 1),
+            "xpts": xpts,
+            "xpts_floor": p.get("xpts_floor"),
+            "p_play": p.get("xpts_p_play"),
+            "fdr": p.get("fdr"),
             "why": why,
             "jornada": jornada,
         }
@@ -929,6 +1026,24 @@ def build_recommended_gw_xi(
     elif formation:
         form_label = str(formation)
 
+    captain = None
+    cap_rule = captain_rule if isinstance(captain_rule, dict) else {}
+    if cap_rule.get("enabled"):
+        captain = pick_captain(xi, multiplier=float(cap_rule.get("multiplier") or 2.0))
+        if captain:
+            for row in xi:
+                row["is_captain"] = row.get("player_id") == captain.get("player_id")
+
+    total_xpts = 0.0
+    for row in xi:
+        try:
+            v = float(row.get("xpts")) if row.get("xpts") is not None else 0.0
+        except (TypeError, ValueError):
+            v = 0.0
+        total_xpts += v
+    if captain:
+        total_xpts += float(captain.get("expected_gain") or 0.0)
+
     return {
         "jornada": jornada,
         "fixtures_count": fixtures,
@@ -936,12 +1051,15 @@ def build_recommended_gw_xi(
         "shape": shape,
         "xi": xi,
         "bench": bench,
+        "captain": captain,
+        "captain_enabled": bool(cap_rule.get("enabled")),
         "summary": {
             "xi_count": len(xi),
             "xi_target": total_need,
             "complete": len(xi) >= total_need,
             "with_gw_signal": gw_n,
             "signals": signals,
+            "xpts_total": round(total_xpts, 2) if total_xpts else None,
         },
     }
 
@@ -1340,9 +1458,35 @@ def priority_score_buy(item: dict[str, Any]) -> int:
         score += 8
     elif trend == "down":
         score -= 6
+    # Puntos esperados de la jornada: lo que realmente se compra
+    score += _xpts_bonus(item)
     # Capacidad de trueque / activo revendible
     score += int(min(20, trade_asset_score(item) / 2.5))
     return score
+
+
+def _xpts_bonus(item: dict[str, Any]) -> int:
+    """
+    Aporte de los puntos esperados al score de compra, normalizado a escala Mixto
+    para que Premier (escala ~16) no infle el ranking.
+    """
+    xpts = item.get("xpts")
+    try:
+        x = float(xpts) if xpts is not None else None
+    except (TypeError, ValueError):
+        x = None
+    if x is None:
+        return 0
+    scale = _avg_scale(item)
+    normalized = x * (8.0 / scale) if scale else x
+    bonus = int(min(30, normalized * 4))
+    p_play = item.get("xpts_p_play")
+    try:
+        if p_play is not None and float(p_play) < 0.35:
+            bonus -= 20  # comprar a quien no va a jugar es tirar la jornada
+    except (TypeError, ValueError):
+        pass
+    return bonus
 
 
 def trade_asset_score(item: dict[str, Any]) -> float:

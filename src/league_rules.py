@@ -135,7 +135,69 @@ def compute_factors(rules: dict[str, Any]) -> list[str]:
         factors.append("custom_rules_text")
     if rules.get("show_balances"):
         factors.append("public_balances")
+    captain = rules.get("captain")
+    if isinstance(captain, dict) and captain.get("enabled"):
+        factors.append(f"captain_x{captain.get('multiplier')}")
     return factors
+
+
+# Mister no publica el multiplicador en ningún endpoint (solo el literal
+# "Capitán x{multiplier}" en las traducciones). x2 es el valor del juego;
+# se puede sobreescribir por liga con `captain_multiplier` en LEAGUE_OVERRIDES.
+DEFAULT_CAPTAIN_MULTIPLIER = 2.0
+
+
+def resolve_captain_rule(
+    *,
+    fg_cfg: dict[str, Any] | None = None,
+    admin_settings: dict[str, Any] | None = None,
+    league_cfg: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Capitán de la liga: activado y multiplicador.
+
+    `is_captain_enabled` llega en /ajax/sw/admin (solo si eres admin) y
+    `LEAGUE_CAPTAIN_ENABLED` en el `_FG_cfg` del HTML (siempre disponible).
+    """
+    cfg = league_cfg if isinstance(league_cfg, dict) else {}
+    admin = admin_settings if isinstance(admin_settings, dict) else {}
+    fgc = fg_cfg if isinstance(fg_cfg, dict) else {}
+
+    enabled: bool | None = None
+    source = "unknown"
+    if cfg.get("captain_enabled") is not None:
+        enabled = _truthy(cfg.get("captain_enabled"))
+        source = "override"
+    elif admin.get("is_captain_enabled") is not None:
+        enabled = _truthy(admin.get("is_captain_enabled"))
+        source = "admin"
+    elif fgc.get("LEAGUE_CAPTAIN_ENABLED") is not None:
+        enabled = _truthy(fgc.get("LEAGUE_CAPTAIN_ENABLED"))
+        source = "fg_cfg"
+
+    multiplier = DEFAULT_CAPTAIN_MULTIPLIER
+    mult_source = "default"
+    for candidate, src in (
+        (cfg.get("captain_multiplier"), "override"),
+        (admin.get("captain_multiplier"), "admin"),
+        (fgc.get("CAPTAIN_MULTIPLIER"), "fg_cfg"),
+    ):
+        try:
+            v = float(candidate) if candidate is not None else None
+        except (TypeError, ValueError):
+            v = None
+        if v and v > 1:
+            multiplier = v
+            mult_source = src
+            break
+
+    return {
+        "enabled": bool(enabled),
+        "known": enabled is not None,
+        "multiplier": multiplier if enabled else 1.0,
+        "source": source,
+        "multiplier_source": mult_source,
+    }
 
 
 def normalize_rules(
@@ -144,6 +206,7 @@ def normalize_rules(
     admin_data: dict[str, Any] | None = None,
     league_cfg: dict[str, Any] | None = None,
     external_key: str | None = None,
+    fg_cfg: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Normaliza normas Mister a schema interno del advisor.
@@ -241,6 +304,11 @@ def normalize_rules(
         "source": source,
         "is_admin": _truthy(fg.get("admin")),
     }
+    rules["captain"] = resolve_captain_rule(
+        fg_cfg=fg_cfg,
+        admin_settings=admin_settings,
+        league_cfg=cfg,
+    )
     rules["factors"] = compute_factors({**rules, "competition_key": ext})
     # Urgencia derivada para el motor (1.0 = normal; >1 = más agresivo en buy_now)
     # market_speed Mister: 1=normal; valores mayores → mercado más rápido

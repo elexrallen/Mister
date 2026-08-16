@@ -9,33 +9,46 @@ Dashboard Jamstack + PWA para tomar mejores decisiones diarias en tu liga privad
 - **Dashboard estático** (HTML + Tailwind CDN + JS) en `/public`, listo para **GitHub Pages**
 - **PWA instalable** en el móvil (manifest + service worker) con botón **Actualizar** (nube)
 
-## Fuentes de datos (5 capas)
+## Jerarquía de fuentes
 
-| Capa | Fuente | Qué aporta |
-|------|--------|------------|
-| 1 | Mister Fantasy (`MISTER_TOKEN`) o `src/mock_data.json` | Mercado, plantilla, rivales, saldos |
-| 2 | `public/data/leagues/<slug>/history/YYYY-MM-DD.json` (precios slim) | Δvalor, chollos, trading 3–5 días |
-| 3 | API-Football (`FOOTBALL_API_KEY`) o `src/performance_history.json` | PPG / minutos / fiabilidad de **temporadas previas** |
-| 4 | **Externas Fantasy** (scrapers) | Estado, % titular, chollos, nota Sofascore best-effort |
-| 5 | Mock / seed local | Demo inmediata sin secrets |
+**Mister es la autoridad de datos duros.** Todo lo que Mister publica (economía,
+puntos por jornada, valores y su delta diario, rival y localía, calendario con
+kickoffs, reglas de liga y capitán) se toma de Mister y no se contrasta con
+terceros. Las fuentes externas solo cubren lo que Mister no da.
+
+| Prioridad | Fuente | Qué aporta | Estado |
+|-----------|--------|------------|--------|
+| 1 | **Mister** (`MISTER_TOKEN`): `ajax/sw/players`, `/feed`, `ajax/sw/gameweek`, `ajax/sw/competition`, balances y plantillas rivales | Mercado, plantilla, saldos, cláusulas, `recent_gw_points`, `price_delta_1d`, `next_opponent_team_id`, jornada y kickoffs, reglas | Autoridad |
+| 2 | **Fútbol Fantasy** | Probabilidad de titularidad (`gw_lineup_prob`), previa de alineaciones, lesionados y sancionados, producción por temporada (`ff_mister_avg`) | Autoridad complementaria |
+| 3 | **FotMob** | Nota, minutos, goles y xG de los últimos 5 partidos | Opcional, acotado a plantilla + candidatos del board |
+| 4 | **Jornada Perfecta** | Dudas y `gw_*` | Respaldo: solo se ejecuta si la previa de FF sale `partial` o `fail` |
+| 5 | `public/data/leagues/<slug>/history/YYYY-MM-DD.json` | Serie propia de precios y puntos por jornada | Derivada |
+| 6 | API-Football o `src/performance_history.json` | PPG / minutos de temporadas previas | Derivada |
+| 7 | Mock / seed local | Demo inmediata sin secrets | Fallback |
 
 Sin secrets el proyecto **funciona al clonar** (mock + seed).
 
-### Fuentes externas (scrapers)
+Sofascore y Comuniate se retiraron: la nota reciente la da FotMob, y la racha de
+puntos (`points_streak`) y la señal de chollo (`is_chollo_ext`) se derivan del
+propio `streak` y `prev_value` de Mister, sin peticiones extra ni bloqueos 403.
+
+### Enriquecimiento externo (scrapers)
 
 El motor enriquece plantilla y mercado vía `src/external_data.py` + `src/scrapers/`:
 
-| Prioridad | Fuente | Uso |
-|-----------|--------|-----|
-| Titularidad / estado | **Fútbol Fantasy** (primario) + **Jornada Perfecta** (refuerzo lesiones/dudas) | `availability`, `lineup_prob_ext`, chollos/recos |
-| Nota / racha | **Comuniate** (fichas → `id_sofascore` + media) + **Sofascore API** (best-effort; a menudo 403 → `partial` vía Comuniate) | `sofascore_avg_5`, `points_streak` |
-| Plantillas rivales | Mister `/users/{id}/…` | gaps, demanda de puja, `wait_risk` |
-| Libres | Mister best-effort; si no hay señal clara → lista vacía (honesto) | `free_agents_top` / nota en UI |
-
 - Matching de nombres con `thefuzz` (umbral ≥ 85; desempate por club).
 - **Fail-soft**: timeouts cortos, try/except por fuente. Si scrape falla → `src/cache/external_latest.json` (TTL 12h) → `src/external_seed.json`.
-- Cada mañana el JSON incluye `action_plan[]` (`buy_now` / `wait`+`wait_risk` / `avoid` / `sell`) y el dashboard muestra la **cola del día**.
+- Cada mañana el JSON incluye `action_plan[]` (`buy_now` / `wait`+`wait_risk` / `avoid` / `sell`) y el dashboard muestra la **cola del día** con la fase del playbook (ver [docs/daily-playbook.md](docs/daily-playbook.md)).
 - Los selectores HTML son frágiles y los sitios tienen ToS propios: úsalo bajo tu responsabilidad; el pipeline de Mister no se tumba si un scraper rompe.
+
+### Motor de jornada
+
+Sobre esa base el pipeline calcula:
+
+- `fdr` / `fdr_note` (`src/fixture_difficulty.py`): dificultad del rival derivada de los puntos que concede cada equipo en el propio pool de Mister, más localía. En pretemporada degrada a neutro.
+- `xpts` / `xpts_floor` / `xpts_why` (`src/expected_points.py`): puntos esperados de la jornada como `p_juega × producción_base × ajuste_fdr`, escalados por el `provider` de la liga.
+- `recommended_xi` con **capitán** elegido por `xpts × (multiplicador − 1)` y desempate por probabilidad de jugar, si la liga tiene capitán activo.
+- `recommendations[]` y `squad_notes[]` desde `src/daily_playbook.py`.
 
 ### Motor competitivo
 

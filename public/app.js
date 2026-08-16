@@ -93,7 +93,7 @@
         p.delta_5d != null ? Number(p.delta_5d) : p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0,
       fotmob: (p) => {
         const fm = p.fotmob_stats || {};
-        const v = fm.rating_promedio ?? (p.external || {}).sofascore_avg_5;
+        const v = fm.rating_promedio ?? (p.external || {}).recent_rating;
         return v != null ? Number(v) : -1;
       },
       bid: (p) => Number(p.puja_recomendada) || 0,
@@ -117,7 +117,7 @@
       lineup: (p) => (p.lineup_prob != null ? Number(p.lineup_prob) : -1),
       fotmob: (p) => {
         const fm = p.fotmob_stats || {};
-        const v = fm.rating_promedio ?? (p.external || {}).sofascore_avg_5;
+        const v = fm.rating_promedio ?? (p.external || {}).recent_rating;
         return v != null ? Number(v) : -1;
       },
       mister: (p) => {
@@ -366,8 +366,8 @@
   const fotmobCell = (p) => {
     const fm = p.fotmob_stats || {};
     let rating = fm.rating_promedio;
-    if (rating == null && p.external && p.external.sofascore_avg_5 != null) {
-      rating = p.external.sofascore_avg_5;
+    if (rating == null && p.external && p.external.recent_rating != null) {
+      rating = p.external.recent_rating;
     }
     if (rating == null) return "—";
     const mins = Number(fm.minutos_ultimos_5 || 0);
@@ -548,7 +548,6 @@
       if (!s) return -1;
       if (s.includes("futbolfantasy.com/jugadores/")) return 50;
       if (s.includes("jornadaperfecta.com/jugador/")) return 40;
-      if (s.includes("comuniate.com") && s.includes("jugador")) return 30;
       if (s.includes("/partido/")) return 5;
       if (s.startsWith("http")) return 20;
       return 10;
@@ -1456,6 +1455,48 @@
     bindPlayerOpenClicks(root, "market");
   }
 
+  function renderPlaybook(playbook) {
+    if (!playbook || !playbook.phase) return "";
+    const prioCls = {
+      Alta: "badge-alta",
+      Media: "badge-duda",
+      Baja: "badge-baja",
+    };
+    const items = (playbook.checklist || [])
+      .map((c) => {
+        const done = c.status === "done";
+        return `<li class="playbook-task${done ? " is-done" : ""}">
+          <span class="badge ${prioCls[c.priority] || "badge-duda"}">${escapeHtml(
+            c.priority || ""
+          )}</span>
+          <div>
+            <strong>${escapeHtml(c.title || "")}</strong>
+            ${c.detail ? `<p>${escapeHtml(c.detail)}</p>` : ""}
+          </div>
+        </li>`;
+      })
+      .join("");
+    const warnings = (playbook.warnings || [])
+      .map((w) => `<p class="playbook-warning">${escapeHtml(w)}</p>`)
+      .join("");
+    const jornada =
+      playbook.jornada != null
+        ? `<span class="playbook-gw">J${escapeHtml(String(playbook.jornada))}</span>`
+        : "";
+    return `<section class="playbook" aria-label="Fase del día">
+      <header class="playbook-head">
+        ${jornada}
+        <h3>${escapeHtml(playbook.phase_label || "")}</h3>
+        <span class="playbook-countdown">${escapeHtml(
+          playbook.countdown_label || ""
+        )} para la jornada</span>
+      </header>
+      ${playbook.focus ? `<p class="playbook-focus">${escapeHtml(playbook.focus)}</p>` : ""}
+      ${warnings}
+      ${items ? `<ul class="playbook-tasks">${items}</ul>` : ""}
+    </section>`;
+  }
+
   function renderActionQueue(data) {
     const box = document.getElementById("action-queue");
     if (!box) return;
@@ -1495,8 +1536,11 @@
       return "";
     };
 
+    const playbookHtml = renderPlaybook(data.daily_playbook);
+
     if (!plan.length) {
-      box.innerHTML = `<p class="queue-empty">Sin acciones claras hoy.</p>`;
+      box.innerHTML =
+        playbookHtml + `<p class="queue-empty">Sin acciones de mercado claras hoy.</p>`;
       return;
     }
 
@@ -1779,6 +1823,7 @@
     box.className = "action-queue-list" + (expanded ? " is-expanded" : "");
     box.setAttribute("role", "list");
     box.innerHTML =
+      playbookHtml +
       packageHint +
       fundingHint +
       liquidityNote +

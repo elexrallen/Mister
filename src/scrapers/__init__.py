@@ -1,32 +1,39 @@
-"""Scrapers externos Fantasy (FF / JP / Comuniate). Sofascore API no se invoca."""
+"""
+Scrapers externos Fantasy.
+
+Jerarquía tras consolidar en Mister:
+  - Fútbol Fantasy: autoridad externa (lesionados, sancionados, previa de jornada).
+  - Jornada Perfecta: solo respaldo, si la previa de FF no sale o sale incompleta.
+
+Comuniate y Sofascore se retiraron: lo que aportaban (nota reciente, racha de
+puntos, chollos) ya lo da Mister o FotMob con menos peticiones y sin bloqueos.
+"""
 
 from __future__ import annotations
 
 from typing import Any
 
-from .comuniate import fetch_comuniate
 from .futbolfantasy import fetch_futbolfantasy
 from .ff_matchday import fetch_ff_matchday
 from .jornadaperfecta import fetch_jornadaperfecta
 
 # Competiciones con scrapers FF/JP cableados
 SUPPORTED_EXTERNAL = frozenset({"laliga", "premier"})
+# Estados de la previa FF que hacen innecesario el respaldo de Jornada Perfecta
+FF_MATCHDAY_OK = frozenset({"ok", "cache"})
 
 
 def fetch_all_external(
     team_names: list[str] | None = None,
     *,
     competition: str = "laliga",
-    sofascore_candidates: list[dict[str, Any]] | None = None,
     priority_teams: list[str] | None = None,
 ) -> dict[str, Any]:
     """
-    Ejecuta scrapers hub fail-soft.
-    competition: `laliga` | `premier` (u otra → FF/JP vacíos + status skip).
-    priority_teams: equipos de plantilla (FF sin tope).
-    sofascore_candidates se ignora (nota → FotMob en data_engine).
+    Ejecuta los scrapers hub fail-soft.
+    competition: `laliga` | `premier` (u otra → vacíos + status skip).
+    priority_teams: equipos de plantilla propia (FF sin tope de páginas).
     """
-    _ = sofascore_candidates  # legacy kw; no API Sofascore
     comp = (competition or "laliga").strip().lower()
     status: dict[str, str] = {}
 
@@ -34,14 +41,10 @@ def fetch_all_external(
         return {
             "futbolfantasy": [],
             "jornadaperfecta": [],
-            "comuniate": [],
-            "sofascore": [],
             "ff_matchday": {"status": "skip", "fixtures": [], "players": []},
             "status": {
                 "futbolfantasy": "skip",
                 "jornadaperfecta": "skip",
-                "comuniate": "skip",
-                "sofascore": "skip",
                 "ff_matchday": "skip",
             },
             "competition": comp,
@@ -54,32 +57,25 @@ def fetch_all_external(
     )
     status["futbolfantasy"] = "ok" if ff else "fail"
 
-    jp = fetch_jornadaperfecta(competition=comp)
-    status["jornadaperfecta"] = "ok" if jp else "fail"
-
     matchday = fetch_ff_matchday(competition=comp)
     md_status = str(matchday.get("status") or "fail")
     status["ff_matchday"] = md_status if md_status in ("ok", "partial", "cache") else "fail"
 
-    # Comuniate cubre LaLiga Fantasy; Premier no tiene sección usable
-    if comp == "laliga":
-        com = fetch_comuniate(profile_limit=0)
-        status["comuniate"] = "ok" if com else "fail"
+    # Jornada Perfecta solo si FF no cubre la previa: es un scrape caro y redundante
+    if md_status in FF_MATCHDAY_OK and ff:
+        jp: list[dict[str, Any]] = []
+        status["jornadaperfecta"] = "skip"
     else:
-        com = []
-        status["comuniate"] = "skip"
-
-    status["sofascore"] = "skip"
+        jp = fetch_jornadaperfecta(competition=comp)
+        status["jornadaperfecta"] = "ok" if jp else "fail"
 
     return {
         "futbolfantasy": ff,
         "jornadaperfecta": jp,
-        "comuniate": com,
-        "sofascore": [],
         "ff_matchday": matchday,
         "status": status,
         "competition": comp,
     }
 
 
-__all__ = ["fetch_all_external", "SUPPORTED_EXTERNAL", "fetch_ff_matchday"]
+__all__ = ["fetch_all_external", "SUPPORTED_EXTERNAL", "FF_MATCHDAY_OK", "fetch_ff_matchday"]

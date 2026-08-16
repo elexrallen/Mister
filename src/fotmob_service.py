@@ -1,7 +1,7 @@
 """
 Cliente FotMob — forma reciente (rating / minutos / goles / xG).
 
-Reemplaza Sofascore como fuente de nota. Fail-soft: nunca tumba el pipeline.
+Única fuente de nota reciente. Fail-soft: nunca tumba el pipeline.
 """
 
 from __future__ import annotations
@@ -505,9 +505,13 @@ def enrich_players_with_fotmob(
     players: list[dict[str, Any]],
     *,
     max_lookups: int = MAX_LOOKUPS_DEFAULT,
+    focus_ids: set[str] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Añade fotmob_stats a cada jugador (batch fail-soft).
+
+    `focus_ids` acota el presupuesto de peticiones a los jugadores que importan
+    (plantilla propia y objetivos del board); el resto queda en `skip`.
     Meta: {fotmob, matched, filled, errors}.
     """
     meta: dict[str, Any] = {
@@ -516,6 +520,7 @@ def enrich_players_with_fotmob(
         "filled": 0,
         "errors": [],
         "lookups": 0,
+        "focused": bool(focus_ids),
     }
     if not players:
         return players, meta
@@ -527,7 +532,8 @@ def enrich_players_with_fotmob(
 
     for p in players:
         new_p = dict(p)
-        if lookups >= max_lookups:
+        in_focus = focus_ids is None or str(p.get("id") or "") in focus_ids
+        if lookups >= max_lookups or not in_focus:
             new_p["fotmob_stats"] = _defaults(source="skip")
             out.append(new_p)
             continue
@@ -553,9 +559,8 @@ def enrich_players_with_fotmob(
                 matched += 1
             if stats.get("rating_promedio") is not None:
                 filled += 1
-                # Compat scoring / UI legacy
                 ext2 = dict(new_p.get("external") or {})
-                ext2["sofascore_avg_5"] = stats["rating_promedio"]
+                ext2["recent_rating"] = stats["rating_promedio"]
                 new_p["external"] = ext2
             if lookups < max_lookups and lookups < len(players):
                 time.sleep(REQUEST_GAP_S * 0.5)

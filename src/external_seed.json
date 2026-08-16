@@ -6,8 +6,6 @@
     "lineup_prob": 90,
     "is_chollo": false,
     "is_recommendation": true,
-    "sofascore_avg_5": 7.4,
-    "points_streak": "up",
     "profile_url": "https://www.futbolfantasy.com/jugadores/lamine-yamal",
     "source": "seed"
   },
@@ -18,8 +16,6 @@
     "lineup_prob": 90,
     "is_chollo": false,
     "is_recommendation": true,
-    "sofascore_avg_5": 7.1,
-    "points_streak": "flat",
     "profile_url": "https://www.futbolfantasy.com/jugadores/pedri",
     "source": "seed"
   },
@@ -30,8 +26,6 @@
     "lineup_prob": 55,
     "is_chollo": false,
     "is_recommendation": false,
-    "sofascore_avg_5": 6.8,
-    "points_streak": "down",
     "profile_url": "https://www.jornadaperfecta.com/jugador/dani-olmo",
     "source": "seed"
   },
@@ -42,8 +36,6 @@
     "lineup_prob": 0,
     "is_chollo": false,
     "is_recommendation": false,
-    "sofascore_avg_5": null,
-    "points_streak": "unknown",
     "profile_url": "https://www.futbolfantasy.com/laliga/sancionados",
     "source": "seed"
   },
@@ -54,8 +46,6 @@
     "lineup_prob": 95,
     "is_chollo": false,
     "is_recommendation": true,
-    "sofascore_avg_5": 6.9,
-    "points_streak": "flat",
     "profile_url": "https://www.futbolfantasy.com/jugadores/unai-simon",
     "source": "seed"
   }

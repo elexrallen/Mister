@@ -36,7 +36,10 @@ from league_rules import (
     merge_rules_into_league_cfg,
     normalize_rules,
 )
+from daily_playbook import build_daily_playbook, playbook_to_recommendations
 from external_data import enrich_players_with_external, enrich_players_with_ff_production
+from fixture_difficulty import annotate_players_with_fdr, build_team_strength
+from expected_points import annotate_players_with_xpts
 from fotmob_service import enrich_players_with_fotmob
 from scrapers.ff_points import resolve_avg_scale, scale_threshold
 from competitive_actions import (
@@ -139,6 +142,52 @@ def money(n: float | int) -> int:
     return int(round(n))
 
 
+FOTMOB_MARKET_FOCUS = 24
+
+
+def fotmob_focus_ids(
+    squad: list[dict[str, Any]],
+    market: list[dict[str, Any]],
+    *,
+    market_limit: int = FOTMOB_MARKET_FOCUS,
+) -> set[str]:
+    """
+    Jugadores que merecen una petición a FotMob: toda la plantilla propia y los
+    candidatos de mercado con más papeletas de acabar en el board. El resto del
+    universo se queda sin nota y no gasta presupuesto de red.
+    """
+    ids = {str(p.get("id")) for p in squad if p.get("id")}
+
+    def _interest(p: dict[str, Any]) -> float:
+        ext = p.get("external") or {}
+        score = 0.0
+        try:
+            score += float(p.get("mister_avg") or p.get("form") or 0) * 2.0
+        except (TypeError, ValueError):
+            pass
+        try:
+            score += float(p.get("gw_points_sum") or 0) * 0.2
+        except (TypeError, ValueError):
+            pass
+        prob = ext.get("gw_lineup_prob")
+        try:
+            score += float(prob) / 20.0 if prob is not None else 0.0
+        except (TypeError, ValueError):
+            pass
+        if ext.get("is_top_ff"):
+            score += 3.0
+        return score
+
+    ranked = sorted(
+        (p for p in market if p.get("id") and str(p.get("id")) not in ids),
+        key=_interest,
+        reverse=True,
+    )
+    for p in ranked[: max(0, int(market_limit))]:
+        ids.add(str(p.get("id")))
+    return ids
+
+
 # ---------------------------------------------------------------------------
 # Capa 1 — Mister Fantasy (ajax live + mock)
 # ---------------------------------------------------------------------------
@@ -201,13 +250,126 @@ def _player_price_pairs_from_payload(payload: dict[str, Any]) -> dict[str, float
     return prices
 
 
+def merge_matchday_sources(
+    mister_md: dict[str, Any] | None,
+    ff_md: dict[str, Any] | None,
+) -> dict[str, Any] | None:
+    """
+    Mister manda en jornada, fechas y rival (dato oficial de la propia liga);
+    FF aporta la previa con % de titularidad. Si Mister no responde, cae a FF.
+    """
+    if not mister_md or not (mister_md.get("fixtures") or []):
+        if not ff_md:
+            return None
+        out = dict(ff_md)
+        out.setdefault("source", "futbolfantasy")
+        out["sources"] = ["futbolfantasy"]
+        return out
+
+    out = dict(mister_md)
+    out["source"] = mister_md.get("source") or "mister"
+    sources = [out["source"]]
+    if ff_md:
+        sources.append("futbolfantasy")
+        out["ff_status"] = ff_md.get("status")
+        out["ff_fixtures_count"] = ff_md.get("fixtures_count")
+        if out.get("jornada") is None:
+            out["jornada"] = ff_md.get("jornada")
+        if not out.get("competition"):
+            out["competition"] = ff_md.get("competition")
+    out["sources"] = sources
+    return out
+
+
+def _player_points_from_payload(payload: dict[str, Any]) -> tuple[dict[str, list[int | None]], dict[str, int]]:
+    """
+    id → racha de puntos por jornada (`recent_gw_points`) y puntos de la jornada
+    en curso (`gw_points`). None dentro de la racha = jornada sin jugar.
+    """
+    by_gw: dict[str, list[int | None]] = {}
+    current: dict[str, int] = {}
+
+    def _absorb(items: Any) -> None:
+        if not isinstance(items, list):
+            return
+        for p in items:
+            if not isinstance(p, dict):
+                continue
+            pid = p.get("id")
+            if pid is None:
+                continue
+            pid = str(pid)
+            streak = p.get("recent_gw_points")
+            if isinstance(streak, list) and streak and pid not in by_gw:
+                clean: list[int | None] = []
+                for v in streak:
+                    try:
+                        clean.append(int(v) if v is not None else None)
+                    except (TypeError, ValueError):
+                        clean.append(None)
+                by_gw[pid] = clean
+            gw_pts = p.get("gw_points")
+            if gw_pts is not None and pid not in current:
+                try:
+                    current[pid] = int(gw_pts)
+                except (TypeError, ValueError):
+                    pass
+
+    _absorb(payload.get("market_opportunities"))
+    _absorb((payload.get("me") or {}).get("squad"))
+    _absorb(payload.get("free_agents_top"))
+    for rival in payload.get("rivals") or []:
+        if isinstance(rival, dict):
+            _absorb(rival.get("squad"))
+    return by_gw, current
+
+
 def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = None) -> dict[str, Any]:
-    """Snapshot slim: solo precios diarios (no el payload completo)."""
+    """
+    Snapshot slim diario: precios + puntos por jornada (no el payload completo).
+    Los puntos permiten medir a posteriori si las decisiones acertaron.
+    """
     day = day or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    points_by_gw, gw_points = _player_points_from_payload(payload)
+    matchday = payload.get("matchday") if isinstance(payload.get("matchday"), dict) else {}
     return {
         "date": day,
         "league_slug": payload.get("league_slug"),
+        "jornada": matchday.get("jornada"),
+        "gameweek_status": matchday.get("gameweek_status"),
         "prices": _player_price_pairs_from_payload(payload),
+        "points_by_gw": points_by_gw,
+        "gw_points": gw_points,
+    }
+
+
+def load_points_history_for_league(slug: str, days: int = 30) -> dict[str, list[dict[str, Any]]]:
+    """
+    Histórico de puntos por jugador: `{player_id: [{date, jornada, points}]}`.
+    Solo jornadas cerradas (una entrada por jornada, la última observada gana).
+    """
+    history_dir = config.league_history_dir(slug)
+    if not history_dir.exists():
+        return {}
+    out: dict[str, dict[Any, dict[str, Any]]] = {}
+    for snap_path in sorted(history_dir.glob("*.json"))[-days:]:
+        try:
+            snap = load_json(snap_path)
+        except Exception:  # noqa: BLE001
+            continue
+        jornada = snap.get("jornada")
+        date = snap.get("date")
+        for pid, pts in (snap.get("gw_points") or {}).items():
+            if pts is None:
+                continue
+            out.setdefault(str(pid), {})[jornada] = {
+                "date": date,
+                "jornada": jornada,
+                "points": pts,
+            }
+    return {
+        pid: sorted(rows.values(), key=lambda r: (r.get("jornada") is None, r.get("jornada"), r.get("date")))
+        for pid, rows in out.items()
     }
 
 
@@ -552,6 +714,9 @@ def classify_market_opportunities(
         p = enrich_player(raw, perf_idx, allow_synthetic=allow_synthetic)
         price = float(p.get("price") or 0)
         delta = compute_delta_from_history(p["id"], price, price_series)
+        if delta is None and p.get("price_delta_1d") is not None:
+            # Δ real de Mister (value vs prev_value); menos ventana que 5d pero no inventado
+            delta = float(p.get("price_delta_1d") or 0)
         if delta is None and p.get("price_delta_5d") is not None and allow_synthetic:
             delta = float(p.get("price_delta_5d") or 0)
         trend = p.get("trend")
@@ -779,10 +944,10 @@ def classify_market_opportunities(
                 score += 6
         if ext.get("is_chollo_ext") or ext.get("is_recommendation_ext"):
             score += 10
-        sofa = ext.get("sofascore_avg_5")
-        if sofa is not None:
+        rating = ext.get("recent_rating")
+        if rating is not None:
             try:
-                sv = float(sofa)
+                sv = float(rating)
                 if sv > 10:
                     sv = min(9.5, 5.0 + (sv - 5.0) * 0.35)
                 if sv >= 7.0:
@@ -1314,7 +1479,7 @@ def build_action_plan(
             o, rivals, fills_need=fills, market_mode=market_mode
         )
         delta = o.get("delta_5d")
-        sofa = ext.get("sofascore_avg_5")
+        rating = ext.get("recent_rating")
         cost = float(o.get("puja_recomendada") or o.get("price") or 0)
         min_c = float(o.get("puja_minima") or o.get("price") or 0)
         fin = evaluate_bid_finance(
@@ -1831,8 +1996,8 @@ def build_action_plan(
                 wait_bits.append("línea ya cubierta")
             elif not fills:
                 wait_bits.append("no cubre carencia urgente")
-            if sofa is not None and float(sofa) < 6.2:
-                wait_bits.append(f"nota baja ({sofa})")
+            if rating is not None and float(rating) < 6.2:
+                wait_bits.append(f"nota baja ({rating})")
             ff = o.get("ff_mister_avg")
             if ff is not None:
                 wait_bits.append(f"FF media {float(ff):.1f}")
@@ -2057,14 +2222,17 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         else None,
         league_cfg=league_cfg,
         external_key=external_key_early,
+        fg_cfg=live_meta.get("fg_cfg_rules") if isinstance(live_meta.get("fg_cfg_rules"), dict) else None,
     )
     league_cfg = merge_rules_into_league_cfg(league_cfg, league_rules)
     market_mode = config.league_market_mode(league_cfg)
     fixed_market = market_mode == "fixed"
     # Catálogo completo para plantilla ideal; no se persiste en latest_data.json
     full_pool: list[dict[str, Any]] = []
+    gw_bundle: dict[str, Any] = {}
     if isinstance(league, dict):
         full_pool = list(league.pop("pool_all", None) or [])
+        gw_bundle = league.pop("gameweek", None) or {}
     honest_live = mister_source == "api" or bool(live_meta.get("honest_mode"))
 
     # Preferir competición real de la sesión si vino en live_meta
@@ -2140,7 +2308,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         for p in market_combined
     ]
 
-    # Enriquecimiento externo (FF/JP; Comuniate solo LaLiga)
+    # Enriquecimiento externo (FF autoridad, JP solo respaldo)
     universe = squad + market_raw
     external_key = config.external_competition_key(
         league_cfg=league_cfg,
@@ -2154,6 +2322,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         else None,
         league_cfg=league_cfg,
         external_key=external_key,
+        fg_cfg=live_meta.get("fg_cfg_rules") if isinstance(live_meta.get("fg_cfg_rules"), dict) else None,
     )
     league_cfg = merge_rules_into_league_cfg(league_cfg, league_rules)
     market_mode = config.league_market_mode(league_cfg)
@@ -2188,13 +2357,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta = {
             "futbolfantasy": "skip",
             "jornadaperfecta": "skip",
-            "comuniate": "skip",
-            "sofascore": "skip",
             "ff_matchday": "skip",
             "matched": 0,
             "cache_used": False,
             "errors": [],
-            "sofascore_filled": 0,
             "matchday": None,
             "note": (
                 f"Sin scrapers externos para {league_cfg.get('competition') or 'esta competición'} "
@@ -2203,8 +2369,12 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         }
         log.info("Skip externos: sin mapping para id_competition=%s", id_competition_i)
 
-    # FotMob: nota / minutos / goles / xG últimos 5 (reemplaza Sofascore)
-    universe_ext, fotmob_meta = enrich_players_with_fotmob(universe_ext)
+    # FotMob: nota / minutos / goles / xG últimos 5, solo plantilla + candidatos
+    # reales del mercado (el resto del universo no llega nunca al board).
+    universe_ext, fotmob_meta = enrich_players_with_fotmob(
+        universe_ext,
+        focus_ids=fotmob_focus_ids(universe_ext[: len(squad)], universe_ext[len(squad) :]),
+    )
     external_meta["fotmob"] = fotmob_meta.get("fotmob", "skip")
     external_meta["fotmob_matched"] = fotmob_meta.get("matched", 0)
     external_meta["fotmob_filled"] = fotmob_meta.get("filled", 0)
@@ -2239,14 +2409,38 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta["ff_scoring"] = None
         external_meta["ff_avg_scale"] = None
         external_meta["mister_provider"] = league_rules.get("provider")
+
+    # Dificultad de rival (calendario + clasificación Mister) y puntos esperados
+    team_strength = build_team_strength(gw_bundle.get("table") if isinstance(gw_bundle.get("table"), dict) else None)
+    scoring_rules = {
+        **league_rules,
+        "avg_scale": external_meta.get("ff_avg_scale") or ff_hint.get("avg_scale"),
+    }
+    xpts_targets = list(squad) + list(market_ext) + list(full_pool)
+    n_fdr = annotate_players_with_fdr(
+        xpts_targets,
+        strength=team_strength,
+        team_schedule=gw_bundle.get("team_schedule") if isinstance(gw_bundle.get("team_schedule"), dict) else None,
+    )
+    n_xpts = annotate_players_with_xpts(xpts_targets, league_rules=scoring_rules)
+    external_meta["fdr_confidence"] = team_strength.get("confidence")
+    external_meta["xpts_players"] = n_xpts
+    log.info(
+        "xPts [%s]: %s jugadores (FDR %s, confianza=%s, jugadas=%s)",
+        slug,
+        n_xpts,
+        n_fdr,
+        team_strength.get("confidence"),
+        team_strength.get("max_played"),
+    )
+
     me = {**me_raw, "squad": squad}
     log.info(
-        "External match %s/%s (FF=%s JP=%s Com=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
+        "External match %s/%s (FF=%s JP=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
         external_meta.get("matched"),
         len(universe),
         external_meta.get("futbolfantasy"),
         external_meta.get("jornadaperfecta"),
-        external_meta.get("comuniate"),
         external_meta.get("fotmob"),
         external_meta.get("fotmob_filled"),
         external_meta.get("ff_points"),
@@ -2284,11 +2478,12 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     diagnostico_plantilla["competition_phase"] = competition_phase
     diagnostico_plantilla["days_to_kickoff"] = comp.get("days_to_kickoff")
     diagnostico_plantilla["season_start"] = comp.get("season_start")
-    matchday_early = (
-        external_meta.get("matchday")
-        if isinstance(external_meta.get("matchday"), dict)
-        else None
+    matchday_early = merge_matchday_sources(
+        gw_bundle.get("matchday") if isinstance(gw_bundle.get("matchday"), dict) else None,
+        external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None,
     )
+    if matchday_early and gw_bundle.get("schedule"):
+        matchday_early["season_schedule"] = gw_bundle["schedule"]
     diagnostico_plantilla["matchday"] = matchday_early
     hours_j = resolve_hours_to_jornada(
         days_to_kickoff=comp.get("days_to_kickoff"),
@@ -2493,6 +2688,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         matchday=matchday_early,
     )
 
+    # Se rellenan con la doctrina diaria una vez existen action_plan y once
     recommendations: list[dict[str, Any]] = []
     squad_notes: list[dict[str, Any]] = []
 
@@ -2777,15 +2973,45 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     attach_mister_assets(rival_upgrades, player_index=asset_index)
     attach_mister_assets(free_agents, player_index=asset_index)
 
-    matchday_meta = external_meta.get("matchday") if isinstance(external_meta.get("matchday"), dict) else None
+    matchday_meta = matchday_early
     gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
     recommended_xi = build_recommended_gw_xi(
         squad,
         formation=me.get("formation"),
         matchday=matchday_meta or {},
+        captain_rule=league_rules.get("captain") if isinstance(league_rules.get("captain"), dict) else None,
     )
+    my_gw_lineup = gw_bundle.get("my_lineup") if isinstance(gw_bundle.get("my_lineup"), dict) else None
+    if my_gw_lineup:
+        recommended_xi["current"] = {
+            "captain_id": my_gw_lineup.get("captain_id"),
+            "captain_set": bool(my_gw_lineup.get("captain_set")),
+            "starter_ids": [r.get("player_id") for r in my_gw_lineup.get("starters") or []],
+            "points": my_gw_lineup.get("points"),
+            "rank": my_gw_lineup.get("rank"),
+        }
     attach_mister_assets(gw_xi_advice, player_index=asset_index)
     attach_mister_assets(recommended_xi.get("players") or [], player_index=asset_index)
+
+    playbook = build_daily_playbook(
+        hours_to_jornada=hours_j,
+        matchday=matchday_meta,
+        competition_phase=competition_phase,
+        action_plan=action_plan,
+        recommended_xi=recommended_xi,
+        diagnostico=diagnostico_plantilla,
+        me=me,
+        league_rules=league_rules,
+    )
+    recommendations = playbook_to_recommendations(playbook)
+    squad_notes = build_squad_notes(me, diagnosis, diagnostico_plantilla)
+    log.info(
+        "Playbook [%s]: fase=%s (%s) tareas=%s",
+        slug,
+        playbook.get("phase"),
+        playbook.get("countdown_label"),
+        (playbook.get("counts") or {}).get("todo"),
+    )
 
     free_note = live_meta.get("free_agents_source") or ("seed" if free_agents and not honest_live else "unavailable")
     bal = float(me.get("balance") or 0)
@@ -2832,13 +3058,12 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 budget_pressure = "medium"
 
     external_notes = [
-        "Fuentes externas (FF/JP/Comuniate): estado, % titular y chollos; fail-soft con caché/seed.",
-        "FotMob: rating/minutos/goles/xG de los últimos 5 partidos (fuente primaria de nota reciente).",
+        "Fútbol Fantasy: estado (lesión/sanción) y % de titularidad previsto; Jornada Perfecta solo si FF falla.",
+        "FotMob: rating/minutos/goles/xG de los últimos 5 partidos, acotado a plantilla y candidatos del board.",
         (
             f"External matched={external_meta.get('matched')} "
             f"FF={external_meta.get('futbolfantasy')} "
             f"JP={external_meta.get('jornadaperfecta')} "
-            f"Com={external_meta.get('comuniate')} "
             f"FotMob={external_meta.get('fotmob')} "
             f"notas={external_meta.get('fotmob_filled', 0)}"
             + (" (caché FF/JP)" if external_meta.get("cache_used") else "")
@@ -2904,13 +3129,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "factors": list(league_rules.get("factors") or []),
             "external": {
                 "futbolfantasy": external_meta.get("futbolfantasy", "fail"),
-                "jornadaperfecta": external_meta.get("jornadaperfecta", "fail"),
-                "comuniate": external_meta.get("comuniate", "fail"),
+                "jornadaperfecta": external_meta.get("jornadaperfecta", "skip"),
                 "ff_matchday": external_meta.get("ff_matchday", "fail"),
-                "sofascore": "skip",
                 "fotmob": external_meta.get("fotmob", "skip"),
                 "matched": external_meta.get("matched", 0),
-                "sofascore_filled": external_meta.get("sofascore_filled", 0),
                 "fotmob_matched": external_meta.get("fotmob_matched", 0),
                 "fotmob_filled": external_meta.get("fotmob_filled", 0),
                 "cache_used": bool(external_meta.get("cache_used")),
@@ -3015,6 +3237,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "free_agents_top": free_agents,
         "recommendations": recommendations,
         "squad_notes": squad_notes,
+        "daily_playbook": playbook,
         "matchday": matchday_meta,
         "gw_xi_advice": gw_xi_advice,
         "recommended_xi": recommended_xi,

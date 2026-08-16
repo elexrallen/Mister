@@ -1,8 +1,9 @@
 """
 Fachada de enriquecimiento externo Fantasy.
 
-Fusiona Fútbol Fantasy + Jornada Perfecta + Comuniate (best-effort).
-Sofascore API desactivada; la nota reciente la aporta FotMob en data_engine.
+Fútbol Fantasy es la autoridad externa (lesionados, sancionados, previa de
+jornada con % de titularidad) y Jornada Perfecta solo entra como respaldo.
+La nota reciente la aporta FotMob en data_engine.
 Caché en disco (TTL 12h) y seed de respaldo. Nunca tumba el pipeline.
 """
 
@@ -15,7 +16,6 @@ from pathlib import Path
 from typing import Any
 
 from scrapers import fetch_all_external
-from scrapers.comuniate import enrich_profiles_for_names
 from scrapers.name_match import match_player
 from scrapers.ff_points import (
     THIN_APPS,
@@ -77,8 +77,6 @@ def _save_json(path: Path, payload: Any) -> None:
 def _merge_source_records(
     ff: list[dict[str, Any]],
     jp: list[dict[str, Any]],
-    com: list[dict[str, Any]],
-    sofa: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     by_name: dict[str, dict[str, Any]] = {}
 
@@ -94,10 +92,7 @@ def _merge_source_records(
                 "lineup_prob": r.get("lineup_prob"),
                 "is_chollo": bool(r.get("is_chollo")),
                 "is_recommendation": bool(r.get("is_recommendation")),
-                "sofascore_avg_5": r.get("sofascore_avg_5"),
-                "points_streak": r.get("points_streak") or "unknown",
                 "profile_url": r.get("profile_url"),
-                "sofascore_id": r.get("sofascore_id"),
                 "sources": [r["source"]] if r.get("source") else [],
                 "_ff_prob": r.get("source") == "futbolfantasy" and r.get("lineup_prob") is not None,
             }
@@ -114,13 +109,6 @@ def _merge_source_records(
             existing["is_chollo"] = True
         if r.get("is_recommendation"):
             existing["is_recommendation"] = True
-        if r.get("sofascore_avg_5") is not None:
-            existing["sofascore_avg_5"] = r["sofascore_avg_5"]
-        if r.get("points_streak") and r["points_streak"] != "unknown":
-            if existing.get("points_streak") in (None, "unknown"):
-                existing["points_streak"] = r["points_streak"]
-        if r.get("sofascore_id"):
-            existing["sofascore_id"] = r["sofascore_id"]
         if r.get("profile_url"):
             cur = existing.get("profile_url") or ""
             new = str(r["profile_url"])
@@ -131,8 +119,6 @@ def _merge_source_records(
                     return 5
                 if "jornadaperfecta.com/jugador/" in s:
                     return 4
-                if "comuniate.com" in s and "/jugador" in s:
-                    return 3
                 if "/partido/" in s:
                     return 0
                 if s:
@@ -180,12 +166,6 @@ def _merge_source_records(
             if pct_i >= 80:
                 existing["is_recommendation"] = True
 
-    for r in com + sofa:
-        existing = ensure(r)
-        if not existing:
-            continue
-        touch_meta(existing, r)
-
     for rec in by_name.values():
         rec.pop("_ff_prob", None)
     return list(by_name.values())
@@ -197,7 +177,7 @@ def _empty_external() -> dict[str, Any]:
         "lineup_prob_ext": None,
         "is_chollo_ext": False,
         "is_recommendation_ext": False,
-        "sofascore_avg_5": None,
+        "recent_rating": None,
         "points_streak": "unknown",
         "profile_url": None,
         "matched_name": None,
@@ -233,7 +213,7 @@ def _load_candidates_from_cache_or_seed(
     cache = _load_json(_cache_path_for(competition))
     if isinstance(cache, dict) and cache.get("players"):
         meta["cache_used"] = True
-        for k in ("futbolfantasy", "jornadaperfecta", "comuniate", "sofascore"):
+        for k in ("futbolfantasy", "jornadaperfecta"):
             meta[k] = "cache"
         log.info(
             "Usando caché externa [%s] (%d jugadores)",
@@ -247,43 +227,29 @@ def _load_candidates_from_cache_or_seed(
         seed = _load_json(SEED_PATH)
         if isinstance(seed, list) and seed:
             meta["cache_used"] = False
-            for k in ("futbolfantasy", "jornadaperfecta", "comuniate"):
+            for k in ("futbolfantasy", "jornadaperfecta"):
                 meta[k] = "fail"
-            meta["sofascore"] = "skip"
             meta["errors"].append("fallback_seed")
             log.info("Usando external_seed.json (%d)", len(seed))
             return seed
     return []
 
 
-def _overlay_sofa_like(candidates: list[dict[str, Any]], recs: list[dict[str, Any]]) -> None:
-    for s in recs:
-        hit, score = match_player(s.get("name") or "", s.get("team"), candidates, threshold=80)
-        if hit and s.get("sofascore_avg_5") is not None:
-            hit["sofascore_avg_5"] = s["sofascore_avg_5"]
-            if s.get("sofascore_id"):
-                hit["sofascore_id"] = s["sofascore_id"]
-            if s.get("profile_url"):
-                hit["profile_url"] = hit.get("profile_url") or s["profile_url"]
-            src = s.get("source") or "sofascore"
-            if src not in hit.get("sources", []):
-                hit.setdefault("sources", []).append(src)
-            if s.get("points_streak") and s["points_streak"] != "unknown":
-                hit["points_streak"] = s["points_streak"]
-        elif s.get("sofascore_avg_5") is not None or s.get("sofascore_id"):
-            candidates.append({
-                "name": s.get("name"),
-                "team": s.get("team"),
-                "availability": "unknown",
-                "lineup_prob": None,
-                "is_chollo": bool(s.get("is_chollo")),
-                "is_recommendation": bool(s.get("is_recommendation")),
-                "sofascore_avg_5": s.get("sofascore_avg_5"),
-                "points_streak": s.get("points_streak") or "unknown",
-                "profile_url": s.get("profile_url"),
-                "sofascore_id": s.get("sofascore_id"),
-                "sources": [s.get("source") or "sofascore"],
-            })
+def _derive_chollo(player: dict[str, Any]) -> bool:
+    """
+    Chollo endógeno: sustituye la señal que aportaba Comuniate. Un jugador es
+    chollo cuando el mercado lo está abaratando hoy pero sigue produciendo.
+    """
+    try:
+        delta = float(player.get("price_delta_1d"))
+    except (TypeError, ValueError):
+        return False
+    if delta >= -0.005:
+        return False
+    pts = [v for v in (player.get("recent_gw_points") or []) if isinstance(v, (int, float))]
+    if not pts:
+        return False
+    return (sum(pts) / len(pts)) >= 4.0
 
 
 def _apply_matchday_overlay(
@@ -357,10 +323,7 @@ def _apply_matchday_overlay(
                 "lineup_prob": pct_i,
                 "is_chollo": False,
                 "is_recommendation": bool(pct_i is not None and pct_i >= 80),
-                "sofascore_avg_5": None,
-                "points_streak": "unknown",
                 "profile_url": mp.get("profile_url"),
-                "sofascore_id": None,
                 "sources": ["futbolfantasy_matchday"],
                 "gw_lineup_prob": pct_i,
                 "gw_role": role,
@@ -384,21 +347,18 @@ def enrich_players_with_external(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Devuelve jugadores enriquecidos + meta
-    {futbolfantasy, jornadaperfecta, comuniate, sofascore, ff_matchday, matched, ...}.
+    {futbolfantasy, jornadaperfecta, ff_matchday, matched, ...}.
     competition: `laliga` | `premier`.
     squad_teams: equipos de plantilla propia (FF siempre scrapea estas páginas).
     """
     comp = (competition or "laliga").strip().lower() or "laliga"
     meta: dict[str, Any] = {
         "futbolfantasy": "fail",
-        "jornadaperfecta": "fail",
-        "comuniate": "fail",
-        "sofascore": "skip",
+        "jornadaperfecta": "skip",
         "ff_matchday": "fail",
         "matched": 0,
         "cache_used": False,
         "errors": [],
-        "sofascore_filled": 0,
         "competition": comp,
         "matchday": None,
     }
@@ -414,40 +374,16 @@ def enrich_players_with_external(
         bundle = fetch_all_external(
             team_names,
             competition=comp,
-            sofascore_candidates=None,
             priority_teams=priority or None,
         )
         status = dict(bundle.get("status") or {})
-        com_catalog = bundle.get("comuniate") or []
         matchday = bundle.get("ff_matchday") if isinstance(bundle.get("ff_matchday"), dict) else None
         candidates = _merge_source_records(
             bundle.get("futbolfantasy") or [],
             bundle.get("jornadaperfecta") or [],
-            com_catalog,
-            [],
         )
         candidates = _apply_matchday_overlay(candidates, matchday)
 
-        # 1) Fichas Comuniate (solo LaLiga) → sofascore_id + media fallback
-        if comp == "laliga" and com_catalog:
-            mister_names = [str(p.get("name") or "") for p in players if p.get("name")]
-            com_enriched = enrich_profiles_for_names(
-                mister_names,
-                catalog=com_catalog,
-                limit=min(20, max(8, len(mister_names))),
-            )
-            if com_enriched:
-                _overlay_sofa_like(candidates, com_enriched)
-                if status.get("comuniate") == "ok":
-                    status["comuniate"] = "ok"
-                n_com_avg = sum(1 for c in com_enriched if c.get("sofascore_avg_5") is not None)
-                log.info("Comuniate medias en fichas: %s", n_com_avg)
-
-        # Sofascore API desactivada (403 habitual). La nota la aporta FotMob
-        # en data_engine; Comuniate puede dejar medias parciales como fallback.
-        status["sofascore"] = "skip"
-        filled = sum(1 for c in candidates if c.get("sofascore_avg_5") is not None)
-        meta["sofascore_filled"] = filled
         for k, v in status.items():
             meta[k] = v
 
@@ -472,7 +408,6 @@ def enrich_players_with_external(
 
     enriched: list[dict[str, Any]] = []
     matched = 0
-    sofa_on_players = 0
     for p in players:
         ext = _empty_external()
         best, score = match_player(p.get("name") or "", p.get("team"), candidates)
@@ -483,10 +418,10 @@ def enrich_players_with_external(
             ext = {
                 "availability": avail,
                 "lineup_prob_ext": best.get("lineup_prob"),
-                "is_chollo_ext": bool(best.get("is_chollo")),
+                "is_chollo_ext": False,
                 "is_recommendation_ext": bool(best.get("is_recommendation")),
-                "sofascore_avg_5": best.get("sofascore_avg_5"),
-                "points_streak": best.get("points_streak") or "unknown",
+                "recent_rating": None,
+                "points_streak": "unknown",
                 "profile_url": best.get("profile_url"),
                 "matched_name": best.get("name"),
                 "match_score": score,
@@ -498,14 +433,12 @@ def enrich_players_with_external(
                 "gw_opponent": best.get("gw_opponent"),
                 "gw_fixture_id": best.get("gw_fixture_id"),
             }
-            # Mister a veces trae escudos nuevos (Club 50…) → completar con club FF/Comuniate
+            # Mister a veces trae escudos nuevos (Club 50…) → completar con club FF
             team_now = str(new_p.get("team") or "")
             ext_team = (best.get("team") or "").strip()
             if ext_team and (not team_now or team_now.lower().startswith("club ")):
                 new_p["team"] = ext_team
                 new_p["team_resolved_from"] = "external"
-            if ext.get("sofascore_avg_5") is not None:
-                sofa_on_players += 1
             if avail in ("injured", "suspended"):
                 new_p["injury"] = True
             if ext.get("lineup_prob_ext") is not None:
@@ -519,13 +452,14 @@ def enrich_players_with_external(
             new_p["gw_starter"] = ext.get("gw_starter")
             new_p["gw_doubt"] = ext.get("gw_doubt")
             new_p["gw_out"] = ext.get("gw_out")
+        # Señales endógenas: Mister ya trae racha y delta diario, no hacen
+        # falta fuentes externas para derivarlas.
+        ext["points_streak"] = str(new_p.get("points_trend") or "unknown")
+        ext["is_chollo_ext"] = _derive_chollo(new_p)
         new_p["external"] = ext
         enriched.append(new_p)
 
     meta["matched"] = matched
-    meta["sofascore_filled"] = sofa_on_players
-    if sofa_on_players >= 5 and meta.get("sofascore") == "skip":
-        meta["sofascore"] = "partial"
 
     # Resumen matchday para payload (sin listas enormes de jugadores por fixture)
     if matchday and matchday.get("status") not in (None, "fail", "skip"):
