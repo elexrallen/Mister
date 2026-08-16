@@ -11,12 +11,13 @@ import re
 from typing import Any
 from urllib.parse import urljoin
 
-from .http_util import get_soup
+from .http_util import get_soup, host_is_rate_limited
 from .teams import display_team_from_slug, team_slug
 
 log = logging.getLogger("scrapers.ff")
 
 BASE = "https://www.futbolfantasy.com"
+HOST = "www.futbolfantasy.com"
 MAX_TEAM_PAGES = 12
 
 # competition key → path segment en futbolfantasy.com
@@ -192,7 +193,14 @@ def fetch_futbolfantasy(
         ][:MAX_TEAM_PAGES]
         slugs = priority_slugs + other_slugs
 
-        for slug in slugs:
+        for i, slug in enumerate(slugs):
+            if host_is_rate_limited(HOST):
+                log.warning(
+                    "FF nos limitó: paro tras %d/%d equipos, los datos van incompletos",
+                    i,
+                    len(slugs),
+                )
+                break
             try:
                 for rec in _parse_team_page(path, slug):
                     upsert(rec)

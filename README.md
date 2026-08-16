@@ -38,6 +38,7 @@ El motor enriquece plantilla y mercado vía `src/external_data.py` + `src/scrape
 
 - Matching de nombres con `thefuzz` (umbral ≥ 85; desempate por club).
 - **Fail-soft**: timeouts cortos, try/except por fuente. Si scrape falla → `src/cache/external_latest.json` (TTL 12h) → `src/external_seed.json`.
+- **Ritmo y 429** (`src/scrapers/http_util.py`): un ciclo pide a FutbolFantasy las páginas de equipo, la previa y hasta 48 perfiles **por liga**, así que las peticiones al mismo host van espaciadas (0,4 s en FF), un 429 se reintenta respetando `Retry-After`, y a la tercera el host se da por caído durante 10 minutos y se deja de pedirle nada: seguir insistiendo solo alarga el bloqueo y devuelve datos a medias. El corte queda anotado en `meta.external.rate_limited`.
 - Cada mañana el JSON incluye `action_plan[]` (`buy_now` / `wait`+`wait_risk` / `avoid` / `sell`) y el dashboard muestra la **cola del día** con la fase del playbook (ver [docs/daily-playbook.md](docs/daily-playbook.md)).
 - Los selectores HTML son frágiles y los sitios tienen ToS propios: úsalo bajo tu responsabilidad; el pipeline de Mister no se tumba si un scraper rompe.
 
@@ -283,6 +284,8 @@ No hace falta tocar código ni lanzar un segundo deploy: el propio workflow diar
 py -3 src/data_engine.py
 cd public; py -3 -m http.server 8080
 ```
+
+Al iterar, regenera **una sola liga** (`--league laliga-patio`) en vez de las cuatro: encadenar ciclos completos es lo que acaba provocando los 429 de FutbolFantasy, y aunque el pipeline los aguanta, el JSON sale con menos jugadores emparejados.
 
 Sube cambios de código con `git push`. El JSON lo sigue generando la Action, y el workflow auxiliar `Deploy GitHub Pages` queda solo para redeploys manuales puntuales del contenido ya presente en el repo.
 

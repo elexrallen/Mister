@@ -48,6 +48,7 @@ from expected_points import annotate_players_with_xpts
 from model_calibration import build_calibration
 from fotmob_service import enrich_players_with_fotmob
 from scrapers.ff_points import resolve_avg_scale, scale_threshold
+from scrapers.http_util import rate_limit_report, reset_rate_limits
 from competitive_actions import (
     annotate_market_budget_risk,
     build_gw_xi_advice,
@@ -3249,6 +3250,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "fotmob_matched": external_meta.get("fotmob_matched", 0),
                 "fotmob_filled": external_meta.get("fotmob_filled", 0),
                 "cache_used": bool(external_meta.get("cache_used")),
+                "rate_limited": rate_limit_report() or None,
                 "note": external_meta.get("note"),
             },
             "fixture_difficulty": {
@@ -3495,6 +3497,10 @@ def main(argv: list[str] | None = None) -> int:
 
     log.info("=== Mister Fantasy Advisor — data engine ===")
     log.info("USE_MISTER_MOCK=%s USE_PERF_SEED=%s", config.USE_MISTER_MOCK, config.USE_PERF_SEED)
+
+    # El throttling se comparte entre ligas: si FF nos corta en la primera, no
+    # tiene sentido insistir en las tres siguientes.
+    reset_rate_limits()
 
     discovered: list[dict[str, Any]] = []
     if not config.USE_MISTER_MOCK:
