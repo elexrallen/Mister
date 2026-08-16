@@ -21,8 +21,10 @@ from competitive_actions import (  # noqa: E402
 )
 from data_engine import (  # noqa: E402
     build_action_plan,
+    build_price_history_snapshot,
     classify_market_opportunities,
     diagnose_squad,
+    prune_history,
     save_json,
 )
 from squad_analyzer import analyze_squad, merge_structural_into_diagnosis  # noqa: E402
@@ -291,17 +293,15 @@ def main(argv: list[str] | None = None) -> None:
     data["kpis"] = kpis
 
     save_json(path, data)
-    # History por liga si aplica
+    # History slim de precios por liga (no duplicar el payload completo)
     if slug:
         hist_dir = config.league_history_dir(str(slug))
         hist_dir.mkdir(parents=True, exist_ok=True)
-        save_json(hist_dir / f"{datetime.now(timezone.utc).date().isoformat()}.json", data)
-    if not args.league or slug == config.DEFAULT_LEAGUE_SLUG:
-        hist = config.HISTORY_DIR / f"{datetime.now(timezone.utc).date().isoformat()}.json"
-        config.HISTORY_DIR.mkdir(parents=True, exist_ok=True)
-        save_json(hist, data)
-        if path != config.LATEST_DATA_PATH:
-            save_json(config.LATEST_DATA_PATH, data)
+        day = datetime.now(timezone.utc).date().isoformat()
+        save_json(hist_dir / f"{day}.json", build_price_history_snapshot(data, day=day))
+        prune_history(history_dir=hist_dir)
+    if (not args.league or slug == config.DEFAULT_LEAGUE_SLUG) and path != config.LATEST_DATA_PATH:
+        save_json(config.LATEST_DATA_PATH, data)
 
     fw = diagnosis["by_position"]["FW"]
     buys = [a for a in action_plan if a.get("action") == "buy_now"]

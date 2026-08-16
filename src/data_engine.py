@@ -3,11 +3,12 @@ Mister Fantasy Advisor — Motor de datos (data_engine.py)
 
 Pipeline batch multi-fuente:
   1) Mister Fantasy (API o mock) → estado de la liga privada
-  2) Snapshots diarios en public/data/history/ → tendencias de mercado
+  2) Snapshots slim de precios en public/data/leagues/<slug>/history/
+     → tendencias de mercado (Δvalor 3–5 días)
   3) API-Football o seed local → rendimiento multi-temporada
   4) Algoritmos → carencias, oportunidades, libres TOP, recomendaciones
 
-Salida: public/data/latest_data.json (+ snapshot del día).
+Salida: public/data/leagues/<slug>/latest_data.json (+ snapshot de precios del día).
 """
 
 from __future__ import annotations
@@ -166,73 +167,91 @@ def fetch_mister_league(community_id: str | None = None) -> tuple[dict[str, Any]
 # Capa 2 — Histórico de mercado (snapshots locales)
 # ---------------------------------------------------------------------------
 
-def list_history_snapshots() -> list[Path]:
-    if not config.HISTORY_DIR.exists():
-        return []
-    return sorted(config.HISTORY_DIR.glob("*.json"))
+def _player_price_pairs_from_payload(payload: dict[str, Any]) -> dict[str, float]:
+    """Extrae id→precio de un latest_data (o snapshot legacy completo)."""
+    prices: dict[str, float] = {}
+
+    def _absorb(items: Any) -> None:
+        if not isinstance(items, list):
+            return
+        for p in items:
+            if not isinstance(p, dict):
+                continue
+            pid = p.get("id")
+            price = p.get("price")
+            if pid is None or price is None:
+                continue
+            try:
+                prices[str(pid)] = float(price)
+            except (TypeError, ValueError):
+                continue
+
+    _absorb(payload.get("market_opportunities"))
+    _absorb((payload.get("me") or {}).get("squad"))
+    _absorb(payload.get("free_agents_top"))
+    for rival in payload.get("rivals") or []:
+        if isinstance(rival, dict):
+            _absorb(rival.get("squad"))
+    return prices
 
 
-def load_recent_price_map(days: int = 5) -> dict[str, list[float]]:
-    """
-    Construye serie de precios por player_id a partir de snapshots recientes.
-    Útil para calcular Δvalor real cuando ya hay histórico en el repo.
-    """
-    snaps = list_history_snapshots()[-days:]
+def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = None) -> dict[str, Any]:
+    """Snapshot slim: solo precios diarios (no el payload completo)."""
+    day = day or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return {
+        "date": day,
+        "league_slug": payload.get("league_slug"),
+        "prices": _player_price_pairs_from_payload(payload),
+    }
+
+
+def _prices_from_history_file(snap: dict[str, Any]) -> dict[str, float]:
+    """Lee precios de snapshot slim o legacy (payload completo)."""
+    raw = snap.get("prices")
+    if isinstance(raw, dict) and raw:
+        out: dict[str, float] = {}
+        for pid, price in raw.items():
+            try:
+                out[str(pid)] = float(price)
+            except (TypeError, ValueError):
+                continue
+        return out
+    return _player_price_pairs_from_payload(snap)
+
+
+def _series_from_history_dir(history_dir: Path, days: int) -> dict[str, list[float]]:
+    if not history_dir.exists():
+        return {}
+    snaps = sorted(history_dir.glob("*.json"))[-days:]
     series: dict[str, list[float]] = {}
     for snap_path in snaps:
         try:
             snap = load_json(snap_path)
         except Exception:  # noqa: BLE001
             continue
-        for bucket in ("market_opportunities", "me"):
-            items = snap.get(bucket) if bucket != "me" else snap.get("me", {}).get("squad", [])
-            if not items:
-                continue
-            for p in items:
-                pid = p.get("id")
-                price = p.get("price")
-                if pid is None or price is None:
-                    continue
-                series.setdefault(pid, []).append(float(price))
-        # También libres
-        for p in snap.get("free_agents_top", []):
-            pid, price = p.get("id"), p.get("price")
-            if pid is not None and price is not None:
-                series.setdefault(pid, []).append(float(price))
+        for pid, price in _prices_from_history_file(snap).items():
+            series.setdefault(pid, []).append(price)
     return series
 
 
+def load_recent_price_map(days: int = 5) -> dict[str, list[float]]:
+    """
+    Fallback: history global legacy (public/data/history/).
+    Preferir load_recent_price_map_for_league.
+    """
+    return _series_from_history_dir(config.HISTORY_DIR, days)
+
+
 def load_recent_price_map_for_league(slug: str, days: int = 5) -> dict[str, list[float]]:
-    """Histórico de precios por liga; fallback al history global."""
-    hist = config.league_history_dir(slug)
-    if hist.exists():
-        snaps = sorted(hist.glob("*.json"))[-days:]
-        series: dict[str, list[float]] = {}
-        for snap_path in snaps:
-            try:
-                snap = load_json(snap_path)
-            except Exception:  # noqa: BLE001
-                continue
-            for bucket in ("market_opportunities", "me"):
-                items = snap.get(bucket) if bucket != "me" else snap.get("me", {}).get("squad", [])
-                if not items:
-                    continue
-                for p in items:
-                    pid, price = p.get("id"), p.get("price")
-                    if pid is None or price is None:
-                        continue
-                    series.setdefault(pid, []).append(float(price))
-            for p in snap.get("free_agents_top", []):
-                pid, price = p.get("id"), p.get("price")
-                if pid is not None and price is not None:
-                    series.setdefault(pid, []).append(float(price))
-        if series:
-            return series
+    """Histórico de precios por liga; fallback al history global legacy."""
+    series = _series_from_history_dir(config.league_history_dir(slug), days)
+    if series:
+        return series
     return load_recent_price_map(days=days)
 
 
 def compute_delta_from_history(player_id: str, current_price: float, series: dict[str, list[float]]) -> float | None:
-    prices = series.get(player_id) or []
+    prices = series.get(str(player_id)) or []
     if len(prices) < 2:
         return None
     base = prices[0]
@@ -2919,7 +2938,7 @@ def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS, history_d
 
 
 def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None = None) -> Path:
-    """Escribe JSON de la liga + history; si es default, copia a latest_data.json."""
+    """Escribe JSON de la liga + history slim de precios; si es default, copia a latest_data.json."""
     league_cfg = dict(league_cfg or config.get_league(payload.get("league_slug")))
     slug = str(league_cfg.get("slug") or config.DEFAULT_LEAGUE_SLUG)
     out_path = config.league_data_path(slug)
@@ -2929,15 +2948,12 @@ def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None 
     hist_dir = config.league_history_dir(slug)
     hist_dir.mkdir(parents=True, exist_ok=True)
     day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    save_json(hist_dir / f"{day}.json", payload)
+    save_json(hist_dir / f"{day}.json", build_price_history_snapshot(payload, day=day))
     prune_history(history_dir=hist_dir)
 
     is_default = slug == config.DEFAULT_LEAGUE_SLUG or bool(league_cfg.get("default"))
     if is_default:
         save_json(config.LATEST_DATA_PATH, payload)
-        config.HISTORY_DIR.mkdir(parents=True, exist_ok=True)
-        save_json(config.HISTORY_DIR / f"{day}.json", payload)
-        prune_history(history_dir=config.HISTORY_DIR)
 
     log.info("Escrito %s (slug=%s default=%s)", out_path, slug, is_default)
     return out_path

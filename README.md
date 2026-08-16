@@ -14,7 +14,7 @@ Dashboard Jamstack + PWA para tomar mejores decisiones diarias en tu liga privad
 | Capa | Fuente | Qué aporta |
 |------|--------|------------|
 | 1 | Mister Fantasy (`MISTER_TOKEN`) o `src/mock_data.json` | Mercado, plantilla, rivales, saldos |
-| 2 | `public/data/history/YYYY-MM-DD.json` | Δvalor, chollos, trading 3–5 días, liquidez |
+| 2 | `public/data/leagues/<slug>/history/YYYY-MM-DD.json` (precios slim) | Δvalor, chollos, trading 3–5 días |
 | 3 | API-Football (`FOOTBALL_API_KEY`) o `src/performance_history.json` | PPG / minutos / fiabilidad de **temporadas previas** |
 | 4 | **Externas Fantasy** (scrapers) | Estado, % titular, chollos, nota Sofascore best-effort |
 | 5 | Mock / seed local | Demo inmediata sin secrets |

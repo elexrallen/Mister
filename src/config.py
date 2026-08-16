@@ -15,6 +15,7 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 SRC_DIR = ROOT_DIR / "src"
 PUBLIC_DIR = ROOT_DIR / "public"
 DATA_DIR = PUBLIC_DIR / "data"
+# Legacy (ya no se escribe); solo fallback de lectura si existe.
 HISTORY_DIR = DATA_DIR / "history"
 
 # Entradas
