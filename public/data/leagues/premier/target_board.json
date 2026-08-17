@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T11:29:07.832479+00:00",
+  "generated_at": "2026-08-17T12:39:54.940397+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -54,8 +54,8 @@
         "FW": 2
       },
       "ep_sum_starters": 422.2,
-      "ep_sum": 497.4,
-      "cost_sum": 61346500.0,
+      "ep_sum": 537.4,
+      "cost_sum": 63039500.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -168,8 +168,8 @@
         "FW": 2
       },
       "ep_sum_starters": 422.2,
-      "ep_sum": 497.4,
-      "cost_sum": 61346500.0,
+      "ep_sum": 537.4,
+      "cost_sum": 63039500.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -200,8 +200,8 @@
         "FW": 3
       },
       "ep_sum_starters": 413.3,
-      "ep_sum": 540.8,
-      "cost_sum": 62615500.0,
+      "ep_sum": 566.7,
+      "cost_sum": 62944500.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -245,11 +245,11 @@
     "balance": 497000.0,
     "squad_value": 62722000.0,
     "total": 63219000.0,
-    "liquidity_floor": 497000.0,
-    "budget_cap": 62722000.0
+    "liquidity_floor": 0.0,
+    "budget_cap": 63219000.0
   },
   "budget_operable": {
-    "budget_cap": 62722000.0,
+    "budget_cap": 63219000.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
   "ideal_buy_cost": 56887500.0,
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 803,000 € · buy · starter · Δ 15%",
-      "added_at": "2026-08-17T11:29:07.818856+00:00"
+      "added_at": "2026-08-17T11:29:07.688397+00:00"
     },
     {
       "slot": "MF1",
@@ -830,7 +830,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 8,468,000 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-17T11:29:07.823524+00:00"
+      "added_at": "2026-08-17T11:29:07.693056+00:00"
     },
     {
       "slot": "MF5",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,693,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-17T11:29:07.830809+00:00"
+      "added_at": "2026-08-17T11:29:07.700418+00:00"
     },
     {
       "slot": "FW1",
@@ -1418,63 +1418,12 @@
     "formation": "5-4-1"
   },
   "daily_patches": [],
-  "cash_reserved": 0,
+  "cash_reserved": 0.0,
   "residual_after_reserve": 497000.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF4",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "59761",
-      "name": "Ferdi Kadıoğlu",
-      "team": "Brighton",
-      "team_id": "178",
-      "ep_score": 40.4,
-      "price": 5159000.0,
-      "status": "dropped",
-      "delta_5d": 0.0172,
-      "value_note": "stable",
-      "value_ratio": 7.83,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 221.0,
-      "ff_mister_avg": 5.97,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 40 · 5,159,000 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-16T11:15:17.566543+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF6",
-      "position": "DF",
-      "role": "bench",
-      "player_id": "63706",
-      "name": "Adrien Truffert",
-      "team": "Bournemouth",
-      "team_id": "52",
-      "ep_score": 67.0,
-      "price": 5579000.0,
-      "status": "dropped",
-      "delta_5d": -0.0398,
-      "value_note": "stable",
-      "value_ratio": 12.01,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 277.0,
-      "ff_mister_avg": 7.1,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 67 · 5,579,000 € · buy · bench · Δ -4%",
-      "added_at": "2026-08-16T11:15:17.575755+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 497000.0
@@ -1491,7 +1440,7 @@
     "sell": 12,
     "patches": 0,
     "on_daily": 0,
-    "cash_reserved": 0,
+    "cash_reserved": 0.0,
     "ep_sum": 511.5,
     "ep_sum_starters": 463.3,
     "mode": "operable",
