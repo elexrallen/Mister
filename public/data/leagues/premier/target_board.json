@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T10:29:53.398418+00:00",
+  "generated_at": "2026-08-17T10:38:53.014341+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 5,269,000 € · buy · bench · Δ -0%",
-      "added_at": "2026-08-17T10:29:53.396683+00:00"
+      "added_at": "2026-08-17T10:38:53.012565+00:00"
     },
     {
       "slot": "MF1",
@@ -830,7 +830,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 8,468,000 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-17T10:29:53.387448+00:00"
+      "added_at": "2026-08-17T10:38:52.999746+00:00"
     },
     {
       "slot": "MF5",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,693,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-17T10:29:53.396806+00:00"
+      "added_at": "2026-08-17T10:38:53.012678+00:00"
     },
     {
       "slot": "FW1",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 2,031,000 € · buy · bench · Δ 15%",
-      "added_at": "2026-08-17T10:29:53.396831+00:00"
+      "added_at": "2026-08-17T10:38:53.012702+00:00"
     }
   ],
   "moves": {

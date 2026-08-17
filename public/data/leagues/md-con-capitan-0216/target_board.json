@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-17T10:27:06.864698+00:00",
+  "generated_at": "2026-08-17T10:36:54.055751+00:00",
   "league_slug": "md-con-capitan-0216",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 32 · 1,402,000 € · buy · bench · Δ 1%",
-      "added_at": "2026-08-17T10:27:06.862433+00:00"
+      "added_at": "2026-08-17T10:27:06.566473+00:00"
     },
     {
       "slot": "FW1",
@@ -1501,33 +1501,7 @@
   ],
   "aspirational_targets": [],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "MF5",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "24778",
-      "name": "Robert Navarro",
-      "team": "Athletic",
-      "team_id": "1",
-      "ep_score": 32.6,
-      "price": 1536000.0,
-      "status": "dropped",
-      "delta_5d": 0.0159,
-      "value_note": "stable",
-      "value_ratio": 21.22,
-      "lineup_prob": 50.0,
-      "ff_mister_points": 125.1,
-      "ff_mister_avg": 3.91,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 33 · 1,536,000 € · buy · bench · Δ 2%",
-      "added_at": "2026-08-17T08:09:06.769624+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 660000.0
