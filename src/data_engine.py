@@ -91,6 +91,13 @@ from squad_analyzer import (
     structural_market_boost,
     upgrade_worth_buy,
 )
+from market_cycle import (
+    adjust_funding_for_bootstrap,
+    derive_cash_lag_hours,
+    derive_cycle_hours,
+    resolve_bootstrap_xi,
+    resolve_market_cycle,
+)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -1512,11 +1519,14 @@ def build_action_plan(
     cash_reserved = float(funding.get("cash_reserved") or funding.get("funding_target") or 0)
     patch_cap = max_patch_spend(target_board)
     allow_patches = patches_allowed(target_board)
-    cash_lag = float(
-        funding.get("cash_lag_hours")
-        if funding.get("cash_lag_hours") is not None
-        else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2
-    )
+    bootstrap = (diagnostico_plantilla or {}).get("bootstrap_xi") or {}
+    market_cycle_ctx = (diagnostico_plantilla or {}).get("market_cycle") or {}
+    if market_cycle_ctx.get("cash_lag_hours") is not None:
+        cash_lag = float(market_cycle_ctx["cash_lag_hours"])
+    elif funding.get("cash_lag_hours") is not None:
+        cash_lag = float(funding.get("cash_lag_hours"))
+    else:
+        cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2)
     hours_resolved = resolve_hours_to_jornada(
         hours_to_jornada=float(hours_to_jornada) if hours_to_jornada is not None else None,
         days_to_kickoff=days_to_kickoff,
@@ -1829,6 +1839,35 @@ def build_action_plan(
             buy_now = False
             if not any("sobrada" in w.lower() or "ya cubierta" in w.lower() for w in why_parts):
                 why_parts.append("línea sobrada — no insistir en la puja")
+        # Bootstrap once: priorizar titulares del mercado actual que cierran huecos legales
+        if (
+            bootstrap.get("active")
+            and on_daily
+            and bf in ("comfortable", "tight")
+            and not gw_out
+            and not solvency_blocked
+        ):
+            gap_pos = bootstrap.get("position_gaps") or {}
+            if pos in gap_pos and int(gap_pos.get(pos) or 0) > 0:
+                starter_ok = real_starter_cand or (
+                    lineup is not None and float(lineup) >= 45
+                )
+                line_ok = (pos != "GK" and starter_ok) or (
+                    pos == "GK" and int(gap_pos.get("GK") or 0) > 0
+                )
+                if line_ok:
+                    posture = bootstrap.get("posture") or "buy_now"
+                    cycle_urgent = bool(bootstrap.get("cycle_urgent"))
+                    if posture == "buy_now" or cycle_urgent:
+                        buy_now = True
+                        h_end = market_cycle_ctx.get("hours_to_end")
+                        tip = (
+                            f"modo once: mercado cierra en {float(h_end):.0f}h"
+                            if h_end is not None
+                            else "modo once: completa el 11"
+                        )
+                        if not any("modo once" in w for w in why_parts):
+                            why_parts.insert(0, tip)
         if buy_now and pos == "GK" and line_covered and not is_upgrade and not fills_structural_o:
             buy_now = False
             if not any("ya cubierta" in w.lower() for w in why_parts):
@@ -2175,6 +2214,44 @@ def build_action_plan(
                 existing["why"] += f" · rivales top con gap: {', '.join(t['team_name'] for t in top[:2])}"
                 existing["urgency"] = "medium"
 
+    if bootstrap.get("active"):
+        gap_pos = {
+            p
+            for p, n in (bootstrap.get("position_gaps") or {}).items()
+            if int(n or 0) > 0
+        }
+        promoted_b: list[dict[str, Any]] = []
+        for item in plan:
+            if item.get("action") != "wait":
+                promoted_b.append(item)
+                continue
+            pos = item.get("position")
+            if (
+                pos not in gap_pos
+                or not item.get("on_daily_market")
+                or item.get("budget_fit") not in ("comfortable", "tight")
+                or item.get("solvency_blocked")
+            ):
+                promoted_b.append(item)
+                continue
+            posture = bootstrap.get("posture") or "buy_now"
+            if posture == "can_wait_cycle" and not bootstrap.get("cycle_urgent"):
+                promoted_b.append(item)
+                continue
+            row = dict(item)
+            row["action"] = "buy_now"
+            row["urgency"] = "high"
+            why = (row.get("why") or "").strip()
+            h_end = market_cycle_ctx.get("hours_to_end")
+            tip = (
+                f"modo once: mercado cierra en {float(h_end):.0f}h"
+                if h_end is not None
+                else "modo once: completa el 11"
+            )
+            row["why"] = f"{tip}; {why}" if why else tip
+            promoted_b.append(row)
+        plan = promoted_b
+
     # Mercado rápido: wait con alto riesgo → buy_now (si finanzas OK)
     if market_urgency >= 1.15 and not fixed:
         promoted: list[dict[str, Any]] = []
@@ -2213,6 +2290,7 @@ def build_action_plan(
         target_board=target_board,
         squad_size=len(me.get("squad") or []),
         max_squad=max_squad,
+        bootstrap=bootstrap if bootstrap.get("active") else None,
     )
     action_plan, daily_package = finalized
 
@@ -2728,6 +2806,49 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         )
     )
 
+    market_cycle = resolve_market_cycle(
+        league_rules,
+        market_mode=market_mode,
+        hours_to_jornada=hours_j,
+        auction_ends_ts=(
+            live_meta.get("market_auction_ends")
+            if isinstance(live_meta, dict)
+            else None
+        ),
+        market_lock=(
+            live_meta.get("market_lock") if isinstance(live_meta, dict) else None
+        ),
+    )
+    diagnostico_plantilla["market_cycle"] = market_cycle
+
+    recommended_xi = build_recommended_gw_xi(
+        squad,
+        formation=me.get("formation"),
+        matchday=matchday_early or {},
+        captain_rule=league_rules.get("captain")
+        if isinstance(league_rules.get("captain"), dict)
+        else None,
+    )
+    bootstrap_xi = resolve_bootstrap_xi(
+        squad=squad,
+        xi_summary=recommended_xi.get("summary") or {},
+        hours_to_jornada=hours_j,
+        market_cycle=market_cycle,
+        competition_phase=competition_phase,
+    )
+    diagnostico_plantilla["bootstrap_xi"] = bootstrap_xi
+    if bootstrap_xi.get("active"):
+        log.info(
+            "Bootstrap XI [%s]: %s/%s slots short=%s posture=%s cycle_end=%sh cycles_left=%s",
+            slug,
+            bootstrap_xi.get("xi_count"),
+            bootstrap_xi.get("xi_target"),
+            bootstrap_xi.get("slots_short"),
+            bootstrap_xi.get("posture"),
+            market_cycle.get("hours_to_end"),
+            market_cycle.get("cycles_left_before_gw"),
+        )
+
     opportunities = annotate_market_budget_risk(
         opportunities,
         rivals,
@@ -3032,6 +3153,26 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         log.warning("No se pudo guardar target_board: %s", exc)
 
     funding_info = funding_plan_from_board(target_board, balance=float(me.get("balance") or 0))
+    cycle_h = float(market_cycle.get("cycle_hours") or derive_cycle_hours(league_rules, market_mode=market_mode))
+    cash_lag_h = float(
+        market_cycle.get("cash_lag_hours")
+        or derive_cash_lag_hours(cycle_h, league_rules)
+    )
+    funding_info["cycle_hours"] = cycle_h
+    funding_info["cash_lag_hours"] = cash_lag_h
+    if market_mode == "fixed":
+        funding_info["liquidity_note"] = (
+            "Mercado LFM: fichajes al precio listado (ciclo ~"
+            f"{cycle_h:.0f}h). Reserva ajustada al once si la plantilla está incompleta."
+        )
+    funding_info = adjust_funding_for_bootstrap(
+        funding_info,
+        bootstrap=bootstrap_xi,
+        balance=float(me.get("balance") or 0),
+        opportunities=opportunities,
+    )
+    funding_info["bootstrap_xi_context"] = bootstrap_xi
+    funding_info["market_cycle"] = market_cycle
 
     action_plan, daily_package = build_action_plan(
         me,
@@ -3073,12 +3214,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 
     matchday_meta = matchday_early
     gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
-    recommended_xi = build_recommended_gw_xi(
-        squad,
-        formation=me.get("formation"),
-        matchday=matchday_meta or {},
-        captain_rule=league_rules.get("captain") if isinstance(league_rules.get("captain"), dict) else None,
-    )
+    # recommended_xi ya calculado tras bootstrap (antes del action plan)
     my_gw_lineup = gw_bundle.get("my_lineup") if isinstance(gw_bundle.get("my_lineup"), dict) else None
     if my_gw_lineup:
         recommended_xi["current"] = {
@@ -3323,6 +3459,11 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "market_day_slots": int(getattr(config, "MARKET_DAY_SLOTS", 16)),
             "ideal_squad": diagnostico_plantilla.get("ideal_squad")
             or getattr(config, "IDEAL_SQUAD", {"GK": 2, "DF": 5, "MF": 5, "FW": 3}),
+            "bootstrap_xi_active": bool(bootstrap_xi.get("active")),
+            "xi_complete": bool((recommended_xi.get("summary") or {}).get("complete")),
+            "market_cycle_hours": market_cycle.get("cycle_hours"),
+            "market_hours_to_cycle_end": market_cycle.get("hours_to_end"),
+            "market_cycles_before_gw": market_cycle.get("cycles_left_before_gw"),
         },
         "funding_plan": {
             "target": funding_info.get("funding_target"),

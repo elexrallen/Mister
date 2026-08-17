@@ -1775,6 +1775,13 @@
       playbook.jornada != null
         ? `<span class="playbook-gw">J${escapeHtml(String(playbook.jornada))}</span>`
         : "";
+    const mc = playbook.market_cycle || {};
+    const mcEnd =
+      mc.hours_to_end != null
+        ? `<span class="playbook-market-cycle">Mercado: ${escapeHtml(
+            String(Math.round(Number(mc.hours_to_end)))
+          )}h restantes</span>`
+        : "";
     return `<section class="playbook" aria-label="Fase del día">
       <header class="playbook-head">
         ${jornada}
@@ -1782,6 +1789,7 @@
         <span class="playbook-countdown">${escapeHtml(
           playbook.countdown_label || ""
         )} para la jornada</span>
+        ${mcEnd}
       </header>
       ${playbook.focus ? `<p class="playbook-focus">${escapeHtml(playbook.focus)}</p>` : ""}
       ${warnings}

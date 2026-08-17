@@ -125,6 +125,8 @@ def build_daily_playbook(
     rules = league_rules or {}
     diag = diagnostico or {}
     balance = _f((me or {}).get("balance")) or 0.0
+    bootstrap = diag.get("bootstrap_xi") or {}
+    market_cycle = diag.get("market_cycle") or {}
 
     phase = resolve_phase(
         hours_to_jornada=hours_to_jornada,
@@ -162,7 +164,37 @@ def build_daily_playbook(
 
     # --- Once y capitán: lo único que puntúa ---
     summary = xi.get("summary") or {}
-    if not summary.get("complete") and phase not in ("pretemporada",):
+    if bootstrap.get("active"):
+        gaps = bootstrap.get("position_gaps") or {}
+        gap_bits = [
+            f"{pos}×{int(n)}"
+            for pos, n in gaps.items()
+            if int(n or 0) > 0
+        ]
+        gap_txt = ", ".join(gap_bits) if gap_bits else "varias líneas"
+        mc_h = market_cycle.get("hours_to_end")
+        mc_cycles = market_cycle.get("cycles_left_before_gw")
+        cycle_bit = (
+            f"Cierra el mercado en {_fmt_hours(float(mc_h))}"
+            if mc_h is not None
+            else "revisa el mercado de hoy"
+        )
+        cycles_bit = (
+            f" · ~{mc_cycles} ciclo(s) de mercado antes de la jornada"
+            if mc_cycles is not None
+            else ""
+        )
+        add(
+            "bootstrap_xi",
+            "Prioridad: completar el once",
+            f"Faltan {bootstrap.get('slots_short', 0)} jugador(es) para un once legal "
+            f"({summary.get('xi_count', 0)}/{summary.get('xi_target', 11)}). "
+            f"Huecos: {gap_txt}. {cycle_bit}{cycles_bit}. "
+            "Ficha titulares del mercado actual antes de reservar caja para el ideal.",
+            priority="Alta",
+        )
+        warnings.append("Modo bootstrap: completar once antes que plantilla ideal.")
+    elif not summary.get("complete") and phase not in ("pretemporada",):
         add(
             "xi_incompleto",
             "Once incompleto",
@@ -417,6 +449,8 @@ def build_daily_playbook(
             "avoid": len(avoid),
             "todo": sum(1 for c in checklist if c.get("status") != "done"),
         },
+        "bootstrap_xi": bootstrap if bootstrap.get("active") else None,
+        "market_cycle": market_cycle or None,
     }
 
 

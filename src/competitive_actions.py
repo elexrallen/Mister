@@ -3485,6 +3485,7 @@ def finalize_action_plan(
     target_board: dict[str, Any] | None = None,
     squad_size: int | None = None,
     max_squad: int | None = None,
+    bootstrap: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Cola operativa = líneas de necesidad (intents + hedges same-day en auction).
@@ -3495,6 +3496,9 @@ def finalize_action_plan(
     cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
     # Reserva del paquete = objetivos operables de HOY (no reconstruir toda la plantilla)
     bal = float(balance) if balance is not None else 0.0
+    bootstrap_ctx = bootstrap
+    if not bootstrap_ctx and isinstance(funding_info, dict):
+        bootstrap_ctx = funding_info.get("bootstrap_xi_context")
     if funding_info and funding_info.get("cash_reserved") is not None:
         daily_reserve = float(funding_info.get("cash_reserved") or 0)
         if daily_reserve > 0:
@@ -3505,6 +3509,9 @@ def finalize_action_plan(
             cash_reserve = min(cash_reserve, bal * 0.5) if bal > 0 else cash_reserve
     else:
         cash_reserve = min(cash_reserve, bal * 0.5) if bal > 0 else cash_reserve
+    if bootstrap_ctx and bootstrap_ctx.get("active") and bal > 0:
+        # Modo once: no bloquear toda la caja para el ideal fuera de mercado
+        cash_reserve = min(cash_reserve, bal * 0.45)
     secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
     package_id = datetime.now(timezone.utc).date().isoformat()
     fixed = (market_mode or "auction") == "fixed"
@@ -3518,6 +3525,16 @@ def finalize_action_plan(
         max_squad = int(max_squad)
     squad_n = int(squad_size) if squad_size is not None else 0
     free_slots = max(0, max_squad - squad_n)
+    try:
+        from market_cycle import bootstrap_buy_cap
+
+        buy_cap = bootstrap_buy_cap(
+            free_slots=free_slots,
+            bootstrap=bootstrap_ctx if isinstance(bootstrap_ctx, dict) else None,
+            fixed=fixed,
+        )
+    except Exception:  # noqa: BLE001
+        buy_cap = min(2 if fixed else 4, free_slots if free_slots > 0 else 0)
     # Ideal aspiracional: solo scout / watching — no reserva caja ni fund_target
     # Filtrar primary_ids de posiciones sobradas (salvo upgrade que renta)
     overstock_pos = {
@@ -4135,7 +4152,7 @@ def finalize_action_plan(
 
     capped: list[dict[str, Any]] = []
     per_action: dict[str, int] = {}
-    buy_cap = min(2 if fixed else 4, free_slots if free_slots > 0 else 0)
+    # buy_cap definido arriba (bootstrap puede ampliar el tope en fixed)
     # Si no hay plazas, no emitir buy_now (todo demoted)
     limits = {
         "buy_now": buy_cap,

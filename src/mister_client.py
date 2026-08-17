@@ -1891,6 +1891,13 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     admin_data = fetch_admin_settings()
     rules_fg = fg_user_rules_snapshot(fg_user)
     rules_cfg = fg_cfg_snapshot(fg_cfg)
+    auction_ends: list[float] = []
+    try:
+        from market_cycle import parse_auction_cycle_ends
+
+        auction_ends = parse_auction_cycle_ends(market_html)
+    except Exception:  # noqa: BLE001
+        auction_ends = []
 
     bal_src: dict[str, Any] = {}
     if isinstance(balance_data, dict) and balance_data:
@@ -2088,6 +2095,8 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "fg_user_rules": rules_fg,
             "fg_cfg_rules": rules_cfg,
             "admin_settings": admin_data,
+            "market_auction_ends": auction_ends,
+            "market_lock": rules_cfg.get("market_lock"),
             "provider": fg_user.get("provider"),
             "team_limit": fg_user.get("team_limit"),
             "league_type": fg_user.get("type"),
