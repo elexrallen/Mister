@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-16T20:58:07.035382+00:00",
+  "generated_at": "2026-08-17T07:17:46.285385+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -157,9 +157,9 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-16T20:58:06.780578+00:00",
+      "generated_at": "2026-08-17T07:17:46.036379+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
-      "balance": -4702290,
+      "balance": -10851630,
       "rank": 3,
       "market_mode": "auction",
       "max_squad": 25,
