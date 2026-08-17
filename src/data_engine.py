@@ -62,6 +62,7 @@ from competitive_actions import (
     finalize_action_plan,
     is_key_market_candidate,
     liquidity_balance,
+    promote_funded_swaps,
     mister_bid_cap,
     other_gaps_min_cost,
     resolve_hours_to_jornada,
@@ -1456,6 +1457,7 @@ def build_action_plan(
     funding_info: dict[str, Any] | None = None,
     max_squad: int | None = None,
     league_rules: dict[str, Any] | None = None,
+    recommended_xi: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Fuente de verdad diaria:
@@ -1516,7 +1518,7 @@ def build_action_plan(
     gap_pos_labels = ", ".join(str(p) for p in (funding.get("positions") or []) if p) or "otras carencias"
     objective_ids = board_objective_ids(target_board)
     primary_ids = board_primary_ids(target_board)
-    cash_reserved = float(funding.get("cash_reserved") or funding.get("funding_target") or 0)
+    cash_reserved = float(funding.get("cash_reserved") or 0)
     patch_cap = max_patch_spend(target_board)
     allow_patches = patches_allowed(target_board)
     bootstrap = (diagnostico_plantilla or {}).get("bootstrap_xi") or {}
@@ -1611,7 +1613,7 @@ def build_action_plan(
         fills_structural_o = bool(o.get("fills_structural"))
         overstocked = bool(o.get("overstocked"))
         my_squad = list(me.get("squad") or [])
-        cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+        cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 0) or 0)
         worth_upgrade = upgrade_worth_buy(
             o,
             is_upgrade=is_upgrade,
@@ -1858,7 +1860,7 @@ def build_action_plan(
                 if line_ok:
                     posture = bootstrap.get("posture") or "buy_now"
                     cycle_urgent = bool(bootstrap.get("cycle_urgent"))
-                    if posture == "buy_now" or cycle_urgent:
+                    if posture == "buy_now" or cycle_urgent or int(bootstrap.get("slots_short") or 0) > 0:
                         buy_now = True
                         h_end = market_cycle_ctx.get("hours_to_end")
                         tip = (
@@ -1896,39 +1898,20 @@ def build_action_plan(
         ):
             why_parts.append(
                 f"upgrade bueno, pero reserva caja para {gap_pos_labels}"
-            )        # Parche barato: no romper reserva de buys del ideal (clave/primary sí pueden usarla)
+            )
         is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
             cost <= patch_cap
             or (not real_starter_cand and cost < 2_500_000)
             or (o.get("categories") and "chollo_economico" in (o.get("categories") or []) and cost < 1_500_000)
         )
-        if buy_now and not is_primary_obj and not is_key:
-            # Reserva de objetivos: solo si aún podemos preservarla (caja ≥ reserva)
-            if cash_reserved > 0 and balance >= cash_reserved and (balance - cost) < cash_reserved:
+        if buy_now and not is_primary_obj and not is_key and is_patchish:
+            if not allow_patches:
+                buy_now = False
+                why_parts.append("parche bloqueado: no mejora el 15 frente a objetivos de hoy")
+            elif cost > patch_cap:
                 buy_now = False
                 why_parts.append(
-                    f"protege reserva {cash_reserved:,.0f} € para plantilla ideal"
-                )
-            elif cash_reserved > balance:
-                # Shortfall: no hay clave asequible → carencias con colchón operativo
-                soft_floor = max(1_000_000.0, min(balance * 0.25, 4_000_000.0))
-                if (balance - cost) < soft_floor:
-                    buy_now = False
-                    why_parts.append(
-                        f"deja colchón ~{soft_floor:,.0f} € para siguientes claves/carencias"
-                    )
-                elif is_patchish and cost > max(patch_cap, float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))):
-                    buy_now = False
-                    why_parts.append(
-                        f"parche caro vs techo operativo ({max(patch_cap, 2_500_000):,.0f} €)"
-                    )
-            elif is_patchish and not allow_patches:
-                buy_now = False
-                why_parts.append("parche bloqueado: reserva de objetivos sin margen")
-            elif is_patchish and cost > patch_cap:
-                buy_now = False
-                why_parts.append(
-                    f"parche por encima del techo ({patch_cap:,.0f} €) vs reserva objetivos"
+                    f"parche por encima del techo ({patch_cap:,.0f} €)"
                 )
 
         # Defensa extra: nunca buy_now fuera del mercado del día
@@ -2178,8 +2161,16 @@ def build_action_plan(
         diagnostico_plantilla=diagnostico_plantilla,
         target_board=target_board,
         funding_info=funding,
+        recommended_xi=recommended_xi,
+        league_economy=(rules.get("economy") if isinstance(rules.get("economy"), dict) else None),
     )
     plan.extend(sells)
+    promote_funded_swaps(
+        plan,
+        balance=balance,
+        hours_to_jornada=hours_resolved,
+        cash_lag_hours=cash_lag,
+    )
 
     # Cláusulas / scout rivales (solo auction)
     if not fixed:
@@ -2235,7 +2226,11 @@ def build_action_plan(
                 promoted_b.append(item)
                 continue
             posture = bootstrap.get("posture") or "buy_now"
-            if posture == "can_wait_cycle" and not bootstrap.get("cycle_urgent"):
+            if (
+                posture == "can_wait_cycle"
+                and not bootstrap.get("cycle_urgent")
+                and int(bootstrap.get("slots_short") or 0) <= 0
+            ):
                 promoted_b.append(item)
                 continue
             row = dict(item)
@@ -2320,6 +2315,10 @@ def build_action_plan(
             "loans": loans_ok,
             "market_urgency": market_urgency,
             "factors": list(rules.get("factors") or []),
+            "economy": rules.get("economy") if isinstance(rules.get("economy"), dict) else None,
+            "sale_limit": (rules.get("economy") or {}).get("sale_limit")
+            if isinstance(rules.get("economy"), dict)
+            else rules.get("sale_limit"),
         }
         if not loans_ok:
             notes = list(daily_package.get("notes") or [])
@@ -2627,7 +2626,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     diagnostico_plantilla["structural_needs"] = capped_needs
     diagnostico_plantilla["realistic_price_cap"] = (
         int(capped_needs[0]["realistic_cap"]) if capped_needs else int(
-            max(0.0, float(me.get("balance") or 0) - float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)))
+            max(0.0, float(me.get("balance") or 0))
         )
     )
     diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
@@ -2872,10 +2871,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             or info.get("coverage") in ("critical", "thin")
         }
         if needy_pos:
-            market_reserved = min(
-                float(me.get("balance") or 0) * 0.45,
-                float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)),
-            )
+            market_reserved = max(0.0, float(me.get("balance") or 0) * 0.40)
         rival_upgrades = build_rival_upgrade_targets(
             me,
             diagnosis,
@@ -3162,8 +3158,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     funding_info["cash_lag_hours"] = cash_lag_h
     if market_mode == "fixed":
         funding_info["liquidity_note"] = (
-            "Mercado LFM: fichajes al precio listado (ciclo ~"
-            f"{cycle_h:.0f}h). Reserva ajustada al once si la plantilla está incompleta."
+            "Mercado LFM: fichajes al precio listado "
+            f"(ciclo ~{cycle_h:.0f}h). Gasta en el 15; liquidez = listados, no reserva."
         )
     funding_info = adjust_funding_for_bootstrap(
         funding_info,
@@ -3188,6 +3184,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         funding_info=funding_info,
         max_squad=config.league_max_squad(league_cfg),
         league_rules=league_rules,
+        recommended_xi=recommended_xi,
     )
 
     # Recursos visuales oficiales. El índice del pool completa team_id/escudo
@@ -3485,8 +3482,18 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
             "liquidity_note": funding_info.get("liquidity_note")
             or (
-                "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar "
-                "(caja usable en ~1–2 días)."
+                "Gasta en el 15 ahora. Liquidez = jugadores listados, no reserva de caja."
+            ),
+            "economy": (league_rules.get("economy") if isinstance(league_rules.get("economy"), dict) else None),
+            "expected_gw_cash": (
+                (league_rules.get("economy") or {}).get("expected_gw_cash")
+                if isinstance(league_rules.get("economy"), dict)
+                else None
+            ),
+            "gw_cash_bonus": (
+                bool((league_rules.get("economy") or {}).get("gw_cash_bonus"))
+                if isinstance(league_rules.get("economy"), dict)
+                else False
             ),
         },
         "target_board": target_board,

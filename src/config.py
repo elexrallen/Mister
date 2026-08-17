@@ -401,8 +401,9 @@ MARKET_CYCLE_HOURS = 24
 RESCIND_VALUE_RATIO = 0.80
 # Días antes de J1 en los que la fase pasa a "ramp"
 RAMP_DAYS_BEFORE_KICKOFF = 7
-# Paquete del día: colchón de caja y tope del fichaje secundario (parche)
-PACKAGE_CASH_RESERVE = 8_000_000
+# Paquete del día: ya no se congela caja para un crack que no está listado.
+# Liquidez = jugadores en venta (oferta CPU al siguiente ciclo). 0 = no reservar.
+PACKAGE_CASH_RESERVE = 0
 PACKAGE_SECONDARY_MAX = 2_500_000
 # Hedge same-day: puja reducida vs recomendada (mínimo = puja_minima/precio)
 PACKAGE_HEDGE_BID_RATIO = 0.85

@@ -7,7 +7,9 @@ Best-effort: `POST /ajax/sw/admin` (solo si eres admin).
 
 from __future__ import annotations
 
+import html
 import logging
+import re
 from typing import Any
 
 log = logging.getLogger("league_rules")
@@ -131,6 +133,16 @@ def compute_factors(rules: dict[str, Any]) -> list[str]:
 
     if rules.get("salaries"):
         factors.append("salaries")
+    economy = rules.get("economy") if isinstance(rules.get("economy"), dict) else {}
+    if economy.get("gw_cash_bonus"):
+        factors.append("gw_cash_bonus")
+    elif economy.get("no_gw_cash_bonus"):
+        factors.append("no_gw_cash_bonus")
+    if economy.get("credit_prizes"):
+        factors.append("credit_prizes_not_cash")
+    sale_limit = economy.get("sale_limit")
+    if sale_limit:
+        factors.append(f"sale_limit_{int(sale_limit)}")
     if rules.get("custom_rules"):
         factors.append("custom_rules_text")
     if rules.get("show_balances"):
@@ -143,6 +155,141 @@ def compute_factors(rules: dict[str, Any]) -> list[str]:
         else:
             factors.append("captain_by_value")
     return factors
+
+
+_NO_GW_CASH_RE = re.compile(
+    r"no hay bonificacion(?:es)? al cierre|sin bonificacion(?:es)? al cierre",
+    re.I,
+)
+_CREDIT_PRIZE_RE = re.compile(r"cr[eé]ditos|paypal|camiseta", re.I)
+_EURO_PRIZE_RE = re.compile(
+    r"(?:premio|bonificaci[oó]n).{0,40}(?:€|euros?)|(?:€|euros?).{0,40}(?:cierre|jornada|puntos)",
+    re.I,
+)
+
+
+def _plain_custom_rules(raw: Any) -> str:
+    if raw is None:
+        return ""
+    text = str(raw)
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.I)
+    text = re.sub(r"</p\s*>", "\n", text, flags=re.I)
+    text = re.sub(r"<[^>]+>", " ", text)
+    text = html.unescape(text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def _prize_cash_parts(prizes: Any) -> tuple[float, dict[str, float]]:
+    if not isinstance(prizes, dict):
+        return 0.0, {}
+    parts: dict[str, float] = {}
+    total = 0.0
+    for key in ("points", "goals", "best_xi", "fixed"):
+        try:
+            val = float(prizes.get(key) or 0)
+        except (TypeError, ValueError):
+            val = 0.0
+        if val > 0:
+            parts[key] = val
+            total += val
+    return total, parts
+
+
+def resolve_economy(
+    rules: dict[str, Any],
+    *,
+    max_debt_raw: Any = None,
+) -> dict[str, Any]:
+    """
+    Economía de jornada por liga: euros de plantilla vs créditos/tienda,
+    salarios, tope de ventas y deuda.
+    El ingreso esperado NUNCA es saldo de hoy para pujar.
+    """
+    custom_raw = rules.get("custom_rules")
+    plain = _plain_custom_rules(custom_raw)
+    prizes = rules.get("prizes") if isinstance(rules.get("prizes"), dict) else {}
+    prize_cash, prize_parts = _prize_cash_parts(prizes)
+
+    rewards_flag = rules.get("rewards")
+    if rewards_flag is None:
+        # Sin admin: ligas privadas con custom_rules vacío (Patio) suelen tener rewards on.
+        rewards_on = not plain
+    else:
+        rewards_on = bool(rewards_flag)
+
+    no_gw_text = bool(plain and _NO_GW_CASH_RE.search(plain))
+    credit_prizes = bool(plain and _CREDIT_PRIZE_RE.search(plain) and prize_cash <= 0)
+    euro_text = bool(plain and _EURO_PRIZE_RE.search(plain) and not no_gw_text)
+
+    gw_cash_bonus = False
+    source = "none"
+    confidence = "high"
+    if no_gw_text:
+        gw_cash_bonus = False
+        source = "custom_rules_no_bonus"
+    elif prize_cash > 0:
+        gw_cash_bonus = True
+        source = "prizes_euros"
+    elif credit_prizes:
+        gw_cash_bonus = False
+        source = "custom_rules_credits"
+    elif rewards_on and not plain:
+        gw_cash_bonus = True
+        source = "rewards_default"
+        confidence = "medium"
+    elif rewards_on and euro_text:
+        gw_cash_bonus = True
+        source = "custom_rules_euros"
+        confidence = "medium"
+    elif rewards_on:
+        # rewards=1 pero el texto no confirma euros de plantilla (p.ej. MD)
+        gw_cash_bonus = False
+        source = "rewards_on_no_cash_confirmed"
+        confidence = "medium"
+    else:
+        gw_cash_bonus = False
+        source = "rewards_off"
+
+    expected = 0.0
+    if gw_cash_bonus and prize_cash > 0:
+        expected = prize_cash
+        confidence = "medium"
+    elif gw_cash_bonus:
+        expected = 0.0
+        confidence = "low"
+
+    salaries_on = bool(rules.get("salaries"))
+    if salaries_on and expected > 0:
+        expected = 0.0
+        confidence = "low"
+
+    try:
+        sale_limit = int(rules.get("sale_limit") or 5)
+    except (TypeError, ValueError):
+        sale_limit = 5
+    if sale_limit <= 0:
+        sale_limit = 5
+
+    try:
+        max_debt = float(max_debt_raw) if max_debt_raw is not None else None
+    except (TypeError, ValueError):
+        max_debt = None
+
+    return {
+        "gw_cash_bonus": gw_cash_bonus,
+        "no_gw_cash_bonus": not gw_cash_bonus,
+        "credit_prizes": credit_prizes,
+        "expected_gw_cash": round(expected, 0),
+        "source": source,
+        "confidence": confidence,
+        "when": "after_gameweek" if gw_cash_bonus else None,
+        "prizes": prize_parts,
+        "prize_cash_total": prize_cash,
+        "salaries": salaries_on,
+        "sale_limit": sale_limit,
+        "max_debt": max_debt,
+        "usable_for_bids_today": False,
+    }
 
 
 # Mister: multiplicador dinámico por valor de mercado (blog oficial).
@@ -327,6 +474,16 @@ def normalize_rules(
     if custom_rules is not None:
         custom_rules = str(custom_rules).strip() or None
 
+    prizes_raw = _pick("prizes", default=None)
+    try:
+        sale_limit = int(_pick("sale_limit", default=5) or 5)
+    except (TypeError, ValueError):
+        sale_limit = 5
+    if sale_limit <= 0:
+        sale_limit = 5
+    rewards_raw = _pick("rewards", default=None)
+    max_debt_raw = _pick("max_debt", default=None)
+
     source = "fg_user"
     if admin:
         source = "fg_user+admin" if fg else "admin"
@@ -347,6 +504,9 @@ def normalize_rules(
         "salaries": _truthy(_pick("salaries", default=0)),
         "live_changes": _truthy(_pick("live_changes", default=0)),
         "show_balances": _truthy(_pick("show_balances", default=0)),
+        "rewards": None if rewards_raw is None else _truthy(rewards_raw),
+        "sale_limit": sale_limit,
+        "prizes": prizes_raw if isinstance(prizes_raw, dict) else None,
         "custom_rules": custom_rules,
         "type": str(_pick("type", default="") or "") or None,
         "mode": str(_pick("mode", default="") or "") or None,
@@ -359,6 +519,7 @@ def normalize_rules(
         admin_settings=admin_settings,
         league_cfg=cfg,
     )
+    rules["economy"] = resolve_economy(rules, max_debt_raw=max_debt_raw)
     rules["factors"] = compute_factors({**rules, "competition_key": ext})
     # Urgencia derivada para el motor (1.0 = normal; >1 = más agresivo en buy_now)
     # market_speed Mister: 1=normal; valores mayores → mercado más rápido

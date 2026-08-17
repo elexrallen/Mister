@@ -553,7 +553,7 @@ def _normalize_player(
 
 
 def _liquidity_floor(wealth: float, balance: float) -> float:
-    reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+    reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 0) or 0)
     pct = max(0.05, min(0.10, wealth * 0.08 / max(wealth, 1))) * wealth
     # No exigir más liquidez que el saldo actual
     return min(balance, max(reserve * 0.25, min(reserve, pct)))
@@ -857,7 +857,7 @@ def _build_daily_patches(
     cash_reserved: float,
     owned_ids: set[str],
 ) -> list[dict[str, Any]]:
-    """Parches del mercado de hoy para carencias, sin romper reserva del ideal."""
+    """Parches del mercado de hoy para carencias, con el saldo que quede tras el 15."""
     residual = max(0.0, balance - cash_reserved)
     if residual < 150_000:
         return []
@@ -908,8 +908,7 @@ def _build_daily_patches(
                 "ep_score": best["ep_score"],
                 "max_spend": round(max_spend, 0),
                 "why": (
-                    f"Parche {pos} hoy · EP {best['ep_score']:.0f} · {cost:,.0f} € "
-                    f"(reserva ideal intacta: {cash_reserved:,.0f} €)"
+                    f"Parche {pos} hoy · EP {best['ep_score']:.0f} · {cost:,.0f} €"
                 ),
             }
         )
@@ -1833,15 +1832,17 @@ def build_target_board(
         }
         for r in primary_targets
     ]
-    cash_reserved = round(sum(float(t.get("price") or 0) for t in primary_targets), 0)
-    residual_after = round(max(0.0, bal - cash_reserved), 0)
-    shortfall = max(0.0, cash_reserved - bal)
+    daily_primary_cost = round(sum(float(t.get("price") or 0) for t in primary_targets), 0)
+    # No congelar caja: el 15 se compra con el saldo de hoy; liquidez = ventas listadas.
+    cash_reserved = 0.0
+    residual_after = round(max(0.0, bal), 0)
+    shortfall = max(0.0, daily_primary_cost - bal)
     freed_for_fund = 0.0
     for s in sell_cands:
         if freed_for_fund >= shortfall:
             break
         freed_for_fund += float(s.get("price") or 0)
-    funded = bal + freed_for_fund >= cash_reserved
+    funded = bal + freed_for_fund >= daily_primary_cost
 
     daily_patches = _build_daily_patches(
         structural_needs,
@@ -1889,7 +1890,7 @@ def build_target_board(
                 "patch_policy": {
                     "allow": residual_after >= 200_000,
                     "max_spend": patch.get("max_spend"),
-                    "note": "Parche diario sin romper reserva de objetivos de hoy",
+                    "note": "Parche diario si mejora el 15 y hay saldo",
                 },
                 "budget_envelope": {
                     "cash_reserve_for_slot": 0,
@@ -2163,11 +2164,7 @@ def funding_plan_from_board(
         )
     ideal_gaps.sort(key=lambda g: -float(g.get("cost") or 0))
 
-    funding_target = float(
-        (board or {}).get("cash_reserved")
-        if (board or {}).get("cash_reserved") is not None
-        else sum(float(g["cost"]) for g in gaps)
-    )
+    funding_target = float(sum(float(g["cost"]) for g in gaps))
     funding_shortfall = max(0.0, funding_target - bal)
     cheapest = min((float(g["cost"]) for g in gaps), default=None)
     return {
@@ -2181,7 +2178,7 @@ def funding_plan_from_board(
         "positions": [g.get("position") for g in gaps[:5] if g.get("position")],
         "cheapest_need": cheapest,
         "primary_targets": daily,
-        "cash_reserved": funding_target,
+        "cash_reserved": 0.0,
         "from_target_board": True,
         "wealth": (board or {}).get("wealth"),
         "totals": (board or {}).get("totals"),
@@ -2191,8 +2188,8 @@ def funding_plan_from_board(
         "cycle_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
         "cash_lag_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
         "liquidity_note": (
-            "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar "
-            "(caja usable en ~1–2 días). Urgente: rescindir ≈ 80% VM o cláusula rival."
+            "Gasta en el 15 ahora. Liquidez = jugadores listados (oferta CPU al siguiente "
+            "ciclo), no caja congelada. El cobro de una venta no es saldo de hoy."
         ),
     }
 

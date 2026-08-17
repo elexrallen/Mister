@@ -1912,6 +1912,329 @@ def priority_score_clause(item: dict[str, Any]) -> int:
     return score
 
 
+def xi_owned_ids(recommended_xi: dict[str, Any] | None) -> set[str]:
+    ids: set[str] = set()
+    for row in (recommended_xi or {}).get("xi") or []:
+        pid = row.get("player_id") or row.get("id")
+        if pid:
+            ids.add(str(pid))
+    return ids
+
+
+def swap_covers(balance: float, slot_vm: float, bid: float) -> bool:
+    """¿Saldo usable + cobro VM del listado cubre la puja del upgrade?"""
+    return float(balance or 0) + float(slot_vm or 0) >= float(bid or 0)
+
+
+def promote_funded_swaps(
+    plan: list[dict[str, Any]],
+    *,
+    balance: float,
+    hours_to_jornada: float | None = None,
+    cash_lag_hours: float | None = None,
+) -> None:
+    """Si el swap cierra (caja + VM del slot) y el cobro llega a tiempo, buy_now."""
+    slots = [a for a in plan if a.get("action") == "sell" and a.get("sell_reason") == "liquidity_slot"]
+    if not slots:
+        return
+    timely = sells_settle_before_d1(
+        hours_to_jornada=hours_to_jornada,
+        cash_lag_hours=cash_lag_hours,
+    )
+    by_target: dict[str, dict[str, Any]] = {}
+    for s in slots:
+        tid = str(s.get("funds_for") or "")
+        if tid and tid not in by_target:
+            by_target[tid] = s
+    if not by_target:
+        return
+    for item in plan:
+        if item.get("action") not in ("wait", "scout"):
+            continue
+        if not item.get("on_daily_market") and item.get("seller") != "market":
+            continue
+        if item.get("solvency_blocked"):
+            continue
+        pid = str(item.get("player_id") or "")
+        slot = by_target.get(pid)
+        if not slot:
+            continue
+        bid = _money(item.get("bid") or item.get("acquisition_cost") or item.get("price"))
+        if bid <= 0:
+            continue
+        slot_vm = _money(slot.get("price") or slot.get("expected_proceeds"))
+        if not swap_covers(balance, slot_vm, bid):
+            continue
+        if _money(balance) >= bid:
+            continue
+        if not timely:
+            why = (item.get("why") or "").strip()
+            note = "swap cubierto con listado, pero el cobro no llega antes del pitido"
+            if note not in why:
+                item["why"] = f"{why}; {note}" if why else note
+            continue
+        item["action"] = "buy_now"
+        item["affordable"] = True
+        item["budget_fit"] = "funding"
+        item["swap_funded"] = True
+        item["funds_from"] = (slot or {}).get("player_id")
+        item["funds_from_name"] = (slot or {}).get("name")
+        why = (item.get("why") or "").strip()
+        swap_why = (
+            f"swap operable: caja + VM de {(slot or {}).get('name') or 'listado'} "
+            f"cubren {bid:,.0f} €"
+        )
+        item["why"] = f"{swap_why}; {why}" if why else swap_why
+
+
+def _liquidity_prod(p: dict[str, Any] | None) -> float:
+    if not p:
+        return 0.0
+    for key in ("ep_score", "production_score", "xpts"):
+        try:
+            if p.get(key) is not None:
+                return float(p[key])
+        except (TypeError, ValueError):
+            pass
+    ff = _ff_avg(p)
+    if ff is not None:
+        return float(ff) * 10.0
+    prod = _production_score(p)
+    return float(prod or 0)
+
+
+def _bench_not_xi(
+    squad: list[dict[str, Any]],
+    xi_ids: set[str],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for p in squad:
+        pid = str(p.get("id") or "")
+        if not pid:
+            continue
+        if xi_ids and pid in xi_ids:
+            continue
+        if not xi_ids and _is_reliable_starter(p) and p.get("in_lineup"):
+            continue
+        out.append(p)
+    return out
+
+
+def pick_funding_slot(
+    bench: list[dict[str, Any]],
+    *,
+    need_cash: float,
+    prefer_pos: str | None = None,
+) -> dict[str, Any] | None:
+    """
+    Slot de banquillo (fuera del XI) que hace viable el swap.
+    Si el más débil de la línea cubre, se lista ese; si no, el más barato que sí cubra.
+    """
+    if not bench:
+        return None
+
+    def vm(p: dict[str, Any]) -> float:
+        return _money(p.get("price") or p.get("market_value"))
+
+    same = [
+        p for p in bench
+        if prefer_pos and (p.get("position") or "") == prefer_pos
+    ]
+    pools = [same, bench] if same else [bench]
+    need = max(0.0, float(need_cash or 0))
+    for pool in pools:
+        weakest = sorted(pool, key=lambda p: (_liquidity_prod(p), vm(p)))
+        if need <= 0:
+            return weakest[0] if weakest else None
+        if weakest and vm(weakest[0]) >= need:
+            return weakest[0]
+        covering = [p for p in pool if vm(p) >= need]
+        if covering:
+            covering.sort(key=lambda p: (vm(p), _liquidity_prod(p)))
+            return covering[0]
+    return None
+
+
+def _upgrade_profile_worth(
+    cand: dict[str, Any],
+    ref: dict[str, Any] | None,
+    cost: float,
+) -> bool:
+    """ΔEP/producción claro vs titular o banquillo de la línea, con ROI de la puja."""
+    if ref is None:
+        return True
+    delta = _liquidity_prod(cand) - _liquidity_prod(ref)
+    if delta < 6.0:
+        return False
+    roi = delta / max(cost / 1_000_000.0, 0.4)
+    return roi >= 1.2
+
+
+def _owned_line_ref(
+    squad: list[dict[str, Any]],
+    position: str,
+    xi_ids: set[str],
+) -> dict[str, Any] | None:
+    line = [p for p in squad if (p.get("position") or "") == position]
+    if not line:
+        return None
+    in_xi = [p for p in line if str(p.get("id") or "") in xi_ids]
+    pool = in_xi or line
+    return min(pool, key=_liquidity_prod)
+
+
+def collect_upgrade_profiles(
+    *,
+    squad: list[dict[str, Any]],
+    xi_ids: set[str],
+    market_opportunities: list[dict[str, Any]] | None,
+    target_board: dict[str, Any] | None,
+    balance: float,
+) -> list[dict[str, Any]]:
+    """Perfiles que merecen persecución (mercado de hoy o scout)."""
+    owned = {str(p.get("id") or "") for p in squad if p.get("id")}
+    profiles: list[dict[str, Any]] = []
+    seen: set[str] = set()
+
+    def add_prof(raw: dict[str, Any], *, on_daily: bool, source: str) -> None:
+        pid = str(raw.get("id") or raw.get("player_id") or "")
+        pos = raw.get("position") or "MF"
+        if pid and pid in owned:
+            return
+        cost = _money(
+            raw.get("puja_recomendada")
+            or raw.get("price")
+            or raw.get("buy_price")
+            or raw.get("market_value")
+        )
+        if cost <= 0:
+            return
+        key = pid or f"{pos}:{int(cost)}:{source}"
+        if key in seen:
+            return
+        ref = _owned_line_ref(squad, pos, xi_ids)
+        worth = _upgrade_profile_worth(raw, ref, cost)
+        mid = cost
+        band = (max(0.0, mid * 0.85), mid * 1.15)
+        seen.add(key)
+        profiles.append(
+            {
+                "player_id": pid or None,
+                "name": raw.get("name"),
+                "position": pos,
+                "bid": cost,
+                "price_band": [round(band[0], 0), round(band[1], 0)],
+                "on_daily_market": on_daily,
+                "worth": worth,
+                "source": source,
+                "ep_score": raw.get("ep_score") or _liquidity_prod(raw),
+                "ref_name": (ref or {}).get("name"),
+                "ref_ep": _liquidity_prod(ref) if ref else None,
+            }
+        )
+
+    for o in market_opportunities or []:
+        if not (o.get("is_upgrade") or o.get("fills_structural") or o.get("fills_need")):
+            continue
+        add_prof(o, on_daily=bool(o.get("on_daily_market")), source="market")
+
+    board = target_board or {}
+    for t in list(board.get("primary_targets") or []) + list(board.get("aspirational_targets") or []):
+        add_prof(
+            t,
+            on_daily=bool(t.get("on_daily_market")),
+            source="board",
+        )
+    for b in ((board.get("moves") or {}).get("buy") or []):
+        add_prof(b, on_daily=bool(b.get("on_daily_market")), source="board")
+
+    profiles.sort(
+        key=lambda p: (
+            0 if p.get("worth") else 1,
+            0 if p.get("on_daily_market") else 1,
+            -float(p.get("ep_score") or 0),
+        )
+    )
+    return profiles
+
+
+def resolve_liquidity_slots(
+    *,
+    squad: list[dict[str, Any]],
+    recommended_xi: dict[str, Any] | None,
+    market_opportunities: list[dict[str, Any]] | None,
+    target_board: dict[str, Any] | None,
+    balance: float,
+    sale_limit: int = 5,
+) -> dict[str, Any]:
+    """
+    Elige listados de liquidez: cubren swaps de perfiles que rentan
+    y rellenan con los más débiles fuera del XI, sin superar sale_limit.
+    """
+    xi_ids = xi_owned_ids(recommended_xi)
+    bench = _bench_not_xi(squad, xi_ids)
+    limit = max(1, int(sale_limit or 5))
+    profiles = collect_upgrade_profiles(
+        squad=squad,
+        xi_ids=xi_ids,
+        market_opportunities=market_opportunities,
+        target_board=target_board,
+        balance=balance,
+    )
+    chosen: list[dict[str, Any]] = []
+    chosen_ids: set[str] = set()
+    funded: list[dict[str, Any]] = []
+    avoided: list[dict[str, Any]] = []
+
+    for prof in profiles:
+        if not prof.get("worth"):
+            avoided.append({**prof, "avoid_reason": "delta_ep_or_roi"})
+            continue
+        need = max(0.0, float(prof["bid"]) - float(balance or 0))
+        slot = pick_funding_slot(
+            bench, need_cash=need, prefer_pos=str(prof.get("position") or "")
+        )
+        if slot is None:
+            avoided.append({**prof, "avoid_reason": "inabordable_sin_romper_xi"})
+            continue
+        sid = str(slot.get("id") or "")
+        prof = {
+            **prof,
+            "slot_id": sid,
+            "slot_name": slot.get("name"),
+            "slot_vm": _money(slot.get("price") or slot.get("market_value")),
+            "pursue": True,
+        }
+        funded.append(prof)
+        if sid and sid not in chosen_ids:
+            chosen.append(slot)
+            chosen_ids.add(sid)
+        if len(chosen) >= limit:
+            break
+
+    weakest = sorted(bench, key=lambda p: (_liquidity_prod(p), _money(p.get("price"))))
+    min_listed = min(2, limit, len(bench))
+    for p in weakest:
+        if len(chosen) >= limit:
+            break
+        if len(chosen) >= min_listed:
+            break
+        pid = str(p.get("id") or "")
+        if not pid or pid in chosen_ids:
+            continue
+        chosen.append(p)
+        chosen_ids.add(pid)
+
+    return {
+        "xi_ids": xi_ids,
+        "slots": chosen,
+        "slot_ids": chosen_ids,
+        "profiles": funded,
+        "avoided": avoided,
+        "sale_limit": limit,
+    }
+
+
 def build_sell_opportunities(
     me: dict[str, Any],
     diagnosis: dict[str, Any],
@@ -1924,6 +2247,8 @@ def build_sell_opportunities(
     diagnostico_plantilla: dict[str, Any] | None = None,
     target_board: dict[str, Any] | None = None,
     funding_info: dict[str, Any] | None = None,
+    recommended_xi: dict[str, Any] | None = None,
+    league_economy: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Ventas orientadas a estrategia Fantasy:
@@ -2400,17 +2725,149 @@ def build_sell_opportunities(
             item["_pref"] = 20
             add(item)
 
+    economy = league_economy if isinstance(league_economy, dict) else {}
+    try:
+        sale_limit = int(economy.get("sale_limit") or 5)
+    except (TypeError, ValueError):
+        sale_limit = 5
+    liq = resolve_liquidity_slots(
+        squad=squad,
+        recommended_xi=recommended_xi,
+        market_opportunities=market_opportunities,
+        target_board=target_board,
+        balance=balance,
+        sale_limit=sale_limit,
+    )
+    profile_by_slot: dict[str, dict[str, Any]] = {}
+    for prof in liq.get("profiles") or []:
+        sid = str(prof.get("slot_id") or "")
+        if sid and sid not in profile_by_slot:
+            profile_by_slot[sid] = prof
+
+    for slot in liq.get("slots") or []:
+        pid = str(slot.get("id") or "")
+        if not pid:
+            continue
+        prof = profile_by_slot.get(pid)
+        price = _money(slot.get("price") or slot.get("market_value"))
+        if prof:
+            mid = float(prof.get("bid") or 0)
+            why = (
+                f"Liquidez para swap: {sell_cash_phrase(price)}. "
+                f"Perseguir {prof.get('position')} ~{mid / 1e6:.1f}M"
+            )
+            if prof.get("name") and not prof.get("on_daily_market"):
+                why += f" ({prof.get('name')} aún no listado)"
+            elif prof.get("name"):
+                why += f" ({prof.get('name')} en mercado)"
+            why += f". Si sale, vende y puja (caja + VM cubren ~{mid:,.0f} €)."
+        else:
+            why = (
+                f"Liquidez permanente: {sell_cash_phrase(price)}. "
+                "Listado para oferta CPU al siguiente ciclo."
+            )
+        item = base_item(
+            slot,
+            reason="liquidity_slot",
+            why=why,
+            urgency="high" if prof else "medium",
+            sell_risk="low",
+        )
+        item["_pref"] = 55 if prof else 38
+        if prof:
+            item["funds_for"] = prof.get("player_id")
+            item["funds_for_name"] = prof.get("name")
+            item["funds_for_position"] = prof.get("position")
+            item["upgrade_profile"] = {
+                "position": prof.get("position"),
+                "bid": prof.get("bid"),
+                "price_band": prof.get("price_band"),
+                "on_daily_market": prof.get("on_daily_market"),
+            }
+        existing = next((x for x in sells if str(x.get("player_id")) == pid), None)
+        if existing:
+            sells.remove(existing)
+            seen.discard(pid)
+        add(item)
+
+    scouts: list[dict[str, Any]] = []
+    for prof in liq.get("profiles") or []:
+        if prof.get("on_daily_market"):
+            continue
+        pos = prof.get("position") or "?"
+        mid = float(prof.get("bid") or 0)
+        slot_name = prof.get("slot_name") or "banquillo"
+        why = (
+            f"Perseguir {pos} ~{mid / 1e6:.1f}M"
+            + (f" ({prof.get('name')})" if prof.get("name") else "")
+            + f"; listado {slot_name} cubre el swap. Si sale, vende y puja."
+        )
+        scouts.append(
+            {
+                "player_id": prof.get("player_id"),
+                "name": prof.get("name") or f"Perfil {pos}",
+                "position": pos,
+                "action": "scout",
+                "bid": None,
+                "price": mid,
+                "acquisition_cost": mid,
+                "why": why,
+                "urgency": "medium",
+                "affordable": swap_covers(balance, float(prof.get("slot_vm") or 0), mid),
+                "budget_fit": "funding",
+                "queue_role": "upgrade_profile",
+                "is_board_objective": True,
+                "priority_score": 45,
+                "funds_from": prof.get("slot_id"),
+                "funds_from_name": prof.get("slot_name"),
+                "price_band": prof.get("price_band"),
+                "ep_score": prof.get("ep_score"),
+            }
+        )
+    for prof in (liq.get("avoided") or [])[:4]:
+        if not prof.get("player_id"):
+            continue
+        reason = prof.get("avoid_reason") or "no_perseguir"
+        if reason == "inabordable_sin_romper_xi":
+            why = (
+                f"No perseguir {prof.get('name') or prof.get('position')}: "
+                "ni vendiendo banquillo de esa línea (sin romper el once) se llega a la banda."
+            )
+        else:
+            why = (
+                f"No perseguir {prof.get('name') or prof.get('position')}: "
+                "el ΔEP/ROI no compensa la puja."
+            )
+        scouts.append(
+            {
+                "player_id": prof.get("player_id"),
+                "name": prof.get("name"),
+                "position": prof.get("position"),
+                "action": "avoid" if reason == "delta_ep_or_roi" else "scout",
+                "bid": None,
+                "price": prof.get("bid"),
+                "why": why,
+                "urgency": "low",
+                "affordable": False,
+                "budget_fit": "blocked",
+                "queue_role": "upgrade_profile_drop",
+                "priority_score": 8,
+            }
+        )
+
     for s in sells:
         s.pop("_pref", None)
         s["priority_score"] = priority_score_sell(s)
     sells.sort(
         key=lambda x: (
+            0 if x.get("sell_reason") == "liquidity_slot" else 1,
             -int(x.get("priority_score") or 0),
             0 if x.get("xi_impact") == "safe" else 1,
             -_money(x.get("price")),
         )
     )
-    return sells[:8]
+    capped = sells[: max(1, sale_limit)]
+    return capped + scouts
 
 
 def _best_owned_reference(
@@ -2636,11 +3093,6 @@ def allocate_clause_bids(
     Máx. 1 cara (≥40% liquidez) + 1 barata si el residual lo permite.
     """
     bal = max(0.0, float(balance or 0))
-    reserve = float(
-        cash_reserve
-        if cash_reserve is not None
-        else getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)
-    )
     reserved = max(0.0, float(market_reserved or 0))
     sim = max(0.0, bal - reserved)
     expensive_floor = bal * 0.40
@@ -2715,8 +3167,8 @@ def allocate_clause_bids(
                 )
                 others.append(row)
                 continue
-            # Barata: no comerse la reserva de carencias de mercado
-            if reserved > 0 and (sim - cost) < min(reserve, reserved):
+            # Barata: no comerse la caja apartada para fichajes de mercado (el 15)
+            if reserved > 0 and (sim - cost) < reserved:
                 row["action"] = "scout"
                 row["bid"] = None
                 row["affordable"] = False
@@ -3018,10 +3470,7 @@ def build_rival_upgrade_targets(
     # Reserva caja de mercado si hay carencias (no gastar todo en cláusulas)
     reserved = float(market_reserved) if market_reserved is not None else 0.0
     if market_reserved is None and needy:
-        reserved = min(
-            bal * 0.45,
-            float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)),
-        )
+        reserved = max(0.0, bal * 0.40)
 
     results = allocate_clause_bids(results, bal, market_reserved=reserved)
 
@@ -3493,25 +3942,14 @@ def finalize_action_plan(
     Respeta cupo de plantilla (plazas libres = max_squad - squad_size).
     Devuelve (action_plan, daily_package).
     """
-    cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
-    # Reserva del paquete = objetivos operables de HOY (no reconstruir toda la plantilla)
+    cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 0) or 0)
+    # Reserva del paquete = 0 (liquidez = listados). Solo solvencia al pitido.
     bal = float(balance) if balance is not None else 0.0
     bootstrap_ctx = bootstrap
     if not bootstrap_ctx and isinstance(funding_info, dict):
         bootstrap_ctx = funding_info.get("bootstrap_xi_context")
     if funding_info and funding_info.get("cash_reserved") is not None:
-        daily_reserve = float(funding_info.get("cash_reserved") or 0)
-        if daily_reserve > 0:
-            # Nunca hinchar por encima del saldo: si falta caja, se vende; la reserva del
-            # paquete es lo que hay que proteger hoy, acotada al balance.
-            cash_reserve = min(daily_reserve, bal) if bal > 0 else daily_reserve
-        else:
-            cash_reserve = min(cash_reserve, bal * 0.5) if bal > 0 else cash_reserve
-    else:
-        cash_reserve = min(cash_reserve, bal * 0.5) if bal > 0 else cash_reserve
-    if bootstrap_ctx and bootstrap_ctx.get("active") and bal > 0:
-        # Modo once: no bloquear toda la caja para el ideal fuera de mercado
-        cash_reserve = min(cash_reserve, bal * 0.45)
+        cash_reserve = max(0.0, float(funding_info.get("cash_reserved") or 0))
     secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
     package_id = datetime.now(timezone.utc).date().isoformat()
     fixed = (market_mode or "auction") == "fixed"
@@ -3574,11 +4012,7 @@ def finalize_action_plan(
             0,
         )
         cash_reserved_targets = filtered_reserved
-        if filtered_reserved > 0:
-            cash_reserve = min(filtered_reserved, bal) if bal > 0 else filtered_reserved
-        else:
-            base_res = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
-            cash_reserve = min(base_res, bal * 0.5) if bal > 0 else base_res
+        cash_reserve = 0.0
     plan_ids = {str(i.get("player_id")) for i in plan if i.get("player_id")}
     for at in (target_board or {}).get("aspirational_targets") or []:
         pid = str(at.get("player_id") or "")
@@ -4305,7 +4739,7 @@ def finalize_action_plan(
             f"Plantilla llena ({squad_n}/{max_squad}) — vende/rescinde antes de fichar."
         )
     else:
-        note = "Sin compra clara en el mercado de hoy — vigila claves y carencias."
+        note = "Gasta en el 15 ahora. Liquidez = jugadores listados, no reserva."
     if need_slot_sells and slot_sell_ids and primary:
         note = (
             f"{note} Prioriza venta(s) para liberar plaza "

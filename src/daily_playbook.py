@@ -39,9 +39,9 @@ PHASE_FOCUS = {
     "dia_partido": "El once ya casi no se toca: cierra capitán y suplencias antes de cada kickoff.",
     "visperas": "Cierra el once y asegura saldo positivo: en negativo no se puntúa.",
     "confirmacion": "Salen las previas. Confirma titularidades y corrige el once antes de que suban los precios.",
-    "ventana_compra": "Momento de fichar: los precios aún no llevan la prima de la víspera.",
-    "post_jornada": "Balance de la jornada, ventas de los que ya no cuentan y objetivos para el siguiente ciclo.",
-    "pretemporada": "Construir plantilla: titularidad y producción histórica mandan sobre el precio.",
+    "ventana_compra": "Gasta en el mejor 15 ahora. Liquidez = jugadores listados, no caja congelada.",
+    "post_jornada": "Tras el cobro de la jornada, recompón el 15 y deja listados a los débiles.",
+    "pretemporada": "Monta el mejor 15 posible con el mercado de hoy; lista débiles para el siguiente ciclo.",
     "jornada_en_curso": "Jornada disputándose: solo cambios en vivo si la liga los permite.",
 }
 
@@ -190,10 +190,10 @@ def build_daily_playbook(
             f"Faltan {bootstrap.get('slots_short', 0)} jugador(es) para un once legal "
             f"({summary.get('xi_count', 0)}/{summary.get('xi_target', 11)}). "
             f"Huecos: {gap_txt}. {cycle_bit}{cycles_bit}. "
-            "Ficha titulares del mercado actual antes de reservar caja para el ideal.",
+            "Ficha titulares del mercado actual. No congeles caja para un crack que no está listado.",
             priority="Alta",
         )
-        warnings.append("Modo bootstrap: completar once antes que plantilla ideal.")
+        warnings.append("Modo bootstrap: completar once con el mercado de hoy; liquidez = listados.")
     elif not summary.get("complete") and phase not in ("pretemporada",):
         add(
             "xi_incompleto",
@@ -290,6 +290,38 @@ def build_daily_playbook(
                     related=related,
                 )
 
+    # --- Plantilla 15: gastar ahora; liquidez = listados ---
+    economy = rules.get("economy") if isinstance(rules.get("economy"), dict) else {}
+    if not bootstrap.get("active") and phase in ("ventana_compra", "post_jornada", "pretemporada"):
+        add(
+            "gastar_15",
+            "Gasta en el 15 ahora",
+            "El presupuesto se usa para montar ya el mejor 15. La liquidez para un upgrade "
+            "mañana son los débiles listados (oferta CPU al siguiente ciclo), no millones parados.",
+            priority="Alta",
+        )
+    if economy.get("gw_cash_bonus") and phase not in ("jornada_en_curso",):
+        expected = economy.get("expected_gw_cash") or 0
+        src = economy.get("source") or "rewards"
+        extra = (
+            f"Estimado ~{expected:,.0f} € ({src}). "
+            if expected
+            else "El importe exacto se confirma al cierre. "
+        )
+        add(
+            "bonus_jornada",
+            "Ingreso de jornada (después del pitido)",
+            f"{extra}No es saldo de hoy para pujar: alimenta el 15 de la siguiente ventana.",
+            priority="Baja",
+        )
+    elif economy.get("no_gw_cash_bonus") and economy.get("credit_prizes"):
+        add(
+            "bonus_creditos",
+            "Premios en créditos, no caja Mister",
+            "El ranking de jornada paga créditos/tienda. No cuenta como dinero de plantilla.",
+            priority="Baja",
+        )
+
     # --- Dinero: en negativo no se puntúa ---
     if balance < 0 and phase in ("confirmacion", "visperas", "dia_partido"):
         add(
@@ -308,7 +340,8 @@ def build_daily_playbook(
             add(
                 "fichar",
                 f"{len(buys)} fichaje(s) en cola",
-                f"{names}. Es la parte del ciclo donde el precio aún no lleva prima de víspera.",
+                f"{names}. Es la parte del ciclo donde el precio aún no lleva prima de víspera. "
+                "Si el swap cierra (caja + VM del listado), ficha.",
                 priority="Alta",
                 related=[a.get("player_id") or a.get("id") for a in buys],
             )
@@ -317,8 +350,8 @@ def build_daily_playbook(
             add(
                 "listar_ventas",
                 f"Listar {len(sells)} venta(s)",
-                f"{names}. El dinero de una venta tarda un ciclo en estar disponible: "
-                "listar hoy es poder fichar pasado mañana.",
+                f"{names}. Liquidez = jugadores listados, no reserva: la CPU ofertea al siguiente "
+                "ciclo y así puedes vender y pujar si sale el upgrade.",
                 priority="Media",
                 related=[a.get("player_id") or a.get("id") for a in sells],
             )

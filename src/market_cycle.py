@@ -262,7 +262,10 @@ def resolve_bootstrap_xi(
 
     posture = "normal"
     if active:
-        if cycle_urgent or low_cycles:
+        # Sin once legal, el mercado de HOY es la prioridad. Esperar al siguiente
+        # ciclo solo tiene sentido si no hay huecos (el modo ya no estaría activo)
+        # o si el ciclo actual no cubre nada: eso se decide más abajo con candidatos.
+        if cycle_urgent or low_cycles or slots_short > 0:
             posture = "buy_now"
         elif hours_to_cycle_end is not None and float(hours_to_cycle_end) > urgent_cycle_h * 2:
             posture = "can_wait_cycle"
@@ -300,16 +303,17 @@ def adjust_funding_for_bootstrap(
         return funding
     gaps = bootstrap.get("position_gaps") or {}
     gap_pos = {p for p, n in gaps.items() if int(n or 0) > 0}
-    if not gap_pos:
-        return funding
 
-    daily_cost = 0.0
+    # En bootstrap la caja se GASTA en el once, no se reserva para el ideal.
+    # Reservar el saldo entero (o la suma de cracks del mercado) bloqueaba buy_now.
     selected: list[dict[str, Any]] = []
+    remaining = {p: int(n or 0) for p, n in gaps.items() if int(n or 0) > 0}
+    ranked = []
     for o in opportunities or []:
         if not o.get("on_daily_market"):
             continue
         pos = o.get("position")
-        if pos not in gap_pos:
+        if pos not in remaining:
             continue
         ext = o.get("external") or {}
         lp = ext.get("lineup_prob_ext") or o.get("lineup_prob")
@@ -322,6 +326,11 @@ def adjust_funding_for_bootstrap(
         cost = float(o.get("price") or o.get("puja_recomendada") or 0)
         if cost <= 0 or cost > balance:
             continue
+        ranked.append((cost, o, pos))
+    ranked.sort(key=lambda x: x[0])
+    for cost, o, pos in ranked:
+        if remaining.get(pos, 0) <= 0:
+            continue
         selected.append(
             {
                 "position": pos,
@@ -333,24 +342,19 @@ def adjust_funding_for_bootstrap(
                 "primary_name": o.get("name"),
             }
         )
-        daily_cost += cost
-        if len(selected) >= max(3, len(gap_pos)):
-            break
-
-    if daily_cost <= 0:
-        # Al menos no bloquear toda la caja en ideal fuera de mercado
-        daily_cost = min(float(funding.get("cash_reserved") or 0), balance * 0.35)
-        if daily_cost <= 0:
-            daily_cost = min(balance * 0.5, 5_000_000)
+        remaining[pos] = remaining.get(pos, 0) - 1
 
     out = dict(funding)
-    out["cash_reserved"] = round(min(daily_cost, balance), 0)
-    out["funding_target"] = out["cash_reserved"]
-    out["funding_shortfall"] = max(0.0, float(out["funding_target"]) - balance)
+    # Reserva = 0: no proteger el tablero ideal mientras falte un once legal.
+    out["cash_reserved"] = 0.0
+    out["funding_target"] = 0.0
+    out["funding_shortfall"] = 0.0
     out["bootstrap_xi"] = True
     if selected:
         out["gap_costs"] = selected
         out["positions"] = [g.get("position") for g in selected if g.get("position")]
+    elif not gap_pos:
+        return funding
     return out
 
 

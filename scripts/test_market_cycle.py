@@ -50,6 +50,7 @@ def test_bootstrap_active_short_squad() -> None:
     _assert(b["active"], "bootstrap debe activarse con plantilla corta")
     _assert(b["position_gaps"]["FW"] >= 1, "debe faltar delantero")
     _assert(b["slots_short"] >= 7, "faltan muchos huecos")
+    _assert(b["posture"] == "buy_now", "sin once legal no se espera al siguiente ciclo")
 
 
 def test_bootstrap_inactive_full_xi() -> None:
@@ -89,7 +90,7 @@ def test_adjust_funding_lowers_reserve() -> None:
     out = adjust_funding_for_bootstrap(
         funding, bootstrap=bootstrap, balance=20_000_000, opportunities=opps
     )
-    _assert(out["cash_reserved"] < 25_000_000, "reserva debe bajar en bootstrap")
+    _assert(out["cash_reserved"] == 0, "reserva debe ser 0 en bootstrap")
     _assert(out.get("bootstrap_xi"), "flag bootstrap en funding")
 
 

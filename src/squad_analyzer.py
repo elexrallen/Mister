@@ -570,7 +570,7 @@ def upgrade_worth_buy(
     reserve = float(
         cash_reserve
         if cash_reserve is not None
-        else getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000)
+        else getattr(config, "PACKAGE_CASH_RESERVE", 0)
     )
     other_min = float(other_gaps_min or 0)
     if other_min > 0:
@@ -589,8 +589,8 @@ def upgrade_worth_buy(
 
 
 def realistic_price_cap(balance: float) -> float:
-    """Techo de gasto realista: saldo menos colchón del paquete diario."""
-    reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 8_000_000))
+    """Techo de gasto realista: el saldo usable hoy (sin congelar caja)."""
+    reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 0) or 0)
     return max(0.0, float(balance or 0) - reserve)
 
 
@@ -599,7 +599,7 @@ def apply_realistic_need_caps(
     balance: float,
 ) -> list[dict[str, Any]]:
     """
-    Ancla max_price de needs a la caja real (balance − reserva).
+    Ancla max_price de needs a la caja real (saldo usable hoy).
     Needs sin techo (starters) heredan el cap; depth/parche se limitan más.
     """
     cap = realistic_price_cap(balance)
