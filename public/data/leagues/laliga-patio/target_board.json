@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-18T11:33:02.857920+00:00",
+  "generated_at": "2026-08-18T19:40:01.637618+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 65 · 1,839,000 € · buy · starter · Δ -100%",
-      "added_at": "2026-08-18T11:33:02.827910+00:00"
+      "added_at": "2026-08-18T19:40:01.601657+00:00"
     },
     {
       "slot": "DF4",
@@ -806,7 +806,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 41 · 2,196,000 € · keep · bench · Δ 8%",
-      "added_at": "2026-08-18T11:33:02.855664+00:00"
+      "added_at": "2026-08-18T19:40:01.634853+00:00"
     },
     {
       "slot": "MF1",
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 2,364,000 € · buy · bench · Δ 14%",
-      "added_at": "2026-08-18T11:33:02.855907+00:00"
+      "added_at": "2026-08-18T19:40:01.635171+00:00"
     },
     {
       "slot": "FW1",
@@ -974,7 +974,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 27 · 2,544,000 € · buy · bench · Δ -17%",
-      "added_at": "2026-08-18T11:33:02.855424+00:00"
+      "added_at": "2026-08-18T19:40:01.634557+00:00"
     }
   ],
   "moves": {
@@ -1441,7 +1441,7 @@
       },
       {
         "player_id": "65090",
-        "name": "F. Ugrinic",
+        "name": "F. Ugrinic 💥",
         "position": "MF",
         "ep_score": 40.1,
         "price": 1110000.0,

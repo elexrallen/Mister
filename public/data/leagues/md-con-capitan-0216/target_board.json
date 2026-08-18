@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-18T11:27:49.266527+00:00",
+  "generated_at": "2026-08-18T19:34:29.425254+00:00",
   "league_slug": "md-con-capitan-0216",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -239,11 +239,11 @@
       "complete": true
     }
   ],
-  "balance": 6107000.0,
-  "squad_value": 44520000.0,
+  "balance": 170000.0,
+  "squad_value": 50457000.0,
   "wealth": {
-    "balance": 6107000.0,
-    "squad_value": 44520000.0,
+    "balance": 170000.0,
+    "squad_value": 50457000.0,
     "total": 50627000.0,
     "liquidity_floor": 0.0,
     "budget_cap": 50627000.0
@@ -902,7 +902,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 41 · 1,297,000 € · buy · starter · Δ 5%",
-      "added_at": "2026-08-18T11:27:49.092672+00:00"
+      "added_at": "2026-08-18T11:27:48.849480+00:00"
     },
     {
       "slot": "MF6",
@@ -926,7 +926,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,914,000 € · buy · bench · Δ 6%",
-      "added_at": "2026-08-18T11:27:49.114707+00:00"
+      "added_at": "2026-08-18T11:27:48.872238+00:00"
     },
     {
       "slot": "FW1",
@@ -1360,6 +1360,22 @@
         "cash_lag_hours": 48
       },
       {
+        "player_id": "4886",
+        "name": "A. Villalibre",
+        "position": "FW",
+        "ep_score": 25.8,
+        "price": 2783000.0,
+        "delta_5d": -1.0,
+        "value_note": "falling",
+        "why": "Fuera del ideal · EP 26 · lista a ~2,783,000 € (VM); caja usable en ~48h · Δ -100%",
+        "list_at": 2783000.0,
+        "expected_proceeds": 2783000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
         "player_id": "607",
         "name": "B. Mayoral",
         "position": "FW",
@@ -1370,22 +1386,6 @@
         "why": "Fuera del ideal · EP 27 · lista a ~1,699,000 € (VM); caja usable en ~48h · Δ -100%",
         "list_at": 1699000.0,
         "expected_proceeds": 1699000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
-        "player_id": "4886",
-        "name": "A. Villalibre",
-        "position": "FW",
-        "ep_score": 33.0,
-        "price": 2783000.0,
-        "delta_5d": -1.0,
-        "value_note": "falling",
-        "why": "Fuera del ideal · EP 33 · lista a ~2,783,000 € (VM); caja usable en ~48h · Δ -100%",
-        "list_at": 2783000.0,
-        "expected_proceeds": 2783000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24,
@@ -1456,6 +1456,22 @@
         "cash_lag_hours": 48
       },
       {
+        "player_id": "70930",
+        "name": "G. Puerta",
+        "position": "MF",
+        "ep_score": 42.1,
+        "price": 5937000.0,
+        "delta_5d": null,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 42 · lista a ~5,937,000 € (VM); caja usable en ~48h",
+        "list_at": 5937000.0,
+        "expected_proceeds": 5937000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
         "player_id": "56628",
         "name": "L. Agoumé",
         "position": "MF",
@@ -1517,7 +1533,7 @@
     "funded_ideal": false,
     "formation": "4-5-1",
     "ideal_buy_cost": 39922000.0,
-    "daily_primary_count": 3
+    "daily_primary_count": 0
   },
   "totals_aspirational": {
     "ep_sum": 801.8,
@@ -1531,99 +1547,14 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 6107000.0,
-  "primary_targets": [
-    {
-      "player_id": "63871",
-      "name": "Marc Aguado",
-      "need": "perfect_squad_daily",
-      "position": "MF",
-      "price": 2011000.0,
-      "ep_score": 71.4,
-      "status": "affordable",
-      "role": "starter",
-      "on_daily_market": false
-    },
-    {
-      "player_id": "64468",
-      "name": "Tyrhys Dolan",
-      "need": "perfect_squad_daily",
-      "position": "MF",
-      "price": 2022000.0,
-      "ep_score": 69.4,
-      "status": "affordable",
-      "role": "starter",
-      "on_daily_market": false
-    },
-    {
-      "player_id": "65674",
-      "name": "Miguel Román",
-      "need": "perfect_squad_daily",
-      "position": "MF",
-      "price": 1297000.0,
-      "ep_score": 41.2,
-      "status": "affordable",
-      "role": "starter",
-      "on_daily_market": false
-    }
-  ],
+  "residual_after_reserve": 170000.0,
+  "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF5",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "58986",
-      "name": "Abel Bretones",
-      "team": "Osasuna",
-      "team_id": "50",
-      "ep_score": 41.0,
-      "price": 1881000.0,
-      "status": "dropped",
-      "delta_5d": 0.0485,
-      "value_note": "stable",
-      "value_ratio": 21.8,
-      "lineup_prob": 80.0,
-      "ff_mister_points": 80.9,
-      "ff_mister_avg": 2.89,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 41 · 1,881,000 € · buy · starter · Δ 5%",
-      "added_at": "2026-08-17T21:10:36.336259+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF5",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "33726",
-      "name": "Hugo Álvarez",
-      "team": "Celta",
-      "team_id": "5",
-      "ep_score": 31.6,
-      "price": 1412000.0,
-      "status": "dropped",
-      "delta_5d": 0.0071,
-      "value_note": "stable",
-      "value_ratio": 22.38,
-      "lineup_prob": 50.0,
-      "ff_mister_points": 110.0,
-      "ff_mister_avg": 3.93,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 32 · 1,412,000 € · buy · bench · Δ 1%",
-      "added_at": "2026-08-18T06:59:09.675179+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
-    "max_spend": 2500000.0
+    "max_spend": 170000.0
   },
   "summary": {
     "slots": 15,
@@ -1634,7 +1565,7 @@
     "incomplete": false,
     "keep": 3,
     "buy": 12,
-    "sell": 10,
+    "sell": 11,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
