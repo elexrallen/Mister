@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-19T08:06:17.794928+00:00",
+  "generated_at": "2026-08-19T11:26:08.006363+00:00",
   "league_slug": "md-con-capitan-0216",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -1535,26 +1535,7 @@
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
-  "dropped": [
-    {
-      "player_id": "607",
-      "name": "B. Mayoral",
-      "position": "FW",
-      "ep_score": 27.0,
-      "price": 1718000.0,
-      "delta_5d": -1.0,
-      "value_note": "falling",
-      "why": "Fuera del ideal · EP 27 · lista a ~1,718,000 € (VM); caja usable en ~48h · Δ -100%",
-      "list_at": 1718000.0,
-      "expected_proceeds": 1718000.0,
-      "buyer_channel": "system",
-      "settlement": "market_cycle",
-      "cycle_hours": 24,
-      "cash_lag_hours": 48,
-      "status": "dropped",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 280000.0
