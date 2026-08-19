@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-19T07:03:31.641298+00:00",
+  "generated_at": "2026-08-19T07:23:59.071064+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,7 +10,7 @@
       "id_competition": 1,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-19T06:57:31.185526+00:00",
+      "generated_at": "2026-08-19T07:13:51.344296+00:00",
       "path": "leagues/mundo-deportivo-7412/latest_data.json",
       "balance": 44000,
       "rank": 51,
@@ -63,7 +63,7 @@
       "id_competition": 1,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-19T06:58:44.089763+00:00",
+      "generated_at": "2026-08-19T07:15:07.711829+00:00",
       "path": "leagues/md-con-capitan-0216/latest_data.json",
       "balance": 1011000,
       "rank": 51,
@@ -118,7 +118,7 @@
       "id_competition": 3,
       "season_start": "2026-08-21",
       "default": false,
-      "generated_at": "2026-08-19T07:01:18.109699+00:00",
+      "generated_at": "2026-08-19T07:17:35.001136+00:00",
       "path": "leagues/premier/latest_data.json",
       "balance": 497000,
       "rank": 50,
@@ -173,7 +173,7 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-19T07:03:31.389777+00:00",
+      "generated_at": "2026-08-19T07:19:43.837450+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
       "balance": 374760,
       "rank": 1,
@@ -210,6 +210,59 @@
           "normal_market_cycle",
           "gw_cash_bonus",
           "sale_limit_5"
+        ],
+        "source": "fg_user+admin"
+      }
+    },
+    {
+      "slug": "premier-league-d0g38-4036",
+      "name": "Premier League © - D0G38",
+      "competition": "Premier League",
+      "id_community": "2524036",
+      "id_competition": 3,
+      "season_start": null,
+      "default": false,
+      "generated_at": "2026-08-19T07:23:58.982024+00:00",
+      "path": "leagues/premier-league-d0g38-4036/latest_data.json",
+      "balance": 28449000,
+      "rank": 17,
+      "market_mode": "auction",
+      "max_squad": 25,
+      "provider": "mr",
+      "provider_label": "SofaScore",
+      "clauses": true,
+      "loans": true,
+      "factors": [
+        "scoring_sofascore",
+        "auction_urgency",
+        "clause_bids",
+        "loans_liquidity",
+        "max_squad_25",
+        "fast_market",
+        "gw_cash_bonus",
+        "sale_limit_5",
+        "custom_rules_text",
+        "captain_by_value"
+      ],
+      "rules": {
+        "provider": "mr",
+        "provider_label": "SofaScore",
+        "max_squad": 25,
+        "market_mode": "auction",
+        "clauses": true,
+        "loans": true,
+        "market_speed": 3,
+        "factors": [
+          "scoring_sofascore",
+          "auction_urgency",
+          "clause_bids",
+          "loans_liquidity",
+          "max_squad_25",
+          "fast_market",
+          "gw_cash_bonus",
+          "sale_limit_5",
+          "custom_rules_text",
+          "captain_by_value"
         ],
         "source": "fg_user+admin"
       }
