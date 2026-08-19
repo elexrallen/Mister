@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-19T07:17:34.985448+00:00",
+  "generated_at": "2026-08-19T08:08:36.369422+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -23,7 +23,7 @@
       },
       "ep_sum_starters": 428.7,
       "ep_sum": 503.9,
-      "cost_sum": 63636500.0,
+      "cost_sum": 63340250.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -39,7 +39,7 @@
       },
       "ep_sum_starters": 425.9,
       "ep_sum": 474.1,
-      "cost_sum": 63416500.0,
+      "cost_sum": 63120250.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -87,7 +87,7 @@
       },
       "ep_sum_starters": 388.9,
       "ep_sum": 544.6,
-      "cost_sum": 62475500.0,
+      "cost_sum": 62179250.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -103,7 +103,7 @@
       },
       "ep_sum_starters": 385.5,
       "ep_sum": 500.7,
-      "cost_sum": 63744500.0,
+      "cost_sum": 63448250.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -153,7 +153,7 @@
       },
       "ep_sum_starters": 430.0,
       "ep_sum": 505.2,
-      "cost_sum": 63806500.0,
+      "cost_sum": 63510250.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -169,7 +169,7 @@
       },
       "ep_sum_starters": 425.9,
       "ep_sum": 474.1,
-      "cost_sum": 63416500.0,
+      "cost_sum": 63120250.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -217,7 +217,7 @@
       },
       "ep_sum_starters": 388.9,
       "ep_sum": 544.6,
-      "cost_sum": 62475500.0,
+      "cost_sum": 62179250.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -233,17 +233,17 @@
       },
       "ep_sum_starters": 385.5,
       "ep_sum": 500.7,
-      "cost_sum": 63744500.0,
+      "cost_sum": 63448250.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
     }
   ],
-  "balance": 497000.0,
-  "squad_value": 64210000.0,
+  "balance": 102000.0,
+  "squad_value": 64605000.0,
   "wealth": {
-    "balance": 497000.0,
-    "squad_value": 64210000.0,
+    "balance": 102000.0,
+    "squad_value": 64605000.0,
     "total": 64707000.0,
     "liquidity_floor": 0.0,
     "budget_cap": 64707000.0
@@ -252,7 +252,7 @@
     "budget_cap": 64707000.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
-  "ideal_buy_cost": 57373500.0,
+  "ideal_buy_cost": 57077250.0,
   "perfect_squad": [
     {
       "slot": "GK1",
@@ -527,11 +527,11 @@
       "team": "Chelsea",
       "team_id": "54",
       "ep_score": 41.9,
-      "price": 16549500.0,
+      "price": 16253250.0,
       "status": "buy",
       "delta_5d": -0.0067,
       "value_note": "stable",
-      "value_ratio": 2.53,
+      "value_ratio": 2.58,
       "lineup_prob": 89.0,
       "ff_mister_points": 266.0,
       "ff_mister_avg": 7.6,
@@ -539,7 +539,7 @@
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 42 · 16,549,500 € · buy · starter · Δ -1%",
+      "why": "EP 42 · 16,253,250 € · buy · starter · Δ -1%",
       "added_at": "2026-08-18T11:30:39.596881+00:00"
     }
   ],
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 41 · 5,324,000 € · buy · bench · Δ 2%",
-      "added_at": "2026-08-19T07:17:34.984279+00:00"
+      "added_at": "2026-08-19T08:08:36.367863+00:00"
     },
     {
       "slot": "MF1",
@@ -758,7 +758,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 10,631,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-19T07:17:34.979291+00:00"
+      "added_at": "2026-08-19T08:08:36.360301+00:00"
     },
     {
       "slot": "MF2",
@@ -837,12 +837,12 @@
       "position": "MF",
       "role": "bench",
       "player_id": "48471",
-      "name": "Brenden Aaronson",
+      "name": "B. Aaronson",
       "team": "Leeds",
       "team_id": "502",
       "ep_score": 40.0,
       "price": 1809000.0,
-      "status": "buy",
+      "status": "keep",
       "delta_5d": 0.1457,
       "value_note": "rising",
       "value_ratio": 22.11,
@@ -851,10 +851,10 @@
       "ff_mister_avg": 5.43,
       "hist_ok": false,
       "on_daily_market": false,
-      "owned": false,
+      "owned": true,
       "gk_tandem": false,
-      "why": "EP 40 · 1,809,000 € · buy · bench · Δ 15%",
-      "added_at": "2026-08-19T07:17:34.984344+00:00"
+      "why": "EP 40 · 1,809,000 € · keep · bench · Δ 15%",
+      "added_at": "2026-08-19T08:08:36.367963+00:00"
     },
     {
       "slot": "FW1",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 2,184,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-19T07:17:34.984360+00:00"
+      "added_at": "2026-08-19T08:08:36.367986+00:00"
     }
   ],
   "moves": {
@@ -1158,11 +1158,11 @@
         "team": "Chelsea",
         "team_id": "54",
         "ep_score": 41.9,
-        "price": 16549500.0,
+        "price": 16253250.0,
         "status": "buy",
         "delta_5d": -0.0067,
         "value_note": "stable",
-        "value_ratio": 2.53,
+        "value_ratio": 2.58,
         "lineup_prob": 89.0,
         "ff_mister_points": 266.0,
         "ff_mister_avg": 7.6,
@@ -1170,7 +1170,7 @@
         "on_daily_market": false,
         "owned": false,
         "gk_tandem": false,
-        "why": "EP 42 · 16,549,500 € · buy · starter · Δ -1%",
+        "why": "EP 42 · 16,253,250 € · buy · starter · Δ -1%",
         "added_at": "2026-08-18T11:30:39.596881+00:00"
       }
     ],
@@ -1186,22 +1186,6 @@
         "why": "Fuera del ideal · EP 4 · lista a ~160,000 € (VM); caja usable en ~48h · Δ 0%",
         "list_at": 160000.0,
         "expected_proceeds": 160000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
-        "player_id": "14638",
-        "name": "J. Lerma",
-        "position": "MF",
-        "ep_score": 24.3,
-        "price": 1414000.0,
-        "delta_5d": 0.0443,
-        "value_note": "stable",
-        "why": "Fuera del ideal · EP 24 · lista a ~1,414,000 € (VM); caja usable en ~48h · Δ 4%",
-        "list_at": 1414000.0,
-        "expected_proceeds": 1414000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24,
@@ -1352,6 +1336,22 @@
         "cash_lag_hours": 48
       },
       {
+        "player_id": "48471",
+        "name": "B. Aaronson",
+        "position": "MF",
+        "ep_score": 40.0,
+        "price": 1809000.0,
+        "delta_5d": 0.1457,
+        "value_note": "rising",
+        "why": "Fuera del ideal · EP 40 · lista a ~1,809,000 € (VM); caja usable en ~48h · Δ 15%",
+        "list_at": 1809000.0,
+        "expected_proceeds": 1809000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
         "player_id": "15346",
         "name": "B. Saka",
         "position": "FW",
@@ -1372,22 +1372,22 @@
   "totals": {
     "ep_sum": 503.9,
     "ep_sum_starters": 428.7,
-    "cost_sum": 63636500.0,
-    "net_buys": 57373500.0,
+    "cost_sum": 63340250.0,
+    "net_buys": 57077250.0,
     "slots_filled": 12,
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
     "funded_ideal": true,
     "formation": "5-3-2",
-    "ideal_buy_cost": 57373500.0,
+    "ideal_buy_cost": 57077250.0,
     "daily_primary_count": 0
   },
   "totals_aspirational": {
     "ep_sum": 585.3,
     "ep_sum_starters": 455.5,
     "cost_sum": 61881000.0,
-    "net_buys": 55618000.0,
+    "net_buys": 53809000.0,
     "slots_filled": 14,
     "slots_target": 15,
     "funded": null,
@@ -1395,7 +1395,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 497000.0,
+  "residual_after_reserve": 102000.0,
   "primary_targets": [],
   "aspirational_targets": [
     {
@@ -1419,16 +1419,6 @@
       "need": "perfect_squad_aspirational"
     },
     {
-      "player_id": "48471",
-      "name": "Brenden Aaronson",
-      "position": "MF",
-      "price": 1809000.0,
-      "ep_score": 40.0,
-      "role": "bench",
-      "status": "buy",
-      "need": "perfect_squad_aspirational"
-    },
-    {
       "player_id": "52112",
       "name": "Dango Ouattara",
       "position": "FW",
@@ -1440,10 +1430,29 @@
     }
   ],
   "slots": [],
-  "dropped": [],
+  "dropped": [
+    {
+      "player_id": "14638",
+      "name": "J. Lerma",
+      "position": "MF",
+      "ep_score": 24.3,
+      "price": 1414000.0,
+      "delta_5d": 0.0443,
+      "value_note": "stable",
+      "why": "Fuera del ideal · EP 24 · lista a ~1,414,000 € (VM); caja usable en ~48h · Δ 4%",
+      "list_at": 1414000.0,
+      "expected_proceeds": 1414000.0,
+      "buyer_channel": "system",
+      "settlement": "market_cycle",
+      "cycle_hours": 24,
+      "cash_lag_hours": 48,
+      "status": "dropped",
+      "miss_days": 1
+    }
+  ],
   "patch_policy": {
     "allow": false,
-    "max_spend": 497000.0
+    "max_spend": 102000.0
   },
   "summary": {
     "slots": 12,
@@ -1470,8 +1479,8 @@
     "starters": 10,
     "bench": 4,
     "incomplete": true,
-    "keep": 2,
-    "buy": 12,
+    "keep": 3,
+    "buy": 11,
     "ep_sum": 585.3,
     "ep_sum_starters": 455.5,
     "mode": "aspirational",
