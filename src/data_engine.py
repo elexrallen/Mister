@@ -62,10 +62,11 @@ from competitive_actions import (
     finalize_action_plan,
     is_key_market_candidate,
     liquidity_balance,
-    promote_funded_swaps,
     mister_bid_cap,
     other_gaps_min_cost,
+    promote_funded_swaps,
     promote_appreciation_plays,
+    reconcile_avoid_conflicts,
     resolve_hours_to_jornada,
     rival_demand_for_position,
     sells_settle_before_d1,
@@ -2362,6 +2363,8 @@ def build_action_plan(
 
     # Sin hueco/upgrade/objetivo: fichar revalorizaciones del mercado de hoy
     plan = promote_appreciation_plays(plan)
+    # Evitar contradicciones: avoid gana sobre buy/swap del mismo jugador
+    plan = reconcile_avoid_conflicts(plan)
 
     finalized = finalize_action_plan(
         plan,

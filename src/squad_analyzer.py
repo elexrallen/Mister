@@ -55,8 +55,17 @@ def _money(n: float) -> int:
 def _is_injured(p: dict[str, Any]) -> bool:
     if p.get("injury"):
         return True
-    avail = (p.get("external") or {}).get("availability")
+    avail = (p.get("external") or {}).get("availability") or p.get("availability")
     return avail in ("injured", "suspended")
+
+
+def _is_unavailable(p: dict[str, Any]) -> bool:
+    """Lesión, sanción o descartado en la previa: no sirve para hueco/upgrade/swap."""
+    if _is_injured(p):
+        return True
+    if p.get("gw_out") or (p.get("external") or {}).get("gw_out"):
+        return True
+    return False
 
 
 def _lineup_frac(p: dict[str, Any]) -> float | None:
@@ -599,6 +608,19 @@ def assess_market_coverage(
     pos = player.get("position") or "MF"
     cov_map = position_coverage_map(diagnostico)
     coverage = cov_map.get(pos, "ok")
+    overstocked = is_line_overstocked(pos, diagnostico, squad)
+
+    # Lesionado / sancionado / fuera de previa: nunca “cubre hueco” ni upgrade
+    if _is_unavailable(player):
+        return {
+            "position_coverage": coverage,
+            "fills_coverage_gap": False,
+            "line_already_covered": True,
+            "is_upgrade": False,
+            "coverage_label": "No disponible",
+            "overstocked": overstocked,
+        }
+
     fills_gap = coverage in ("critical", "thin")
     line_covered = coverage == "ok"
 
@@ -606,7 +628,6 @@ def assess_market_coverage(
     is_upgrade = False
     label_override: str | None = None
     block_upgrade = False
-    overstocked = is_line_overstocked(pos, diagnostico, squad)
     starters_real = _line_starters_real(pos, diagnostico, squad)
     starter_tgt = int(STARTERS_TARGET.get(pos, 1))
     price = float(_player_value(player) or 0)
@@ -700,7 +721,7 @@ def is_clear_overstock_upgrade(
     Mejora clara en línea sobrada: titular ≥70% y (Δlineup ≥+0.20 vs peor titular,
     TOP FF, o prod≥65 con el peor de la línea <50).
     """
-    if not is_upgrade:
+    if not is_upgrade or _is_unavailable(player):
         return False
     lp = _lineup_frac(player)
     if lp is None or lp < LINEUP_STARTER:
@@ -1660,7 +1681,7 @@ def structural_market_boost(
     Bonus de score + flag fills_structural + etiqueta corta si el jugador
     del mercado encaja en una necesidad estructural.
     """
-    if not needs:
+    if not needs or _is_unavailable(player):
         return 0.0, False, None
 
     pos = player.get("position")

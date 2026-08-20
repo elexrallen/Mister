@@ -2164,6 +2164,50 @@ def xi_owned_ids(recommended_xi: dict[str, Any] | None) -> set[str]:
     return ids
 
 
+def reconcile_avoid_conflicts(plan: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """
+    Si un jugador está en avoid (lesión/sanción/ROI), no puede a la vez
+    ser buy/wait/scout ni el objetivo de un swap de liquidez.
+    """
+    if not plan:
+        return plan
+    avoid_ids = {
+        str(a.get("player_id") or "")
+        for a in plan
+        if a.get("action") == "avoid" and a.get("player_id")
+    }
+    if not avoid_ids:
+        return plan
+
+    out: list[dict[str, Any]] = []
+    for item in plan:
+        pid = str(item.get("player_id") or "")
+        action = item.get("action")
+        if pid in avoid_ids and action in ("buy_now", "wait", "scout", "clause_bid"):
+            continue
+        if action == "sell":
+            funds = str(item.get("funds_for") or "")
+            up = item.get("upgrade_profile") if isinstance(item.get("upgrade_profile"), dict) else {}
+            up_id = str(up.get("player_id") or up.get("id") or "")
+            if funds in avoid_ids or up_id in avoid_ids:
+                # Quitar el chase del lesionado; si el sell era solo liquidez para él, degradar
+                row = dict(item)
+                row.pop("funds_for", None)
+                row.pop("funds_for_name", None)
+                row.pop("upgrade_profile", None)
+                if row.get("sell_reason") == "liquidity_slot":
+                    why = (row.get("why") or "").strip()
+                    note = "objetivo de swap no disponible (lesión/sanción) — no perseguir"
+                    if note not in why:
+                        row["why"] = f"{note}; {why}" if why else note
+                    # Mantener venta solo si sigue siendo liquidez genérica útil
+                    row["sell_reason"] = "surplus_to_demand"
+                out.append(row)
+                continue
+        out.append(item)
+    return out
+
+
 def swap_covers(balance: float, slot_vm: float, bid: float) -> bool:
     """¿Saldo usable + cobro VM del listado cubre la puja del upgrade?"""
     return float(balance or 0) + float(slot_vm or 0) >= float(bid or 0)
@@ -2197,6 +2241,19 @@ def promote_funded_swaps(
         if not item.get("on_daily_market") and item.get("seller") != "market":
             continue
         if item.get("solvency_blocked"):
+            continue
+        # Nunca promover swap/buy de lesionados (evita contradicción con avoid)
+        avail = str(
+            (item.get("external") or {}).get("availability")
+            or item.get("availability")
+            or ""
+        ).lower()
+        if (
+            item.get("injury")
+            or avail in ("injured", "suspended")
+            or item.get("gw_out")
+            or (item.get("external") or {}).get("gw_out")
+        ):
             continue
         pid = str(item.get("player_id") or "")
         slot = by_target.get(pid)
@@ -2362,6 +2419,19 @@ def collect_upgrade_profiles(
         pid = str(raw.get("id") or raw.get("player_id") or "")
         pos = raw.get("position") or "MF"
         if pid and pid in owned:
+            return
+        # No perseguir lesionados / fuera de previa (evitar swap + avoid a la vez)
+        avail = str(
+            (raw.get("external") or {}).get("availability")
+            or raw.get("availability")
+            or ""
+        ).lower()
+        if (
+            raw.get("injury")
+            or avail in ("injured", "suspended")
+            or raw.get("gw_out")
+            or (raw.get("external") or {}).get("gw_out")
+        ):
             return
         cost = _money(
             raw.get("puja_recomendada")
