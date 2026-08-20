@@ -670,9 +670,13 @@ def build_gw_xi_advice(
         gw_starter = bool(p.get("gw_starter") or ext.get("gw_starter"))
         gw_doubt = bool(p.get("gw_doubt") or ext.get("gw_doubt"))
         gw_out = bool(p.get("gw_out") or ext.get("gw_out"))
+        gw_blank = bool(p.get("gw_blank") or ext.get("gw_blank"))
         opponent = p.get("gw_opponent") or ext.get("gw_opponent")
 
-        if gw_out or prob_f < 40:
+        if gw_blank:
+            advice = "sit"
+            why = "Sin partido esta jornada (blank) — no alinear"
+        elif gw_out or prob_f < 40:
             advice = "sit"
             why = f"FF jornada: {prob_f:.0f}% — mejor no alinear"
         elif gw_doubt or (40 <= prob_f < 70):
@@ -761,11 +765,12 @@ def _xi_play_score(p: dict[str, Any]) -> tuple:
     lp = _lineup_pct(p)
     avail = _ext_avail(p)
     injured = avail in ("injured", "suspended") or bool(p.get("injury"))
-    gw_out = bool(p.get("gw_out") or (p.get("external") or {}).get("gw_out"))
+    gw_blank = bool(p.get("gw_blank") or (p.get("external") or {}).get("gw_blank"))
+    gw_out = bool(p.get("gw_out") or (p.get("external") or {}).get("gw_out")) or gw_blank
 
-    if injured or gw_out:
+    if injured or gw_blank or gw_out:
         play = -50.0
-        signal = "out"
+        signal = "blank" if gw_blank and not injured else "out"
     elif gw is not None:
         play = float(gw)
         if gw >= 70:
@@ -844,6 +849,8 @@ def _slot_risk(item: dict[str, Any]) -> tuple[bool, str | None]:
     """
     if item["injured"]:
         return True, "Lesionado o sancionado: cero casi seguro"
+    if item["signal"] == "blank":
+        return True, "Sin partido esta jornada (blank): no puntúa"
     if item["signal"] == "out":
         return True, "Descartado en la previa de la jornada"
     prob = _play_probability(item)
@@ -903,6 +910,8 @@ def pick_captain(
     scored: list[tuple[float, float, float, dict[str, Any]]] = []
     for row in xi:
         if row.get("injured"):
+            continue
+        if row.get("signal") == "blank":
             continue
         xpts = _f(row, "xpts")
         if xpts is None:
@@ -1080,6 +1089,8 @@ def build_recommended_gw_xi(
         xpts = p.get("xpts")
         if item["injured"]:
             why = "Lesionado/sancionado — solo si no hay alternativa"
+        elif signal == "blank" or p.get("gw_blank") or (p.get("external") or {}).get("gw_blank"):
+            why = "Sin partido esta jornada (blank) — no puntúa en Mister"
         elif xpts is not None:
             why = f"{float(xpts):.1f} pts esperados · {p.get('xpts_why') or ''}".strip(" ·")
         elif gw is not None:
@@ -1091,6 +1102,9 @@ def build_recommended_gw_xi(
         else:
             why = "Sin % — mejor disponible en plantilla"
         risk, risk_reason = _slot_risk(item) if role == "xi" else (False, None)
+        if signal == "blank" and role == "xi":
+            risk = True
+            risk_reason = risk_reason or "Sin partido esta jornada"
         if risk and risk_reason:
             why = f"{risk_reason} · {why}"
         elif signal == "doubt" and role == "xi":
@@ -1137,7 +1151,12 @@ def build_recommended_gw_xi(
         for pos in ("GK", "DF", "MF", "FW"):
             need = int(shape_map.get(pos, 0))
             pool = by_pos.get(pos) or []
-            preferred = [x for x in pool if not x["injured"] and x["signal"] != "out"]
+            preferred = [
+                x
+                for x in pool
+                if not x["injured"]
+                and x["signal"] not in ("out", "blank")
+            ]
             fallback = [x for x in pool if x not in preferred]
             n = 0
             for item in preferred + fallback:

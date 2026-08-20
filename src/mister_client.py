@@ -2000,6 +2000,18 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             gameweek,
         )
         log.info("Señales de jornada Mister aplicadas a %s jugadores", n_gw)
+    # Blank GW aunque no haya previa: equipo sin partido → icono prohibido Mister
+    try:
+        from mister_gameweek import apply_blank_gameweek
+
+        n_blank = apply_blank_gameweek(
+            list(squad) + list(market) + list(full_pool),
+            gameweek.get("matchday") if isinstance(gameweek.get("matchday"), dict) else None,
+        )
+        if n_blank:
+            log.info("Blank GW aplicado a %s jugadores", n_blank)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Blank GW no aplicado: %s", exc)
 
     squad_value = sum(int(p.get("price") or 0) for p in squad)
     # Mister muestra en /standings el valor oficial de plantilla; la suma HTML

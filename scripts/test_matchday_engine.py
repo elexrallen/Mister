@@ -35,10 +35,12 @@ from mister_client import (  # noqa: E402
     points_trend_from_gw,
 )
 from mister_gameweek import (  # noqa: E402
+    apply_blank_gameweek,
     build_matchday,
     extract_preview,
     parse_feed_fixtures,
     parse_feed_gameweek_id,
+    playing_team_ids,
 )
 
 # HTML reducido del bloque `feed-top-gameweek` (ver cache/probe/feed.html):
@@ -348,6 +350,54 @@ def test_xpts_injured_is_near_zero() -> None:
     assert p_play <= 0.05, (p_play, why)
     out = expected_points(player)
     assert out["xpts"] < 1.0, out
+
+
+def test_blank_gameweek_marks_teams_without_fixture() -> None:
+    """Equipo sin partido esta jornada → blank (icono prohibido Mister)."""
+    matchday = {
+        "status": "ok",
+        "fixtures": [
+            {"home_id": "51", "away_id": "54"},
+            {"home_id": "59", "away_id": "60"},
+            {"home_id": "67", "away_id": "178"},
+            {"home_id": "320", "away_id": "402"},
+            {"home_id": "502", "away_id": "619"},
+            {"home_id": "55", "away_id": "52"},
+        ],
+    }
+    players = [
+        {
+            "id": "58378",
+            "name": "M. Hermansen",
+            "team_id": "70",  # West Ham: no juega
+            "position": "GK",
+            "lineup_prob": 1.0,
+            "external": {"lineup_prob_ext": 100, "lineup_prob_source": "ff_profile_titular"},
+        },
+        {
+            "id": "1",
+            "name": "Starter",
+            "team_id": "51",  # sí juega
+            "position": "GK",
+            "lineup_prob": 0.8,
+        },
+    ]
+    assert "70" not in playing_team_ids(matchday)
+    n = apply_blank_gameweek(players, matchday)
+    assert n == 1, n
+    blank, plays = players[0], players[1]
+    assert blank.get("gw_blank") is True
+    assert blank.get("gw_out") is True
+    assert plays.get("gw_blank") in (False, None)
+    p_play, why = probability_of_playing(blank)
+    assert p_play <= 0.05, (p_play, why)
+    assert "blank" in why.lower() or "sin partido" in why.lower(), why
+    out = expected_points(blank, league_rules={"avg_scale": 16.0})
+    assert out["xpts"] < 1.0, out
+    xi = build_recommended_gw_xi(players, matchday=matchday)
+    gk = [r for r in (xi.get("xi") or []) if r.get("position") == "GK"]
+    assert gk and gk[0].get("player_id") == "1", gk
+    assert gk[0].get("signal") != "blank", gk[0]
 
 
 def test_xpts_scales_with_provider() -> None:
@@ -753,6 +803,7 @@ def main() -> None:
         test_xpts_preseason_falls_back_to_history,
         test_xpts_without_any_signal_is_conservative,
         test_xpts_injured_is_near_zero,
+        test_blank_gameweek_marks_teams_without_fixture,
         test_xpts_scales_with_provider,
         test_captain_multiplier_for_price_tiers,
         test_captain_picks_highest_expected_gain,

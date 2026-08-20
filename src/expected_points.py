@@ -97,6 +97,8 @@ def probability_of_playing(player: dict[str, Any]) -> tuple[float, str]:
     Mister manda cuando publica el once probable; FF aporta el matiz del %.
     """
     ext = _ext(player)
+    if player.get("gw_blank") or ext.get("gw_blank"):
+        return P_PLAY_UNAVAILABLE, "Sin partido esta jornada (blank)"
     avail = str(ext.get("availability") or ("injured" if player.get("injury") else "")).lower()
     if avail in ("injured", "suspended"):
         return P_PLAY_UNAVAILABLE, f"Baja ({avail})"

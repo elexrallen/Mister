@@ -44,6 +44,7 @@ from fixture_difficulty import (
     build_team_prior,
     build_team_strength,
 )
+from mister_gameweek import apply_blank_gameweek
 from expected_points import annotate_players_with_xpts
 from model_calibration import build_calibration
 from fotmob_service import enrich_players_with_fotmob
@@ -2659,6 +2660,15 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "avg_scale": external_meta.get("ff_avg_scale") or ff_hint.get("avg_scale"),
     }
     xpts_targets = list(squad) + list(market_ext) + list(full_pool)
+    # Blank GW antes de xPts/once: sin partido esta jornada → no titular (icono Mister)
+    md_blank = None
+    if isinstance(gw_bundle.get("matchday"), dict):
+        md_blank = gw_bundle["matchday"]
+    elif isinstance(external_meta.get("matchday"), dict):
+        md_blank = external_meta["matchday"]
+    n_blank = apply_blank_gameweek(xpts_targets, md_blank)
+    if n_blank:
+        external_meta["blank_gw_players"] = n_blank
     n_fdr = annotate_players_with_fdr(
         xpts_targets,
         strength=team_strength,

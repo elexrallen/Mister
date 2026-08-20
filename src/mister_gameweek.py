@@ -280,6 +280,75 @@ def preview_coverage(gw_data: dict[str, Any] | None) -> set[str]:
     return teams
 
 
+def playing_team_ids(matchday: dict[str, Any] | None) -> set[str]:
+    """IDs de equipos con partido en la jornada actual."""
+    ids: set[str] = set()
+    for f in (matchday or {}).get("fixtures") or []:
+        if not isinstance(f, dict):
+            continue
+        for key in ("home_id", "away_id", "id_home", "id_away"):
+            v = f.get(key)
+            if v not in (None, "", 0, "0"):
+                ids.add(str(v))
+    return ids
+
+
+def apply_blank_gameweek(
+    players: list[dict[str, Any]],
+    matchday: dict[str, Any] | None,
+    *,
+    min_fixtures: int = 6,
+) -> int:
+    """
+    Marca `gw_blank` / `gw_out` a jugadores cuyo equipo NO disputa esta jornada.
+
+    Mister muestra el icono de prohibido (no puntúa). Sin esto, el motor puede
+    alinearlos por % titular de temporada (p.ej. Hermansen 100% FF sin rival).
+    Solo actúa si el panel trae suficientes partidos (evita falsos blanks).
+    """
+    if not isinstance(matchday, dict):
+        return 0
+    fixtures = matchday.get("fixtures") or []
+    if not isinstance(fixtures, list) or len(fixtures) < min_fixtures:
+        return 0
+    playing = playing_team_ids(matchday)
+    if len(playing) < min_fixtures:
+        return 0
+
+    touched = 0
+    seen: set[int] = set()
+    for p in players:
+        if id(p) in seen:
+            continue
+        seen.add(id(p))
+        tid = str(p.get("team_id") or "")
+        if not tid:
+            continue
+        if tid in playing:
+            if p.get("gw_blank"):
+                p["gw_blank"] = False
+            ext = p.get("external")
+            if isinstance(ext, dict) and ext.get("gw_blank"):
+                ext["gw_blank"] = False
+            continue
+        p["gw_blank"] = True
+        p["gw_out"] = True
+        p["gw_probable_xi"] = False
+        ext = p.get("external")
+        if isinstance(ext, dict):
+            ext["gw_blank"] = True
+            ext["gw_out"] = True
+            ext["gw_starter"] = False
+        touched += 1
+    if touched:
+        log.info(
+            "Blank GW: %s jugadores sin partido esta jornada (%s equipos juegan)",
+            touched,
+            len(playing),
+        )
+    return touched
+
+
 def extract_gw_points(gw_data: dict[str, Any] | None) -> dict[str, dict[str, Any]]:
     """
     `players[id_match].all[id_team] = [{id, points, played, ...}]`
