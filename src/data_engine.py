@@ -47,7 +47,7 @@ from fixture_difficulty import (
 from expected_points import annotate_players_with_xpts
 from model_calibration import build_calibration
 from fotmob_service import enrich_players_with_fotmob
-from scrapers.ff_points import resolve_avg_scale, scale_threshold
+from scrapers.ff_points import THIN_APPS, resolve_avg_scale, scale_threshold
 from scrapers.http_util import rate_limit_report, reset_rate_limits
 from competitive_actions import (
     annotate_market_budget_risk,
@@ -65,6 +65,7 @@ from competitive_actions import (
     promote_funded_swaps,
     mister_bid_cap,
     other_gaps_min_cost,
+    promote_appreciation_plays,
     resolve_hours_to_jornada,
     rival_demand_for_position,
     sells_settle_before_d1,
@@ -87,7 +88,9 @@ from squad_analyzer import (
     analyze_squad,
     apply_realistic_need_caps,
     assess_market_coverage,
+    comparable_ff_signal,
     is_clear_overstock_upgrade,
+    market_value_justification,
     merge_structural_into_diagnosis,
     structural_market_boost,
     upgrade_worth_buy,
@@ -849,6 +852,11 @@ def classify_market_opportunities(
             categories.append("especulacion_trading")
         elif trend == "up" and (form is None or float(form) < scale_threshold(4.0, scale)):
             categories.append("especulacion_trading")
+        elif (
+            (trend == "up" or (delta is not None and delta >= float(getattr(config, "APPRECIATION_DELTA_MIN", 0.04))))
+            and float(p.get("lineup_prob") or 0) >= float(getattr(config, "APPRECIATION_LINEUP_MIN", 0.45))
+        ):
+            categories.append("especulacion_trading")
         if not categories:
             if position_needy or fills_coverage_gap:
                 categories.append("titular_garantizado")
@@ -887,6 +895,17 @@ def classify_market_opportunities(
             score += 8
         elif trend == "down":
             score -= 4
+        # Perspectiva de minutos: la flecha al alza es más creíble
+        try:
+            lp_frac = float(p.get("lineup_prob") or 0)
+            if lp_frac > 1.5:
+                lp_frac = lp_frac / 100.0
+            if (trend == "up" or (delta is not None and delta >= 0.03)) and lp_frac >= float(
+                getattr(config, "APPRECIATION_LINEUP_MIN", 0.45)
+            ):
+                score += 10
+        except (TypeError, ValueError):
+            pass
         if form is not None:
             scale = resolve_avg_scale(p)
             score += (float(form) * 3.0) * (8.0 / scale)
@@ -948,15 +967,26 @@ def classify_market_opportunities(
         eff_apps = ff_apps
         if (ff_apps is None or ff_apps <= 0) and prior_apps_i is not None:
             eff_apps = prior_apps_i
-        sample_thin = eff_apps is not None and eff_apps < 8
+        current_thin = ff_apps is not None and 0 < ff_apps < THIN_APPS
+        prior_ok = (prior_apps_i or 0) >= THIN_APPS
+        if current_thin and prior_ok:
+            sample_thin = False
+        elif current_thin:
+            sample_thin = True
+        else:
+            sample_thin = eff_apps is not None and eff_apps < THIN_APPS
 
         prod = p.get("production_score")
         ff_avg = p.get("ff_mister_avg")
         if ff_avg is None:
             ff_avg = (p.get("external") or {}).get("ff_mister_avg")
-        # Media 0 no aporta; preferir previa si actual vacía
+        # Media 0 / muestra corta: preferir previa si es fiable
         try:
-            if (ff_avg is None or float(ff_avg) <= 0) and (ff_apps is None or ff_apps <= 0):
+            use_prior_avg = (
+                (ff_avg is None or float(ff_avg) <= 0)
+                and (ff_apps is None or ff_apps <= 0)
+            ) or (current_thin and prior_ok)
+            if use_prior_avg:
                 pa = p.get("ff_prior_avg")
                 if pa is None:
                     pa = (p.get("external") or {}).get("ff_prior_avg")
@@ -973,10 +1003,20 @@ def classify_market_opportunities(
                 score += (float(ff_avg) / resolve_avg_scale(p)) * (14 if preseasonish else 22)
         except (TypeError, ValueError):
             pass
-        if sample_thin:
+        if current_thin and prior_ok:
+            score -= 3  # aviso suave: actual corta, anclado a previa
+        elif sample_thin:
             score -= 8
+        value_note = None
         try:
-            if ff_avg is not None and price > 0 and not sample_thin:
+            just = market_value_justification(p, price)
+            if just:
+                value_note = just.get("note")
+                if just.get("justified"):
+                    score += 8
+                elif just.get("expensive"):
+                    score -= 12
+            elif ff_avg is not None and price > 0 and not sample_thin:
                 scale = resolve_avg_scale(p)
                 roi = (float(ff_avg) / scale * 8.0) / max(price / 1_000_000, 0.4)
                 if roi >= 1.2:
@@ -1068,7 +1108,7 @@ def classify_market_opportunities(
             "category_label": {
                 "chollo_economico": "Chollo / precio atractivo",
                 "titular_garantizado": "Encaje / forma",
-                "especulacion_trading": "Especulación (flecha/Δ)",
+                "especulacion_trading": "Revalorización / trading",
                 "alerta_baja": "Alerta lesión/sanción",
                 "ajuste_estructural": coverage_label or "Ajuste estructural",
             }.get(primary, primary),
@@ -1087,6 +1127,9 @@ def classify_market_opportunities(
             "hours_to_jornada": fin.get("hours_to_jornada"),
             "ff_apps": ff_apps,
             "sample_thin": sample_thin,
+            "current_sample_thin": current_thin,
+            "prior_backed": bool(current_thin and prior_ok),
+            "value_note": value_note,
             "fills_need": position_needy or fills_structural or fills_coverage_gap,
             "fills_structural": fills_structural,
             "structural_label": coverage_label or struct_label,
@@ -1176,13 +1219,22 @@ def find_free_agents_top(
         eff_apps = ff_apps
         if (ff_apps is None or ff_apps <= 0) and prior_apps_i is not None:
             eff_apps = prior_apps_i
-        sample_thin = eff_apps is not None and eff_apps < 8
+        current_thin = ff_apps is not None and 0 < ff_apps < THIN_APPS
+        prior_ok = (prior_apps_i or 0) >= THIN_APPS
+        if current_thin and prior_ok:
+            sample_thin = False
+        elif current_thin:
+            sample_thin = True
+        else:
+            sample_thin = eff_apps is not None and eff_apps < THIN_APPS
         row: dict[str, Any] = {
             **p,
             "roi_ppg_per_million": round(roi, 3),
             "why_free": "Aún no ha salido / nadie lo ha fichado en la liga",
             "ff_apps": ff_apps,
             "sample_thin": sample_thin,
+            "current_sample_thin": current_thin,
+            "prior_backed": bool(current_thin and prior_ok),
         }
         if bal is not None:
             fin = evaluate_bid_finance(
@@ -1638,6 +1690,11 @@ def build_action_plan(
         gw_out = bool(o.get("gw_out") or ext_o.get("gw_out"))
         gw_starter = bool(o.get("gw_starter") or ext_o.get("gw_starter"))
         prod_ok = False
+        has_ff_signal = False
+        signal_avg = None
+        signal_apps = 0
+        signal_from_prior = False
+        cur_apps = 0
         try:
             cur_avg = o.get("ff_mister_avg")
             if cur_avg is None:
@@ -1654,12 +1711,14 @@ def build_action_plan(
             except (TypeError, ValueError):
                 prior_apps_n = 0
 
-            # Señal FF real: media >0 con PJ >0 en la temporada de referencia.
-            # Si esa temporada tiene 0 PJ y media ≤0, NO usar una más antigua como “media alta”.
-            has_ff_signal = False
-            signal_avg = None
-            signal_apps = 0
-            try:
+            # Señal FF: actual si ≥THIN_APPS; si no, temporada pasada fiable.
+            sig = comparable_ff_signal(o)
+            if sig.get("usable"):
+                has_ff_signal = True
+                signal_avg = float(sig["avg"])
+                signal_apps = int(sig["apps"])
+                signal_from_prior = bool(sig.get("prior_backed"))
+            else:
                 cur_known_empty = cur_apps == 0 and (
                     cur_avg is None or float(cur_avg) <= 0
                 )
@@ -1676,33 +1735,51 @@ def build_action_plan(
                     has_ff_signal = True
                     signal_avg = float(prior_avg)
                     signal_apps = prior_apps_n
-            except (TypeError, ValueError):
-                has_ff_signal = False
+                    signal_from_prior = True
 
             prod_ok = has_ff_signal and (
                 float(o.get("production_score") or 0) >= 35
                 or (bool(o.get("is_top_ff")) and not o.get("sample_thin"))
+                or (signal_from_prior and signal_avg is not None and signal_avg >= 4.0)
             )
         except (TypeError, ValueError):
             prod_ok = False
             has_ff_signal = False
             signal_avg = None
             signal_apps = 0
+            signal_from_prior = False
 
         if gw_out:
             why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
-        # Solo avisar “media alta / pocos PJ” si hay media >0 con algún partido
-        if (
+        # Muestra actual corta: avisar y anclar a temporada pasada si existe
+        if o.get("current_sample_thin") or (
             o.get("sample_thin")
             and has_ff_signal
             and signal_avg is not None
             and signal_avg > 0
-            and 0 < signal_apps < 8
+            and 0 < signal_apps < THIN_APPS
+            and not signal_from_prior
         ):
-            why_parts.append(
-                f"Media alta pero pocos partidos ({signal_apps} PJ) — poco fiable"
-            )
+            if signal_from_prior or o.get("prior_backed"):
+                why_parts.append(
+                    f"Pocos PJ esta temporada ({cur_apps if cur_apps else o.get('ff_apps') or '?'}) — "
+                    f"comparo con temp. pasada ({signal_avg:.1f} · {signal_apps} PJ)"
+                )
+            elif has_ff_signal and signal_avg is not None and signal_avg > 0:
+                why_parts.append(
+                    f"Media alta pero pocos partidos ({signal_apps} PJ) — poco fiable"
+                )
+        just = market_value_justification(
+            o, o.get("puja_recomendada") or o.get("price")
+        )
+        if just and just.get("prior_backed"):
+            if just.get("justified"):
+                why_parts.append(f"VM justificado por {just['note']}")
+            elif just.get("expensive"):
+                why_parts.append(f"VM caro vs {just['note']}")
+            elif just.get("note"):
+                why_parts.append(just["note"])
         if not on_daily:
             # Pipeline breve: solo vigilantes claros (no saturar la cola)
             if not (
@@ -2018,11 +2095,17 @@ def build_action_plan(
             "clause_reference": o.get("clause_reference"),
             "ff_apps": o.get("ff_apps"),
             "sample_thin": bool(o.get("sample_thin")),
+            "current_sample_thin": bool(o.get("current_sample_thin")),
+            "prior_backed": bool(o.get("prior_backed")),
+            "value_note": o.get("value_note"),
+            "ff_prior_avg": o.get("ff_prior_avg") or (o.get("external") or {}).get("ff_prior_avg"),
+            "ff_prior_apps": o.get("ff_prior_apps") or (o.get("external") or {}).get("ff_prior_apps"),
             "target_tier": o.get("target_tier"),
             "is_board_objective": is_objective,
             "is_primary_target": is_primary_obj,
             "is_key_market": is_key,
             "trade_asset_score": asset_score,
+            "appreciation_play": bool(o.get("appreciation_play")),
             "delta_5d": delta,
             "categories": list(o.get("categories") or []),
             "cash_reserved": cash_reserved,
@@ -2276,6 +2359,9 @@ def build_action_plan(
             else:
                 promoted.append(item)
         plan = promoted
+
+    # Sin hueco/upgrade/objetivo: fichar revalorizaciones del mercado de hoy
+    plan = promote_appreciation_plays(plan)
 
     finalized = finalize_action_plan(
         plan,

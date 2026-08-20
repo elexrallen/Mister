@@ -37,7 +37,7 @@ W_RECENT = 0.35
 W_SEASON = 0.30
 W_HISTORIC = 0.35
 # Jornadas jugadas a partir de las cuales la racha reciente es señal fiable
-RECENT_MIN_SAMPLE = 2
+RECENT_MIN_SAMPLE = 5
 
 
 def _num(value: Any) -> float | None:

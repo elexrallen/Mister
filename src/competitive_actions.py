@@ -12,7 +12,12 @@ from typing import Any
 
 import config
 from league_rules import captain_multiplier_for_price
-from scrapers.ff_points import resolve_avg_scale, scale_threshold
+from scrapers.ff_points import THIN_APPS, resolve_avg_scale, scale_threshold
+from squad_analyzer import (
+    comparable_ff_signal,
+    lacks_comparable_sample,
+    quality_for_compare,
+)
 
 # Día antes de jornada: no endeudarse (Mister: saldo negativo → no puntúa).
 SOLVENCY_STRICT_HOURS = 48
@@ -418,11 +423,22 @@ def _mister_points(p: dict[str, Any] | None) -> float | None:
 def _prior_avg(p: dict[str, Any] | None) -> float | None:
     if not p:
         return None
-    if p.get("prior_avg") is not None:
+    for key in ("ff_prior_avg", "prior_avg"):
+        if p.get(key) is not None:
+            try:
+                v = float(p[key])
+                if v > 0:
+                    return v
+            except (TypeError, ValueError):
+                pass
+    ext = p.get("external") or {}
+    if isinstance(ext, dict) and ext.get("ff_prior_avg") is not None:
         try:
-            return float(p["prior_avg"])
+            v = float(ext["ff_prior_avg"])
+            if v > 0:
+                return v
         except (TypeError, ValueError):
-            return None
+            pass
     return None
 
 
@@ -1750,7 +1766,234 @@ def trade_asset_score(item: dict[str, Any]) -> float:
         score += 4.0
     if item.get("sample_thin"):
         score -= 6.0
+    if item.get("appreciation_play"):
+        score += 8.0
     return round(score, 1)
+
+
+def appreciation_play_score(item: dict[str, Any]) -> tuple[float, list[str]]:
+    """
+    Puntuación de revalorización: sube de VM + perspectiva de seguir subiendo
+    (titularidad / producción / no baja).
+    """
+    why: list[str] = []
+    score = 0.0
+    if item.get("gw_out") or (item.get("external") or {}).get("gw_out"):
+        return 0.0, ["descartado en la previa"]
+    avail = _ext_avail(item)
+    if avail in ("injured", "suspended"):
+        return 0.0, [f"baja ({avail})"]
+
+    delta = None
+    try:
+        if item.get("delta_5d") is not None:
+            delta = float(item["delta_5d"])
+    except (TypeError, ValueError):
+        delta = None
+    trend = item.get("trend")
+    rising = bool(trend == "up" or (delta is not None and delta >= float(
+        getattr(config, "APPRECIATION_DELTA_MIN", 0.04)
+    )))
+    if not rising:
+        return 0.0, ["sin revalorización clara"]
+
+    if delta is not None:
+        score += min(28.0, float(delta) * 120.0)
+        why.append(f"sube {delta * 100:.1f}%")
+    elif trend == "up":
+        score += 10.0
+        why.append("flecha al alza")
+
+    lp = _lineup_pct(item)
+    lineup_min = float(getattr(config, "APPRECIATION_LINEUP_MIN", 0.45)) * 100.0
+    if lp is not None and lp >= 70:
+        score += 14.0
+        why.append(f"titular {lp:.0f}%")
+    elif lp is not None and lp >= lineup_min:
+        score += 8.0
+        why.append(f"rotación usable {lp:.0f}%")
+    elif item.get("gw_starter") or (item.get("external") or {}).get("gw_starter"):
+        score += 10.0
+        why.append("titular FF jornada")
+    else:
+        score -= 8.0
+        why.append("poca perspectiva de minutos")
+
+    if avail == "doubt":
+        score -= 6.0
+        why.append("duda física")
+
+    ptrend = _points_trend(item)
+    if ptrend == "up":
+        score += 6.0
+        why.append("racha puntos ↑")
+    elif ptrend == "down":
+        score -= 8.0
+        why.append("racha puntos ↓")
+
+    # Señal comparable (actual o temporada pasada) para no comprar humo
+    sig = comparable_ff_signal(item)
+    if sig.get("usable") and sig.get("avg") is not None:
+        avg = float(sig["avg"])
+        scale = resolve_avg_scale(item)
+        if avg >= scale_threshold(5.0, scale):
+            score += 10.0
+            label = "prev" if sig.get("prior_backed") else "FF"
+            why.append(f"{label} {avg:.1f}")
+        elif avg >= scale_threshold(3.8, scale):
+            score += 4.0
+        else:
+            score -= 4.0
+    elif item.get("sample_thin"):
+        score -= 10.0
+        why.append("muestra corta sin previa")
+
+    price = _money(item.get("price") or item.get("puja_recomendada") or item.get("cost"))
+    max_price = float(getattr(config, "APPRECIATION_MAX_PRICE", 8_000_000))
+    if price > max_price:
+        score -= 12.0
+        why.append(f"caro para flip ({price:,.0f} €)")
+    elif 0 < price <= 3_000_000:
+        score += 5.0
+        why.append("precio manejable")
+
+    if item.get("overstocked") and not item.get("fills_coverage_gap"):
+        score -= 6.0
+        why.append("línea sobrada")
+
+    cats = item.get("categories") or []
+    if isinstance(cats, list) and "especulacion_trading" in cats:
+        score += 4.0
+
+    return round(score, 1), why
+
+
+def is_appreciation_candidate(item: dict[str, Any]) -> bool:
+    """¿Candidato a fichar por revalorización (no por hueco/upgrade)?"""
+    if not item.get("on_daily_market") and item.get("seller") != "market":
+        return False
+    if item.get("budget_fit") not in ("comfortable", "tight", None):
+        return False
+    if item.get("solvency_blocked") or item.get("debt_risk"):
+        return False
+    min_score = float(getattr(config, "APPRECIATION_MIN_SCORE", 18.0))
+    score, _ = appreciation_play_score(item)
+    return score >= min_score
+
+
+def promote_appreciation_plays(
+    plan: list[dict[str, Any]],
+    *,
+    max_buys: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Si no hay buy/swap estructural (hueco, upgrade, objetivo, clave),
+    promueve wait→buy_now a los mejores revalorizándose del mercado de hoy.
+    """
+    if not plan:
+        return plan
+    strong = [
+        i
+        for i in plan
+        if i.get("action") == "buy_now"
+        and (
+            i.get("fills_coverage_gap")
+            or i.get("fills_structural")
+            or i.get("fills_need")
+            or i.get("is_upgrade")
+            or i.get("upgrade_worth_buy")
+            or i.get("is_key_market")
+            or i.get("is_primary_target")
+            or i.get("is_board_objective")
+            or i.get("appreciation_play")
+        )
+    ]
+    if strong:
+        return plan
+
+    cap = int(
+        max_buys
+        if max_buys is not None
+        else getattr(config, "APPRECIATION_MAX_BUYS", 2)
+    )
+    if cap <= 0:
+        return plan
+
+    cands: list[tuple[float, dict[str, Any], list[str]]] = []
+    for item in plan:
+        if item.get("action") not in ("wait", "buy_now"):
+            continue
+        if not bool(item.get("on_daily_market")):
+            continue
+        if item.get("budget_fit") not in ("comfortable", "tight"):
+            continue
+        if item.get("solvency_blocked") or item.get("debt_risk"):
+            continue
+        # Línea muy sobrada: solo si el precio es flip barato
+        price = _money(item.get("bid") or item.get("cost") or item.get("price"))
+        if item.get("overstocked") and not item.get("fills_coverage_gap"):
+            if price > 4_000_000:
+                continue
+        score, bits = appreciation_play_score(item)
+        min_score = float(getattr(config, "APPRECIATION_MIN_SCORE", 18.0))
+        if score < min_score:
+            continue
+        cands.append((score, item, bits))
+
+    cands.sort(key=lambda x: (-x[0], _money(x[1].get("price"))))
+    promoted_ids: set[str] = set()
+    out: list[dict[str, Any]] = []
+    used_pos: set[str] = set()
+    for score, item, bits in cands:
+        if len(promoted_ids) >= cap:
+            break
+        pid = str(item.get("player_id") or item.get("id") or "")
+        pos = str(item.get("position") or "")
+        if pid and pid in promoted_ids:
+            continue
+        # Diversificar: como máximo uno por línea en el lote de revalorización
+        if pos and pos in used_pos:
+            continue
+        row = dict(item)
+        row["action"] = "buy_now"
+        row["appreciation_play"] = True
+        row["urgency"] = row.get("urgency") or "medium"
+        row["priority_score"] = int(row.get("priority_score") or 0) + int(min(35, score))
+        tip = (
+            "revalorización: sube de valor con buena perspectiva — "
+            "fichar para vender más caro o como activo oportunidad"
+        )
+        detail = "; ".join(bits[:4])
+        why = (row.get("why") or "").strip()
+        row["why"] = f"{tip} ({detail}); {why}" if why else f"{tip} ({detail})"
+        cats = list(row.get("categories") or [])
+        if "especulacion_trading" not in cats:
+            cats.insert(0, "especulacion_trading")
+        row["categories"] = cats
+        if pid:
+            promoted_ids.add(pid)
+        if pos:
+            used_pos.add(pos)
+        out.append(row)
+
+    if not promoted_ids:
+        return plan
+
+    # Sustituir filas promovidas; el resto igual
+    replaced: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    by_id = {str(r.get("player_id") or r.get("id") or ""): r for r in out}
+    for item in plan:
+        pid = str(item.get("player_id") or item.get("id") or "")
+        if pid and pid in by_id and pid not in seen:
+            replaced.append(by_id[pid])
+            seen.add(pid)
+        elif not (pid and pid in promoted_ids):
+            replaced.append(item)
+    for pid, row in by_id.items():
+        if pid and pid not in seen:
+            replaced.append(row)
+    return replaced
 
 
 def is_key_market_candidate(
@@ -2063,11 +2306,30 @@ def _upgrade_profile_worth(
     """ΔEP/producción claro vs titular o banquillo de la línea, con ROI de la puja."""
     if ref is None:
         return True
-    delta = _liquidity_prod(cand) - _liquidity_prod(ref)
+
+    # Sin muestra actual ni previa fiable no se afirma que sea mejor por media/EP
+    if lacks_comparable_sample(cand):
+        return False
+    cand_q = quality_for_compare(cand)
+    ref_q = quality_for_compare(ref)
+    # Preferir calidad comparable; si ambos a 0, caer a EP/prod crudo
+    if cand_q > 0 or ref_q > 0:
+        delta = cand_q - ref_q
+    else:
+        delta = _liquidity_prod(cand) - _liquidity_prod(ref)
     if delta < 6.0:
         return False
     roi = delta / max(cost / 1_000_000.0, 0.4)
-    return roi >= 1.2
+    if roi < 1.2:
+        return False
+    # Anotar si la comparación va por temporada pasada
+    sig = comparable_ff_signal(cand)
+    if sig.get("prior_backed"):
+        cand["value_note"] = (
+            f"comparado con temp. pasada ({float(sig['avg']):.1f} · {int(sig['apps'])} PJ)"
+        )
+        cand["prior_backed"] = True
+    return True
 
 
 def _owned_line_ref(
@@ -2946,30 +3208,38 @@ def compute_upgrade_score(
     elif cand_rating is not None and points_phase == "preseason":
         score += 6
 
-    # Temporada anterior (valioso en preseason)
-    if points_phase == "preseason" and cand_prior is not None:
+    # Temporada anterior: preseason o muestra actual corta con previa fiable
+    cand_sig = comparable_ff_signal(cand)
+    use_prior = points_phase == "preseason" or bool(cand_sig.get("prior_backed"))
+    if use_prior and cand_prior is not None:
         if ref_prior is not None:
-            score += (cand_prior - ref_prior) * 8
+            score += (cand_prior - ref_prior) * (8 if points_phase == "preseason" else 6)
         else:
-            score += min(10, cand_prior)
-        why_extra.append("prior season")
+            score += min(10, float(cand_prior))
+        why_extra.append(
+            f"temp. pasada {float(cand_prior):.1f}"
+            if cand_sig.get("prior_backed")
+            else "prior season"
+        )
 
-    # Producción Fútbol Fantasy (Mister Mixto / Fantasy RPG según liga)
-    cand_ff = _ff_avg(cand)
-    ref_ff = _ff_avg(ref) if ref else None
-    cand_prod = _production_score(cand)
-    ref_prod = _production_score(ref) if ref else None
-    ff_w = 14.0 if points_phase == "preseason" else 6.0
+    # Producción Fútbol Fantasy (actual si ≥5 PJ; si no, temp. pasada)
+    ref_sig = comparable_ff_signal(ref) if ref else {}
+    cand_ff = float(cand_sig["avg"]) if cand_sig.get("usable") else _ff_avg(cand)
+    ref_ff = float(ref_sig["avg"]) if ref_sig.get("usable") else (_ff_avg(ref) if ref else None)
+    cand_prod = quality_for_compare(cand) or _production_score(cand)
+    ref_prod = (quality_for_compare(ref) if ref else 0) or (_production_score(ref) if ref else None)
+    ff_w = 14.0 if points_phase == "preseason" or cand_sig.get("prior_backed") else 6.0
     if cand_ff is not None and ref_ff is not None:
         score += (cand_ff - ref_ff) * ff_w
-        why_extra.append(f"FF {cand_ff:.1f} vs {ref_ff:.1f}")
+        src = "prev" if cand_sig.get("prior_backed") else "FF"
+        why_extra.append(f"{src} {cand_ff:.1f} vs {ref_ff:.1f}")
     elif cand_ff is not None:
         score += min(16, cand_ff * 2.2)
         why_extra.append(f"FF media {cand_ff:.1f}")
     if cand_prod is not None and ref_prod is not None:
-        score += (cand_prod - ref_prod) / 8.0
+        score += (float(cand_prod) - float(ref_prod)) / 8.0
     elif cand_prod is not None and points_phase == "preseason":
-        score += cand_prod / 12.0
+        score += float(cand_prod) / 12.0
 
     # Capa puntos actual — solo si discrimina
     points_signal = False
@@ -3582,17 +3852,26 @@ def annotate_market_budget_risk(
         )
         bf = str(fin.get("budget_fit") or "blocked")
         tier = target_tier_from_budget_fit(bf)
-        # Muestra corta desde ff_apps si no vino ya
+        # Muestra corta: solo si tampoco hay temporada pasada usable
         if row.get("sample_thin") is None:
             apps = row.get("ff_apps")
             if apps is None:
                 apps = (row.get("external") or {}).get("ff_apps")
             try:
-                row["sample_thin"] = apps is not None and int(apps) < 8
+                row["sample_thin"] = lacks_comparable_sample(row)
+                cur = int(apps) if apps is not None else 0
                 if row.get("ff_apps") is None and apps is not None:
-                    row["ff_apps"] = int(apps)
+                    row["ff_apps"] = cur
+                row["current_sample_thin"] = 0 < cur < THIN_APPS
+                prior = row.get("ff_prior_apps")
+                if prior is None:
+                    prior = (row.get("external") or {}).get("ff_prior_apps")
+                prior_n = int(prior) if prior is not None else 0
+                row["prior_backed"] = bool(0 < cur < THIN_APPS and prior_n >= THIN_APPS)
             except (TypeError, ValueError):
                 row["sample_thin"] = False
+                row["current_sample_thin"] = False
+                row["prior_backed"] = False
         row["wait_risk"] = risk
         row["budget_fit"] = bf
         row["target_tier"] = tier
@@ -3727,6 +4006,9 @@ def _is_weak_intent(item: dict[str, Any], primary_ids: set[str]) -> bool:
 
 def _intent_eligible(item: dict[str, Any]) -> bool:
     """Excluye líneas sobradas sin gap/upgrade rentable del pool de intents/primary."""
+    if item.get("appreciation_play"):
+        # Flip de valor: permitido aunque la línea esté cubierta (tope de precio aparte)
+        return True
     if item.get("overstocked") and not (
         item.get("fills_coverage_gap")
         or item.get("fills_structural")
@@ -3775,6 +4057,7 @@ def _intent_sort_key(
         1 if is_prim else 0,
         1 if is_obj else 0,
         1 if fills else 0,
+        1 if item.get("appreciation_play") else 0,
         int(prod),
         int(asset * 10),
         0 if crowds else 1,
@@ -3838,6 +4121,9 @@ def select_intent_lines(
             or i.get("is_board_objective")
         )
     ]
+    apprec_pool = [
+        i for i in daily_buys if _intent_eligible(i) and i.get("appreciation_play")
+    ]
     preferred = [
         i
         for i in daily_buys
@@ -3845,7 +4131,7 @@ def select_intent_lines(
         and ((bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget"))
     ]
     eligible = [i for i in daily_buys if _intent_eligible(i)]
-    pool = key_hit or gap_pool or preferred or eligible
+    pool = key_hit or gap_pool or apprec_pool or preferred or eligible
     if not pool:
         return []
     first = max(pool, key=sort_key)
@@ -4343,6 +4629,13 @@ def finalize_action_plan(
                     "Carencia prioritaria — fichar al precio"
                     if fixed
                     else "Carencia prioritaria — pujar (máx. puntaje/trueque)"
+                )
+            elif item.get("appreciation_play"):
+                item["queue_role"] = "secondary"
+                item["package_note"] = (
+                    "Revalorización — fichar para vender más caro / activo oportunidad"
+                    if fixed
+                    else "Revalorización — pujar: sube de VM con buena perspectiva"
                 )
             else:
                 item["queue_role"] = "secondary"

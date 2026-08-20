@@ -15,7 +15,7 @@ from __future__ import annotations
 from typing import Any
 
 import config
-from scrapers.ff_points import resolve_avg_scale, scale_threshold
+from scrapers.ff_points import THIN_APPS, resolve_avg_scale, scale_threshold
 
 # --- Umbrales (buenas prácticas Fantasy) ---
 TOP_COUNT_MIN = 3
@@ -167,6 +167,183 @@ def _is_top_player(p: dict[str, Any]) -> bool:
     if p.get("is_top_ff"):
         return True
     return bool((p.get("external") or {}).get("is_top_ff"))
+
+
+def _ff_apps_count(p: dict[str, Any]) -> int:
+    """PJ efectivos (temporada actual o previa) para juzgar muestra."""
+    cur = _current_ff_apps(p)
+    if cur > 0:
+        return cur
+    return _prior_ff_apps(p)
+
+
+def _current_ff_apps(p: dict[str, Any]) -> int:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        for key in ("ff_apps", "apps"):
+            if source.get(key) is None:
+                continue
+            try:
+                n = int(source[key])
+                if n > 0:
+                    return n
+            except (TypeError, ValueError):
+                pass
+    return 0
+
+
+def _prior_ff_apps(p: dict[str, Any]) -> int:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        for key in ("ff_prior_apps", "prior_apps"):
+            if source.get(key) is None:
+                continue
+            try:
+                n = int(source[key])
+                if n > 0:
+                    return n
+            except (TypeError, ValueError):
+                pass
+    return 0
+
+
+def _current_ff_avg(p: dict[str, Any]) -> float | None:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        if source.get("ff_mister_avg") is None:
+            continue
+        try:
+            v = float(source["ff_mister_avg"])
+            if v > 0:
+                return v
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _prior_ff_avg(p: dict[str, Any]) -> float | None:
+    for source in (p, p.get("external") if isinstance(p.get("external"), dict) else {}):
+        for key in ("ff_prior_avg", "prior_avg"):
+            if source.get(key) is None:
+                continue
+            try:
+                v = float(source[key])
+                if v > 0:
+                    return v
+            except (TypeError, ValueError):
+                pass
+    if p.get("prior_avg") is not None:
+        try:
+            v = float(p["prior_avg"])
+            if v > 0:
+                return v
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def comparable_ff_signal(p: dict[str, Any]) -> dict[str, Any]:
+    """
+    Señal usable para comparar jugadores / justificar VM.
+    Preferencia: temporada actual con ≥ THIN_APPS; si no, temporada pasada con ≥ THIN_APPS.
+    """
+    cur_apps = _current_ff_apps(p)
+    cur_avg = _current_ff_avg(p)
+    prior_apps = _prior_ff_apps(p)
+    prior_avg = _prior_ff_avg(p)
+    current_thin = cur_apps < THIN_APPS
+
+    if cur_apps >= THIN_APPS and cur_avg is not None:
+        return {
+            "usable": True,
+            "source": "current",
+            "avg": cur_avg,
+            "apps": cur_apps,
+            "current_thin": False,
+            "prior_backed": False,
+        }
+    if prior_apps >= THIN_APPS and prior_avg is not None:
+        return {
+            "usable": True,
+            "source": "prior",
+            "avg": prior_avg,
+            "apps": prior_apps,
+            "current_thin": current_thin,
+            "prior_backed": True,
+        }
+    return {
+        "usable": False,
+        "source": None,
+        "avg": cur_avg if cur_apps > 0 else prior_avg,
+        "apps": cur_apps if cur_apps > 0 else prior_apps,
+        "current_thin": current_thin,
+        "prior_backed": False,
+    }
+
+
+def lacks_comparable_sample(p: dict[str, Any]) -> bool:
+    """True si ni la actual ni la previa aportan ≥ THIN_APPS PJ fiables."""
+    return not bool(comparable_ff_signal(p).get("usable"))
+
+
+def _sample_thin(p: dict[str, Any]) -> bool:
+    """True si la temporada actual tiene PJ pero < THIN_APPS (media engañosa sola)."""
+    if p.get("sample_thin") is True:
+        return True
+    if p.get("sample_thin") is False:
+        return False
+    apps = _current_ff_apps(p)
+    return 0 < apps < THIN_APPS
+
+
+def quality_for_compare(p: dict[str, Any]) -> float:
+    """
+    Calidad 0–100 para decir si A es mejor que B.
+    Con muestra actual corta usa producción si hay previa fiable embebida,
+    o escala la media de la temporada pasada.
+    """
+    sig = comparable_ff_signal(p)
+    if sig.get("source") == "current":
+        return _prod(p)
+    if sig.get("source") == "prior" and sig.get("avg") is not None:
+        scale = resolve_avg_scale(p)
+        # Misma banda aproximada que production_score (media → ~70 pts)
+        return round(max(0.0, min(100.0, (float(sig["avg"]) / scale) * 70.0)), 1)
+    if not sig.get("current_thin"):
+        return _prod(p)
+    return 0.0
+
+
+def market_value_justification(
+    p: dict[str, Any],
+    price: float | None = None,
+) -> dict[str, Any] | None:
+    """ROI / nota de valor usando señal comparable (actual o temporada pasada)."""
+    sig = comparable_ff_signal(p)
+    if not sig.get("usable") or sig.get("avg") is None:
+        return None
+    try:
+        cost = float(price if price is not None else (_player_value(p) or 0))
+    except (TypeError, ValueError):
+        cost = 0.0
+    if cost <= 0:
+        return None
+    scale = resolve_avg_scale(p)
+    avg = float(sig["avg"])
+    roi = (avg / scale * 8.0) / max(cost / 1_000_000.0, 0.4)
+    if sig.get("source") == "prior":
+        label = f"temp. pasada {avg:.1f} · {int(sig['apps'])} PJ"
+        note = f"VM vs {label} (ROI {roi:.1f}/M€)"
+    else:
+        label = f"media {avg:.1f} · {int(sig['apps'])} PJ"
+        note = f"VM vs {label} (ROI {roi:.1f}/M€)"
+    return {
+        "source": sig.get("source"),
+        "avg": avg,
+        "apps": int(sig["apps"]),
+        "roi": round(roi, 2),
+        "justified": roi >= 1.2,
+        "expensive": roi < 0.45 and cost >= 5_000_000,
+        "note": note,
+        "prior_backed": bool(sig.get("prior_backed")),
+    }
 
 
 def _prod(p: dict[str, Any]) -> float:
@@ -477,11 +654,20 @@ def assess_market_coverage(
             worst_top = any(_is_top_player(p) for p in same)
             if player_lp >= LINEUP_STARTER and player_lp >= worst_lp + 0.15:
                 is_upgrade = True
-            elif player_top and not worst_top:
+            elif player_top and not worst_top and not lacks_comparable_sample(player):
                 is_upgrade = True
-            elif _prod(player) >= 65 and max(_prod(p) for p in same) < 50:
+            elif (
+                not lacks_comparable_sample(player)
+                and quality_for_compare(player) >= 65
+                and max(quality_for_compare(p) for p in same) < 50
+            ):
                 is_upgrade = True
-        elif lp is not None and lp >= LINEUP_STARTER and _is_top_player(player):
+        elif (
+            lp is not None
+            and lp >= LINEUP_STARTER
+            and _is_top_player(player)
+            and not lacks_comparable_sample(player)
+        ):
             is_upgrade = True
 
     label = None
@@ -532,9 +718,13 @@ def is_clear_overstock_upgrade(
     worst_lp = min((_lineup_frac(p) or 0.0) for p in pool)
     if lp >= worst_lp + 0.20:
         return True
-    if _is_top_player(player):
+    if _is_top_player(player) and not lacks_comparable_sample(player):
         return True
-    if _prod(player) >= 65 and max(_prod(p) for p in same) < 50:
+    if (
+        not lacks_comparable_sample(player)
+        and quality_for_compare(player) >= 65
+        and max(quality_for_compare(p) for p in same) < 50
+    ):
         return True
     return False
 

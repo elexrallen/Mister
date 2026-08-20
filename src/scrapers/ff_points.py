@@ -46,7 +46,7 @@ def default_ff_seasons(today: date | None = None) -> list[int]:
 
 MIN_APPS_TOP = 15
 RELIABLE_APPS = 20  # muestra decente ≈ media temporada para confiar en la media
-THIN_APPS = 8  # por debajo: muestra corta (sin bonus de volumen)
+THIN_APPS = 5  # por debajo: muestra corta; ≥5 PJ para comparar fiablemente
 TOP_PERCENTILE = 0.85
 TOP_AVG_FLOOR = 5.5  # LaLiga Mister Mixto
 

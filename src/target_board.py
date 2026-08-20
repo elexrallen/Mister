@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 import config
-from scrapers.ff_points import resolve_avg_scale, scale_threshold
+from scrapers.ff_points import THIN_APPS, resolve_avg_scale, scale_threshold
 from competitive_actions import (
     budget_fit,
     sell_cash_phrase,
@@ -172,7 +172,7 @@ def _ff_avg(p: dict[str, Any]) -> float | None:
                 pass
     prior = _ff_prior_avg(p)
     # Temporada en curso con muestra corta: prior es más fiable
-    if prior is not None and (_ff_current_apps(p) < 8 or cur is None):
+    if prior is not None and (_ff_current_apps(p) < THIN_APPS or cur is None):
         return prior
     return cur if cur is not None else prior
 
@@ -198,7 +198,7 @@ def _ff_points(p: dict[str, Any]) -> float | None:
             except (TypeError, ValueError):
                 pass
     prior = _ff_prior_points(p)
-    if prior is not None and (_ff_current_apps(p) < 8 or cur is None):
+    if prior is not None and (_ff_current_apps(p) < THIN_APPS or cur is None):
         return prior
     return cur if cur is not None else prior
 
@@ -206,7 +206,7 @@ def _ff_points(p: dict[str, Any]) -> float | None:
 def _ff_apps(p: dict[str, Any]) -> int:
     cur = _ff_current_apps(p)
     # Muestra corta de la temporada actual: usar PJ de la anterior
-    if cur >= 8:
+    if cur >= THIN_APPS:
         return cur
     prior = _ff_prior_apps(p)
     return prior if prior > cur else cur
@@ -290,8 +290,8 @@ def _hist_quality(p: dict[str, Any]) -> tuple[float | None, bool]:
         and float(avg) >= avg_floor * 0.98
         and apps >= 15
     )
-    # 1–7 PJ: media engañosa (p.ej. 8.0 en 1 partido)
-    if apps < 8:
+    # <5 PJ: media engañosa (p.ej. 8.0 en 1–2 partidos)
+    if apps < THIN_APPS:
         hist *= 0.40
     elif apps < 15:
         hist *= 0.70
@@ -513,7 +513,7 @@ def _normalize_player(
     price_m = max(slot_cost / 1_000_000.0, 0.4)
     apps = _ff_apps(p)
     # No confiar en sample_thin del scrape si ya hay PJ de temporada anterior
-    sample_thin = 0 < apps < 8
+    sample_thin = 0 < apps < THIN_APPS
     ext = p.get("external") or {}
     clause_val = p.get("clause") if clause_known else None
     return {

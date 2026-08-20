@@ -435,8 +435,23 @@
         `<span class="badge badge-titular" title="Rival lo pone a la venta en el mercado (puja, no cláusula)">En venta${escapeHtml(who)}</span>`
       );
     }
-    if (p.sample_thin || (p.ff_apps != null && Number(p.ff_apps) < 8)) {
+    if (p.prior_backed || (p.current_sample_thin && (p.ff_prior_avg ?? ext.ff_prior_avg) != null)) {
+      const pa = p.ff_prior_avg ?? ext.ff_prior_avg;
+      const papps = p.ff_prior_apps ?? ext.ff_prior_apps;
+      const paTxt = pa != null ? Number(pa).toFixed(1) : "—";
+      const appsTxt = papps != null ? ` · ${Number(papps)} PJ` : "";
+      chips.push(
+        `<span class="badge badge-duda" title="Muestra actual corta; valor anclado a temporada pasada">Prev ${paTxt}${appsTxt}</span>`
+      );
+    } else if (p.sample_thin || p.current_sample_thin || (p.ff_apps != null && Number(p.ff_apps) < 5)) {
       chips.push(`<span class="badge badge-baja-ext" title="Pocos partidos FF">Muestra corta</span>`);
+    }
+    if (p.appreciation_play || (p.categories || []).includes("especulacion_trading")) {
+      if (p.appreciation_play || p.trend === "up" || (p.delta_5d != null && Number(p.delta_5d) >= 0.04)) {
+        chips.push(
+          `<span class="badge badge-mint" title="Revalorización de mercado">↑ VM</span>`
+        );
+      }
     }
     if (p.target_tier === "aspirational" || p.budget_fit === "blocked") {
       chips.push(`<span class="badge badge-baja">Fuera de caja</span>`);
@@ -1999,6 +2014,9 @@
         a.trade_asset_score != null && Number(a.trade_asset_score) >= 12
           ? `<span class="badge badge-titular">Trueque</span>`
           : "",
+        a.appreciation_play
+          ? `<span class="badge badge-mint" title="Sube de valor con perspectiva de minutos — flip / activo oportunidad">Revalorización</span>`
+          : "",
       ]
         .filter(Boolean)
         .join("");
@@ -2017,8 +2035,13 @@
             : "",
         a.mister_avg != null || a.points != null ? scoringLine(a) : "",
         ffAvgAppsBadge(a),
-        a.sample_thin
-          ? `<span class="badge badge-baja-ext">Muestra corta</span>`
+        a.prior_backed
+          ? `<span class="badge badge-duda" title="Valor anclado a temporada pasada">Prev</span>`
+          : a.sample_thin || a.current_sample_thin
+            ? `<span class="badge badge-baja-ext">Muestra corta</span>`
+            : "",
+        a.value_note
+          ? `<span class="badge badge-duda" title="${escapeHtml(a.value_note)}">VM</span>`
           : "",
         a.target_tier === "aspirational" || a.budget_fit === "blocked"
           ? `<span class="badge badge-baja">Fuera de caja</span>`

@@ -476,6 +476,12 @@ def external_competition_key(
 HISTORY_RETENTION_DAYS = 30
 CHOLLO_DELTA_MIN = 0.08
 TRADING_WINDOW_DAYS = 5
+# Revalorización: sin hueco/upgrade claro, fichar flechas al alza con perspectiva
+APPRECIATION_DELTA_MIN = 0.04  # +4% en ~5d
+APPRECIATION_MAX_BUYS = 2
+APPRECIATION_MAX_PRICE = 8_000_000  # no meter pasta gorda solo por Δprecio
+APPRECIATION_MIN_SCORE = 18.0
+APPRECIATION_LINEUP_MIN = 0.45  # regular usable para que el VM siga subiendo
 
 # Pool completo Mister via POST /ajax/sw/players (páginas de 50)
 MISTER_POOL_PAGE_SIZE = 50
