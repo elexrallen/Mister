@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T08:13:00.685326+00:00",
+  "generated_at": "2026-08-20T08:48:16.681809+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -136,7 +136,7 @@
         "FW": 2
       },
       "ep_sum_starters": 707.6,
-      "ep_sum": 804.3,
+      "ep_sum": 831.2,
       "cost_sum": 75913158.0,
       "starters": 11,
       "starters_target": 11,
@@ -152,7 +152,7 @@
         "FW": 1
       },
       "ep_sum_starters": 702.5,
-      "ep_sum": 810.5,
+      "ep_sum": 837.4,
       "cost_sum": 74946158.0,
       "starters": 11,
       "starters_target": 11,
@@ -168,7 +168,7 @@
         "FW": 2
       },
       "ep_sum_starters": 696.3,
-      "ep_sum": 793.0,
+      "ep_sum": 819.9,
       "cost_sum": 75861158.0,
       "starters": 11,
       "starters_target": 11,
@@ -184,7 +184,7 @@
         "FW": 1
       },
       "ep_sum_starters": 691.2,
-      "ep_sum": 799.2,
+      "ep_sum": 826.1,
       "cost_sum": 74894158.0,
       "starters": 11,
       "starters_target": 11,
@@ -200,7 +200,7 @@
         "FW": 3
       },
       "ep_sum_starters": 679.8,
-      "ep_sum": 776.5,
+      "ep_sum": 803.4,
       "cost_sum": 75817158.0,
       "starters": 11,
       "starters_target": 11,
@@ -216,7 +216,7 @@
         "FW": 2
       },
       "ep_sum_starters": 677.6,
-      "ep_sum": 774.3,
+      "ep_sum": 801.2,
       "cost_sum": 75625158.0,
       "starters": 11,
       "starters_target": 11,
@@ -232,7 +232,7 @@
         "FW": 3
       },
       "ep_sum_starters": 654.7,
-      "ep_sum": 776.2,
+      "ep_sum": 803.1,
       "cost_sum": 75211158.0,
       "starters": 11,
       "starters_target": 11,
@@ -638,7 +638,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 79 · 16,591,158 € · buy · starter · tándem mismo club",
-      "added_at": "2026-08-20T08:13:00.608720+00:00"
+      "added_at": "2026-08-20T08:48:16.623196+00:00"
     },
     {
       "slot": "GK2",
@@ -648,21 +648,21 @@
       "name": "Andriy Lunin",
       "team": "Real Madrid",
       "team_id": "15",
-      "ep_score": 10.1,
+      "ep_score": 37.0,
       "price": 1473000.0,
       "status": "buy",
       "delta_5d": null,
       "value_note": "stable",
-      "value_ratio": 6.86,
-      "lineup_prob": 16.0,
+      "value_ratio": 25.12,
+      "lineup_prob": 100.0,
       "ff_mister_points": 29.0,
       "ff_mister_avg": 4.83,
       "hist_ok": false,
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": true,
-      "why": "EP 10 · 1,473,000 € · buy · bench · tándem mismo club",
-      "added_at": "2026-08-20T08:13:00.608735+00:00"
+      "why": "EP 37 · 1,473,000 € · buy · bench · tándem mismo club",
+      "added_at": "2026-08-20T08:48:16.623202+00:00"
     },
     {
       "slot": "DF1",
@@ -686,7 +686,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 65 · 1,947,000 € · buy · starter",
-      "added_at": "2026-08-20T08:13:00.610118+00:00"
+      "added_at": "2026-08-20T08:48:16.624244+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 64 · 5,702,000 € · buy · starter · Δ -0%",
-      "added_at": "2026-08-20T08:13:00.618988+00:00"
+      "added_at": "2026-08-20T08:48:16.631065+00:00"
     },
     {
       "slot": "DF3",
@@ -806,7 +806,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 30 · 1,389,000 € · buy · bench · Δ 11%",
-      "added_at": "2026-08-20T08:13:00.650612+00:00"
+      "added_at": "2026-08-20T08:48:16.655395+00:00"
     },
     {
       "slot": "MF1",
@@ -950,7 +950,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 63 · 10,501,000 € · buy · starter · Δ -3%",
-      "added_at": "2026-08-20T08:13:00.625762+00:00"
+      "added_at": "2026-08-20T08:48:16.636261+00:00"
     },
     {
       "slot": "FW3",
@@ -1536,7 +1536,7 @@
     "daily_primary_count": 0
   },
   "totals_aspirational": {
-    "ep_sum": 804.3,
+    "ep_sum": 831.2,
     "ep_sum_starters": 707.6,
     "cost_sum": 75913158.0,
     "net_buys": 47706158.0,
@@ -1565,7 +1565,7 @@
       "name": "Andriy Lunin",
       "position": "GK",
       "price": 1473000.0,
-      "ep_score": 10.1,
+      "ep_score": 37.0,
       "role": "bench",
       "status": "buy",
       "need": "perfect_squad_aspirational"
@@ -1644,7 +1644,7 @@
     "incomplete": false,
     "keep": 3,
     "buy": 12,
-    "ep_sum": 804.3,
+    "ep_sum": 831.2,
     "ep_sum_starters": 707.6,
     "mode": "aspirational",
     "formation": "5-3-2",

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T08:15:54.218588+00:00",
+  "generated_at": "2026-08-20T08:50:43.120512+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -542,7 +542,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 8 · 1,000,000 € · buy · bench · tándem mismo club · Δ 3%",
-      "added_at": "2026-08-20T08:15:54.200610+00:00"
+      "added_at": "2026-08-20T08:50:43.107131+00:00"
     },
     {
       "slot": "DF1",
@@ -638,7 +638,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 41 · 5,349,000 € · keep · starter · Δ 0%",
-      "added_at": "2026-08-20T08:15:54.193507+00:00"
+      "added_at": "2026-08-20T08:50:43.101678+00:00"
     },
     {
       "slot": "DF5",
@@ -758,7 +758,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,878,000 € · buy · bench · Δ 4%",
-      "added_at": "2026-08-20T08:15:54.200897+00:00"
+      "added_at": "2026-08-20T08:50:43.107359+00:00"
     }
   ],
   "moves": {
@@ -1120,22 +1120,6 @@
         "cash_lag_hours": 48
       },
       {
-        "player_id": "52159",
-        "name": "J. Gomes",
-        "position": "MF",
-        "ep_score": 39.1,
-        "price": 1743000.0,
-        "delta_5d": 0.0363,
-        "value_note": "stable",
-        "why": "Fuera del ideal · EP 39 · lista a ~1,743,000 € (VM); caja usable en ~48h · Δ 4%",
-        "list_at": 1743000.0,
-        "expected_proceeds": 1743000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
         "player_id": "58378",
         "name": "M. Hermansen",
         "position": "GK",
@@ -1194,7 +1178,7 @@
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
-    "funded_ideal": true,
+    "funded_ideal": false,
     "formation": "4-4-2",
     "ideal_buy_cost": 41026362.0,
     "daily_primary_count": 3
@@ -1270,44 +1254,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "player_id": "60293",
-      "name": "J. Devenny",
-      "position": "MF",
-      "ep_score": 8.7,
-      "price": 160000.0,
-      "delta_5d": null,
-      "value_note": "stable",
-      "why": "Fuera del ideal · EP 9 · lista a ~160,000 € (VM); caja usable en ~48h",
-      "list_at": 160000.0,
-      "expected_proceeds": 160000.0,
-      "buyer_channel": "system",
-      "settlement": "market_cycle",
-      "cycle_hours": 24,
-      "cash_lag_hours": 48,
-      "status": "dropped",
-      "miss_days": 1
-    },
-    {
-      "player_id": "2369",
-      "name": "T. Mings",
-      "position": "DF",
-      "ep_score": 36.1,
-      "price": 359000.0,
-      "delta_5d": null,
-      "value_note": "stable",
-      "why": "Fuera del ideal · EP 36 · lista a ~359,000 € (VM); caja usable en ~48h",
-      "list_at": 359000.0,
-      "expected_proceeds": 359000.0,
-      "buyer_channel": "system",
-      "settlement": "market_cycle",
-      "cycle_hours": 24,
-      "cash_lag_hours": 48,
-      "status": "dropped",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 2500000.0
@@ -1321,7 +1268,7 @@
     "incomplete": true,
     "keep": 1,
     "buy": 9,
-    "sell": 11,
+    "sell": 10,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
