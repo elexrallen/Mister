@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T08:10:50.441442+00:00",
+  "generated_at": "2026-08-20T08:46:26.734960+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -782,7 +782,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 8,570,000 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-20T08:10:50.369714+00:00"
+      "added_at": "2026-08-20T08:46:26.681533+00:00"
     },
     {
       "slot": "MF5",
@@ -806,7 +806,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 40 · 1,878,000 € · keep · bench · Δ 15%",
-      "added_at": "2026-08-20T08:10:50.374708+00:00"
+      "added_at": "2026-08-20T08:46:26.685305+00:00"
     },
     {
       "slot": "FW1",
@@ -1224,22 +1224,6 @@
         "cash_lag_hours": 48
       },
       {
-        "player_id": "52159",
-        "name": "J. Gomes",
-        "position": "MF",
-        "ep_score": 39.1,
-        "price": 1743000.0,
-        "delta_5d": 0.1543,
-        "value_note": "rising",
-        "why": "Fuera del ideal · EP 39 · lista a ~1,743,000 € (VM); caja usable en ~48h · Δ 15%",
-        "list_at": 1743000.0,
-        "expected_proceeds": 1743000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
         "player_id": "3055",
         "name": "C. Kelleher",
         "position": "GK",
@@ -1330,7 +1314,7 @@
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
-    "funded_ideal": true,
+    "funded_ideal": false,
     "formation": "5-3-2",
     "ideal_buy_cost": 57794250.0,
     "daily_primary_count": 0
@@ -1376,7 +1360,7 @@
     "incomplete": true,
     "keep": 2,
     "buy": 10,
-    "sell": 12,
+    "sell": 11,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
