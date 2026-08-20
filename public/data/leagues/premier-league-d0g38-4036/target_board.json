@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-20T08:50:43.120512+00:00",
+  "generated_at": "2026-08-20T09:42:05.360265+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -542,7 +542,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 8 · 1,000,000 € · buy · bench · tándem mismo club · Δ 3%",
-      "added_at": "2026-08-20T08:50:43.107131+00:00"
+      "added_at": "2026-08-20T09:42:05.335038+00:00"
     },
     {
       "slot": "DF1",
@@ -638,7 +638,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 41 · 5,349,000 € · keep · starter · Δ 0%",
-      "added_at": "2026-08-20T08:50:43.101678+00:00"
+      "added_at": "2026-08-20T09:42:05.324310+00:00"
     },
     {
       "slot": "DF5",
@@ -758,7 +758,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 1,878,000 € · buy · bench · Δ 4%",
-      "added_at": "2026-08-20T08:50:43.107359+00:00"
+      "added_at": "2026-08-20T09:42:05.335431+00:00"
     }
   ],
   "moves": {
@@ -1008,22 +1008,6 @@
     ],
     "sell": [
       {
-        "player_id": "68548",
-        "name": "K. Lamadrid",
-        "position": "FW",
-        "ep_score": 0.0,
-        "price": 206000.0,
-        "delta_5d": 0.2875,
-        "value_note": "rising",
-        "why": "Fuera del ideal · EP 0 · lista a ~206,000 € (VM); caja usable en ~48h · Δ 29%",
-        "list_at": 206000.0,
-        "expected_proceeds": 206000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
         "player_id": "11145",
         "name": "L. Nmecha",
         "position": "FW",
@@ -1072,70 +1056,6 @@
         "cash_lag_hours": 48
       },
       {
-        "player_id": "23381",
-        "name": "R. Aït Nouri",
-        "position": "DF",
-        "ep_score": 36.6,
-        "price": 2523000.0,
-        "delta_5d": 0.0153,
-        "value_note": "stable",
-        "why": "Fuera del ideal · EP 37 · lista a ~2,523,000 € (VM); caja usable en ~48h · Δ 2%",
-        "list_at": 2523000.0,
-        "expected_proceeds": 2523000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
-        "player_id": "28713",
-        "name": "J. Sá",
-        "position": "GK",
-        "ep_score": 37.0,
-        "price": 210000.0,
-        "delta_5d": 0.0,
-        "value_note": "stable",
-        "why": "Fuera del ideal · EP 37 · lista a ~210,000 € (VM); caja usable en ~48h · Δ 0%",
-        "list_at": 210000.0,
-        "expected_proceeds": 210000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
-        "player_id": "55072",
-        "name": "L. Ugochukwu",
-        "position": "MF",
-        "ep_score": 37.9,
-        "price": 195000.0,
-        "delta_5d": 0.2188,
-        "value_note": "rising",
-        "why": "Fuera del ideal · EP 38 · lista a ~195,000 € (VM); caja usable en ~48h · Δ 22%",
-        "list_at": 195000.0,
-        "expected_proceeds": 195000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
-        "player_id": "58378",
-        "name": "M. Hermansen",
-        "position": "GK",
-        "ep_score": 39.2,
-        "price": 2358000.0,
-        "delta_5d": 0.0499,
-        "value_note": "stable",
-        "why": "Fuera del ideal · EP 39 · lista a ~2,358,000 € (VM); caja usable en ~48h · Δ 5%",
-        "list_at": 2358000.0,
-        "expected_proceeds": 2358000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
-      },
-      {
         "player_id": "52392",
         "name": "L. Hall",
         "position": "DF",
@@ -1146,6 +1066,22 @@
         "why": "Fuera del ideal · EP 39 · lista a ~6,317,000 € (VM); caja usable en ~48h · Δ 1%",
         "list_at": 6317000.0,
         "expected_proceeds": 6317000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24,
+        "cash_lag_hours": 48
+      },
+      {
+        "player_id": "23381",
+        "name": "R. Aït Nouri",
+        "position": "DF",
+        "ep_score": 40.0,
+        "price": 2523000.0,
+        "delta_5d": 0.0153,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 40 · lista a ~2,523,000 € (VM); caja usable en ~48h · Δ 2%",
+        "list_at": 2523000.0,
+        "expected_proceeds": 2523000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24,
@@ -1268,7 +1204,7 @@
     "incomplete": true,
     "keep": 1,
     "buy": 9,
-    "sell": 10,
+    "sell": 6,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
