@@ -13,6 +13,7 @@ from competitive_actions import (  # noqa: E402
     other_gaps_min_cost,
 )
 from data_engine import build_action_plan  # noqa: E402
+from target_board import funding_plan_from_board  # noqa: E402
 
 
 def _assert(cond: bool, msg: str) -> None:
@@ -84,6 +85,65 @@ def test_other_min_uses_cheapest_on_market_for_thin_fw() -> None:
         ],
     )
     _assert(cost == 1_000_000, cost)
+
+
+def test_other_min_zero_when_thin_has_no_listing() -> None:
+    cost = other_gaps_min_cost(
+        {"all_gap_costs": []},
+        exclude_position="DF",
+        diagnosis={"by_position": {"FW": {"coverage": "thin"}}},
+        structural_needs=[{"position": "FW", "priority": "Alta"}],
+        opportunities=[],
+    )
+    _assert(cost == 0.0, cost)
+    cost_df_only = other_gaps_min_cost(
+        {},
+        exclude_position="DF",
+        diagnosis={"by_position": {"FW": {"coverage": "thin"}, "DF": {"coverage": "thin"}}},
+        opportunities=[{"position": "DF", "on_daily_market": True, "price": 2_000_000}],
+    )
+    _assert(cost_df_only == 0.0, cost_df_only)
+
+
+def test_thin_fw_without_listing_does_not_block_df() -> None:
+    me = {"balance": 3_000_000, "squad": [], "rank": 8}
+    diagnosis = {
+        "alerts": [],
+        "by_position": {
+            "DF": {"coverage": "thin"},
+            "FW": {"coverage": "thin"},
+        },
+    }
+    opps = [_opp("d1", "DF_A", "DF", 2_000_000)]
+    plan, _pkg = build_action_plan(
+        me,
+        diagnosis,
+        opps,
+        [],
+        target_board={
+            "primary_targets": [],
+            "patch_policy": {"allow": False, "max_spend": 2_500_000},
+            "moves": {"buy": []},
+            "cash_reserved": 0,
+        },
+        funding_info={
+            "cash_reserved": 0,
+            "primary_targets": [],
+            "funding_target": 0,
+            "gap_costs": [],
+        },
+        market_mode="fixed",
+        diagnostico_plantilla={
+            "structural_needs": [],
+            "lineas": diagnosis["by_position"],
+        },
+    )
+    buys = {a.get("name") for a in plan if a.get("action") == "buy_now"}
+    _assert("DF_A" in buys, [(a.get("name"), a.get("action"), a.get("why")) for a in plan])
+    _assert(
+        not any("poca caja" in (a.get("why") or "") for a in plan if a.get("name") == "DF_A"),
+        [a.get("why") for a in plan],
+    )
 
 
 def test_patch_policy_does_not_block_daily_buys() -> None:
@@ -198,6 +258,36 @@ def test_expensive_primary_does_not_kill_chollo_that_fits() -> None:
     )
 
 
+def test_funding_plan_skips_unaffordable_crack() -> None:
+    board = {
+        "primary_targets": [
+            {
+                "player_id": "fw8",
+                "name": "Crack",
+                "position": "FW",
+                "price": 8_000_000,
+                "ep_score": 90,
+                "on_daily_market": True,
+            },
+            {
+                "player_id": "mf1",
+                "name": "Chollo",
+                "position": "MF",
+                "price": 1_000_000,
+                "ep_score": 40,
+                "on_daily_market": True,
+            },
+        ],
+        "moves": {"buy": []},
+        "balance": 6_500_000,
+    }
+    funding = funding_plan_from_board(board, balance=6_500_000)
+    _assert(float(funding["funding_target"]) == 1_000_000, funding)
+    _assert(float(funding["funding_shortfall"]) == 0.0, funding)
+    _assert(funding["cash_tight"] is False, funding)
+    _assert(len(funding.get("all_gap_costs") or []) == 2, funding)
+
+
 def test_estimate_gap_funding_uses_league_cycle() -> None:
     out = estimate_gap_funding([], [], 1_000_000, cycle_hours=8)
     note = str(out.get("liquidity_note") or "")
@@ -211,8 +301,11 @@ if __name__ == "__main__":
     tests = [
         test_other_min_ignores_primary_shopping_list,
         test_other_min_uses_cheapest_on_market_for_thin_fw,
+        test_other_min_zero_when_thin_has_no_listing,
+        test_thin_fw_without_listing_does_not_block_df,
         test_patch_policy_does_not_block_daily_buys,
         test_expensive_primary_does_not_kill_chollo_that_fits,
+        test_funding_plan_skips_unaffordable_crack,
         test_estimate_gap_funding_uses_league_cycle,
     ]
     failed = 0

@@ -2122,6 +2122,17 @@ def funding_plan_from_board(
         )
     )
 
+    # Solo lo que cabe en el saldo de hoy (greedy). Un crack inabordable no es shortfall.
+    room = bal
+    operable: list[dict[str, Any]] = []
+    for g in gaps:
+        cost = float(g.get("cost") or 0)
+        if cost <= 0:
+            continue
+        if cost <= room + 1e-6:
+            operable.append(g)
+            room -= cost
+
     # Ideal completo (info): no mueve cash_reserved del día
     ideal_gaps: list[dict[str, Any]] = []
     for b in ((board or {}).get("moves") or {}).get("buy") or []:
@@ -2141,18 +2152,18 @@ def funding_plan_from_board(
         )
     ideal_gaps.sort(key=lambda g: -float(g.get("cost") or 0))
 
-    funding_target = float(sum(float(g["cost"]) for g in gaps))
-    funding_shortfall = max(0.0, funding_target - bal)
-    cheapest = min((float(g["cost"]) for g in gaps), default=None)
+    funding_target = float(sum(float(g["cost"]) for g in operable))
+    funding_shortfall = 0.0
+    cheapest = min((float(g["cost"]) for g in operable), default=None)
     return {
         "funding_target": funding_target,
         "funding_shortfall": funding_shortfall,
-        "cash_tight": funding_shortfall > 0,
-        "gap_costs": gaps[:5],
+        "cash_tight": False,
+        "gap_costs": operable[:5],
         "all_gap_costs": gaps,
         "ideal_gap_costs": ideal_gaps[:8],
         "ideal_buy_cost": float((board or {}).get("ideal_buy_cost") or sum(g["cost"] for g in ideal_gaps)),
-        "positions": [g.get("position") for g in gaps[:5] if g.get("position")],
+        "positions": [g.get("position") for g in operable[:5] if g.get("position")],
         "cheapest_need": cheapest,
         "primary_targets": daily,
         "cash_reserved": 0.0,

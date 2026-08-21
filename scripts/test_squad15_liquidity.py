@@ -103,6 +103,35 @@ def test_funding_only_on_daily_market() -> None:
     _assert(float(funding["funding_target"]) == 500_000, funding)
 
 
+def test_funding_skips_on_market_crack_that_does_not_fit() -> None:
+    board = {
+        "primary_targets": [
+            {
+                "player_id": "u1",
+                "name": "Crack",
+                "position": "FW",
+                "price": 20_000_000,
+                "ep_score": 90,
+                "on_daily_market": True,
+            },
+            {
+                "player_id": "d1",
+                "name": "Hoy",
+                "position": "MF",
+                "price": 500_000,
+                "ep_score": 50,
+                "on_daily_market": True,
+            },
+        ],
+        "moves": {"buy": []},
+        "balance": 12_000_000,
+    }
+    funding = funding_plan_from_board(board, balance=12_000_000)
+    _assert(float(funding["funding_target"]) == 500_000, funding)
+    _assert(funding["cash_tight"] is False, funding)
+    _assert(float(funding["funding_shortfall"]) == 0.0, funding)
+
+
 def test_three_daily_primaries_no_cap_of_two() -> None:
     rows = [
         {
@@ -432,10 +461,67 @@ def test_no_fund_target_for_off_market_primary() -> None:
     _assert(not fund, fund)
 
 
+def test_no_fund_target_for_unaffordable_on_market() -> None:
+    squad = [_p(f"s{i}", "DF", 2_000_000, name=f"S{i}", ep=30, lineup=40) for i in range(4)]
+    squad.append(_p("bench", "MF", 3_000_000, name="Banco", ep=18, lineup=20))
+    sells = build_sell_opportunities(
+        {"balance": 500_000, "rank": 8, "squad": squad},
+        {"by_position": {}, "alerts": []},
+        [],
+        diagnostico_plantilla={"financiero": {}},
+        funding_info={
+            "primary_targets": [
+                {
+                    "player_id": "on",
+                    "name": "Crack",
+                    "price": 8_000_000,
+                    "on_daily_market": True,
+                }
+            ],
+            "funding_target": 0,
+            "funding_shortfall": 0,
+            "cash_tight": False,
+            "positions": ["FW"],
+        },
+        recommended_xi={"xi": [{"player_id": p["id"]} for p in squad[:4]]},
+    )
+    fund = [s for s in sells if s.get("sell_reason") == "fund_target"]
+    _assert(not fund, fund)
+
+
+def test_no_fund_target_for_unaffordable_on_market() -> None:
+    squad = [_p(f"s{i}", "DF", 2_000_000, name=f"S{i}", ep=30, lineup=40) for i in range(4)]
+    squad.append(_p("bench", "MF", 3_000_000, name="Banco", ep=18, lineup=20))
+    sells = build_sell_opportunities(
+        {"balance": 500_000, "rank": 8, "squad": squad},
+        {"by_position": {}, "alerts": []},
+        [],
+        diagnostico_plantilla={"financiero": {}},
+        funding_info={
+            "primary_targets": [
+                {
+                    "player_id": "on",
+                    "name": "Crack",
+                    "price": 8_000_000,
+                    "on_daily_market": True,
+                }
+            ],
+            "funding_target": 0,
+            "funding_shortfall": 0,
+            "cash_tight": False,
+            "positions": ["FW"],
+        },
+        recommended_xi={"xi": [{"player_id": p["id"]} for p in squad[:4]]},
+    )
+    fund = [s for s in sells if s.get("sell_reason") == "fund_target"]
+    _assert(not fund, fund)
+
+
 if __name__ == "__main__":
     test_package_reserve_is_zero()
     test_funding_plan_does_not_reserve_cash()
     test_funding_only_on_daily_market()
+    test_funding_skips_on_market_crack_that_does_not_fit()
     test_three_daily_primaries_no_cap_of_two()
     test_swap_covers()
     test_pick_slot_upgrades_from_weakest_to_cheapest_cover()
@@ -451,4 +537,5 @@ if __name__ == "__main__":
     test_playbook_visperas_follows_buy_now()
     test_playbook_visperas_without_buys()
     test_no_fund_target_for_off_market_primary()
+    test_no_fund_target_for_unaffordable_on_market()
     print("test_squad15_liquidity: OK")

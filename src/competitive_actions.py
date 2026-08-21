@@ -1594,6 +1594,33 @@ def real_needy_positions(
     return pos
 
 
+def _coverage_urgency(
+    pos: str,
+    diagnosis: dict[str, Any] | None,
+    structural_needs: list[dict[str, Any]] | None,
+) -> int:
+    """0 = critical / estructural Alta; 1 = thin."""
+    for n in structural_needs or []:
+        if n.get("priority") == "Alta" and str(n.get("position") or "") == pos:
+            return 0
+    buckets: list[dict[str, Any]] = []
+    if diagnosis:
+        if isinstance(diagnosis.get("lineas"), dict):
+            buckets.append(diagnosis["lineas"])
+        if isinstance(diagnosis.get("by_position"), dict):
+            buckets.append(diagnosis["by_position"])
+    for bucket in buckets:
+        info = bucket.get(pos) or {}
+        if not isinstance(info, dict):
+            continue
+        cov = str(info.get("coverage") or "")
+        if cov == "critical":
+            return 0
+        if cov == "thin":
+            return 1
+    return 1
+
+
 def other_gaps_min_cost(
     funding_info: dict[str, Any] | None = None,
     *,
@@ -1602,7 +1629,7 @@ def other_gaps_min_cost(
     structural_needs: list[dict[str, Any]] | None = None,
     opportunities: list[dict[str, Any]] | None = None,
 ) -> float:
-    """Coste mínimo de cubrir huecos reales de otras líneas (no primaries del board)."""
+    """Chollo on-market de la otra línea needy más urgente. 0 si hoy no hay candidato."""
     excl = str(exclude_position or "")
     if diagnosis is not None or structural_needs:
         needy = real_needy_positions(diagnosis, structural_needs)
@@ -1610,7 +1637,7 @@ def other_gaps_min_cost(
             needy.discard(excl)
         if not needy:
             return 0.0
-        total = 0.0
+        fills: list[tuple[int, float]] = []
         market = list(opportunities or [])
         for pos in needy:
             costs = [
@@ -1620,8 +1647,15 @@ def other_gaps_min_cost(
                 and (o.get("on_daily_market") or o.get("seller") == "market")
             ]
             costs = [c for c in costs if c > 0]
-            total += min(costs) if costs else float(_GAP_FALLBACK_COST.get(pos, 2_000_000.0))
-        return total
+            if not costs:
+                continue
+            fills.append(
+                (_coverage_urgency(pos, diagnosis, structural_needs), min(costs))
+            )
+        if not fills:
+            return 0.0
+        best_rank = min(r for r, _ in fills)
+        return float(min(c for r, c in fills if r == best_rank))
 
     info = funding_info or {}
     skip_needs = {"perfect_buy_daily", "perfect_buy"}
@@ -1633,7 +1667,7 @@ def other_gaps_min_cost(
         and float(g.get("cost") or 0) > 0
     ]
     others.sort()
-    return float(sum(others[:3])) if others else 0.0
+    return float(others[0]) if others else 0.0
 
 
 def rival_demand_for_position(
@@ -3071,6 +3105,8 @@ def build_sell_opportunities(
             need_price = _money(pt.get("price"))
             if need_price <= 0:
                 continue
+            if need_price > balance:
+                continue  # greedy no puja hoy a quien no cabe
             shortfall_pt = max(0.0, need_price - balance)
             if shortfall_pt <= 0:
                 continue
