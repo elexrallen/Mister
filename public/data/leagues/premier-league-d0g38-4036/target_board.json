@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-21T14:23:01.853602+00:00",
+  "generated_at": "2026-08-21T20:21:30.557131+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -239,17 +239,17 @@
       "complete": false
     }
   ],
-  "balance": 4315285.0,
-  "squad_value": 44944000.0,
+  "balance": 3255285.0,
+  "squad_value": 45971000.0,
   "wealth": {
-    "balance": 4315285.0,
-    "squad_value": 44944000.0,
-    "total": 49259285.0,
+    "balance": 3255285.0,
+    "squad_value": 45971000.0,
+    "total": 49226285.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 49259285.0
+    "budget_cap": 49226285.0
   },
   "budget_operable": {
-    "budget_cap": 49259285.0,
+    "budget_cap": 49226285.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
   "ideal_buy_cost": 40481500.0,
@@ -1056,6 +1056,22 @@
     ],
     "sell": [
       {
+        "player_id": "1655020",
+        "name": "L. Gourna-Douath",
+        "position": "MF",
+        "ep_score": 0.0,
+        "price": 1027000.0,
+        "delta_5d": -0.0595,
+        "value_note": "falling",
+        "why": "Fuera del ideal · EP 0 · lista a ~1,027,000 € (VM); caja usable en ~48h · Δ -6%",
+        "list_at": 1027000.0,
+        "expected_proceeds": 1027000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
+      },
+      {
         "player_id": "11145",
         "name": "L. Nmecha",
         "position": "FW",
@@ -1243,7 +1259,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 4315285.0,
+  "residual_after_reserve": 3255285.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1261,7 +1277,7 @@
     "incomplete": true,
     "keep": 1,
     "buy": 10,
-    "sell": 10,
+    "sell": 11,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
