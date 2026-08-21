@@ -1087,7 +1087,9 @@
         xi != null ? `${xi}${all != null ? ` (${all})` : ""}` : all != null ? String(all) : "—";
     }
     if (elR) {
-      elR.textContent = isAsp ? "—" : formatMoney(board.cash_reserved);
+      const residual =
+        board.residual_after_reserve != null ? board.residual_after_reserve : board.balance;
+      elR.textContent = isAsp ? "—" : formatMoney(residual);
     }
 
     const statusBadge = (st, role, extra) => {
@@ -1839,7 +1841,6 @@
       if (role === "alt_no_slot") return `<span class="badge badge-baja">Sin plaza</span>`;
       if (role === "alt_if_lost") return `<span class="badge badge-duda">Alt</span>`;
       if (role === "also_good") return `<span class="badge badge-duda">También</span>`;
-      if (role === "do_not_stack") return `<span class="badge badge-baja">No acumular</span>`;
       if (role === "out_of_budget") return `<span class="badge badge-baja">Fuera de caja</span>`;
       return "";
     };
@@ -1861,10 +1862,7 @@
     }
 
     const fp = data.funding_plan || {};
-    const comboChip =
-      pkg.combo && !fixed
-        ? ` · combo <strong>${escapeHtml(String(pkg.combo))}</strong>`
-        : "";
+    const nBuys = Number(pkg.n_buys != null ? pkg.n_buys : (pkg.hedges || []).length + (pkg.primary ? 1 : 0) + (pkg.secondary ? 1 : 0));
     const cupoChip =
       pkg.max_squad != null
         ? ` · cupo <strong>${escapeHtml(
@@ -1881,52 +1879,37 @@
       .map((s) => s && s.name)
       .filter(Boolean)
       .slice(0, 2);
-    const packageHint = pkg.primary || (pkg.slot_sells || []).length
-      ? `<p class="queue-package-hint">Plan de hoy${comboChip}${cupoChip}${
-          pkg.primary
-            ? `: <strong>${escapeHtml(pkg.primary.name || "")}</strong>${
-                pkg.secondary
-                  ? ` + <strong>${escapeHtml(pkg.secondary.name || "")}</strong>`
-                  : ""
-              }`
-            : ":"
-        }${
-          slotSellNames.length
-            ? ` · vender ${slotSellNames
-                .map((n) => `<strong>${escapeHtml(n)}</strong>`)
-                .join(", ")}`
-            : ""
-        }${
-          hedgeNames.length
-            ? ` · hedge ${hedgeNames.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}`
-            : ""
-        } · gasto ~${formatMoney(pkg.spend_cap)} · queda ~${formatMoney(
-          pkg.residual_after
-        )}</p>`
-      : pkg.note
-        ? `<p class="queue-package-hint">${escapeHtml(pkg.note)}${cupoChip ? cupoChip.replace(/^ · /, " · ") : ""}</p>`
-        : "";
-    const fundingHint =
-      fp.target != null && Number(fp.target) > 0
-        ? `<p class="queue-funding-hint">Reserva objetivos: ~${formatMoney(
-            fp.cash_reserved != null ? fp.cash_reserved : fp.target
-          )}${
-            fp.shortfall != null && Number(fp.shortfall) > 0
-              ? ` · faltan ~${formatMoney(fp.shortfall)}`
-              : " · cubierto"
+    const packageHint =
+      pkg.primary || (pkg.slot_sells || []).length || nBuys
+        ? `<p class="queue-package-hint">${
+            nBuys ? `<strong>${escapeHtml(String(nBuys))}</strong> fichaje(s)` : "Hoy"
+          }${cupoChip}${
+            slotSellNames.length
+              ? ` · vender ${slotSellNames
+                  .map((n) => `<strong>${escapeHtml(n)}</strong>`)
+                  .join(", ")}`
+              : ""
           }${
+            hedgeNames.length
+              ? ` · hedge ${hedgeNames.map((n) => `<strong>${escapeHtml(n)}</strong>`).join(", ")}`
+              : ""
+          } · gasto ~${formatMoney(pkg.spend_cap)} · queda ~${formatMoney(
+            pkg.residual_after
+          )}</p>`
+        : pkg.note
+          ? `<p class="queue-package-hint">${escapeHtml(pkg.note)}${cupoChip ? cupoChip.replace(/^ · /, " · ") : ""}</p>`
+          : "";
+    const fundingHint =
+      fp.shortfall != null && Number(fp.shortfall) > 0
+        ? `<p class="queue-funding-hint">Faltan ~${formatMoney(fp.shortfall)} para los fichajes de hoy${
             (fp.primary_targets || []).length
               ? ` · ${(fp.primary_targets || [])
                   .slice(0, 2)
                   .map((t) => escapeHtml(t.name || ""))
                   .join(", ")}`
-              : (fp.positions || []).length
-                ? ` · ${escapeHtml((fp.positions || []).join(", "))}`
-                : ""
-          }${
-            fp.shortfall != null && Number(fp.shortfall) > 0
-              ? ` · ventas: caja en ~${fp.cash_lag_hours != null ? Number(fp.cash_lag_hours) : 48}h (no hoy)`
               : ""
+          }${
+            ` · ventas: caja en ~${fp.cash_lag_hours != null ? Number(fp.cash_lag_hours) : 48}h (no hoy)`
           }</p>`
         : "";
     const liquidityNote =
@@ -1957,11 +1940,11 @@
       if (doTodayIds.has(key)) return false;
       return ["wait", "scout", "avoid"].includes(a.action) || a.queue_role === "aspirational_watch";
     });
-    // Siempre visibles: waits del mercado ligados al paquete (alts / no-apilar)
+    // Siempre visibles: waits del mercado ligados a la cola (alts / sin caja / sin plaza)
     const relatedWaits = contextAll
       .filter((a) => {
         if (a.action !== "wait" || !a.on_daily_market) return false;
-        return ["alt_if_lost", "alt_unfunded", "do_not_stack"].includes(a.queue_role);
+        return ["alt_if_lost", "alt_unfunded", "alt_no_slot"].includes(a.queue_role);
       })
       .slice(0, 5);
     const relatedIds = new Set(
@@ -2161,7 +2144,7 @@
         "No pujar hoy (relacionados)",
         relatedWaits,
         "muted",
-        "Alts del paquete de hoy (mismo puesto / sin caja / no apilar) — no pujar ahora"
+        "Alts del mismo puesto / sin caja / sin plaza — no pujar ahora"
       ) +
       (expanded
         ? section(

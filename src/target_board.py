@@ -2035,15 +2035,11 @@ def _select_daily_primary_targets(
     diagnostico: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Objetivos del día para cola/funding: mercado diario (máx 2) + buys asequibles
-    con el saldo actual (sin exigir vender casi toda la plantilla).
-
-    Excluye posiciones overstocked (cupo≥ideal y titulares OK) para no reservar
-    caja en líneas ya sobradas.
+    Objetivos del día: solo mercado diario, sin tope de 2 y sin relleno off-market.
+    Excluye posiciones overstocked (cupo≥ideal y titulares OK).
     """
     from squad_analyzer import is_line_overstocked
 
-    bal = max(0.0, float(balance or 0))
     squad = list(squad or [])
 
     def _overstocked_row(r: dict[str, Any]) -> bool:
@@ -2063,42 +2059,19 @@ def _select_daily_primary_targets(
         [r for r in buy_rows if r.get("on_daily_market") and not _overstocked_row(r)],
         key=_sort_key,
     )
-    affordable = sorted(
-        [
-            r
-            for r in buy_rows
-            if not r.get("on_daily_market")
-            and not _overstocked_row(r)
-            and float(r.get("price") or 0) <= bal + 1e-6
-        ],
-        key=_sort_key,
-    )
 
     selected: list[dict[str, Any]] = []
     seen: set[str] = set()
-    spent = 0.0
+    max_daily = 8
 
-    # Hasta 2 del mercado de hoy (pueden requerir ventas si superan saldo)
-    max_daily = int(getattr(config, "IDEAL_DAILY_MARKET_PRIMARIES", 2))
-    for r in on_daily[: max(0, max_daily)]:
+    for r in on_daily:
+        if len(selected) >= max_daily:
+            break
         pid = str(r.get("player_id") or "")
         if not pid or pid in seen:
             continue
         selected.append(r)
         seen.add(pid)
-        spent += float(r.get("price") or 0)
-
-    # Relleno con asequibles que quepan en el saldo restante
-    room = max(0.0, bal - min(spent, bal))
-    for r in affordable:
-        pid = str(r.get("player_id") or "")
-        if not pid or pid in seen:
-            continue
-        price = float(r.get("price") or 0)
-        if price <= room + 1e-6:
-            selected.append(r)
-            seen.add(pid)
-            room -= price
 
     return selected
 
@@ -2108,11 +2081,15 @@ def funding_plan_from_board(
     *,
     balance: float | None = None,
 ) -> dict[str, Any]:
-    """Funding del día = primary_targets operables (mercado/asequibles), no el rebuild completo.
-    Shortfall se cubre con ventas al sistema (caja diferida ~1–2 días), no saldo inmediato.
+    """Funding del día = primary_targets del mercado de hoy, no el rebuild completo.
+    Shortfall se cubre con ventas al sistema (caja diferida ~2 ciclos), no saldo inmediato.
     """
     bal = max(0.0, float(balance if balance is not None else (board or {}).get("balance") or 0))
-    daily = list((board or {}).get("primary_targets") or [])
+    daily = [
+        t
+        for t in list((board or {}).get("primary_targets") or [])
+        if t.get("on_daily_market")
+    ]
     if not daily:
         # Compat: si el board antiguo no separó daily, derivar de moves.buy
         buys = list(((board or {}).get("moves") or {}).get("buy") or [])
@@ -2183,10 +2160,10 @@ def funding_plan_from_board(
         "wealth": (board or {}).get("wealth"),
         "totals": (board or {}).get("totals"),
         "formation": (board or {}).get("formation"),
-        # Ventas al sistema no suman al balance del día (ciclo 24h → caja ~48h)
+        # Ventas al sistema no suman al balance del día (caja ≈ 2 ciclos)
         "settlement": "market_cycle",
-        "cycle_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
-        "cash_lag_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+        "cycle_hours": float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
+        "cash_lag_hours": float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
         "liquidity_note": (
             "Gasta en el 15 ahora. Liquidez = jugadores listados (oferta CPU al siguiente "
             "ciclo), no caja congelada. El cobro de una venta no es saldo de hoy."

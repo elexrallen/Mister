@@ -38,10 +38,11 @@ Los cortes están en las constantes `HOURS_MATCHDAY`, `HOURS_EVE`,
   exigente y cambio de capitán con su motivo y su alternativa.
 - **Dinero**: saldo negativo con la jornada encima, que en muchas ligas anula los
   puntos.
-- **Mercado según fase**: fichar y listar ventas en la ventana de compra, última
-  llamada en confirmación, y freno explícito en víspera y día de partido. En las
-  fases pegadas al cierre el ranking de compra dobla el peso de los puntos
-  esperados y reduce a la mitad el de objetivo de plantilla a medio plazo.
+- **Mercado según fase**: fichar y listar ventas en la ventana de compra; última
+  llamada en confirmación; en víspera y día de partido el playbook **sigue a la
+  cola** (si hay `buy_now` solvente, ficha esos con aviso de prima; si no, no
+  fichar). En las fases pegadas al cierre el ranking de compra dobla el peso de
+  los puntos esperados y reduce a la mitad el de objetivo de plantilla a medio plazo.
 - **Balance del ciclo**: error medio del xPts en la última jornada cerrada y los
   mayores desvíos con nombre, para saber si el modelo va sobrado o corto.
 - **Estructura**: carencias estructurales de plantilla, que salen más baratas de
@@ -59,8 +60,8 @@ no haya ninguna acción de mercado pendiente.
 
 1. Mira la fase y el countdown: te dice si hoy toca mover mercado o cerrar once.
 2. Resuelve primero lo marcado como **Alta**; suele ser once, capitán o saldo.
-3. En `ventana_compra` es cuando fichar sale barato; en `visperas` lo normal es
-   no tocar el mercado salvo que tapes un hueco del once.
+3. En `ventana_compra` es cuando fichar sale barato; en `visperas` ficha solo
+   lo que la cola pida (si hay `buy_now`), y cierra el once.
 4. Después de la jornada, mira el punto de **balance**: compara los puntos
    esperados que guardó el snapshot con los reales y señala en qué te pasaste y
    en qué te quedaste corto (`meta.model_calibration` tiene el desglose por tramo

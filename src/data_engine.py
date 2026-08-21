@@ -1569,7 +1569,9 @@ def build_action_plan(
         if target_board
         else estimate_gap_funding(structural_needs, opportunities, balance, top_n=3)
     )
-    gap_pos_labels = ", ".join(str(p) for p in (funding.get("positions") or []) if p) or "otras carencias"
+    gap_pos_labels = (
+        ", ".join(sorted(str(p) for p in need_pos_alta if p)) or "otras carencias"
+    )
     objective_ids = board_objective_ids(target_board)
     primary_ids = board_primary_ids(target_board)
     cash_reserved = float(funding.get("cash_reserved") or 0)
@@ -1973,10 +1975,11 @@ def build_action_plan(
             and not fills_structural_o
             and not worth_upgrade
             and crowds_out
+            and need_pos_alta
             and not any("prioriza otras" in w or "poca caja" in w for w in why_parts)
         ):
             why_parts.append(
-                f"upgrade bueno, pero reserva caja para {gap_pos_labels}"
+                f"upgrade bueno, pero prioriza {gap_pos_labels}"
             )
         is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
             cost <= patch_cap
@@ -2961,16 +2964,6 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     rival_upgrades: list[dict[str, Any]] = []
     if not fixed_market:
-        # Reserva para carencias de mercado antes de gastar en cláusulas
-        market_reserved = 0.0
-        needy_pos = {
-            pos
-            for pos, info in (diagnosis.get("by_position") or {}).items()
-            if info.get("status") in ("critical", "warning")
-            or info.get("coverage") in ("critical", "thin")
-        }
-        if needy_pos:
-            market_reserved = max(0.0, float(me.get("balance") or 0) * 0.40)
         rival_upgrades = build_rival_upgrade_targets(
             me,
             diagnosis,
@@ -2982,7 +2975,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             hours_to_jornada=hours_j,
             days_to_kickoff=comp.get("days_to_kickoff"),
             matchday=matchday_early,
-            market_reserved=market_reserved,
+            market_reserved=0.0,
         )
 
     owned = set(league.get("owned_across_league") or [])

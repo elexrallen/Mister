@@ -335,7 +335,7 @@ def main(argv: list[str] | None = None) -> None:
     )
     hedge_names = ", ".join(h.get("name") or "?" for h in hedges[:4]) or "—"
     print(
-        f"  package combo={daily_package.get('combo')} "
+        f"  queue buys={daily_package.get('n_buys')} "
         f"primary={prim.get('name')} secondary={sec.get('name')} "
         f"hedges={hedge_names} "
         f"spend={daily_package.get('spend_cap')} residual={daily_package.get('residual_after')}"
@@ -348,7 +348,7 @@ def main(argv: list[str] | None = None) -> None:
             f"cost={a.get('cost') or a.get('bid')}"
         )
     for a in waits:
-        if a.get("queue_role") in ("alt_if_lost", "alt_unfunded", "do_not_stack"):
+        if a.get("queue_role") in ("alt_if_lost", "alt_unfunded", "alt_no_slot"):
             print(
                 f"  {a.get('queue_role')} {a.get('name')} [{a.get('position')}] "
                 f"{(a.get('why') or '')[:90]}"

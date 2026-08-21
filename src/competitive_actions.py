@@ -312,12 +312,23 @@ def budget_fit(
     )
 
 
-def sell_settlement_fields(price: float) -> dict[str, Any]:
+def _cycle_hours_value(cycle_hours: float | None = None) -> float:
+    if cycle_hours is not None:
+        try:
+            return float(cycle_hours)
+        except (TypeError, ValueError):
+            pass
+    return float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+
+
+def sell_settlement_fields(
+    price: float, *, cycle_hours: float | None = None
+) -> dict[str, Any]:
     """
     Liquidez de venta al sistema (Mister): ask ≈ VM; cobro en ciclos de mercado.
     Lista → oferta (~1 ciclo) → aceptar → cobro (~1 ciclo más) ≈ 2 ciclos.
     """
-    cycle = int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    cycle = _cycle_hours_value(cycle_hours)
     proceeds = float(price or 0)
     return {
         "list_at": proceeds,
@@ -329,13 +340,15 @@ def sell_settlement_fields(price: float) -> dict[str, Any]:
     }
 
 
-def sell_cash_phrase(price: float, *, deferred: bool = False) -> str:
-    """Texto corto de ask VM + plazo de caja (ciclo 24h → ~48h usable)."""
-    cycle = int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
-    lag = cycle * 2
+def sell_cash_phrase(
+    price: float, *, deferred: bool = False, cycle_hours: float | None = None
+) -> str:
+    """Texto corto de ask VM + plazo de caja (2 ciclos de la liga)."""
+    cycle = _cycle_hours_value(cycle_hours)
+    lag = int(round(cycle * 2))
     base = f"lista a ~{price:,.0f} € (VM)"
     if deferred:
-        return f"{base}; caja en 1–2 días (no liquida hoy)"
+        return f"{base}; caja en ~{lag}h (no liquida hoy)"
     return f"{base}; caja usable en ~{lag}h"
 
 
@@ -2642,9 +2655,13 @@ def build_sell_opportunities(
     )
     cash_tight = bool(funding.get("cash_tight"))
     funding_pressure = float(funding.get("funding_shortfall") or 0) > 0
+    cycle_h = funding.get("cycle_hours")
     gap_labels = ", ".join(
         str(p) for p in (funding.get("positions") or []) if p
     ) or "carencias"
+
+    def _cash_phrase(amount: float, *, deferred: bool = False) -> str:
+        return sell_cash_phrase(amount, deferred=deferred, cycle_hours=cycle_h)
 
     sells: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -2703,7 +2720,7 @@ def build_sell_opportunities(
             "recent_minutes": _recent_minutes(p),
             "funding_shortfall": funding.get("funding_shortfall"),
             "funding_target": funding.get("funding_target"),
-            **sell_settlement_fields(price),
+            **sell_settlement_fields(price, cycle_hours=cycle_h),
         }
         # Tip de urgencia: liquidez inmediata vía rescisión (no sustituye listar al VM)
         if urgency == "high" or reason in ("fund_buy", "fund_target"):
@@ -2779,7 +2796,7 @@ def build_sell_opportunities(
             urg = "high" if bench_inflated or price >= 6_000_000 or funding_pressure else "medium"
             bits = [
                 f"fuera del once real (titularidad {_lineup_titularidad_label(p, lineup)})",
-                sell_cash_phrase(price),
+                _cash_phrase(price),
             ]
             if p.get("in_lineup"):
                 bits.insert(0, "en tu once Mister pero sin titularidad real")
@@ -2817,7 +2834,7 @@ def build_sell_opportunities(
                 bits.append(f"{int(recent_mins)}' en últimos partidos")
             if p.get("in_lineup"):
                 bits.append("está en tu once fantasy")
-            bits.append(sell_cash_phrase(price, deferred=funding_pressure))
+            bits.append(_cash_phrase(price, deferred=funding_pressure))
             if funding_pressure:
                 bits.append(f"caja justa vs {gap_labels}")
             item = base_item(
@@ -2854,7 +2871,7 @@ def build_sell_opportunities(
             ]
             if opp:
                 bits.append(f"vs {opp}")
-            bits.append(f"{sell_cash_phrase(price)} si hay mejor opción")
+            bits.append(f"{_cash_phrase(price)} si hay mejor opción")
             item = base_item(
                 p,
                 reason="low_minutes",
@@ -2907,7 +2924,7 @@ def build_sell_opportunities(
             item = base_item(
                 p,
                 reason="injured_covered",
-                why=f"{avail} con cobertura en {pos}; {sell_cash_phrase(price)} sin romper el once.",
+                why=f"{avail} con cobertura en {pos}; {_cash_phrase(price)} sin romper el once.",
                 urgency="medium",
                 sell_risk="low",
             )
@@ -2973,7 +2990,7 @@ def build_sell_opportunities(
                             f"Caja justa ({balance:,.0f} €) vs ~{funding.get('funding_target', 0):,.0f} € "
                             f"para {gap_labels}"
                             + (f" (faltan {shortfall:,.0f} €)" if shortfall else "")
-                            + f"; {sell_cash_phrase(price, deferred=True)}."
+                            + f"; {_cash_phrase(price, deferred=True)}."
                         ),
                         urgency="high" if critical_pos or funding_pressure else "medium",
                         sell_risk=(
@@ -2990,6 +3007,8 @@ def build_sell_opportunities(
         if not primary_targets and target_board:
             primary_targets = list(target_board.get("primary_targets") or [])
         for pt in primary_targets:
+            if not pt.get("on_daily_market"):
+                continue
             need_price = _money(pt.get("price"))
             if need_price <= 0:
                 continue
@@ -3019,7 +3038,7 @@ def build_sell_opportunities(
                 reason="fund_target",
                 why=(
                     f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €) en 1–2 días; "
-                    f"faltan ~{shortfall_pt:,.0f} €; {sell_cash_phrase(price, deferred=True)} ({loss_note})"
+                    f"faltan ~{shortfall_pt:,.0f} €; {_cash_phrase(price, deferred=True)} ({loss_note})"
                 ),
                 urgency="high" if shortfall_pt >= need_price * 0.35 else "medium",
                 sell_risk="low" if not is_starter else "medium",
@@ -3104,7 +3123,7 @@ def build_sell_opportunities(
         if prof:
             mid = float(prof.get("bid") or 0)
             why = (
-                f"Liquidez para swap: {sell_cash_phrase(price)}. "
+                f"Liquidez para swap: {_cash_phrase(price)}. "
                 f"Perseguir {prof.get('position')} ~{mid / 1e6:.1f}M"
             )
             if prof.get("name") and not prof.get("on_daily_market"):
@@ -3114,7 +3133,7 @@ def build_sell_opportunities(
             why += f". Si sale, vende y puja (caja + VM cubren ~{mid:,.0f} €)."
         else:
             why = (
-                f"Liquidez permanente: {sell_cash_phrase(price)}. "
+                f"Liquidez permanente: {_cash_phrase(price)}. "
                 "Listado para oferta CPU al siguiente ciclo."
             )
         item = base_item(
@@ -3828,8 +3847,6 @@ def build_rival_upgrade_targets(
 
     # Reserva caja de mercado si hay carencias (no gastar todo en cláusulas)
     reserved = float(market_reserved) if market_reserved is not None else 0.0
-    if market_reserved is None and needy:
-        reserved = max(0.0, bal * 0.40)
 
     results = allocate_clause_bids(results, bal, market_reserved=reserved)
 
@@ -4093,6 +4110,15 @@ def _is_weak_intent(item: dict[str, Any], primary_ids: set[str]) -> bool:
     )
 
 
+def _another_full_bid_ok(item: dict[str, Any], pos_full_count: dict[str, int]) -> bool:
+    """Segundo fichaje lleno en la misma pos solo si la línea sigue con hueco estructural."""
+    pos = str(item.get("position") or "")
+    n = int(pos_full_count.get(pos, 0) or 0)
+    if n <= 0 or n >= 2:
+        return False
+    return bool(item.get("fills_structural"))
+
+
 def _intent_eligible(item: dict[str, Any]) -> bool:
     """Excluye líneas sobradas sin gap/upgrade rentable del pool de intents/primary."""
     if item.get("appreciation_play"):
@@ -4312,9 +4338,8 @@ def finalize_action_plan(
     bootstrap: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
-    Cola operativa = líneas de necesidad (intents + hedges same-day en auction).
-    Combos típicos: 1+0, 1+1, 2+0, 2+1, 2+2. Fixed: solo intents + also_good.
-    Respeta cupo de plantilla (plazas libres = max_squad - squad_size).
+    Cola operativa: fichar mientras quepan caja y plazas.
+    Hedge same-day solo en subasta si el titular de esa línea está disputado.
     Devuelve (action_plan, daily_package).
     """
     cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 0) or 0)
@@ -4325,8 +4350,15 @@ def finalize_action_plan(
         bootstrap_ctx = funding_info.get("bootstrap_xi_context")
     if funding_info and funding_info.get("cash_reserved") is not None:
         cash_reserve = max(0.0, float(funding_info.get("cash_reserved") or 0))
-    secondary_max = float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))
     package_id = datetime.now(timezone.utc).date().isoformat()
+    cycle_h = None
+    if isinstance(funding_info, dict):
+        cycle_h = funding_info.get("cycle_hours")
+    cash_lag_h = None
+    if isinstance(funding_info, dict):
+        cash_lag_h = funding_info.get("cash_lag_hours")
+    if cash_lag_h is None:
+        cash_lag_h = _cycle_hours_value(cycle_h) * 2
     fixed = (market_mode or "auction") == "fixed"
     if max_squad is None:
         max_squad = int(
@@ -4347,7 +4379,7 @@ def finalize_action_plan(
             fixed=fixed,
         )
     except Exception:  # noqa: BLE001
-        buy_cap = min(2 if fixed else 4, free_slots if free_slots > 0 else 0)
+        buy_cap = min(8, free_slots if free_slots > 0 else 0)
     # Ideal aspiracional: solo scout / watching — no reserva caja ni fund_target
     # Filtrar primary_ids de posiciones sobradas (salvo upgrade que renta)
     overstock_pos = {
@@ -4370,24 +4402,14 @@ def finalize_action_plan(
         str(t.get("player_id"))
         for t in (target_board or {}).get("primary_targets") or []
         if t.get("player_id")
+        and t.get("on_daily_market")
         and (
             t.get("position") not in overstock_pos
             or str(t.get("player_id")) in worth_upgrade_ids
         )
     }
     cash_reserved_targets = float((funding_info or {}).get("cash_reserved") or 0)
-    # Reserva de caja: no anclar millions a líneas overstocked del board
-    if overstock_pos:
-        filtered_reserved = round(
-            sum(
-                float(t.get("price") or 0)
-                for t in (target_board or {}).get("primary_targets") or []
-                if t.get("position") not in overstock_pos
-            ),
-            0,
-        )
-        cash_reserved_targets = filtered_reserved
-        cash_reserve = 0.0
+    cash_reserve = 0.0
     plan_ids = {str(i.get("player_id")) for i in plan if i.get("player_id")}
     for at in (target_board or {}).get("aspirational_targets") or []:
         pid = str(at.get("player_id") or "")
@@ -4492,18 +4514,50 @@ def finalize_action_plan(
         and (i.get("budget_fit") in ("comfortable", "tight", None))
     ]
 
-    intents = select_intent_lines(
-        daily_buys,
-        bal=bal,
-        cash_reserve=cash_reserve,
-        primary_ids=primary_ids,
-        secondary_max=secondary_max,
-        max_intents=2,
+    def _rank_buy(item: dict[str, Any]) -> tuple:
+        return _intent_sort_key(
+            item, bal=bal, cash_reserve=cash_reserve, primary_ids=primary_ids
+        )
+
+    ranked_buys = sorted(
+        [i for i in daily_buys if _intent_eligible(i)],
+        key=_rank_buy,
+        reverse=True,
     )
 
-    # Candidatos hedge por línea (auction + risk medium/high)
-    intent_ids = {str(i.get("player_id") or "") for i in intents}
+    sim = bal
+    slots_left = free_slots
+    funded_intent_ids: set[str] = set()
+    funded_hedge_ids: set[str] = set()
+    blocked_no_slot_ids: set[str] = set()
+    intents: list[dict[str, Any]] = []
+    pos_full_count: dict[str, int] = {}
     hedge_by_intent: dict[str, dict[str, Any]] = {}
+
+    # Pase 1: fichajes llenos (posición nueva o hueco estructural restante)
+    for item in ranked_buys:
+        if len(funded_intent_ids) + len(funded_hedge_ids) >= buy_cap:
+            break
+        pid = str(item.get("player_id") or "")
+        pos = str(item.get("position") or "")
+        if not pid:
+            continue
+        n_pos = int(pos_full_count.get(pos, 0) or 0)
+        if n_pos <= 0 or _another_full_bid_ok(item, pos_full_count):
+            cost = _item_buy_cost(item)
+            if slots_left <= 0:
+                blocked_no_slot_ids.add(pid)
+                continue
+            if cost > sim:
+                continue
+            funded_intent_ids.add(pid)
+            intents.append(item)
+            pos_full_count[pos] = n_pos + 1
+            sim -= cost
+            slots_left -= 1
+
+    # Pase 2: hedges same-pos solo en subasta si el titular está disputado
+    intent_ids = set(funded_intent_ids)
     if not fixed:
         for intent in intents:
             iid = str(intent.get("player_id") or "")
@@ -4519,65 +4573,20 @@ def finalize_action_plan(
                 primary_ids=primary_ids,
                 fixed=fixed,
             )
-            if hedge:
-                hedge_by_intent[iid] = hedge
-                intent_ids.add(str(hedge.get("player_id") or ""))
-
-    # Excepción 1+1 vs 2º intent débil: clave/crítica high-risk gana al 2º débil
-    if (
-        not fixed
-        and len(intents) >= 2
-        and _is_strong_intent(intents[0], primary_ids)
-        and _wait_risk_rank(intents[0]) >= 2
-        and str(intents[0].get("player_id") or "") in hedge_by_intent
-        and _is_weak_intent(intents[1], primary_ids)
-    ):
-        i0, i1 = intents[0], intents[1]
-        h0 = hedge_by_intent[str(i0.get("player_id") or "")]
-        c0, c1, ch = _item_buy_cost(i0), _item_buy_cost(i1), hedge_bid_amount(h0)
-        can_1_1 = c0 + ch <= bal
-        can_2_1 = c0 + c1 + ch <= bal
-        if can_1_1 and not can_2_1:
-            dropped_id = str(i1.get("player_id") or "")
-            intents = [i0]
-            hedge_by_intent = {
-                k: v for k, v in hedge_by_intent.items() if k != dropped_id
-            }
-
-    # Asignar caja + plazas: intents primero, luego hedges por riesgo desc.
-    # En subasta cada buy_now puede entrar → no pujar más plazas de las libres.
-    sim = bal
-    slots_left = free_slots
-    funded_intent_ids: set[str] = set()
-    funded_hedge_ids: set[str] = set()
-    blocked_no_slot_ids: set[str] = set()
-    for intent in intents:
-        cost = _item_buy_cost(intent)
-        pid = str(intent.get("player_id") or "")
-        if slots_left <= 0:
-            if pid:
-                blocked_no_slot_ids.add(pid)
-            continue
-        if cost <= sim:
-            funded_intent_ids.add(pid)
-            sim -= cost
-            slots_left -= 1
-
-    hedge_order = sorted(
-        ((iid, h) for iid, h in hedge_by_intent.items() if iid in funded_intent_ids),
-        key=lambda pair: (
-            -_wait_risk_rank(next(i for i in intents if str(i.get("player_id") or "") == pair[0])),
-            -int(pair[1].get("priority_score") or 0),
-        ),
-    )
-    for iid, hedge in hedge_order:
-        cost = hedge_bid_amount(hedge)
-        hid = str(hedge.get("player_id") or "")
-        if slots_left <= 0:
+            if not hedge:
+                continue
+            hid = str(hedge.get("player_id") or "")
+            hedge_by_intent[iid] = hedge
             if hid:
-                blocked_no_slot_ids.add(hid)
-            continue
-        if cost <= sim:
+                intent_ids.add(hid)
+            cost = hedge_bid_amount(hedge)
+            at_cap = len(funded_intent_ids) + len(funded_hedge_ids) >= buy_cap
+            if slots_left <= 0 or at_cap:
+                if hid:
+                    blocked_no_slot_ids.add(hid)
+                continue
+            if cost > sim:
+                continue
             funded_hedge_ids.add(hid)
             sim -= cost
             slots_left -= 1
@@ -4638,7 +4647,6 @@ def finalize_action_plan(
 
     n_intents_funded = len(funded_intent_ids)
     n_hedges_funded = len(funded_hedge_ids)
-    combo = f"{n_intents_funded}+{n_hedges_funded}"
     slot_shortfall = len(blocked_no_slot_ids)
     # Cupo justo / sin plaza → priorizar ventas que abren hueco (rescindir libera ya)
     need_slot_sells = free_slots <= 2 or slot_shortfall > 0
@@ -4837,11 +4845,11 @@ def finalize_action_plan(
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         else:
             item["action"] = "wait"
-            item["queue_role"] = "do_not_stack"
+            item["queue_role"] = "also_good"
             item["alt_for"] = primary.get("player_id") if primary else None
-            item["package_note"] = "No acumular con el paquete de hoy"
+            item["package_note"] = "También válido — ya hay otros fichajes priorizados"
             item["urgency"] = "low"
-            prefix = "No acumular con el paquete de hoy"
+            prefix = item["package_note"]
             item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
         demoted.append(item)
 
@@ -4870,7 +4878,10 @@ def finalize_action_plan(
         item["queue_role"] = "sell_now"
         item["package_id"] = package_id
         if not item.get("package_note"):
-            item["package_note"] = "Vender hoy — puedes listar ya (caja en ~48h salvo rescindir)"
+            item["package_note"] = (
+                f"Vender hoy — puedes listar ya (caja en ~{int(round(float(cash_lag_h)))}h "
+                "salvo rescindir)"
+            )
 
     # Waits del mercado de hoy same-pos / clave sin rol → etiquetar como alt visible
     primary_pos = primary.get("position") if primary else None
@@ -4902,7 +4913,7 @@ def finalize_action_plan(
         else:
             item["queue_role"] = "also_good" if fixed else "alt_if_lost"
             item["package_note"] = (
-                "No pujar hoy — interesante pero fuera del paquete de pujas"
+                "No pujar hoy — ya hay fichajes priorizados en la cola"
             )
         why_prev = (item.get("why") or "").strip()
         prefix = item["package_note"]
@@ -4923,7 +4934,6 @@ def finalize_action_plan(
             "alt_unfunded",
             "alt_no_slot",
             "also_good",
-            "do_not_stack",
         ):
             item["queue_role"] = "out_of_budget"
             note = "Fuera de caja — vigilar / vender antes"
@@ -4954,8 +4964,6 @@ def finalize_action_plan(
             item["_queue_rank"] = 740 + int(item.get("priority_score") or 0)
         elif role in ("alt_if_lost", "also_good"):
             item["_queue_rank"] = 700 + int(item.get("priority_score") or 0)
-        elif role == "do_not_stack":
-            item["_queue_rank"] = 550 + int(item.get("priority_score") or 0) // 2
         elif role == "out_of_budget":
             item["_queue_rank"] = 300 + int(item.get("priority_score") or 0) // 3
 
@@ -4980,18 +4988,16 @@ def finalize_action_plan(
     }
     max_pipeline_waits = 2
     max_alt_waits = 3
-    max_stack_waits = 2
     max_oob_waits = 2
     pipeline_waits = 0
     alt_waits = 0
-    stack_waits = 0
     oob_waits = 0
     max_total = sum(limits.values())
     used_ids: set[str] = set()
     sim_balance = float(balance) if balance is not None else None
 
     def _append(item: dict[str, Any]) -> bool:
-        nonlocal sim_balance, pipeline_waits, alt_waits, stack_waits, oob_waits
+        nonlocal sim_balance, pipeline_waits, alt_waits, oob_waits
         a = item.get("action") or ""
         pid = str(item.get("player_id") or "")
         role = item.get("queue_role")
@@ -5020,10 +5026,6 @@ def finalize_action_plan(
                 if alt_waits >= max_alt_waits:
                     return False
                 alt_waits += 1
-            elif role == "do_not_stack":
-                if stack_waits >= max_stack_waits:
-                    return False
-                stack_waits += 1
             elif role == "out_of_budget":
                 if oob_waits >= max_oob_waits:
                     return False
@@ -5062,7 +5064,6 @@ def finalize_action_plan(
             "alt_unfunded",
             "alt_no_slot",
             "also_good",
-            "do_not_stack",
         ):
             _append(item)
     for item in plan:
@@ -5075,7 +5076,6 @@ def finalize_action_plan(
             "alt_unfunded",
             "alt_no_slot",
             "also_good",
-            "do_not_stack",
             "out_of_budget",
         ):
             continue
@@ -5095,27 +5095,18 @@ def finalize_action_plan(
             )
     residual_after = max(0.0, bal - spend)
 
+    n_buys = n_intents_funded + n_hedges_funded
     if primary:
-        if primary.get("is_key_market") or primary.get("is_primary_target"):
-            note = (
-                "Prioridad: jugador clave en mercado. Luego carencias con buen puntaje/trueque."
-                if fixed
-                else (
-                    f"Paquete {combo}: hedges same-day con puja reducida; "
-                    f"si ganas intent+hedge, vende el peor al ciclo siguiente. "
-                    f"Cupo {squad_n}/{max_squad} ({free_slots} libres)."
-                )
+        hedge_bit = ""
+        if n_hedges_funded:
+            hedge_bit = (
+                " Hedges same-day con puja reducida; "
+                "si ganas ambos de una línea, vende el peor al ciclo siguiente."
             )
-        else:
-            note = (
-                "Sin clave hoy: prioriza carencias con más puntaje y valor de trueque."
-                if fixed
-                else (
-                    f"Paquete {combo}: hedges con puja reducida; "
-                    f"si ganas ambos de una línea, vende el peor al ciclo siguiente. "
-                    f"Cupo {squad_n}/{max_squad} ({free_slots} libres)."
-                )
-            )
+        note = (
+            f"{n_buys} fichaje(s) · cupo {squad_n}/{max_squad} ({free_slots} libres)."
+            f"{hedge_bit}"
+        )
     elif free_slots <= 0:
         note = (
             f"Plantilla llena ({squad_n}/{max_squad}) — vende/rescinde antes de fichar."
@@ -5149,7 +5140,9 @@ def finalize_action_plan(
     daily_package: dict[str, Any] = {
         "package_id": package_id,
         "market_mode": "fixed" if fixed else "auction",
-        "combo": combo,
+        "n_buys": n_buys,
+        "n_intents": n_intents_funded,
+        "n_hedges": n_hedges_funded,
         "lines": line_meta,
         "squad_size": squad_n,
         "max_squad": max_squad,
@@ -5199,7 +5192,7 @@ def finalize_action_plan(
                 or str(primary.get("player_id") or "") in primary_ids
             )
         ),
-        "policy": "multi_line_risk_hedge",
+        "policy": "fill_cash_slots",
     }
 
     return capped, daily_package

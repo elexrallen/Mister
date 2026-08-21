@@ -476,6 +476,8 @@ def test_upgrade_elite_worth_buy_when_residual_ok() -> None:
         "lineup_prob": 0.95,
         "production_score": 70,
         "is_top_ff": True,
+        "ff_apps": 20,
+        "ff_mister_avg": 7.2,
     }
     cov = assess_market_coverage(cand, diag, squad=squad)
     assert cov["is_upgrade"] is True, cov

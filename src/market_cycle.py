@@ -361,14 +361,10 @@ def adjust_funding_for_bootstrap(
 def bootstrap_buy_cap(
     *,
     free_slots: int,
-    bootstrap: dict[str, Any] | None,
-    fixed: bool,
+    bootstrap: dict[str, Any] | None = None,
+    fixed: bool = False,
 ) -> int:
-    """Tope de buy_now: más holgado en bootstrap con muchas plazas libres."""
-    b = bootstrap or {}
-    if not b.get("active"):
-        return min(2 if fixed else 4, free_slots if free_slots > 0 else 0)
-    slots_short = int(b.get("slots_short") or 0)
-    cap = max(slots_short, 2 if fixed else 3)
-    cap = min(cap, 6 if fixed else 8)
-    return min(cap, free_slots if free_slots > 0 else 0)
+    """Tope de buy_now = plazas libres, con un techo de cola de 8."""
+    del bootstrap, fixed
+    slots = max(0, int(free_slots or 0))
+    return min(8, slots)

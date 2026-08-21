@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+from competitive_actions import sell_cash_phrase, sell_settlement_fields  # noqa: E402
 from market_cycle import (  # noqa: E402
     adjust_funding_for_bootstrap,
     bootstrap_buy_cap,
@@ -102,7 +103,19 @@ def test_bootstrap_buy_cap() -> None:
     )
     _assert(cap >= 5, "bootstrap amplía buy_cap en fixed")
     cap_norm = bootstrap_buy_cap(free_slots=16, bootstrap=None, fixed=True)
-    _assert(cap_norm == 2, "sin bootstrap tope fixed=2")
+    _assert(cap_norm == 8, f"sin bootstrap tope=min(slots,8) got {cap_norm}")
+    cap_tight = bootstrap_buy_cap(free_slots=3, bootstrap=None, fixed=False)
+    _assert(cap_tight == 3, cap_tight)
+
+
+def test_sell_copy_uses_league_cycle() -> None:
+    phrase = sell_cash_phrase(1_000_000, cycle_hours=8)
+    _assert("16h" in phrase, phrase)
+    _assert("48h" not in phrase, phrase)
+    fields = sell_settlement_fields(1_000_000, cycle_hours=8)
+    _assert(float(fields["cash_lag_hours"]) == 16.0, fields)
+    deferred = sell_cash_phrase(1_000_000, deferred=True, cycle_hours=8)
+    _assert("16h" in deferred, deferred)
 
 
 if __name__ == "__main__":
@@ -111,4 +124,5 @@ if __name__ == "__main__":
     test_bootstrap_inactive_full_xi()
     test_adjust_funding_lowers_reserve()
     test_bootstrap_buy_cap()
+    test_sell_copy_uses_league_cycle()
     print("test_market_cycle: OK")

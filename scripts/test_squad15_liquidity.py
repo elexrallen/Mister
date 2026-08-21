@@ -18,7 +18,7 @@ from competitive_actions import (  # noqa: E402
 )
 from daily_playbook import build_daily_playbook  # noqa: E402
 from league_rules import normalize_rules, resolve_economy  # noqa: E402
-from target_board import funding_plan_from_board  # noqa: E402
+from target_board import _select_daily_primary_targets, funding_plan_from_board  # noqa: E402
 
 
 def _assert(cond: bool, msg: str) -> None:
@@ -55,7 +55,14 @@ def test_package_reserve_is_zero() -> None:
 def test_funding_plan_does_not_reserve_cash() -> None:
     board = {
         "primary_targets": [
-            {"player_id": "u1", "name": "Crack", "position": "FW", "price": 20_000_000, "ep_score": 90},
+            {
+                "player_id": "u1",
+                "name": "Crack",
+                "position": "FW",
+                "price": 20_000_000,
+                "ep_score": 90,
+                "on_daily_market": False,
+            },
         ],
         "cash_reserved": 0,
         "moves": {"buy": []},
@@ -63,8 +70,54 @@ def test_funding_plan_does_not_reserve_cash() -> None:
     }
     funding = funding_plan_from_board(board, balance=12_000_000)
     _assert(float(funding["cash_reserved"]) == 0.0, "cash_reserved debe ser 0")
-    _assert(float(funding["funding_target"]) >= 20_000_000, "funding_target informa el coste del 15")
+    _assert(float(funding["funding_target"]) == 0.0, "off-market no entra en funding_target")
     _assert("listados" in str(funding.get("liquidity_note") or "").lower() or "15" in str(funding.get("liquidity_note") or ""), "nota de liquidez")
+
+
+def test_funding_only_on_daily_market() -> None:
+    board = {
+        "primary_targets": [
+            {
+                "player_id": "u1",
+                "name": "Crack",
+                "position": "FW",
+                "price": 20_000_000,
+                "ep_score": 90,
+                "on_daily_market": False,
+            },
+            {
+                "player_id": "d1",
+                "name": "Hoy",
+                "position": "MF",
+                "price": 500_000,
+                "ep_score": 50,
+                "on_daily_market": True,
+            },
+        ],
+        "moves": {"buy": []},
+        "balance": 12_000_000,
+    }
+    funding = funding_plan_from_board(board, balance=12_000_000)
+    names = {t.get("name") for t in funding.get("primary_targets") or []}
+    _assert(names == {"Hoy"}, names)
+    _assert(float(funding["funding_target"]) == 500_000, funding)
+
+
+def test_three_daily_primaries_no_cap_of_two() -> None:
+    rows = [
+        {
+            "player_id": f"p{i}",
+            "name": f"N{i}",
+            "position": pos,
+            "price": 100_000,
+            "ep_score": 40 + i,
+            "on_daily_market": True,
+            "role": "starter",
+        }
+        for i, pos in enumerate(["GK", "DF", "MF"])
+    ]
+    selected = _select_daily_primary_targets(rows, balance=1_000_000)
+    _assert(len(selected) == 3, selected)
 
 
 def test_swap_covers() -> None:
@@ -95,6 +148,9 @@ def test_liquidity_lists_slot_and_scout_off_market() -> None:
                 "position": "DF",
                 "price": 7_000_000,
                 "ep_score": 80,
+                "production_score": 80,
+                "ff_apps": 20,
+                "ff_mister_avg": 7.5,
                 "on_daily_market": False,
             }
         ],
@@ -130,6 +186,9 @@ def test_unaffordable_without_breaking_xi_is_dropped() -> None:
                     "position": "DF",
                     "price": 40_000_000,
                     "ep_score": 99,
+                    "production_score": 90,
+                    "ff_apps": 25,
+                    "ff_mister_avg": 8.0,
                     "on_daily_market": False,
                 }
             ],
@@ -310,9 +369,74 @@ def test_playbook_spend_15_copy() -> None:
     _assert("listados" in sells["detail"].lower(), sells)
 
 
+def test_playbook_visperas_follows_buy_now() -> None:
+    pb = build_daily_playbook(
+        hours_to_jornada=12.0,
+        competition_phase="active",
+        action_plan=[
+            {"action": "buy_now", "name": "Perez", "player_id": "1"},
+        ],
+        recommended_xi={"summary": {"complete": True, "xi_count": 11, "xi_target": 11}},
+        diagnostico={"bootstrap_xi": {"active": False}},
+        me={"balance": 5_000_000},
+        league_rules={},
+    )
+    ids = {c["id"] for c in pb["checklist"]}
+    _assert(pb.get("phase") == "visperas", pb.get("phase"))
+    _assert("no_fichar" not in ids, ids)
+    _assert("fichar_vispera" in ids, ids)
+    hit = next(c for c in pb["checklist"] if c["id"] == "fichar_vispera")
+    _assert("Perez" in hit["detail"], hit)
+
+
+def test_playbook_visperas_without_buys() -> None:
+    pb = build_daily_playbook(
+        hours_to_jornada=12.0,
+        competition_phase="active",
+        action_plan=[],
+        recommended_xi={"summary": {"complete": True, "xi_count": 11, "xi_target": 11}},
+        diagnostico={"bootstrap_xi": {"active": False}},
+        me={"balance": 5_000_000},
+        league_rules={},
+    )
+    ids = {c["id"] for c in pb["checklist"]}
+    _assert("no_fichar" in ids, ids)
+    _assert("fichar_vispera" not in ids, ids)
+
+
+def test_no_fund_target_for_off_market_primary() -> None:
+    squad = [_p(f"s{i}", "DF", 2_000_000, name=f"S{i}", ep=30, lineup=40) for i in range(4)]
+    squad.append(_p("bench", "MF", 3_000_000, name="Banco", ep=18, lineup=20))
+    sells = build_sell_opportunities(
+        {"balance": 500_000, "rank": 8, "squad": squad},
+        {"by_position": {}, "alerts": []},
+        [],
+        diagnostico_plantilla={"financiero": {}},
+        funding_info={
+            "primary_targets": [
+                {
+                    "player_id": "off",
+                    "name": "Fuera",
+                    "price": 8_000_000,
+                    "on_daily_market": False,
+                }
+            ],
+            "funding_target": 8_000_000,
+            "funding_shortfall": 7_500_000,
+            "cash_tight": True,
+            "positions": ["FW"],
+        },
+        recommended_xi={"xi": [{"player_id": p["id"]} for p in squad[:4]]},
+    )
+    fund = [s for s in sells if s.get("sell_reason") == "fund_target"]
+    _assert(not fund, fund)
+
+
 if __name__ == "__main__":
     test_package_reserve_is_zero()
     test_funding_plan_does_not_reserve_cash()
+    test_funding_only_on_daily_market()
+    test_three_daily_primaries_no_cap_of_two()
     test_swap_covers()
     test_pick_slot_upgrades_from_weakest_to_cheapest_cover()
     test_liquidity_lists_slot_and_scout_off_market()
@@ -324,4 +448,7 @@ if __name__ == "__main__":
     test_patio_rewards_post_gw_not_today_cash()
     test_prizes_euros_and_salaries_subtract()
     test_playbook_spend_15_copy()
+    test_playbook_visperas_follows_buy_now()
+    test_playbook_visperas_without_buys()
+    test_no_fund_target_for_off_market_primary()
     print("test_squad15_liquidity: OK")

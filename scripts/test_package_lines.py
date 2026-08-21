@@ -1,4 +1,4 @@
-"""Validación del paquete multi-línea con hedges (auction)."""
+"""Cola greedy: caja+plazas, hedges solo en subasta si hay riesgo."""
 
 from __future__ import annotations
 
@@ -82,10 +82,11 @@ def test_2_plus_2_wide_cash() -> None:
     capped, pkg = _finalize(plan, balance=20_000_000, market_mode="auction")
     buys = [a for a in capped if a.get("action") == "buy_now"]
     roles = {a["queue_role"] for a in buys}
-    _assert(pkg.get("combo") == "2+2", f"expected 2+2 got {pkg.get('combo')}")
+    _assert("combo" not in pkg or pkg.get("combo") is None, "combo must go")
     _assert(len(buys) == 4, f"expected 4 buy_now got {len(buys)}")
     _assert("hedge" in roles, f"missing hedge in {roles}")
-    _assert(pkg.get("policy") == "multi_line_risk_hedge", "bad policy")
+    _assert(pkg.get("policy") == "fill_cash_slots", "bad policy")
+    _assert(pkg.get("n_buys") == 4, pkg)
     _assert(len(pkg.get("lines") or []) == 2, "expected 2 lines")
     _assert(all(L.get("hedge_status") == "bid" for L in pkg["lines"]), "hedges should be bid")
 
@@ -102,7 +103,7 @@ def test_2_plus_0_no_cash_for_hedges() -> None:
     buys = [a for a in capped if a.get("action") == "buy_now"]
     hedges = [a for a in buys if a.get("queue_role") == "hedge"]
     unfunded = [a for a in capped if a.get("queue_role") == "alt_unfunded"]
-    _assert(pkg.get("combo") == "2+0", f"expected 2+0 got {pkg.get('combo')}")
+    _assert(pkg.get("n_hedges") == 0, pkg)
     _assert(len(hedges) == 0, "no hedge bids")
     _assert(len(unfunded) >= 1, "expected alt_unfunded copy")
     _assert(
@@ -119,7 +120,7 @@ def test_1_plus_1_high_risk() -> None:
     capped, pkg = _finalize(plan, balance=12_000_000, market_mode="auction")
     buys = [a for a in capped if a.get("action") == "buy_now"]
     roles = _roles(buys)
-    _assert(pkg.get("combo") == "1+1", f"expected 1+1 got {pkg.get('combo')}")
+    _assert(pkg.get("n_intents") == 1 and pkg.get("n_hedges") == 1, pkg)
     _assert(roles.get("DF_A") in ("primary", "primary_target"), roles)
     _assert(roles.get("DF_B") == "hedge", roles)
 
@@ -133,7 +134,7 @@ def test_risk_low_no_hedge() -> None:
     capped, pkg = _finalize(plan, balance=20_000_000, market_mode="auction")
     buys = [a for a in capped if a.get("action") == "buy_now"]
     hedges = [a for a in buys if a.get("queue_role") == "hedge"]
-    _assert(pkg.get("combo") == "2+0", f"expected 2+0 got {pkg.get('combo')}")
+    _assert(pkg.get("n_hedges") == 0, pkg)
     _assert(len(hedges) == 0, "low risk should not hedge")
     alts = [a for a in capped if a.get("queue_role") == "alt_if_lost"]
     _assert(len(alts) >= 1, "same-pos low risk stays as alt_if_lost")
@@ -149,14 +150,14 @@ def test_fixed_no_hedge() -> None:
     buys = [a for a in capped if a.get("action") == "buy_now"]
     hedges = [a for a in buys if a.get("queue_role") == "hedge"]
     _assert(len(hedges) == 0, "fixed must not hedge")
-    _assert(len(buys) <= 2, f"fixed max 2 buy_now got {len(buys)}")
+    _assert(len(buys) == 2, f"fixed DF+FW got {len(buys)} {[b.get('name') for b in buys]}")
     also = [a for a in capped if a.get("queue_role") == "also_good"]
     _assert(len(also) >= 1, "fixed same-pos should be also_good")
-    _assert(pkg.get("combo", "").startswith("2+") or pkg.get("combo", "").startswith("1+"), pkg)
+    _assert(pkg.get("n_hedges") == 0, pkg)
 
 
-def test_prefer_1_plus_1_over_weak_second() -> None:
-    """Clave high-risk: 1+1 gana a un 2º intent débil si no cabe 2+1."""
+def test_second_position_fits_before_hedge() -> None:
+    """Si otra posición cabe, se ficha; el hedge no come esa caja."""
     plan = [
         _buy(
             "1",
@@ -169,7 +170,6 @@ def test_prefer_1_plus_1_over_weak_second() -> None:
             priority=99,
         ),
         _buy("2", "DF_H", "DF", 3_000_000, wait_risk="medium", priority=70),
-        # 2º intent débil (sin carencia real) — no debería entrar si impide el hedge
         _buy(
             "3",
             "FW_WEAK",
@@ -181,13 +181,13 @@ def test_prefer_1_plus_1_over_weak_second() -> None:
             priority=40,
         ),
     ]
-    # 7+3+2.4 = 12.4 > 11 → no cabe 2+1 a puja llena; con hedge 85% (2.55M):
-    # 7+2.55=9.55 cabe 1+1; 7+2.4+2.55=11.95 > 11 → no 2+1
+    # 7 + 2.4 = 9.4 cabe; hedge 2.55 ya no (11.95 > 11)
     capped, pkg = _finalize(plan, balance=11_000_000, market_mode="auction")
     names = {a["name"] for a in capped if a.get("action") == "buy_now"}
-    _assert(pkg.get("combo") == "1+1", f"expected 1+1 got {pkg.get('combo')} buys={names}")
-    _assert("DF_KEY" in names and "DF_H" in names, names)
-    _assert("FW_WEAK" not in names, names)
+    _assert("DF_KEY" in names and "FW_WEAK" in names, names)
+    _assert("DF_H" not in names, names)
+    _assert(pkg.get("n_intents") == 2, pkg)
+    _assert(any(a.get("queue_role") == "alt_unfunded" for a in capped), capped)
 
 
 def test_hedge_reduced_bid_and_exit_note() -> None:
@@ -281,7 +281,7 @@ def test_squad_cap_blocks_hedge() -> None:
     )
     buys = [a for a in capped if a.get("action") == "buy_now"]
     no_slot = [a for a in capped if a.get("queue_role") == "alt_no_slot"]
-    _assert(pkg.get("combo") == "1+0", f"expected 1+0 got {pkg.get('combo')}")
+    _assert(pkg.get("n_intents") == 1 and pkg.get("n_hedges") == 0, pkg)
     _assert(pkg.get("free_slots") == 1, pkg)
     _assert(len(buys) == 1, buys)
     _assert(len(no_slot) >= 1, "expected alt_no_slot for hedge")
@@ -298,7 +298,7 @@ def test_squad_full_no_buys() -> None:
         plan, balance=20_000_000, market_mode="auction", squad_size=25, max_squad=25
     )
     buys = [a for a in capped if a.get("action") == "buy_now"]
-    _assert(pkg.get("combo") == "0+0", f"expected 0+0 got {pkg.get('combo')}")
+    _assert(pkg.get("n_buys") == 0, pkg)
     _assert(len(buys) == 0, buys)
     _assert(pkg.get("free_slots") == 0, pkg)
     _assert("llena" in (pkg.get("note") or "").lower() or "Cupo" in (pkg.get("note") or ""), pkg.get("note"))
@@ -340,6 +340,80 @@ def test_squad_full_prioritizes_sells() -> None:
     _assert(any("plaza" in (a.get("package_note") or "").lower() for a in free), free)
 
 
+def test_three_positions_all_funded() -> None:
+    plan = [
+        _buy("1", "GK_A", "GK", 400_000, fills_need=True, priority=50),
+        _buy("2", "DF_A", "DF", 500_000, fills_need=True, priority=60),
+        _buy("3", "MF_A", "MF", 300_000, fills_need=True, priority=55),
+    ]
+    capped, pkg = _finalize(plan, balance=2_000_000, market_mode="auction")
+    buys = [a for a in capped if a.get("action") == "buy_now"]
+    names = {a["name"] for a in buys}
+    _assert(len(buys) == 3, buys)
+    _assert(names == {"GK_A", "DF_A", "MF_A"}, names)
+    _assert(not any(a.get("queue_role") == "do_not_stack" for a in capped), capped)
+    _assert(float(pkg.get("spend_cap") or 0) <= 2_000_000, pkg)
+    _assert("combo" not in pkg, pkg)
+
+
+def test_two_fw_structural_both_full() -> None:
+    plan = [
+        _buy("1", "FW_A", "FW", 1_000_000, wait_risk="high", fills_structural=True, priority=90),
+        _buy("2", "FW_B", "FW", 800_000, wait_risk="medium", fills_structural=True, priority=80),
+    ]
+    capped, pkg = _finalize(plan, balance=5_000_000, market_mode="auction")
+    buys = [a for a in capped if a.get("action") == "buy_now"]
+    hedges = [a for a in buys if a.get("queue_role") == "hedge"]
+    _assert(len(buys) == 2, buys)
+    _assert(len(hedges) == 0, hedges)
+    _assert(pkg.get("n_intents") == 2, pkg)
+
+
+def test_tight_cash_does_not_overspend() -> None:
+    plan = [
+        _buy("1", "DF_A", "DF", 5_000_000, fills_structural=True, priority=90),
+        _buy("2", "MF_A", "MF", 4_000_000, fills_need=True, priority=80),
+        _buy("3", "FW_A", "FW", 3_000_000, fills_need=True, priority=70),
+    ]
+    capped, pkg = _finalize(plan, balance=6_500_000, market_mode="auction")
+    buys = [a for a in capped if a.get("action") == "buy_now"]
+    spend = sum(float(a.get("bid") or a.get("cost") or 0) for a in buys)
+    _assert(spend <= 6_500_000, spend)
+    _assert(float(pkg.get("spend_cap") or 0) <= 6_500_000, pkg)
+    _assert(len(buys) >= 1, buys)
+
+
+def test_buy_cap_eight_not_two() -> None:
+    plan = [
+        _buy("1", "GK1", "GK", 100_000, fills_structural=True, priority=90),
+        _buy("2", "DF1", "DF", 100_000, fills_structural=True, priority=89),
+        _buy("3", "MF1", "MF", 100_000, fills_structural=True, priority=88),
+        _buy("4", "FW1", "FW", 100_000, fills_structural=True, priority=87),
+        _buy("5", "DF2", "DF", 100_000, fills_structural=True, priority=86),
+        _buy("6", "MF2", "MF", 100_000, fills_structural=True, priority=85),
+        _buy("7", "FW2", "FW", 100_000, fills_structural=True, priority=84),
+        _buy("8", "GK2", "GK", 100_000, fills_structural=True, priority=83),
+        _buy("9", "DF3", "DF", 100_000, fills_structural=True, priority=82),
+        _buy("10", "MF3", "MF", 100_000, fills_structural=True, priority=81),
+    ]
+    capped, pkg = _finalize(
+        plan, balance=20_000_000, market_mode="fixed", squad_size=15, max_squad=25
+    )
+    buys = [a for a in capped if a.get("action") == "buy_now"]
+    _assert(len(buys) == 8, f"expected 8 got {len(buys)}")
+    _assert(pkg.get("n_buys") == 8, pkg)
+
+
+def test_no_do_not_stack_role() -> None:
+    plan = [
+        _buy("1", "DF_A", "DF", 200_000, fills_need=True, priority=80),
+        _buy("2", "MF_A", "MF", 150_000, fills_need=True, priority=70),
+        _buy("3", "FW_A", "FW", 180_000, fills_need=True, priority=60),
+    ]
+    capped, _pkg = _finalize(plan, balance=1_000_000, market_mode="auction")
+    _assert(not any(a.get("queue_role") == "do_not_stack" for a in capped), capped)
+
+
 def main() -> None:
     tests = [
         test_2_plus_2_wide_cash,
@@ -347,7 +421,7 @@ def main() -> None:
         test_1_plus_1_high_risk,
         test_risk_low_no_hedge,
         test_fixed_no_hedge,
-        test_prefer_1_plus_1_over_weak_second,
+        test_second_position_fits_before_hedge,
         test_hedge_reduced_bid_and_exit_note,
         test_hedge_never_below_min_bid,
         test_hedge_missing_floor_no_illegal_discount,
@@ -356,6 +430,11 @@ def main() -> None:
         test_squad_full_no_buys,
         test_premier_max_22,
         test_squad_full_prioritizes_sells,
+        test_three_positions_all_funded,
+        test_two_fw_structural_both_full,
+        test_tight_cash_does_not_overspend,
+        test_buy_cap_eight_not_two,
+        test_no_do_not_stack_role,
     ]
     failed = 0
     for t in tests:

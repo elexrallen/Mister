@@ -373,11 +373,20 @@ def build_daily_playbook(
         )
     elif phase in ("visperas", "dia_partido"):
         if buys:
+            names = ", ".join(str(a.get("name")) for a in buys[:3])
+            add(
+                "fichar_vispera",
+                f"{len(buys)} fichaje(s) en cola",
+                f"{names}. A estas horas se paga prima: ficha si cierra el 15 o tapa un "
+                "hueco del once, no sobrepujes por pánico.",
+                priority="Media",
+                related=[a.get("player_id") or a.get("id") for a in buys],
+            )
+        else:
             add(
                 "no_fichar",
                 "No fichar salvo urgencia",
-                f"{len(buys)} objetivo(s) siguen en cola, pero a estas horas se paga prima. "
-                "Solo si tapa un hueco del once.",
+                "La cola no pide compras. Cierra el once; no entres al mercado por pánico.",
                 priority="Baja",
             )
         add(
