@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-21T11:41:53.198684+00:00",
+  "generated_at": "2026-08-21T12:17:42.006290+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -37,8 +37,8 @@
         "MF": 5,
         "FW": 1
       },
-      "ep_sum_starters": 677.4,
-      "ep_sum": 771.7,
+      "ep_sum_starters": 677.8,
+      "ep_sum": 771.2,
       "cost_sum": 81483500.0,
       "starters": 11,
       "starters_target": 11,
@@ -53,8 +53,8 @@
         "MF": 5,
         "FW": 2
       },
-      "ep_sum_starters": 662.0,
-      "ep_sum": 756.3,
+      "ep_sum_starters": 662.4,
+      "ep_sum": 755.8,
       "cost_sum": 81197000.0,
       "starters": 11,
       "starters_target": 11,
@@ -69,8 +69,8 @@
         "MF": 4,
         "FW": 2
       },
-      "ep_sum_starters": 660.1,
-      "ep_sum": 754.4,
+      "ep_sum_starters": 660.5,
+      "ep_sum": 753.9,
       "cost_sum": 80728000.0,
       "starters": 11,
       "starters_target": 11,
@@ -85,8 +85,8 @@
         "MF": 3,
         "FW": 2
       },
-      "ep_sum_starters": 659.0,
-      "ep_sum": 753.3,
+      "ep_sum_starters": 659.1,
+      "ep_sum": 752.5,
       "cost_sum": 81402000.0,
       "starters": 11,
       "starters_target": 11,
@@ -117,8 +117,8 @@
         "MF": 3,
         "FW": 3
       },
-      "ep_sum_starters": 648.2,
-      "ep_sum": 742.5,
+      "ep_sum_starters": 648.3,
+      "ep_sum": 741.7,
       "cost_sum": 81523000.0,
       "starters": 11,
       "starters_target": 11,
@@ -136,7 +136,7 @@
         "FW": 2
       },
       "ep_sum_starters": 705.4,
-      "ep_sum": 780.3,
+      "ep_sum": 779.4,
       "cost_sum": 81548000.0,
       "starters": 11,
       "starters_target": 11,
@@ -151,8 +151,8 @@
         "MF": 4,
         "FW": 1
       },
-      "ep_sum_starters": 701.8,
-      "ep_sum": 796.1,
+      "ep_sum_starters": 702.2,
+      "ep_sum": 795.6,
       "cost_sum": 80963000.0,
       "starters": 11,
       "starters_target": 11,
@@ -167,8 +167,8 @@
         "MF": 4,
         "FW": 2
       },
-      "ep_sum_starters": 693.1,
-      "ep_sum": 786.4,
+      "ep_sum_starters": 693.5,
+      "ep_sum": 785.9,
       "cost_sum": 81515000.0,
       "starters": 11,
       "starters_target": 11,
@@ -183,9 +183,9 @@
         "MF": 5,
         "FW": 1
       },
-      "ep_sum_starters": 681.9,
-      "ep_sum": 792.6,
-      "cost_sum": 81177500.0,
+      "ep_sum_starters": 681.5,
+      "ep_sum": 804.0,
+      "cost_sum": 81187500.0,
       "starters": 11,
       "starters_target": 11,
       "complete": true
@@ -199,8 +199,8 @@
         "MF": 3,
         "FW": 3
       },
-      "ep_sum_starters": 679.2,
-      "ep_sum": 766.8,
+      "ep_sum_starters": 679.6,
+      "ep_sum": 767.2,
       "cost_sum": 81460500.0,
       "starters": 11,
       "starters_target": 11,
@@ -231,8 +231,8 @@
         "MF": 5,
         "FW": 2
       },
-      "ep_sum_starters": 663.0,
-      "ep_sum": 756.3,
+      "ep_sum_starters": 663.4,
+      "ep_sum": 755.8,
       "cost_sum": 81197000.0,
       "starters": 11,
       "starters_target": 11,
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 67 · 1,999,500 € · buy · starter",
-      "added_at": "2026-08-21T11:41:53.131932+00:00"
+      "added_at": "2026-08-21T12:17:41.897958+00:00"
     },
     {
       "slot": "DF3",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 65 · 1,409,000 € · buy · starter · Δ -4%",
-      "added_at": "2026-08-21T11:41:53.131048+00:00"
+      "added_at": "2026-08-21T11:41:52.887570+00:00"
     },
     {
       "slot": "DF4",
@@ -806,7 +806,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 35 · 1,437,000 € · buy · bench · Δ 12%",
-      "added_at": "2026-08-21T11:41:53.164325+00:00"
+      "added_at": "2026-08-21T12:17:41.950371+00:00"
     },
     {
       "slot": "MF1",
@@ -888,12 +888,12 @@
       "name": "Hugo Álvarez",
       "team": "Celta",
       "team_id": "5",
-      "ep_score": 30.2,
+      "ep_score": 29.3,
       "price": 1394000.0,
       "status": "buy",
       "delta_5d": -0.0057,
       "value_note": "stable",
-      "value_ratio": 21.66,
+      "value_ratio": 21.02,
       "lineup_prob": 50.0,
       "ff_mister_points": 110.0,
       "ff_mister_avg": 3.93,
@@ -901,8 +901,8 @@
       "on_daily_market": false,
       "owned": false,
       "gk_tandem": false,
-      "why": "EP 30 · 1,394,000 € · buy · bench · Δ -1%",
-      "added_at": "2026-08-21T11:41:53.164384+00:00"
+      "why": "EP 29 · 1,394,000 € · buy · bench · Δ -1%",
+      "added_at": "2026-08-21T12:17:41.950484+00:00"
     },
     {
       "slot": "FW1",
@@ -950,7 +950,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 80 · 19,990,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-21T11:41:53.134293+00:00"
+      "added_at": "2026-08-21T12:17:41.901787+00:00"
     },
     {
       "slot": "FW3",
@@ -1408,32 +1408,32 @@
         "cash_lag_hours": 48.0
       },
       {
-        "player_id": "65090",
-        "name": "F. Ugrinic",
-        "position": "MF",
-        "ep_score": 40.2,
-        "price": 1193000.0,
-        "delta_5d": 0.0925,
+        "player_id": "59506",
+        "name": "J. Rodríguez",
+        "position": "DF",
+        "ep_score": 40.6,
+        "price": 2360000.0,
+        "delta_5d": 0.0951,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 40 · lista a ~1,193,000 € (VM); caja usable en ~48h · Δ 9%",
-        "list_at": 1193000.0,
-        "expected_proceeds": 1193000.0,
+        "why": "Fuera del ideal · EP 41 · lista a ~2,360,000 € (VM); caja usable en ~48h · Δ 10%",
+        "list_at": 2360000.0,
+        "expected_proceeds": 2360000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
         "cash_lag_hours": 48.0
       },
       {
-        "player_id": "59506",
-        "name": "J. Rodríguez",
-        "position": "DF",
-        "ep_score": 40.5,
-        "price": 2360000.0,
-        "delta_5d": 0.0951,
+        "player_id": "65090",
+        "name": "F. Ugrinic",
+        "position": "MF",
+        "ep_score": 40.6,
+        "price": 1193000.0,
+        "delta_5d": 0.0925,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 40 · lista a ~2,360,000 € (VM); caja usable en ~48h · Δ 10%",
-        "list_at": 2360000.0,
-        "expected_proceeds": 2360000.0,
+        "why": "Fuera del ideal · EP 41 · lista a ~1,193,000 € (VM); caja usable en ~48h · Δ 9%",
+        "list_at": 1193000.0,
+        "expected_proceeds": 1193000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
@@ -1552,7 +1552,7 @@
     "daily_primary_count": 0
   },
   "totals_aspirational": {
-    "ep_sum": 780.3,
+    "ep_sum": 779.4,
     "ep_sum_starters": 705.4,
     "cost_sum": 81548000.0,
     "net_buys": 54093000.0,
@@ -1591,7 +1591,7 @@
       "name": "Hugo Álvarez",
       "position": "MF",
       "price": 1394000.0,
-      "ep_score": 30.2,
+      "ep_score": 29.3,
       "role": "bench",
       "status": "buy",
       "need": "perfect_squad_aspirational"
@@ -1608,33 +1608,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "MF5",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "65674",
-      "name": "Miguel Román",
-      "team": "Celta",
-      "team_id": "5",
-      "ep_score": 41.2,
-      "price": 1404000.0,
-      "status": "dropped",
-      "delta_5d": 0.1099,
-      "value_note": "rising",
-      "value_ratio": 29.34,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 76.0,
-      "ff_mister_avg": 4.0,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 41 · 1,404,000 € · buy · starter · Δ 11%",
-      "added_at": "2026-08-18T08:08:17.910538+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 2500000.0
@@ -1666,7 +1640,7 @@
     "incomplete": false,
     "keep": 3,
     "buy": 12,
-    "ep_sum": 780.3,
+    "ep_sum": 779.4,
     "ep_sum_starters": 705.4,
     "mode": "aspirational",
     "formation": "5-3-2",

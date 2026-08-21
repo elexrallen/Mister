@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-21T11:44:51.525015+00:00",
+  "generated_at": "2026-08-21T12:20:06.792995+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -239,17 +239,17 @@
       "complete": false
     }
   ],
-  "balance": 4098985.0,
-  "squad_value": 45150000.0,
+  "balance": 4315285.0,
+  "squad_value": 44944000.0,
   "wealth": {
-    "balance": 4098985.0,
-    "squad_value": 45150000.0,
-    "total": 49248985.0,
+    "balance": 4315285.0,
+    "squad_value": 44944000.0,
+    "total": 49259285.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 49248985.0
+    "budget_cap": 49259285.0
   },
   "budget_operable": {
-    "budget_cap": 49248985.0,
+    "budget_cap": 49259285.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
   "ideal_buy_cost": 40481500.0,
@@ -1243,7 +1243,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 4098985.0,
+  "residual_after_reserve": 4315285.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],

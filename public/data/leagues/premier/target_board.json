@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-21T11:39:33.752308+00:00",
+  "generated_at": "2026-08-21T12:15:39.130483+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -614,7 +614,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 72 · 7,328,000 € · keep · starter · Δ -1%",
-      "added_at": "2026-08-21T11:39:33.745076+00:00"
+      "added_at": "2026-08-21T12:15:39.119346+00:00"
     },
     {
       "slot": "DF2",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 41 · 5,386,000 € · buy · bench · Δ 3%",
-      "added_at": "2026-08-21T11:39:33.751369+00:00"
+      "added_at": "2026-08-21T11:39:33.654390+00:00"
     },
     {
       "slot": "MF1",
@@ -758,7 +758,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 42 · 10,601,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-21T11:39:33.746806+00:00"
+      "added_at": "2026-08-21T12:15:39.122009+00:00"
     },
     {
       "slot": "MF2",
@@ -854,7 +854,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 40 · 1,952,000 € · keep · bench · Δ 15%",
-      "added_at": "2026-08-21T11:39:33.751161+00:00"
+      "added_at": "2026-08-21T12:15:39.128770+00:00"
     },
     {
       "slot": "FW1",
@@ -878,7 +878,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 2,364,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-21T11:39:33.751177+00:00"
+      "added_at": "2026-08-21T12:15:39.128796+00:00"
     }
   ],
   "moves": {
@@ -1388,33 +1388,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF3",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "59761",
-      "name": "Ferdi Kadıoğlu",
-      "team": "Brighton",
-      "team_id": "178",
-      "ep_score": 40.3,
-      "price": 5055000.0,
-      "status": "dropped",
-      "delta_5d": -0.0202,
-      "value_note": "stable",
-      "value_ratio": 7.97,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 221.0,
-      "ff_mister_avg": 5.97,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 40 · 5,055,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-20T11:31:19.036702+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 2499000.0
