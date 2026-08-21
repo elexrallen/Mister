@@ -2242,6 +2242,7 @@ def build_action_plan(
         funding_info=funding,
         recommended_xi=recommended_xi,
         league_economy=(rules.get("economy") if isinstance(rules.get("economy"), dict) else None),
+        market_mode=market_mode,
     )
     plan.extend(sells)
     promote_funded_swaps(
@@ -3241,8 +3242,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     funding_info["cash_lag_hours"] = cash_lag_h
     if market_mode == "fixed":
         funding_info["liquidity_note"] = (
-            "Mercado LFM: fichajes al precio listado "
-            f"(ciclo ~{cycle_h:.0f}h). Gasta en el 15; liquidez = listados, no reserva."
+            "Precio fijo: ficha al VM y vende al instante solo si hay recambio "
+            "hoy en el mercado. No vendas para dejar caja: si el VM sube, mañana vale más."
         )
     funding_info = adjust_funding_for_bootstrap(
         funding_info,
@@ -3565,7 +3566,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
             "liquidity_note": funding_info.get("liquidity_note")
             or (
-                "Gasta en el 15 ahora. Liquidez = jugadores listados, no reserva de caja."
+                "Precio fijo: ficha al VM y vende al instante solo si hay recambio hoy."
+                if market_mode == "fixed"
+                else "Gasta en el 15 ahora. Liquidez = jugadores listados, no reserva de caja."
             ),
             "economy": (league_rules.get("economy") if isinstance(league_rules.get("economy"), dict) else None),
             "expected_gw_cash": (

@@ -14,6 +14,7 @@ from competitive_actions import (  # noqa: E402
     pick_funding_slot,
     promote_funded_swaps,
     resolve_liquidity_slots,
+    sell_cash_phrase,
     swap_covers,
 )
 from daily_playbook import build_daily_playbook  # noqa: E402
@@ -517,6 +518,157 @@ def test_no_fund_target_for_unaffordable_on_market() -> None:
     _assert(not fund, fund)
 
 
+def _upgrade_df_on_market() -> dict:
+    return {
+        "id": "tgt",
+        "name": "UpgradeDF",
+        "position": "DF",
+        "price": 7_000_000,
+        "ep_score": 80,
+        "production_score": 80,
+        "ff_apps": 20,
+        "ff_mister_avg": 7.5,
+        "on_daily_market": True,
+        "seller": "market",
+        "is_upgrade": True,
+        "fills_need": True,
+        "fills_structural": True,
+    }
+
+
+def test_fixed_no_liquidity_for_off_market_crack() -> None:
+    xi = [_p(f"xi{i}", "DF", 6_000_000, name=f"Tit{i}", ep=50, lineup=80) for i in range(4)]
+    weak = _p("bench1", "DF", 8_000_000, name="Banquillo", ep=22, lineup=30)
+    liq = resolve_liquidity_slots(
+        squad=xi + [weak],
+        recommended_xi={"xi": [{"player_id": p["id"]} for p in xi]},
+        market_opportunities=[],
+        target_board={
+            "primary_targets": [
+                {
+                    "player_id": "tgt",
+                    "name": "UpgradeDF",
+                    "position": "DF",
+                    "price": 7_000_000,
+                    "ep_score": 80,
+                    "production_score": 80,
+                    "ff_apps": 20,
+                    "ff_mister_avg": 7.5,
+                    "on_daily_market": False,
+                }
+            ],
+            "moves": {"buy": []},
+        },
+        balance=1_000_000,
+        sale_limit=5,
+        market_mode="fixed",
+    )
+    _assert("bench1" not in liq["slot_ids"], f"fixed no lista por chase off-market: {liq['slot_ids']}")
+    funded = [p for p in liq["profiles"] if p.get("player_id") == "tgt"]
+    _assert(not funded, funded)
+    avoided = [p for p in liq["avoided"] if p.get("player_id") == "tgt"]
+    _assert(avoided and avoided[0].get("avoid_reason") == "off_market_fixed", avoided)
+
+
+def test_fixed_on_market_upgrade_lists_slot_instant_copy() -> None:
+    xi = [_p(f"xi{i}", "DF", 6_000_000, name=f"Tit{i}", ep=50, lineup=80) for i in range(4)]
+    weak = _p("bench1", "DF", 8_000_000, name="Banquillo", ep=22, lineup=30)
+    opp = _upgrade_df_on_market()
+    rec_xi = {"xi": [{"player_id": p["id"]} for p in xi]}
+    liq = resolve_liquidity_slots(
+        squad=xi + [weak],
+        recommended_xi=rec_xi,
+        market_opportunities=[opp],
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        balance=1_000_000,
+        sale_limit=5,
+        market_mode="fixed",
+    )
+    _assert("bench1" in liq["slot_ids"], f"debe listar el slot del swap: {liq['slot_ids']}")
+    sells = build_sell_opportunities(
+        {"squad": xi + [weak], "balance": 1_000_000, "rank": 8},
+        {"alerts": [], "by_position": {}},
+        [],
+        market_opportunities=[opp],
+        recommended_xi=rec_xi,
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        market_mode="fixed",
+        league_economy={"sale_limit": 5},
+    )
+    listed = [s for s in sells if s.get("sell_reason") == "liquidity_slot"]
+    _assert(listed, sells)
+    why = str(listed[0].get("why") or "").lower()
+    _assert("puja" not in why and "ciclo" not in why, why)
+    _assert("ficha" in why or "instante" in why, why)
+    _assert(listed[0].get("cash_lag_hours") == 0.0, listed[0])
+    _assert("cpu" not in why, why)
+
+
+def test_fixed_rising_without_upgrade_not_listed() -> None:
+    xi = [_p(f"xi{i}", "DF", 6_000_000, name=f"Tit{i}", ep=50, lineup=80) for i in range(4)]
+    weak = _p("bench1", "DF", 8_000_000, name="Banquillo", ep=22, lineup=30)
+    weak["trend"] = "up"
+    weak["delta_5d"] = 0.08
+    rec_xi = {"xi": [{"player_id": p["id"]} for p in xi]}
+    kwargs = dict(
+        squad=xi + [weak],
+        recommended_xi=rec_xi,
+        market_opportunities=[],
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        balance=5_000_000,
+        sale_limit=5,
+    )
+    liq_fixed = resolve_liquidity_slots(**kwargs, market_mode="fixed")
+    _assert("bench1" not in liq_fixed["slot_ids"], liq_fixed["slot_ids"])
+    liq_auc = resolve_liquidity_slots(**kwargs, market_mode="auction")
+    _assert("bench1" in liq_auc["slot_ids"], "subasta sigue listando débiles")
+    sells = build_sell_opportunities(
+        {"squad": xi + [weak], "balance": 5_000_000, "rank": 8},
+        {"alerts": [], "by_position": {}},
+        [],
+        recommended_xi=rec_xi,
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        market_mode="fixed",
+        league_economy={"sale_limit": 5},
+    )
+    liq_sells = [s for s in sells if s.get("sell_reason") == "liquidity_slot"]
+    _assert(not liq_sells, liq_sells)
+
+
+def test_fixed_cash_lag_zero() -> None:
+    from market_cycle import derive_cash_lag_hours
+
+    _assert(derive_cash_lag_hours(8.0, {"market_mode": "fixed"}) == 0.0, "fixed lag 0")
+    _assert(derive_cash_lag_hours(8.0, {"direct_transfer": True}) == 0.0, "direct_transfer lag 0")
+    phrase = sell_cash_phrase(1_000_000, instant=True)
+    _assert("instante" in phrase, phrase)
+    _assert("16h" not in phrase and "48h" not in phrase, phrase)
+
+
+def test_playbook_fixed_no_cpu_copy() -> None:
+    pb = build_daily_playbook(
+        hours_to_jornada=80.0,
+        competition_phase="active",
+        action_plan=[
+            {"action": "buy_now", "name": "Fichaje", "player_id": "1"},
+            {"action": "sell", "name": "Listado", "player_id": "2", "sell_reason": "liquidity_slot"},
+        ],
+        recommended_xi={"summary": {"complete": True, "xi_count": 11, "xi_target": 11}},
+        diagnostico={"bootstrap_xi": {"active": False}},
+        me={"balance": 10_000_000},
+        league_rules={"market_mode": "fixed"},
+    )
+    gastar = next(c for c in pb["checklist"] if c["id"] == "gastar_15")
+    detail = gastar["detail"].lower()
+    _assert("cpu" not in detail and "pujar" not in detail, gastar)
+    _assert("upgrade" in detail or "vm" in detail or "instante" in detail, gastar)
+    sells = next(c for c in pb["checklist"] if c["id"] == "listar_ventas")
+    sdet = sells["detail"].lower()
+    _assert("cpu" not in sdet and "pujar" not in sdet, sells)
+    _assert("ciclo" not in sdet, sells)
+    _assert("recambio" in sdet or "mercado" in sdet, sells)
+
+
 if __name__ == "__main__":
     test_package_reserve_is_zero()
     test_funding_plan_does_not_reserve_cash()
@@ -538,4 +690,9 @@ if __name__ == "__main__":
     test_playbook_visperas_without_buys()
     test_no_fund_target_for_off_market_primary()
     test_no_fund_target_for_unaffordable_on_market()
+    test_fixed_no_liquidity_for_off_market_crack()
+    test_fixed_on_market_upgrade_lists_slot_instant_copy()
+    test_fixed_rising_without_upgrade_not_listed()
+    test_fixed_cash_lag_zero()
+    test_playbook_fixed_no_cpu_copy()
     print("test_squad15_liquidity: OK")

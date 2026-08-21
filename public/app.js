@@ -1351,8 +1351,9 @@
     const fixed = isFixedMarket(data);
     const actionsHint = document.getElementById("actions-hint");
     if (actionsHint) {
-      actionsHint.textContent =
-        "Primero lo que puedes hacer hoy (pujar/vender); abajo solo contexto (no pujar / vigilar)";
+      actionsHint.textContent = fixed
+        ? "Primero lo que puedes hacer hoy (fichar/vender); abajo solo contexto (no fichar / vigilar)"
+        : "Primero lo que puedes hacer hoy (pujar/vender); abajo solo contexto (no pujar / vigilar)";
     }
     const bidTh = document.getElementById("th-bid-label");
     if (bidTh) bidTh.textContent = fixed ? "Precio" : "Puja rec.";
@@ -1377,14 +1378,17 @@
     }
   }
 
-  const TACTICAL_ACTIONS = {
-    buy_now: { label: "Fichar", verb: "Puja por", cls: "is-buy" },
-    clause_bid: { label: "Cláusula", verb: "Ve a por", cls: "is-buy" },
-    sell: { label: "Vender", verb: "Vende a", cls: "is-sell" },
-    avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
-    wait: { label: "Esperar", verb: "Espera con", cls: "is-wait" },
-    scout: { label: "Vigilar", verb: "Sigue a", cls: "is-scout" },
-  };
+  function tacticalActions(data) {
+    const fixed = isFixedMarket(data);
+    return {
+      buy_now: { label: "Fichar", verb: fixed ? "Ficha a" : "Puja por", cls: "is-buy" },
+      clause_bid: { label: "Cláusula", verb: "Ve a por", cls: "is-buy" },
+      sell: { label: "Vender", verb: "Vende a", cls: "is-sell" },
+      avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
+      wait: { label: fixed ? "No fichar" : "Esperar", verb: "Espera con", cls: "is-wait" },
+      scout: { label: "Vigilar", verb: "Sigue a", cls: "is-scout" },
+    };
+  }
 
   function tacticalRecord(item) {
     const source = findPlayerRecord(item && (item.player_id || item.id)) || {};
@@ -1517,7 +1521,8 @@
     const rec = tacticalRecord(item);
     actionDetailItem = rec;
     actionDetailTab = actionDetailFocusTab(rec);
-    const meta = TACTICAL_ACTIONS[rec.action] || TACTICAL_ACTIONS.wait;
+    const ACTIONS = tacticalActions(DATA);
+    const meta = ACTIONS[rec.action] || ACTIONS.wait;
     const confidence = actionConfidence(rec);
     const money = actionAmount(rec);
     const risk = rec.wait_risk || rec.sell_risk;
@@ -1644,7 +1649,8 @@
     }
 
     const hero = ordered[0];
-    const heroMeta = TACTICAL_ACTIONS[hero.action] || TACTICAL_ACTIONS.wait;
+    const ACTIONS = tacticalActions(data);
+    const heroMeta = ACTIONS[hero.action] || ACTIONS.wait;
     const confidence = actionConfidence(hero);
     const amount = actionAmount(hero);
     heroRoot.innerHTML = `<article class="command-hero ${heroMeta.cls}">
@@ -1676,7 +1682,7 @@
     listRoot.innerHTML = followUps.length
       ? followUps
           .map((item, index) => {
-            const meta = TACTICAL_ACTIONS[item.action] || TACTICAL_ACTIONS.wait;
+            const meta = ACTIONS[item.action] || ACTIONS.wait;
             const itemConfidence = actionConfidence(item);
             const money = actionAmount(item);
             const targetTab = actionDetailFocusTab(item);
@@ -1735,7 +1741,9 @@
       .slice(0, 2);
 
     if (!picks.length) {
-      root.innerHTML = `<p class="queue-empty">No hay oportunidades pujables ahora.</p>`;
+      root.innerHTML = `<p class="queue-empty">${
+        isFixedMarket() ? "No hay oportunidades de fichaje ahora." : "No hay oportunidades pujables ahora."
+      }</p>`;
       return;
     }
 
@@ -1840,7 +1848,7 @@
       clause_bid: { title: "Cláusula", cls: "act-clause" },
       sell: { title: "Vender", cls: "act-sell" },
       avoid: { title: "Evitar", cls: "act-avoid" },
-      wait: { title: "No pujar hoy", cls: "act-wait" },
+      wait: { title: fixed ? "No fichar hoy" : "No pujar hoy", cls: "act-wait" },
       scout: { title: "Solo vigilar", cls: "act-scout" },
     };
     const roleChip = (role, a) => {
@@ -1861,7 +1869,9 @@
     };
     const contextNote = (a) => {
       if (a.package_note) return a.package_note;
-      if (a.action === "wait") return "No requiere acción — alternativa o sin urgencia de puja";
+      if (a.action === "wait") return fixed
+        ? "No requiere acción — alternativa o sin urgencia de fichaje"
+        : "No requiere acción — alternativa o sin urgencia de puja";
       if (a.action === "scout") return "Solo contexto — mirar, no comprar aún";
       if (a.action === "avoid") return "No fichar — lesión/sanción u otra alerta";
       return "";
@@ -2138,7 +2148,9 @@
         }">${
           expanded
             ? `Ocultar contexto`
-            : `Ver contexto del mercado (${context.length}: no pujar / vigilar / evitar)`
+            : `Ver contexto del mercado (${context.length}: ${
+                fixed ? "no fichar" : "no pujar"
+              } / vigilar / evitar)`
         }</button>`
       : "";
 
@@ -2153,13 +2165,17 @@
         "Haz esto hoy",
         doToday,
         "numbered",
-        "Pujas, ventas y cláusulas que puedes ejecutar en Mister ahora"
+        fixed
+          ? "Fichajes, ventas y cláusulas que puedes ejecutar en Mister ahora"
+          : "Pujas, ventas y cláusulas que puedes ejecutar en Mister ahora"
       ) +
       section(
-        "No pujar hoy (relacionados)",
+        fixed ? "No fichar hoy (relacionados)" : "No pujar hoy (relacionados)",
         relatedWaits,
         "muted",
-        "Alts del mismo puesto / sin caja / sin plaza — no pujar ahora"
+        fixed
+          ? "Alts del mismo puesto / sin caja / sin plaza — no fichar ahora"
+          : "Alts del mismo puesto / sin caja / sin plaza — no pujar ahora"
       ) +
       (expanded
         ? section(

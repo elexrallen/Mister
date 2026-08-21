@@ -45,6 +45,12 @@ PHASE_FOCUS = {
     "jornada_en_curso": "Jornada disputándose: solo cambios en vivo si la liga los permite.",
 }
 
+PHASE_FOCUS_FIXED = {
+    "ventana_compra": "Si hay upgrade en el mercado, vende al VM y ficha al momento. No vendas para dejar caja.",
+    "post_jornada": "Recompón el 15 con el mercado de ahora. Vende solo si el recambio está listado hoy.",
+    "pretemporada": "Monta el mejor 15 con el mercado de hoy. No vendas a quien sube de VM si no hay recambio.",
+}
+
 
 def _f(value: Any) -> float | None:
     if value is None:
@@ -127,6 +133,7 @@ def build_daily_playbook(
     balance = _f((me or {}).get("balance")) or 0.0
     bootstrap = diag.get("bootstrap_xi") or {}
     market_cycle = diag.get("market_cycle") or {}
+    fixed = str(rules.get("market_mode") or "").strip().lower() == "fixed"
 
     phase = resolve_phase(
         hours_to_jornada=hours_to_jornada,
@@ -193,7 +200,11 @@ def build_daily_playbook(
             "Ficha titulares del mercado actual. No congeles caja para un crack que no está listado.",
             priority="Alta",
         )
-        warnings.append("Modo bootstrap: completar once con el mercado de hoy; liquidez = listados.")
+        warnings.append(
+            "Modo bootstrap: completar once con el mercado de hoy."
+            if fixed
+            else "Modo bootstrap: completar once con el mercado de hoy; liquidez = listados."
+        )
     elif not summary.get("complete") and phase not in ("pretemporada",):
         add(
             "xi_incompleto",
@@ -290,14 +301,21 @@ def build_daily_playbook(
                     related=related,
                 )
 
-    # --- Plantilla 15: gastar ahora; liquidez = listados ---
+    # --- Plantilla 15: gastar ahora ---
     economy = rules.get("economy") if isinstance(rules.get("economy"), dict) else {}
     if not bootstrap.get("active") and phase in ("ventana_compra", "post_jornada", "pretemporada"):
         add(
             "gastar_15",
             "Gasta en el 15 ahora",
-            "El presupuesto se usa para montar ya el mejor 15. La liquidez para un upgrade "
-            "mañana son los débiles listados (oferta CPU al siguiente ciclo), no millones parados.",
+            (
+                "Si hay upgrade en el mercado, vende al VM y ficha al momento. "
+                "No vendas para dejar caja: si el VM sube, mañana vale más."
+                if fixed
+                else (
+                    "El presupuesto se usa para montar ya el mejor 15. La liquidez para un upgrade "
+                    "mañana son los débiles listados (oferta CPU al siguiente ciclo), no millones parados."
+                )
+            ),
             priority="Alta",
         )
     if economy.get("gw_cash_bonus") and phase not in ("jornada_en_curso",):
@@ -311,7 +329,7 @@ def build_daily_playbook(
         add(
             "bonus_jornada",
             "Ingreso de jornada (después del pitido)",
-            f"{extra}No es saldo de hoy para pujar: alimenta el 15 de la siguiente ventana.",
+            f"{extra}No es saldo de hoy{' para pujar' if not fixed else ''}: alimenta el 15 de la siguiente ventana.",
             priority="Baja",
         )
     elif economy.get("no_gw_cash_bonus") and economy.get("credit_prizes"):
@@ -328,7 +346,8 @@ def build_daily_playbook(
             "saldo_negativo",
             "Saldo negativo antes de la jornada",
             f"Tienes {balance:,.0f} €. En muchas ligas Mister un saldo negativo al arrancar "
-            "la jornada anula los puntos: vende o cancela pujas.",
+            "la jornada anula los puntos: "
+            + ("vende o cancela fichajes pendientes." if fixed else "vende o cancela pujas."),
             priority="Alta",
         )
         warnings.append("Saldo negativo con la jornada encima.")
@@ -341,7 +360,11 @@ def build_daily_playbook(
                 "fichar",
                 f"{len(buys)} fichaje(s) en cola",
                 f"{names}. Es la parte del ciclo donde el precio aún no lleva prima de víspera. "
-                "Si el swap cierra (caja + VM del listado), ficha.",
+                + (
+                    "Si el recambio está en mercado, vende y ficha al momento."
+                    if fixed
+                    else "Si el swap cierra (caja + VM del listado), ficha."
+                ),
                 priority="Alta",
                 related=[a.get("player_id") or a.get("id") for a in buys],
             )
@@ -350,8 +373,15 @@ def build_daily_playbook(
             add(
                 "listar_ventas",
                 f"Listar {len(sells)} venta(s)",
-                f"{names}. Liquidez = jugadores listados, no reserva: la CPU ofertea al siguiente "
-                "ciclo y así puedes vender y pujar si sale el upgrade.",
+                f"{names}. "
+                + (
+                    "Vende ahora solo para fichar el recambio que está en el mercado."
+                    if fixed
+                    else (
+                        "Liquidez = jugadores listados, no reserva: la CPU ofertea al siguiente "
+                        "ciclo y así puedes vender y pujar si sale el upgrade."
+                    )
+                ),
                 priority="Media",
                 related=[a.get("player_id") or a.get("id") for a in sells],
             )
@@ -466,7 +496,9 @@ def build_daily_playbook(
     return {
         "phase": phase,
         "phase_label": PHASE_LABELS.get(phase, phase),
-        "focus": PHASE_FOCUS.get(phase, ""),
+        "focus": (PHASE_FOCUS_FIXED.get(phase) or PHASE_FOCUS.get(phase, ""))
+        if fixed
+        else PHASE_FOCUS.get(phase, ""),
         "jornada": md.get("jornada"),
         "hours_to_jornada": round(hours, 1) if hours is not None else None,
         "countdown_label": _fmt_hours(hours),

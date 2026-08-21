@@ -16,6 +16,7 @@ from competitive_actions import (  # noqa: E402
 from market_cycle import (  # noqa: E402
     adjust_funding_for_bootstrap,
     bootstrap_buy_cap,
+    derive_cash_lag_hours,
     derive_cycle_hours,
     resolve_bootstrap_xi,
     resolve_market_cycle,
@@ -124,6 +125,17 @@ def test_sell_copy_uses_league_cycle() -> None:
     _assert("16h" in str(note) and "24h" not in str(note), note)
 
 
+def test_fixed_cash_lag_is_zero() -> None:
+    _assert(derive_cash_lag_hours(8.0, {"market_mode": "fixed"}) == 0.0, "fixed → 0")
+    _assert(derive_cash_lag_hours(24.0, {"direct_transfer": 1}) == 0.0, "direct_transfer → 0")
+    _assert(derive_cash_lag_hours(8.0, {"market_mode": "auction"}) == 16.0, "auction → 2 ciclos")
+    phrase = sell_cash_phrase(2_000_000, instant=True)
+    _assert("instante" in phrase, phrase)
+    fields = sell_settlement_fields(2_000_000, cycle_hours=8, instant=True)
+    _assert(float(fields["cash_lag_hours"]) == 0.0, fields)
+    _assert(fields.get("settlement") == "instant", fields)
+
+
 if __name__ == "__main__":
     test_derive_cycle_hours()
     test_bootstrap_active_short_squad()
@@ -131,4 +143,5 @@ if __name__ == "__main__":
     test_adjust_funding_lowers_reserve()
     test_bootstrap_buy_cap()
     test_sell_copy_uses_league_cycle()
+    test_fixed_cash_lag_is_zero()
     print("test_market_cycle: OK")

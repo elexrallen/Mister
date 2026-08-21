@@ -50,7 +50,7 @@ def derive_cash_lag_hours(cycle_hours: float, rules: dict[str, Any] | None = Non
     rules = rules or {}
     mode = (rules.get("market_mode") or "auction").strip().lower()
     if mode == "fixed" or rules.get("direct_transfer"):
-        return max(0.0, cycle_hours * 0.25)
+        return 0.0
     return max(cycle_hours * 2.0, 1.0)
 
 

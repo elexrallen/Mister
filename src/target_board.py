@@ -2155,6 +2155,9 @@ def funding_plan_from_board(
     funding_target = float(sum(float(g["cost"]) for g in operable))
     funding_shortfall = 0.0
     cheapest = min((float(g["cost"]) for g in operable), default=None)
+    board_mode = str((board or {}).get("market_mode") or "auction").strip().lower()
+    fixed_board = board_mode == "fixed"
+    cycle_h = float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
     return {
         "funding_target": funding_target,
         "funding_shortfall": funding_shortfall,
@@ -2171,13 +2174,17 @@ def funding_plan_from_board(
         "wealth": (board or {}).get("wealth"),
         "totals": (board or {}).get("totals"),
         "formation": (board or {}).get("formation"),
-        # Ventas al sistema no suman al balance del día (caja ≈ 2 ciclos)
-        "settlement": "market_cycle",
-        "cycle_hours": float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
-        "cash_lag_hours": float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+        "settlement": "instant" if fixed_board else "market_cycle",
+        "cycle_hours": cycle_h,
+        "cash_lag_hours": 0.0 if fixed_board else cycle_h * 2,
         "liquidity_note": (
-            "Gasta en el 15 ahora. Liquidez = jugadores listados (oferta CPU al siguiente "
-            "ciclo), no caja congelada. El cobro de una venta no es saldo de hoy."
+            "Precio fijo: ficha al VM y vende al instante solo si hay recambio hoy. "
+            "No vendas para dejar caja: si el VM sube, mañana vale más."
+            if fixed_board
+            else (
+                "Gasta en el 15 ahora. Liquidez = jugadores listados (oferta CPU al siguiente "
+                "ciclo), no caja congelada. El cobro de una venta no es saldo de hoy."
+            )
         ),
     }
 

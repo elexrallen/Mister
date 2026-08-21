@@ -322,14 +322,24 @@ def _cycle_hours_value(cycle_hours: float | None = None) -> float:
 
 
 def sell_settlement_fields(
-    price: float, *, cycle_hours: float | None = None
+    price: float, *, cycle_hours: float | None = None, instant: bool = False
 ) -> dict[str, Any]:
     """
-    Liquidez de venta al sistema (Mister): ask ≈ VM; cobro en ciclos de mercado.
-    Lista → oferta (~1 ciclo) → aceptar → cobro (~1 ciclo más) ≈ 2 ciclos.
+    Liquidez de venta al sistema (Mister): ask ≈ VM.
+    Subasta: lista → oferta (~1 ciclo) → aceptar → cobro (~1 ciclo más) ≈ 2 ciclos.
+    Precio fijo: cobro al instante.
     """
     cycle = _cycle_hours_value(cycle_hours)
     proceeds = float(price or 0)
+    if instant:
+        return {
+            "list_at": proceeds,
+            "expected_proceeds": proceeds,
+            "buyer_channel": "system",
+            "settlement": "instant",
+            "cycle_hours": cycle,
+            "cash_lag_hours": 0.0,
+        }
     return {
         "list_at": proceeds,
         "expected_proceeds": proceeds,
@@ -341,9 +351,15 @@ def sell_settlement_fields(
 
 
 def sell_cash_phrase(
-    price: float, *, deferred: bool = False, cycle_hours: float | None = None
+    price: float,
+    *,
+    deferred: bool = False,
+    cycle_hours: float | None = None,
+    instant: bool = False,
 ) -> str:
-    """Texto corto de ask VM + plazo de caja (2 ciclos de la liga)."""
+    """Texto corto de ask VM + plazo de caja."""
+    if instant:
+        return f"cobra al instante ~{price:,.0f} € (VM)"
     cycle = _cycle_hours_value(cycle_hours)
     lag = int(round(cycle * 2))
     base = f"lista a ~{price:,.0f} € (VM)"
@@ -2408,6 +2424,23 @@ def promote_funded_swaps(
         item["why"] = f"{swap_why}; {why}" if why else swap_why
 
 
+def _player_vm_rising(p: dict[str, Any] | None) -> bool:
+    """VM al alza: no aparcar en liquidez fixed si no hay swap de hoy."""
+    if not p:
+        return False
+    if str(p.get("trend") or "").lower() == "up":
+        return True
+    thresh = float(getattr(config, "APPRECIATION_DELTA_MIN", 0.04) or 0.04)
+    for key in ("delta_5d", "price_delta_5d"):
+        if p.get(key) is None:
+            continue
+        try:
+            return float(p[key]) >= thresh
+        except (TypeError, ValueError):
+            continue
+    return False
+
+
 def _liquidity_prod(p: dict[str, Any] | None) -> float:
     if not p:
         return 0.0
@@ -2619,14 +2652,17 @@ def resolve_liquidity_slots(
     target_board: dict[str, Any] | None,
     balance: float,
     sale_limit: int = 5,
+    market_mode: str = "auction",
 ) -> dict[str, Any]:
     """
     Elige listados de liquidez: cubren swaps de perfiles que rentan
-    y rellenan con los más débiles fuera del XI, sin superar sale_limit.
+    y, en subasta, rellenan con los más débiles fuera del XI.
+    En precio fijo solo hay slot si el recambio está hoy en mercado.
     """
     xi_ids = xi_owned_ids(recommended_xi)
     bench = _bench_not_xi(squad, xi_ids)
     limit = max(1, int(sale_limit or 5))
+    fixed = (market_mode or "auction") == "fixed"
     profiles = collect_upgrade_profiles(
         squad=squad,
         xi_ids=xi_ids,
@@ -2640,6 +2676,9 @@ def resolve_liquidity_slots(
     avoided: list[dict[str, Any]] = []
 
     for prof in profiles:
+        if fixed and not prof.get("on_daily_market"):
+            avoided.append({**prof, "avoid_reason": "off_market_fixed"})
+            continue
         if not prof.get("worth"):
             avoided.append({**prof, "avoid_reason": "delta_ep_or_roi"})
             continue
@@ -2665,18 +2704,19 @@ def resolve_liquidity_slots(
         if len(chosen) >= limit:
             break
 
-    weakest = sorted(bench, key=lambda p: (_liquidity_prod(p), _money(p.get("price"))))
-    min_listed = min(2, limit, len(bench))
-    for p in weakest:
-        if len(chosen) >= limit:
-            break
-        if len(chosen) >= min_listed:
-            break
-        pid = str(p.get("id") or "")
-        if not pid or pid in chosen_ids:
-            continue
-        chosen.append(p)
-        chosen_ids.add(pid)
+    if not fixed:
+        weakest = sorted(bench, key=lambda p: (_liquidity_prod(p), _money(p.get("price"))))
+        min_listed = min(2, limit, len(bench))
+        for p in weakest:
+            if len(chosen) >= limit:
+                break
+            if len(chosen) >= min_listed:
+                break
+            pid = str(p.get("id") or "")
+            if not pid or pid in chosen_ids:
+                continue
+            chosen.append(p)
+            chosen_ids.add(pid)
 
     return {
         "xi_ids": xi_ids,
@@ -2685,6 +2725,7 @@ def resolve_liquidity_slots(
         "profiles": funded,
         "avoided": avoided,
         "sale_limit": limit,
+        "market_mode": "fixed" if fixed else "auction",
     }
 
 
@@ -2702,6 +2743,7 @@ def build_sell_opportunities(
     funding_info: dict[str, Any] | None = None,
     recommended_xi: dict[str, Any] | None = None,
     league_economy: dict[str, Any] | None = None,
+    market_mode: str = "auction",
 ) -> list[dict[str, Any]]:
     """
     Ventas orientadas a estrategia Fantasy:
@@ -2746,15 +2788,18 @@ def build_sell_opportunities(
     funding_pressure = float(funding.get("funding_shortfall") or 0) > 0
     cycle_h = funding.get("cycle_hours")
     lag_h = funding.get("cash_lag_hours")
+    fixed = (market_mode or "auction") == "fixed"
     if lag_h is None:
-        lag_h = _cycle_hours_value(cycle_h) * 2
+        lag_h = 0.0 if fixed else _cycle_hours_value(cycle_h) * 2
     lag_h = int(round(float(lag_h)))
     gap_labels = ", ".join(
         str(p) for p in (funding.get("positions") or []) if p
     ) or "carencias"
 
     def _cash_phrase(amount: float, *, deferred: bool = False) -> str:
-        return sell_cash_phrase(amount, deferred=deferred, cycle_hours=cycle_h)
+        return sell_cash_phrase(
+            amount, deferred=deferred, cycle_hours=cycle_h, instant=fixed
+        )
 
     sells: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -2813,7 +2858,7 @@ def build_sell_opportunities(
             "recent_minutes": _recent_minutes(p),
             "funding_shortfall": funding.get("funding_shortfall"),
             "funding_target": funding.get("funding_target"),
-            **sell_settlement_fields(price, cycle_hours=cycle_h),
+            **sell_settlement_fields(price, cycle_hours=cycle_h, instant=fixed),
         }
         # Tip de urgencia: liquidez inmediata vía rescisión (no sustituye listar al VM)
         if urgency == "high" or reason in ("fund_buy", "fund_target"):
@@ -3060,7 +3105,15 @@ def build_sell_opportunities(
                 add(item)
 
         # 5) Financiar carencias multi-gap (prioriza no titulares)
-        if cash_tight and needy and covered_if_sold and not keep_top and not protect_xi:
+        # En precio fijo no se vende para aparcar caja: cobras al instante si hay swap.
+        if (
+            not fixed
+            and cash_tight
+            and needy
+            and covered_if_sold
+            and not keep_top
+            and not protect_xi
+        ):
             # Con presión de caja se puede vender aunque profundidad sea justa
             if protect_patch and not critical_pos and not funding_pressure:
                 pass
@@ -3096,53 +3149,54 @@ def build_sell_opportunities(
                     add(item)
 
         # 5b) Financiar primary del target board con mínima pérdida de valor
-        primary_targets = list(funding.get("primary_targets") or [])
-        if not primary_targets and target_board:
-            primary_targets = list(target_board.get("primary_targets") or [])
-        for pt in primary_targets:
-            if not pt.get("on_daily_market"):
-                continue
-            need_price = _money(pt.get("price"))
-            if need_price <= 0:
-                continue
-            if need_price > balance:
-                continue  # greedy no puja hoy a quien no cabe
-            shortfall_pt = max(0.0, need_price - balance)
-            if shortfall_pt <= 0:
-                continue
-            if not covered_if_sold or keep_top or protect_xi or protect_patch:
-                continue
-            if is_star or (is_starter and (prod is not None and prod >= 55)):
-                continue
-            # Preferir bajo EP / banquillo / Δ negativo (menor pérdida)
-            low_ep = (prod is not None and prod < 45) or (
-                ff is not None and ff < scale_threshold(3.8, _avg_scale(p))
-            )
-            delta_ok = delta is None or float(delta) <= 0.02  # no vender si está subiendo fuerte
-            if not (low_ep or plays_little or not is_starter):
-                continue
-            if not delta_ok and price < 3_000_000:
-                continue
-            loss_note = (
-                f"Δ {float(delta)*100:.0f}%"
-                if delta is not None
-                else "sin serie Δ"
-            )
-            item = base_item(
-                p,
-                reason="fund_target",
-                why=(
-                    f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €) en ~{lag_h}h; "
-                    f"faltan ~{shortfall_pt:,.0f} €; {_cash_phrase(price, deferred=True)} ({loss_note})"
-                ),
-                urgency="high" if shortfall_pt >= need_price * 0.35 else "medium",
-                sell_risk="low" if not is_starter else "medium",
-            )
-            item["_pref"] = 42
-            item["funds_for"] = pt.get("player_id")
-            item["funds_for_name"] = pt.get("name")
-            add(item)
-            break  # una venta fund_target por jugador owned basta vía add()
+        if not fixed:
+            primary_targets = list(funding.get("primary_targets") or [])
+            if not primary_targets and target_board:
+                primary_targets = list(target_board.get("primary_targets") or [])
+            for pt in primary_targets:
+                if not pt.get("on_daily_market"):
+                    continue
+                need_price = _money(pt.get("price"))
+                if need_price <= 0:
+                    continue
+                if need_price > balance:
+                    continue  # greedy no puja hoy a quien no cabe
+                shortfall_pt = max(0.0, need_price - balance)
+                if shortfall_pt <= 0:
+                    continue
+                if not covered_if_sold or keep_top or protect_xi or protect_patch:
+                    continue
+                if is_star or (is_starter and (prod is not None and prod >= 55)):
+                    continue
+                # Preferir bajo EP / banquillo / Δ negativo (menor pérdida)
+                low_ep = (prod is not None and prod < 45) or (
+                    ff is not None and ff < scale_threshold(3.8, _avg_scale(p))
+                )
+                delta_ok = delta is None or float(delta) <= 0.02  # no vender si está subiendo fuerte
+                if not (low_ep or plays_little or not is_starter):
+                    continue
+                if not delta_ok and price < 3_000_000:
+                    continue
+                loss_note = (
+                    f"Δ {float(delta)*100:.0f}%"
+                    if delta is not None
+                    else "sin serie Δ"
+                )
+                item = base_item(
+                    p,
+                    reason="fund_target",
+                    why=(
+                        f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €) en ~{lag_h}h; "
+                        f"faltan ~{shortfall_pt:,.0f} €; {_cash_phrase(price, deferred=True)} ({loss_note})"
+                    ),
+                    urgency="high" if shortfall_pt >= need_price * 0.35 else "medium",
+                    sell_risk="low" if not is_starter else "medium",
+                )
+                item["_pref"] = 42
+                item["funds_for"] = pt.get("player_id")
+                item["funds_for_name"] = pt.get("name")
+                add(item)
+                break  # una venta fund_target por jugador owned basta vía add()
 
         # 6) Forma / tendencia a la baja
         scale = _avg_scale(p)
@@ -3202,6 +3256,7 @@ def build_sell_opportunities(
         target_board=target_board,
         balance=balance,
         sale_limit=sale_limit,
+        market_mode=market_mode,
     )
     profile_by_slot: dict[str, dict[str, Any]] = {}
     for prof in liq.get("profiles") or []:
@@ -3214,18 +3269,28 @@ def build_sell_opportunities(
         if not pid:
             continue
         prof = profile_by_slot.get(pid)
+        if fixed and not prof:
+            continue  # no listados de CPU / parking de caja
+        if fixed and _player_vm_rising(slot) and not prof:
+            continue
         price = _money(slot.get("price") or slot.get("market_value"))
         if prof:
             mid = float(prof.get("bid") or 0)
-            why = (
-                f"Liquidez para swap: {_cash_phrase(price)}. "
-                f"Perseguir {prof.get('position')} ~{mid / 1e6:.1f}M"
-            )
-            if prof.get("name") and not prof.get("on_daily_market"):
-                why += f" ({prof.get('name')} aún no listado)"
-            elif prof.get("name"):
-                why += f" ({prof.get('name')} en mercado)"
-            why += f". Si sale, vende y puja (caja + VM cubren ~{mid:,.0f} €)."
+            if fixed:
+                why = (
+                    f"Vende ahora y ficha {prof.get('name') or prof.get('position')} "
+                    f"(~{mid:,.0f} €). {_cash_phrase(price)}."
+                )
+            else:
+                why = (
+                    f"Liquidez para swap: {_cash_phrase(price)}. "
+                    f"Perseguir {prof.get('position')} ~{mid / 1e6:.1f}M"
+                )
+                if prof.get("name") and not prof.get("on_daily_market"):
+                    why += f" ({prof.get('name')} aún no listado)"
+                elif prof.get("name"):
+                    why += f" ({prof.get('name')} en mercado)"
+                why += f". Si sale, vende y puja (caja + VM cubren ~{mid:,.0f} €)."
         else:
             why = (
                 f"Liquidez permanente: {_cash_phrase(price)}. "
@@ -3257,7 +3322,7 @@ def build_sell_opportunities(
 
     scouts: list[dict[str, Any]] = []
     for prof in liq.get("profiles") or []:
-        if prof.get("on_daily_market"):
+        if fixed or prof.get("on_daily_market"):
             continue
         pos = prof.get("position") or "?"
         mid = float(prof.get("bid") or 0)
@@ -3293,6 +3358,8 @@ def build_sell_opportunities(
         if not prof.get("player_id"):
             continue
         reason = prof.get("avoid_reason") or "no_perseguir"
+        if reason == "off_market_fixed":
+            continue
         if reason == "inabordable_sin_romper_xi":
             why = (
                 f"No perseguir {prof.get('name') or prof.get('position')}: "
@@ -3301,7 +3368,11 @@ def build_sell_opportunities(
         else:
             why = (
                 f"No perseguir {prof.get('name') or prof.get('position')}: "
-                "el ΔEP/ROI no compensa la puja."
+                + (
+                    "el ΔEP/ROI no compensa el fichaje."
+                    if fixed
+                    else "el ΔEP/ROI no compensa la puja."
+                )
             )
         scouts.append(
             {
