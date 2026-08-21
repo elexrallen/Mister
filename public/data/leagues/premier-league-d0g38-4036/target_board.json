@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-21T08:13:33.544600+00:00",
+  "generated_at": "2026-08-21T11:44:51.525015+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -1068,8 +1068,8 @@
         "expected_proceeds": 1865000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "60836",
@@ -1084,8 +1084,8 @@
         "expected_proceeds": 217000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "63673",
@@ -1100,8 +1100,8 @@
         "expected_proceeds": 1752000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "23030",
@@ -1116,12 +1116,12 @@
         "expected_proceeds": 1863000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "1859",
-        "name": "D. Solanke 💥",
+        "name": "D. Solanke",
         "position": "FW",
         "ep_score": 36.5,
         "price": 2223000.0,
@@ -1132,8 +1132,8 @@
         "expected_proceeds": 2223000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "22739",
@@ -1148,8 +1148,8 @@
         "expected_proceeds": 1491000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "52392",
@@ -1164,8 +1164,8 @@
         "expected_proceeds": 6358000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "10011",
@@ -1180,8 +1180,8 @@
         "expected_proceeds": 8053000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "23381",
@@ -1196,8 +1196,8 @@
         "expected_proceeds": 2593000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       },
       {
         "player_id": "65186",
@@ -1212,8 +1212,8 @@
         "expected_proceeds": 5386000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
-        "cycle_hours": 24,
-        "cash_lag_hours": 48
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
       }
     ]
   },
@@ -1229,7 +1229,7 @@
     "funded_ideal": false,
     "formation": "5-3-2",
     "ideal_buy_cost": 40481500.0,
-    "daily_primary_count": 1
+    "daily_primary_count": 0
   },
   "totals_aspirational": {
     "ep_sum": 462.9,
@@ -1244,19 +1244,7 @@
   "daily_patches": [],
   "cash_reserved": 0.0,
   "residual_after_reserve": 4098985.0,
-  "primary_targets": [
-    {
-      "player_id": "48471",
-      "name": "Brenden Aaronson",
-      "need": "perfect_squad_daily",
-      "position": "MF",
-      "price": 1952000.0,
-      "ep_score": 40.0,
-      "status": "affordable",
-      "role": "bench",
-      "on_daily_market": false
-    }
-  ],
+  "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
   "dropped": [],
