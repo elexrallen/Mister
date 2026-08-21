@@ -1431,12 +1431,13 @@ def estimate_gap_funding(
     balance: float,
     *,
     top_n: int = 3,
+    cycle_hours: float | None = None,
 ) -> dict[str, Any]:
     """
     Estima coste mínimo para cubrir needs Alta (multi-carencia).
     Prefiere candidatos asequibles (realistic) del pool; si no hay, marca shortfall.
     funding_target = suma de hasta top_n gaps; shortfall vs saldo.
-    Ventas para cubrir shortfall liquidan en ciclos de mercado (~48h), no el mismo día.
+    Ventas para cubrir shortfall liquidan en ~2 ciclos de mercado, no el mismo día.
     """
     needs = [n for n in (structural_needs or []) if n.get("priority") == "Alta"]
     market = list(market_opportunities or [])
@@ -1547,6 +1548,8 @@ def estimate_gap_funding(
     if any(g.get("no_affordable_candidate") for g in selected):
         cash_tight = True
 
+    cycle = _cycle_hours_value(cycle_hours)
+    lag = cycle * 2
     return {
         "funding_target": funding_target,
         "funding_shortfall": funding_shortfall,
@@ -1556,29 +1559,81 @@ def estimate_gap_funding(
         "positions": [g.get("position") for g in selected if g.get("position")],
         "cheapest_need": cheapest,
         "settlement": "market_cycle",
-        "cycle_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
-        "cash_lag_hours": int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+        "cycle_hours": cycle,
+        "cash_lag_hours": lag,
         "liquidity_note": (
-            "Las ventas al sistema no liquidan hoy: oferta ~24h, cobro ~24h tras aceptar "
-            "(caja usable en ~1–2 días). Urgente: rescindir ≈ 80% VM o cláusula rival."
+            f"Las ventas al sistema no liquidan hoy: oferta ~{int(round(cycle))}h, "
+            f"cobro ~{int(round(cycle))}h tras aceptar "
+            f"(caja usable en ~{int(round(lag))}h). Urgente: rescindir ≈ 80% VM o cláusula rival."
         ),
     }
 
 
+def real_needy_positions(
+    diagnosis: dict[str, Any] | None = None,
+    structural_needs: list[dict[str, Any]] | None = None,
+) -> set[str]:
+    """Posiciones con cobertura thin/critical o carencia estructural Alta."""
+    pos: set[str] = set()
+    buckets: list[dict[str, Any]] = []
+    if diagnosis:
+        if isinstance(diagnosis.get("lineas"), dict):
+            buckets.append(diagnosis["lineas"])
+        if isinstance(diagnosis.get("by_position"), dict):
+            buckets.append(diagnosis["by_position"])
+    for bucket in buckets:
+        for p, info in bucket.items():
+            if not isinstance(info, dict):
+                continue
+            cov = str(info.get("coverage") or "")
+            if cov in ("critical", "thin"):
+                pos.add(str(p))
+    for n in structural_needs or []:
+        if n.get("priority") == "Alta" and n.get("position"):
+            pos.add(str(n["position"]))
+    return pos
+
+
 def other_gaps_min_cost(
-    funding_info: dict[str, Any] | None,
+    funding_info: dict[str, Any] | None = None,
     *,
     exclude_position: str | None = None,
+    diagnosis: dict[str, Any] | None = None,
+    structural_needs: list[dict[str, Any]] | None = None,
+    opportunities: list[dict[str, Any]] | None = None,
 ) -> float:
-    """Suma de costes mínimos de hasta 3 gaps Alta distintos a la posición del fichaje."""
+    """Coste mínimo de cubrir huecos reales de otras líneas (no primaries del board)."""
+    excl = str(exclude_position or "")
+    if diagnosis is not None or structural_needs:
+        needy = real_needy_positions(diagnosis, structural_needs)
+        if excl:
+            needy.discard(excl)
+        if not needy:
+            return 0.0
+        total = 0.0
+        market = list(opportunities or [])
+        for pos in needy:
+            costs = [
+                _money(o.get("puja_recomendada") or o.get("price"))
+                for o in market
+                if (o.get("position") or "") == pos
+                and (o.get("on_daily_market") or o.get("seller") == "market")
+            ]
+            costs = [c for c in costs if c > 0]
+            total += min(costs) if costs else float(_GAP_FALLBACK_COST.get(pos, 2_000_000.0))
+        return total
+
     info = funding_info or {}
+    skip_needs = {"perfect_buy_daily", "perfect_buy"}
     others = [
         float(g.get("cost") or 0)
         for g in (info.get("all_gap_costs") or info.get("gap_costs") or [])
-        if not (exclude_position and g.get("position") == exclude_position)
+        if not (excl and g.get("position") == excl)
+        and g.get("need") not in skip_needs
+        and float(g.get("cost") or 0) > 0
     ]
-    others.sort(reverse=True)
-    return sum(others[:3])
+    others.sort()
+    return float(sum(others[:3])) if others else 0.0
 
 
 def rival_demand_for_position(
@@ -1689,7 +1744,7 @@ def priority_score_buy(item: dict[str, Any]) -> int:
         score -= 55
         cost = _money(item.get("cost") or item.get("bid") or item.get("price"))
         if cost >= 8_000_000:
-            score -= 20  # caro que aprieta gaps: no apilar en el paquete
+            score -= 20  # caro que deja una línea needy sin margen
     elif item.get("leaves_gap_budget"):
         score += 18
     score += min(15, int(item.get("rival_demand") or 0) * 5)
@@ -2088,7 +2143,7 @@ def is_key_market_candidate(
 def priority_score_sell(item: dict[str, Any]) -> int:
     """
     Prioriza ventas que mejoran el once: banquillo caro, baja producción,
-    plan de caja diferida (1–2 días); protege titulares TOP / once fiable.
+    plan de caja diferida (2 ciclos de la liga); protege titulares TOP / once fiable.
     """
     score = 0
     reason = item.get("sell_reason") or ""
@@ -2656,6 +2711,10 @@ def build_sell_opportunities(
     cash_tight = bool(funding.get("cash_tight"))
     funding_pressure = float(funding.get("funding_shortfall") or 0) > 0
     cycle_h = funding.get("cycle_hours")
+    lag_h = funding.get("cash_lag_hours")
+    if lag_h is None:
+        lag_h = _cycle_hours_value(cycle_h) * 2
+    lag_h = int(round(float(lag_h)))
     gap_labels = ", ".join(
         str(p) for p in (funding.get("positions") or []) if p
     ) or "carencias"
@@ -3037,7 +3096,7 @@ def build_sell_opportunities(
                 p,
                 reason="fund_target",
                 why=(
-                    f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €) en 1–2 días; "
+                    f"Financia objetivo {pt.get('name')} (~{need_price:,.0f} €) en ~{lag_h}h; "
                     f"faltan ~{shortfall_pt:,.0f} €; {_cash_phrase(price, deferred=True)} ({loss_note})"
                 ),
                 urgency="high" if shortfall_pt >= need_price * 0.35 else "medium",
@@ -4204,7 +4263,7 @@ def select_intent_lines(
     cash_reserve: float,
     primary_ids: set[str],
     secondary_max: float,
-    max_intents: int = 2,
+    max_intents: int = 8,
 ) -> list[dict[str, Any]]:
     """Hasta N intents de posiciones distintas (clave → carencia → score/trueque)."""
     if not daily_buys or max_intents <= 0:

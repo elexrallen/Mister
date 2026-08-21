@@ -329,7 +329,7 @@ def test_select_intent_skips_overstock_df() -> None:
         cash_reserve=8_000_000,
         primary_ids={"df_up"},
         secondary_max=2_500_000,
-        max_intents=2,
+        max_intents=8,
     )
     assert intents, "debe haber al menos un intent"
     assert intents[0]["player_id"] == "fw_need", intents[0]
@@ -581,7 +581,7 @@ def test_upgrade_elite_crowds_out_not_worth() -> None:
         cash_reserve=8_000_000,
         primary_ids=set(),
         secondary_max=2_500_000,
-        max_intents=2,
+        max_intents=8,
     )
     assert intents[0]["player_id"] == "fw_need", intents[0]
 
@@ -600,7 +600,7 @@ def test_upgrade_elite_crowds_out_not_worth() -> None:
         cash_reserve=8_000_000,
         primary_ids={"df_up"},
         secondary_max=2_500_000,
-        max_intents=2,
+        max_intents=8,
     )
     ids = [i["player_id"] for i in intents_ok]
     assert "df_up" in ids, ids

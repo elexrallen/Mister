@@ -8,7 +8,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from competitive_actions import sell_cash_phrase, sell_settlement_fields  # noqa: E402
+from competitive_actions import (  # noqa: E402
+    estimate_gap_funding,
+    sell_cash_phrase,
+    sell_settlement_fields,
+)
 from market_cycle import (  # noqa: E402
     adjust_funding_for_bootstrap,
     bootstrap_buy_cap,
@@ -116,6 +120,8 @@ def test_sell_copy_uses_league_cycle() -> None:
     _assert(float(fields["cash_lag_hours"]) == 16.0, fields)
     deferred = sell_cash_phrase(1_000_000, deferred=True, cycle_hours=8)
     _assert("16h" in deferred, deferred)
+    note = estimate_gap_funding([], [], 1_000_000, cycle_hours=8).get("liquidity_note") or ""
+    _assert("16h" in str(note) and "24h" not in str(note), note)
 
 
 if __name__ == "__main__":

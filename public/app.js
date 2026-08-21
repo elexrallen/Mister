@@ -1200,7 +1200,7 @@
         sellEl.textContent = "";
       } else {
         sellEl.hidden = false;
-        sellEl.textContent = `Vender (lista a VM; caja en 1–2 días): ${sells
+        sellEl.textContent = `Vender (lista a VM; caja en ${cashLagText()}): ${sells
           .map((s) => s.name)
           .filter(Boolean)
           .join(" · ")}`;
@@ -1226,6 +1226,21 @@
     return `<span class="text-xs text-slate-400">${avg} / ${pts}${phase}</span>`;
   };
 
+  function cashLagHours() {
+    const fp = (typeof DATA !== "undefined" && DATA && DATA.funding_plan) || {};
+    if (fp.cash_lag_hours != null && Number.isFinite(Number(fp.cash_lag_hours))) {
+      return Math.round(Number(fp.cash_lag_hours));
+    }
+    if (fp.cycle_hours != null && Number.isFinite(Number(fp.cycle_hours))) {
+      return Math.round(Number(fp.cycle_hours) * 2);
+    }
+    return 48;
+  }
+
+  function cashLagText() {
+    return `~${cashLagHours()}h`;
+  }
+
   const budgetBadge = (bf) => {
     if (!bf) return "";
     const map = {
@@ -1233,7 +1248,7 @@
       tight: ["badge-duda", "Ajusta"],
       stretch: ["badge-duda", "Al límite"],
       blocked: ["badge-baja-ext", "Sin saldo"],
-      funding: ["badge-mint", "Caja 1–2 días"],
+      funding: ["badge-mint", `Caja ${cashLagText()}`],
     };
     const [cls, label] = map[bf] || ["badge-duda", bf];
     return `<span class="badge ${cls}">${label}</span>`;
@@ -1246,7 +1261,7 @@
         a.sell_reason === "free_slot"
           ? "Abre plaza"
           : a.sell_reason === "fund_target"
-            ? "Financia en 1–2 días"
+            ? `Financia en ${cashLagText()}`
             : "Caja diferida"
       }</span>`;
     }
@@ -1279,7 +1294,7 @@
       low_minutes: "Pocos minutos",
       low_production: "Baja prod.",
       surplus_to_demand: "Excedente",
-      fund_buy: "Financiar (1–2 días)",
+      fund_buy: `Financiar (${cashLagText()})`,
       fund_target: "Financia objetivo",
       free_slot: "Abre plaza",
       injured_covered: "Lesión",

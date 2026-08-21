@@ -82,8 +82,6 @@ from target_board import (
     board_primary_ids,
     build_target_board,
     funding_plan_from_board,
-    max_patch_spend,
-    patches_allowed,
     save_target_board,
 )
 from squad_analyzer import (
@@ -1516,7 +1514,7 @@ def build_action_plan(
     """
     Fuente de verdad diaria:
     buy_now | clause_bid | sell | avoid | wait | scout
-    Empaquetado: líneas de necesidad + hedges (auction), respetando cupo de plantilla.
+    Cola: fichar mientras quepan caja y plazas; hedges same-day solo en subasta.
     Devuelve (action_plan, daily_package).
     """
     plan: list[dict[str, Any]] = []
@@ -1575,8 +1573,9 @@ def build_action_plan(
     objective_ids = board_objective_ids(target_board)
     primary_ids = board_primary_ids(target_board)
     cash_reserved = float(funding.get("cash_reserved") or 0)
-    patch_cap = max_patch_spend(target_board)
-    allow_patches = patches_allowed(target_board)
+    cov_diag: dict[str, Any] = dict(diagnosis or {})
+    if (diagnostico_plantilla or {}).get("lineas"):
+        cov_diag["lineas"] = diagnostico_plantilla["lineas"]
     bootstrap = (diagnostico_plantilla or {}).get("bootstrap_xi") or {}
     market_cycle_ctx = (diagnostico_plantilla or {}).get("market_cycle") or {}
     if market_cycle_ctx.get("cash_lag_hours") is not None:
@@ -1632,7 +1631,13 @@ def build_action_plan(
         solvency_blocked = bool(fin.get("solvency_blocked") or o.get("solvency_blocked"))
 
         pos = o.get("position")
-        other_min = other_gaps_min_cost(funding, exclude_position=pos)
+        other_min = other_gaps_min_cost(
+            funding,
+            exclude_position=pos,
+            diagnosis=cov_diag,
+            structural_needs=structural_needs,
+            opportunities=opportunities,
+        )
         residual = balance - cost if cost <= balance else -1.0
         crowds_out = residual >= 0 and other_min > 0 and residual < other_min
         leaves_budget = residual >= 0 and other_min > 0 and residual >= other_min
@@ -1981,20 +1986,6 @@ def build_action_plan(
             why_parts.append(
                 f"upgrade bueno, pero prioriza {gap_pos_labels}"
             )
-        is_patchish = buy_now and on_daily and not is_primary_obj and not is_key and (
-            cost <= patch_cap
-            or (not real_starter_cand and cost < 2_500_000)
-            or (o.get("categories") and "chollo_economico" in (o.get("categories") or []) and cost < 1_500_000)
-        )
-        if buy_now and not is_primary_obj and not is_key and is_patchish:
-            if not allow_patches:
-                buy_now = False
-                why_parts.append("parche bloqueado: no mejora el 15 frente a objetivos de hoy")
-            elif cost > patch_cap:
-                buy_now = False
-                why_parts.append(
-                    f"parche por encima del techo ({patch_cap:,.0f} €)"
-                )
 
         # Defensa extra: nunca buy_now fuera del mercado del día
         if buy_now and not on_daily:
@@ -2005,7 +1996,7 @@ def build_action_plan(
             if not any("no titular" in w for w in why_parts):
                 why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
-        # Sin caja / solvencia → no buy_now (stretch por crowding también queda fuera)
+        # Sin caja / solvencia → no buy_now (stretch por crowding de hueco real también)
         if buy_now and bf not in ("comfortable", "tight"):
             buy_now = False
             if solvency_blocked:
