@@ -414,11 +414,34 @@
   };
 
   const ffAvgAppsBadge = (p) => {
-    const ff = p.ff_mister_avg ?? (p.external || {}).ff_mister_avg;
+    const ext = p.external || {};
+    const source = p.ff_display_source;
+    const thin =
+      p.current_sample_thin ||
+      (p.ff_apps != null && Number(p.ff_apps) > 0 && Number(p.ff_apps) < 5);
+    const priorAvg = p.ff_prior_avg ?? ext.ff_prior_avg ?? p.ff_display_avg;
+    const priorApps = p.ff_prior_apps ?? ext.ff_prior_apps ?? p.ff_display_apps;
+    const priorOk =
+      source === "prior" ||
+      p.prior_backed ||
+      (thin && priorAvg != null && (priorApps == null || Number(priorApps) >= 5));
+    if (p.ff_no_history || source === "none") {
+      return `<span class="badge badge-baja-ext" title="Sin historial FF en esta liga — solo titularidad">Sin historial FF</span>`;
+    }
+    if (priorOk && priorAvg != null) {
+      const appsTxt = priorApps != null ? ` · ${Number(priorApps)} PJ` : "";
+      const cur = p.ff_apps ?? ext.ff_apps;
+      const curTxt = cur != null ? `${Number(cur)} PJ esta temporada (aún no comparable). ` : "";
+      return `<span class="badge badge-duda" title="${curTxt}Referencia: temporada pasada">Prev ${Number(priorAvg).toFixed(1)}${appsTxt}</span>`;
+    }
+    if (thin || p.sample_thin) {
+      return `<span class="badge badge-baja-ext" title="Pocos partidos FF esta temporada">Muestra corta</span>`;
+    }
+    const ff = p.ff_display_avg ?? p.ff_mister_avg ?? ext.ff_mister_avg;
     if (ff == null) return "";
-    const apps = p.ff_apps ?? (p.external || {}).ff_apps;
+    const apps = p.ff_display_apps ?? p.ff_apps ?? ext.ff_apps;
     const appsTxt = apps != null ? ` · ${Number(apps)} PJ` : "";
-    return `<span class="badge badge-duda" title="Media FF y partidos">FF ${Number(ff).toFixed(1)}${appsTxt}</span>`;
+    return `<span class="badge badge-duda" title="Media FF esta temporada">FF ${Number(ff).toFixed(1)}${appsTxt}</span>`;
   };
 
   const signalChips = (p) => {
@@ -434,17 +457,6 @@
       chips.push(
         `<span class="badge badge-titular" title="Rival lo pone a la venta en el mercado (puja, no cláusula)">En venta${escapeHtml(who)}</span>`
       );
-    }
-    if (p.prior_backed || (p.current_sample_thin && (p.ff_prior_avg ?? ext.ff_prior_avg) != null)) {
-      const pa = p.ff_prior_avg ?? ext.ff_prior_avg;
-      const papps = p.ff_prior_apps ?? ext.ff_prior_apps;
-      const paTxt = pa != null ? Number(pa).toFixed(1) : "—";
-      const appsTxt = papps != null ? ` · ${Number(papps)} PJ` : "";
-      chips.push(
-        `<span class="badge badge-duda" title="Muestra actual corta; valor anclado a temporada pasada">Prev ${paTxt}${appsTxt}</span>`
-      );
-    } else if (p.sample_thin || p.current_sample_thin || (p.ff_apps != null && Number(p.ff_apps) < 5)) {
-      chips.push(`<span class="badge badge-baja-ext" title="Pocos partidos FF">Muestra corta</span>`);
     }
     if (p.appreciation_play || (p.categories || []).includes("especulacion_trading")) {
       if (p.appreciation_play || p.trend === "up" || (p.delta_5d != null && Number(p.delta_5d) >= 0.04)) {
@@ -472,9 +484,22 @@
   };
 
   const ffAvgLine = (p) => {
-    const avg = p.ff_mister_avg ?? (p.external && p.external.ff_mister_avg);
+    if (p.ff_no_history || p.ff_display_source === "none") {
+      return `<span class="badge badge-baja-ext" title="Sin historial FF en esta liga">Sin historial FF</span>`;
+    }
+    if (p.ff_display_source === "prior" || p.prior_backed) {
+      const avg = p.ff_display_avg ?? p.ff_prior_avg ?? (p.external && p.external.ff_prior_avg);
+      if (avg == null) return "";
+      const apps = p.ff_display_apps ?? p.ff_prior_apps ?? (p.external && p.external.ff_prior_apps);
+      const appsTxt = apps != null ? ` · ${Number(apps)} PJ` : "";
+      return `<span class="badge badge-duda" title="Referencia temporada pasada">Prev ${Number(avg).toFixed(1)}${appsTxt}</span>`;
+    }
+    if (p.ff_display_source === "thin" || p.current_sample_thin || p.sample_thin) {
+      return `<span class="badge badge-baja-ext" title="Pocos partidos FF esta temporada">Muestra corta</span>`;
+    }
+    const avg = p.ff_display_avg ?? p.ff_mister_avg ?? (p.external && p.external.ff_mister_avg);
     if (avg == null) return "";
-    return `<span class="badge badge-duda">Mister ${Number(avg).toFixed(1)}</span>`;
+    return `<span class="badge badge-duda">FF ${Number(avg).toFixed(1)}</span>`;
   };
 
   const riskBadge = (risk) => {
@@ -1382,6 +1407,7 @@
     const fixed = isFixedMarket(data);
     return {
       buy_now: { label: "Fichar", verb: fixed ? "Ficha a" : "Puja por", cls: "is-buy" },
+      lineup: { label: "Once", verb: "Mete a", cls: "is-buy" },
       clause_bid: { label: "Cláusula", verb: "Ve a por", cls: "is-buy" },
       sell: { label: "Vender", verb: "Vende a", cls: "is-sell" },
       avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
@@ -1501,7 +1527,7 @@
 
   function actionDetailFocusTab(item) {
     if (!item) return "market";
-    if (item.action === "sell") return "squad";
+    if (item.action === "sell" || item.action === "lineup") return "squad";
     if (item.action === "clause_bid" || item.action === "scout") return "radar";
     return "market";
   }
@@ -1845,6 +1871,7 @@
     const fixed = isFixedMarket(data);
     const labels = {
       buy_now: { title: fixed ? "Fichar" : "Pujar", cls: "act-buy" },
+      lineup: { title: "Once", cls: "act-lineup" },
       clause_bid: { title: "Cláusula", cls: "act-clause" },
       sell: { title: "Vender", cls: "act-sell" },
       avoid: { title: "Evitar", cls: "act-avoid" },
@@ -1858,6 +1885,7 @@
       if (role === "secondary") return `<span class="badge badge-titular">2ª línea</span>`;
       if (role === "hedge")
         return `<span class="badge badge-alta">Hedge</span><span class="badge badge-duda">Si ambos → vende</span>`;
+      if (role === "lineup_swap") return `<span class="badge badge-mint">Cambia el once</span>`;
       if (role === "free_slot") return `<span class="badge badge-mint">Abre plaza</span>`;
       if (role === "sell_now") return `<span class="badge badge-titular">Listar ya</span>`;
       if (role === "alt_unfunded") return `<span class="badge badge-baja">Sin caja hedge</span>`;
@@ -1873,6 +1901,7 @@
         ? "No requiere acción — alternativa o sin urgencia de fichaje"
         : "No requiere acción — alternativa o sin urgencia de puja";
       if (a.action === "scout") return "Solo contexto — mirar, no comprar aún";
+      if (a.action === "lineup") return a.package_note || "Cambia el once Mister";
       if (a.action === "avoid") return "No fichar — lesión/sanción u otra alerta";
       return "";
     };
@@ -1942,6 +1971,7 @@
         ? `<p class="queue-funding-hint queue-liquidity-note">${escapeHtml(fp.liquidity_note)}</p>`
         : "";
 
+    const lineupMoves = plan.filter((a) => a.action === "lineup");
     const buyRoles = ["primary", "primary_target", "secondary", "hedge"];
     const slotSells = plan.filter((a) => a.queue_role === "free_slot" && a.action === "sell");
     const packageBuys = plan.filter(
@@ -1956,7 +1986,7 @@
       (a) => a.action === "clause_bid" && a.affordable !== false
     );
     // Haz esto hoy: cupo → pujas → ventas → cláusulas
-    const doToday = [...slotSells, ...packageBuys, ...otherSells, ...clauses];
+    const doToday = [...lineupMoves, ...slotSells, ...packageBuys, ...otherSells, ...clauses];
     const doTodayIds = new Set(
       doToday.map((a) => String(a.player_id || "") + ":" + (a.action || ""))
     );
@@ -1983,7 +2013,11 @@
     const renderItem = (a, rankLabel, opts = {}) => {
       const meta = labels[a.action] || { title: a.action || "Acción", cls: "act-wait" };
       const tab =
-        a.action === "sell" ? "squad" : a.action === "clause_bid" || a.action === "scout" ? "radar" : "market";
+        a.action === "sell" || a.action === "lineup"
+          ? "squad"
+          : a.action === "clause_bid" || a.action === "scout"
+            ? "radar"
+            : "market";
       const rivals = (a.rival_targets || [])
         .map((t) => t.team_name)
         .filter(Boolean)
@@ -2043,11 +2077,6 @@
             : "",
         a.mister_avg != null || a.points != null ? scoringLine(a) : "",
         ffAvgAppsBadge(a),
-        a.prior_backed
-          ? `<span class="badge badge-duda" title="Valor anclado a temporada pasada">Prev</span>`
-          : a.sample_thin || a.current_sample_thin
-            ? `<span class="badge badge-baja-ext">Muestra corta</span>`
-            : "",
         a.value_note
           ? `<span class="badge badge-duda" title="${escapeHtml(a.value_note)}">VM</span>`
           : "",
@@ -2059,11 +2088,11 @@
         .filter(Boolean)
         .join("");
       const muted = Boolean(opts.muted);
-      const topCls = ["primary", "primary_target", "secondary", "hedge", "free_slot", "sell_now"].includes(
+      const topCls = ["primary", "primary_target", "secondary", "hedge", "free_slot", "sell_now", "lineup_swap"].includes(
         a.queue_role
       )
         ? " is-top"
-        : a.action === "sell" || a.action === "buy_now" || a.action === "clause_bid"
+        : a.action === "sell" || a.action === "buy_now" || a.action === "clause_bid" || a.action === "lineup"
           ? " is-top"
           : "";
       const rankDisplay = rankLabel != null ? String(rankLabel) : "·";

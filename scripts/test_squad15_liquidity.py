@@ -13,6 +13,7 @@ from competitive_actions import (  # noqa: E402
     build_sell_opportunities,
     pick_funding_slot,
     promote_funded_swaps,
+    prune_parking_sells_without_buy,
     resolve_liquidity_slots,
     sell_cash_phrase,
     swap_covers,
@@ -303,6 +304,172 @@ def test_promote_swap_buy_now_when_settlement_timely() -> None:
     promote_funded_swaps(plan, balance=3_000_000, hours_to_jornada=120.0, cash_lag_hours=16.0)
     _assert(plan[0]["action"] == "buy_now", "swap a tiempo → buy_now")
     _assert(plan[0].get("swap_funded"), "flag swap_funded")
+
+
+def _gap_df(pid: str = "up1", name: str = "Sangare", cost: float = 1_640_000) -> dict:
+    return {
+        "id": pid,
+        "player_id": pid,
+        "name": name,
+        "position": "DF",
+        "price": cost,
+        "puja_recomendada": cost,
+        "bid": cost,
+        "on_daily_market": True,
+        "seller": "market",
+        "fills_need": True,
+        "fills_coverage_gap": True,
+        "fills_structural": True,
+        "is_upgrade": True,
+        "upgrade_worth_buy": True,
+        "priority_score": 119,
+    }
+
+
+def _patch_df(pid: str = "patch1", name: str = "SangarePatch", cost: float = 1_640_000) -> dict:
+    """Cubre línea fina, pero no es upgrade (FF floja / no mejora el 15)."""
+    return {
+        "id": pid,
+        "player_id": pid,
+        "name": name,
+        "position": "DF",
+        "price": cost,
+        "puja_recomendada": cost,
+        "bid": cost,
+        "on_daily_market": True,
+        "seller": "market",
+        "fills_need": True,
+        "fills_coverage_gap": True,
+        "fills_structural": False,
+        "is_upgrade": False,
+        "upgrade_worth_buy": False,
+        "ff_mister_avg": 2.0,
+        "priority_score": 119,
+    }
+
+
+def test_promote_expensive_bench_pairs_on_market_wait_when_instant() -> None:
+    """Venta de banquillo caro + cobro instantáneo → fichar el hueco que desbloquea."""
+    plan = [
+        {
+            **_gap_df(),
+            "action": "wait",
+            "why": "cubre hueco DF",
+        },
+        {
+            "player_id": "j1",
+            "name": "Jaure",
+            "action": "sell",
+            "sell_reason": "expensive_bench",
+            "price": 2_621_000,
+            "expected_proceeds": 2_621_000,
+            "why": "fuera del once real",
+        },
+    ]
+    promote_funded_swaps(plan, balance=280_000, hours_to_jornada=7.0, cash_lag_hours=0.0)
+    _assert(plan[0]["action"] == "buy_now", plan[0])
+    _assert(plan[0].get("swap_funded"), plan[0])
+    _assert(plan[0].get("funds_from") == "j1", plan[0])
+    _assert(plan[1].get("funds_for") == "up1", plan[1])
+    _assert("sangare" in str(plan[1].get("why") or "").lower(), plan[1].get("why"))
+
+
+def test_coverage_patch_is_not_spend_target_for_bench_sell() -> None:
+    """Sangaré-like: cubre profundidad DF pero no es upgrade → no justifica la venta."""
+    plan = [
+        {**_patch_df(), "action": "wait", "why": "cubre hueco de profundidad"},
+        {
+            "player_id": "j1",
+            "name": "Jaure",
+            "action": "sell",
+            "sell_reason": "expensive_bench",
+            "price": 2_621_000,
+            "expected_proceeds": 2_621_000,
+            "why": "fuera del once real",
+        },
+    ]
+    promote_funded_swaps(plan, balance=280_000, hours_to_jornada=7.0, cash_lag_hours=0.0)
+    _assert(plan[0]["action"] == "wait", plan[0])
+    _assert(not plan[0].get("swap_funded"), plan[0])
+    _assert(not plan[1].get("funds_for"), plan[1])
+
+
+def test_prune_unpaired_expensive_bench_in_fixed() -> None:
+    plan = [
+        {
+            "player_id": "j1",
+            "name": "Jaure",
+            "action": "sell",
+            "sell_reason": "expensive_bench",
+            "price": 2_621_000,
+        }
+    ]
+    out = prune_parking_sells_without_buy(plan, market_mode="fixed")
+    _assert(out == [], out)
+    kept = prune_parking_sells_without_buy(plan, market_mode="auction")
+    _assert(len(kept) == 1, kept)
+
+
+def test_fixed_expensive_bench_needs_on_market_dest() -> None:
+    starters = [_p(f"xi{i}", "MF", 5_000_000, name=f"Tit{i}", ep=55, lineup=85) for i in range(4)]
+    jaure = _p("j1", "MF", 3_200_000, name="Jaure", ep=30, lineup=60)
+    rec_xi = {"xi": [{"player_id": p["id"]} for p in starters + [jaure]]}
+    me = {"squad": starters + [jaure], "balance": 280_000, "rank": 8}
+    diag = {"alerts": [], "by_position": {}}
+    kwargs = dict(
+        me=me,
+        diagnosis=diag,
+        rivals=[],
+        recommended_xi=rec_xi,
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        league_economy={"sale_limit": 5},
+        market_mode="fixed",
+    )
+    none = build_sell_opportunities(**kwargs, market_opportunities=[])
+    _assert(
+        not any(s.get("player_id") == "j1" for s in none if s.get("action") == "sell"),
+        none,
+    )
+    yes = build_sell_opportunities(**kwargs, market_opportunities=[_gap_df()])
+    listed = [s for s in yes if s.get("player_id") == "j1" and s.get("action") == "sell"]
+    _assert(listed, yes)
+    _assert(listed[0].get("funds_for") == "up1", listed[0])
+    auc = build_sell_opportunities(
+        me, diag, [], recommended_xi=rec_xi, market_mode="auction",
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        league_economy={"sale_limit": 5},
+    )
+    _assert(any(s.get("player_id") == "j1" for s in auc if s.get("action") == "sell"), auc)
+
+
+def test_fixed_lineup_swap_skips_expensive_bench_sell() -> None:
+    starters = [_p(f"xi{i}", "MF", 5_000_000, name=f"Tit{i}", ep=55, lineup=85) for i in range(3)]
+    for p in starters:
+        p["in_lineup"] = True
+    jaure = _p("j1", "MF", 3_200_000, name="Jaure", ep=30, lineup=60)
+    jaure["in_lineup"] = True
+    agoume = _p("a1", "MF", 2_500_000, name="Agoume", ep=50, lineup=80)
+    agoume["in_lineup"] = False
+    rec_xi = {"xi": [{"player_id": p["id"]} for p in starters + [jaure]]}
+    me = {"squad": starters + [jaure, agoume], "balance": 280_000, "rank": 8}
+    diag = {"alerts": [], "by_position": {}}
+    kwargs = dict(
+        me=me,
+        diagnosis=diag,
+        rivals=[],
+        recommended_xi=rec_xi,
+        target_board={"primary_targets": [], "moves": {"buy": []}},
+        league_economy={"sale_limit": 5},
+        market_opportunities=[_gap_df()],
+    )
+    fixed = build_sell_opportunities(**kwargs, market_mode="fixed")
+    swaps = [s for s in fixed if s.get("action") == "lineup"]
+    _assert(swaps, fixed)
+    _assert(swaps[0].get("name") == "Agoume", swaps[0])
+    _assert(swaps[0].get("swap_out_name") == "Jaure", swaps[0])
+    _assert(not any(s.get("player_id") == "j1" and s.get("action") == "sell" for s in fixed), fixed)
+    auc = build_sell_opportunities(**kwargs, market_mode="auction")
+    _assert(any(s.get("action") == "lineup" for s in auc), auc)
 
 
 def test_md_no_gw_cash_bonus() -> None:
@@ -682,6 +849,11 @@ if __name__ == "__main__":
     test_low_delta_not_pursued()
     test_sell_opportunities_respect_sale_limit_and_liquidity_reason()
     test_promote_swap_buy_now_when_settlement_timely()
+    test_promote_expensive_bench_pairs_on_market_wait_when_instant()
+    test_coverage_patch_is_not_spend_target_for_bench_sell()
+    test_prune_unpaired_expensive_bench_in_fixed()
+    test_fixed_expensive_bench_needs_on_market_dest()
+    test_fixed_lineup_swap_skips_expensive_bench_sell()
     test_md_no_gw_cash_bonus()
     test_patio_rewards_post_gw_not_today_cash()
     test_prizes_euros_and_salaries_subtract()

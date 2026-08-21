@@ -67,6 +67,7 @@ from competitive_actions import (
     other_gaps_min_cost,
     promote_funded_swaps,
     promote_appreciation_plays,
+    prune_parking_sells_without_buy,
     reconcile_avoid_conflicts,
     resolve_hours_to_jornada,
     rival_demand_for_position,
@@ -89,6 +90,7 @@ from squad_analyzer import (
     apply_realistic_need_caps,
     assess_market_coverage,
     comparable_ff_signal,
+    ff_display_fields,
     is_clear_overstock_upgrade,
     market_value_justification,
     merge_structural_into_diagnosis,
@@ -1099,6 +1101,7 @@ def classify_market_opportunities(
             priority = "Baja"
 
         primary = categories[0]
+        disp = ff_display_fields(p)
         opportunities.append({
             **p,
             "delta_5d": round(delta, 4) if delta is not None else None,
@@ -1129,6 +1132,11 @@ def classify_market_opportunities(
             "sample_thin": sample_thin,
             "current_sample_thin": current_thin,
             "prior_backed": bool(current_thin and prior_ok),
+            "ff_display_source": disp.get("ff_display_source"),
+            "ff_display_avg": disp.get("ff_display_avg"),
+            "ff_display_apps": disp.get("ff_display_apps"),
+            "ff_note": disp.get("ff_note"),
+            "ff_no_history": bool(disp.get("ff_no_history")),
             "value_note": value_note,
             "fills_need": position_needy or fills_structural or fills_coverage_gap,
             "fills_structural": fills_structural,
@@ -1762,7 +1770,10 @@ def build_action_plan(
             why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
         # Muestra actual corta: avisar y anclar a temporada pasada si existe
-        if o.get("current_sample_thin") or (
+        disp = ff_display_fields(o)
+        if disp.get("ff_note"):
+            why_parts.append(disp["ff_note"])
+        elif o.get("current_sample_thin") or (
             o.get("sample_thin")
             and has_ff_signal
             and signal_avg is not None
@@ -1770,12 +1781,7 @@ def build_action_plan(
             and 0 < signal_apps < THIN_APPS
             and not signal_from_prior
         ):
-            if signal_from_prior or o.get("prior_backed"):
-                why_parts.append(
-                    f"Pocos PJ esta temporada ({cur_apps if cur_apps else o.get('ff_apps') or '?'}) — "
-                    f"comparo con temp. pasada ({signal_avg:.1f} · {signal_apps} PJ)"
-                )
-            elif has_ff_signal and signal_avg is not None and signal_avg > 0:
+            if has_ff_signal and signal_avg is not None and signal_avg > 0:
                 why_parts.append(
                     f"Media alta pero pocos partidos ({signal_apps} PJ) — poco fiable"
                 )
@@ -2093,6 +2099,11 @@ def build_action_plan(
             "sample_thin": bool(o.get("sample_thin")),
             "current_sample_thin": bool(o.get("current_sample_thin")),
             "prior_backed": bool(o.get("prior_backed")),
+            "ff_display_source": o.get("ff_display_source"),
+            "ff_display_avg": o.get("ff_display_avg"),
+            "ff_display_apps": o.get("ff_display_apps"),
+            "ff_note": o.get("ff_note"),
+            "ff_no_history": bool(o.get("ff_no_history")),
             "value_note": o.get("value_note"),
             "ff_prior_avg": o.get("ff_prior_avg") or (o.get("external") or {}).get("ff_prior_avg"),
             "ff_prior_apps": o.get("ff_prior_apps") or (o.get("external") or {}).get("ff_prior_apps"),
@@ -2164,9 +2175,14 @@ def build_action_plan(
                 wait_bits.append("no cubre carencia urgente")
             if rating is not None and float(rating) < 6.2:
                 wait_bits.append(f"nota baja ({rating})")
-            ff = o.get("ff_mister_avg")
-            if ff is not None:
-                wait_bits.append(f"FF media {float(ff):.1f}")
+            ff_disp = ff_display_fields(o)
+            if ff_disp.get("ff_note"):
+                if ff_disp["ff_note"] not in wait_bits:
+                    wait_bits.append(ff_disp["ff_note"])
+            else:
+                ff = o.get("ff_mister_avg")
+                if ff is not None:
+                    wait_bits.append(f"FF media {float(ff):.1f}")
             if bf == "blocked":
                 if solvency_blocked:
                     wait_bits.append(
@@ -2251,6 +2267,7 @@ def build_action_plan(
         hours_to_jornada=hours_resolved,
         cash_lag_hours=cash_lag,
     )
+    plan = prune_parking_sells_without_buy(plan, market_mode=market_mode)
 
     # Cláusulas / scout rivales (solo auction)
     if not fixed:

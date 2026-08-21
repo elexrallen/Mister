@@ -1348,6 +1348,7 @@ button.player-link:hover {
 }
 
 .queue-item.act-buy .queue-action { color: #4ade80; }
+.queue-item.act-lineup .queue-action { color: #86efac; }
 .queue-item.act-clause .queue-action { color: #5eead4; }
 .queue-item.act-sell .queue-action { color: #fb923c; }
 .queue-item.act-avoid .queue-action { color: #fb7185; }
@@ -1355,6 +1356,7 @@ button.player-link:hover {
 .queue-item.act-scout .queue-action { color: #fbbf24; }
 
 .queue-item.act-buy { border-color: rgba(74, 222, 128, 0.22); }
+.queue-item.act-lineup { border-color: rgba(134, 239, 172, 0.28); }
 .queue-item.act-clause { border-color: rgba(45, 212, 191, 0.28); }
 .queue-item.act-sell { border-color: rgba(249, 115, 22, 0.28); }
 .queue-item.act-avoid { border-color: rgba(244, 63, 94, 0.28); }
@@ -2617,6 +2619,7 @@ body {
 }
 
 .queue-item.act-buy .queue-action,
+.queue-item.act-lineup .queue-action,
 .queue-item.act-clause .queue-action { color: var(--acid); }
 .queue-item.act-sell .queue-action { color: #ffad38; }
 .queue-item.act-avoid .queue-action { color: #ff6683; }

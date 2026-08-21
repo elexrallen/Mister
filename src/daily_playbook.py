@@ -168,6 +168,24 @@ def build_daily_playbook(
     buys = [a for a in plan if a.get("action") in ("buy_now", "clause_bid")]
     sells = [a for a in plan if a.get("action") == "sell"]
     avoid = [a for a in plan if a.get("action") == "avoid"]
+    lineup_swaps = [a for a in plan if a.get("action") == "lineup"]
+
+    if lineup_swaps:
+        bits = []
+        related = []
+        for a in lineup_swaps[:3]:
+            inn = a.get("name") or "titular"
+            outn = a.get("swap_out_name") or "el del once"
+            bits.append(f"mete a {inn}, saca a {outn}")
+            related.append(a.get("player_id"))
+            related.append(a.get("swap_out_id"))
+        add(
+            "lineup_swap",
+            "Cambia el once Mister",
+            f"{'; '.join(bits)}. Titular real en plantilla fuera del once: no hace falta vender.",
+            priority="Alta",
+            related=related,
+        )
 
     # --- Once y capitán: lo único que puntúa ---
     summary = xi.get("summary") or {}

@@ -414,6 +414,116 @@ def test_no_do_not_stack_role() -> None:
     _assert(not any(a.get("queue_role") == "do_not_stack" for a in capped), capped)
 
 
+def test_fixed_swap_buy_stays_funded_and_sell_comes_first() -> None:
+    buy = _buy("1", "Sangare", "DF", 1_640_000, fills_need=True, priority=119)
+    buy["budget_fit"] = "funding"
+    buy["swap_funded"] = True
+    buy["funds_from"] = "s1"
+    buy["funds_from_name"] = "Jaure"
+    plan = [
+        buy,
+        {
+            "player_id": "s1",
+            "name": "Jaure",
+            "position": "MF",
+            "action": "sell",
+            "sell_reason": "expensive_bench",
+            "price": 2_621_000,
+            "expected_proceeds": 2_621_000,
+            "funds_for": "1",
+            "funds_for_name": "Sangare",
+            "priority_score": 67,
+            "xi_impact": "safe",
+            "urgency": "high",
+            "why": "fuera del once real",
+        },
+        {
+            "player_id": "w1",
+            "name": "Candidato",
+            "position": "FW",
+            "action": "wait",
+            "on_daily_market": True,
+            "seller": "market",
+            "fills_need": True,
+            "budget_fit": "stretch",
+            "target_tier": "realistic",
+            "priority_score": 20,
+            "why": "otro hueco",
+        },
+    ]
+    capped, _pkg = _finalize(plan, balance=280_000, market_mode="fixed")
+    buys = [a for a in capped if a.get("action") == "buy_now"]
+    _assert(any(a.get("name") == "Sangare" for a in buys), buys)
+    actionable = [
+        a.get("name")
+        for a in capped
+        if a.get("action") in ("sell", "buy_now")
+        and a.get("queue_role")
+        in ("sell_now", "primary", "primary_target", "secondary", "free_slot")
+    ]
+    _assert("Jaure" in actionable and "Sangare" in actionable, actionable)
+    _assert(actionable.index("Jaure") < actionable.index("Sangare"), actionable)
+
+
+def test_fixed_wait_with_only_sell_does_not_claim_signings() -> None:
+    plan = [
+        {
+            "player_id": "s1",
+            "name": "Venta",
+            "position": "MF",
+            "action": "sell",
+            "price": 3_000_000,
+            "sell_reason": "form_drop",
+            "priority_score": 40,
+        },
+        {
+            "player_id": "w1",
+            "name": "Candidato",
+            "position": "DF",
+            "action": "wait",
+            "on_daily_market": True,
+            "seller": "market",
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "tight",
+            "target_tier": "realistic",
+            "priority_score": 50,
+            "why": "cubre hueco DF",
+        },
+    ]
+    capped, _pkg = _finalize(plan, balance=500_000, market_mode="fixed")
+    buys = [a for a in capped if a.get("action") == "buy_now"]
+    _assert(not buys, buys)
+    waits = [a for a in capped if a.get("name") == "Candidato"]
+    _assert(waits, capped)
+    blob = f"{waits[0].get('why') or ''} {waits[0].get('package_note') or ''}".lower()
+    _assert("fichajes priorizados" not in blob, blob)
+    _assert("no pujar" not in blob, blob)
+    _assert("no fichar" in blob, blob)
+    _assert("ventas" in blob, blob)
+
+
+def test_lineup_swap_stays_in_today_queue() -> None:
+    plan = [
+        {
+            "player_id": "a1",
+            "name": "Agoume",
+            "position": "MF",
+            "action": "lineup",
+            "queue_role": "lineup_swap",
+            "swap_out_id": "j1",
+            "swap_out_name": "Jaure",
+            "priority_score": 80,
+            "why": "Mete a Agoume y saca a Jaure",
+        }
+    ]
+    capped, _pkg = _finalize(plan, balance=280_000, market_mode="fixed")
+    moves = [a for a in capped if a.get("action") == "lineup"]
+    _assert(len(moves) == 1, capped)
+    _assert(moves[0].get("queue_role") == "lineup_swap", moves[0])
+    _assert("Agoume" in (moves[0].get("package_note") or ""), moves[0])
+
+
 def main() -> None:
     tests = [
         test_2_plus_2_wide_cash,
@@ -435,6 +545,9 @@ def main() -> None:
         test_tight_cash_does_not_overspend,
         test_buy_cap_eight_not_two,
         test_no_do_not_stack_role,
+        test_fixed_swap_buy_stays_funded_and_sell_comes_first,
+        test_fixed_wait_with_only_sell_does_not_claim_signings,
+        test_lineup_swap_stays_in_today_queue,
     ]
     failed = 0
     for t in tests:

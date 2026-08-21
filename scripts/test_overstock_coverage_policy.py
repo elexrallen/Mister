@@ -19,6 +19,7 @@ from competitive_actions import (  # noqa: E402
 from external_data import _merge_source_records  # noqa: E402
 from squad_analyzer import (  # noqa: E402
     assess_market_coverage,
+    ff_display_fields,
     is_clear_overstock_upgrade,
     is_line_overstocked,
     upgrade_worth_buy,
@@ -165,6 +166,8 @@ def test_overstock_df_expensive_not_gap() -> None:
         "lineup_prob": 0.95,
         "production_score": 70,
         "is_top_ff": True,
+        "ff_apps": 20,
+        "ff_mister_avg": 6.8,
     }
     cov = assess_market_coverage(cand, diag, squad=squad)
     assert cov["overstocked"] is True, cov
@@ -447,6 +450,8 @@ def test_upgrade_mediocre_not_worth_buy() -> None:
         "lineup_prob": 0.75,
         "production_score": 40,
         "is_top_ff": False,
+        "ff_apps": 20,
+        "ff_mister_avg": 4.5,
     }
     cov = assess_market_coverage(cand, diag, squad=squad)
     assert cov.get("is_upgrade") is True, cov
@@ -606,6 +611,43 @@ def test_upgrade_elite_crowds_out_not_worth() -> None:
     assert "df_up" in ids, ids
 
 
+def test_ff_display_prior_when_current_thin() -> None:
+    p = {
+        "ff_mister_avg": 2.0,
+        "ff_apps": 1,
+        "ff_prior_avg": 2.25,
+        "ff_prior_apps": 12,
+    }
+    d = ff_display_fields(p)
+    assert d["ff_display_source"] == "prior", d
+    assert d["ff_display_avg"] == 2.25, d
+    assert "aún no comparable" in (d.get("ff_note") or ""), d
+    assert "2.2" in (d.get("ff_note") or ""), d
+    assert d["ff_no_history"] is False, d
+
+
+def test_ff_display_no_history() -> None:
+    d = ff_display_fields({"ff_apps": 0, "ff_mister_avg": None})
+    assert d["ff_no_history"] is True, d
+    assert d["ff_display_source"] == "none", d
+    assert "titularidad" in (d.get("ff_note") or "").lower(), d
+
+
+def test_no_upgrade_without_ff_history() -> None:
+    foreign = {"position": "MF", "lineup_prob": 0.9, "ff_apps": 0}
+    squad = [
+        {
+            "position": "MF",
+            "lineup_prob": 0.70,
+            "production_score": 40,
+            "ff_apps": 20,
+            "ff_mister_avg": 5.0,
+        }
+    ]
+    cov = assess_market_coverage(foreign, {"by_position": {}}, squad=squad)
+    assert cov["is_upgrade"] is False, cov
+
+
 def main() -> None:
     tests = [
         test_overstock_df_expensive_not_gap,
@@ -618,6 +660,9 @@ def main() -> None:
         test_upgrade_mediocre_not_worth_buy,
         test_upgrade_elite_worth_buy_when_residual_ok,
         test_upgrade_elite_crowds_out_not_worth,
+        test_ff_display_prior_when_current_thin,
+        test_ff_display_no_history,
+        test_no_upgrade_without_ff_history,
     ]
     failed = 0
     for fn in tests:

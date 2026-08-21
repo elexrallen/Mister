@@ -292,6 +292,52 @@ def lacks_comparable_sample(p: dict[str, Any]) -> bool:
     return not bool(comparable_ff_signal(p).get("usable"))
 
 
+def ff_display_fields(p: dict[str, Any]) -> dict[str, Any]:
+    """
+    Qué media enseñar: actual si ≥ THIN_APPS; si no, temporada pasada;
+    si no hay historial en este scoring, solo titularidad.
+    """
+    sig = comparable_ff_signal(p)
+    cur_apps = _current_ff_apps(p)
+    if sig.get("source") == "current":
+        return {
+            "ff_display_source": "current",
+            "ff_display_avg": sig.get("avg"),
+            "ff_display_apps": sig.get("apps"),
+            "ff_note": None,
+            "ff_no_history": False,
+        }
+    if sig.get("source") == "prior":
+        avg = sig.get("avg")
+        apps = int(sig.get("apps") or 0)
+        n_cur = int(cur_apps or 0)
+        return {
+            "ff_display_source": "prior",
+            "ff_display_avg": avg,
+            "ff_display_apps": apps,
+            "ff_note": (
+                f"esta temporada {n_cur} PJ (aún no comparable); "
+                f"referencia temp. pasada {float(avg):.1f} · {apps} PJ"
+            ),
+            "ff_no_history": False,
+        }
+    if cur_apps > 0:
+        return {
+            "ff_display_source": "thin",
+            "ff_display_avg": None,
+            "ff_display_apps": cur_apps,
+            "ff_note": f"esta temporada {cur_apps} PJ (aún no comparable)",
+            "ff_no_history": False,
+        }
+    return {
+        "ff_display_source": "none",
+        "ff_display_avg": None,
+        "ff_display_apps": None,
+        "ff_note": "Sin historial FF en esta liga — solo titularidad",
+        "ff_no_history": True,
+    }
+
+
 def _sample_thin(p: dict[str, Any]) -> bool:
     """True si la temporada actual tiene PJ pero < THIN_APPS (media engañosa sola)."""
     if p.get("sample_thin") is True:
@@ -690,6 +736,9 @@ def assess_market_coverage(
             and not lacks_comparable_sample(player)
         ):
             is_upgrade = True
+
+    if is_upgrade and lacks_comparable_sample(player):
+        is_upgrade = False
 
     label = None
     if label_override:
