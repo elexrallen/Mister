@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-22T08:00:07.925246+00:00",
+  "generated_at": "2026-08-22T12:16:51.943343+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 77 · 11,680,500 € · buy · starter",
-      "added_at": "2026-08-22T08:00:07.795973+00:00"
+      "added_at": "2026-08-22T12:16:51.813909+00:00"
     },
     {
       "slot": "DF3",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 67 · 2,053,500 € · buy · starter",
-      "added_at": "2026-08-22T08:00:07.788051+00:00"
+      "added_at": "2026-08-22T12:16:51.806036+00:00"
     },
     {
       "slot": "DF4",

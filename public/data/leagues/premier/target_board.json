@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-22T07:58:10.129103+00:00",
+  "generated_at": "2026-08-22T12:14:21.086141+00:00",
   "league_slug": "premier",
   "market_mode": "fixed",
   "mode_default": "operable",
@@ -21,25 +21,9 @@
         "MF": 3,
         "FW": 2
       },
-      "ep_sum_starters": 454.9,
-      "ep_sum": 543.6,
-      "cost_sum": 66960000.0,
-      "starters": 10,
-      "starters_target": 11,
-      "complete": false
-    },
-    {
-      "formation": "5-4-1",
-      "formation_raw": "5-4-1",
-      "shape": {
-        "GK": 1,
-        "DF": 5,
-        "MF": 4,
-        "FW": 1
-      },
-      "ep_sum_starters": 451.0,
-      "ep_sum": 612.1,
-      "cost_sum": 66133000.0,
+      "ep_sum_starters": 427.7,
+      "ep_sum": 543.0,
+      "cost_sum": 66954000.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -53,9 +37,9 @@
         "MF": 5,
         "FW": 1
       },
-      "ep_sum_starters": 425.4,
-      "ep_sum": 540.7,
-      "cost_sum": 67017000.0,
+      "ep_sum_starters": 425.8,
+      "ep_sum": 474.0,
+      "cost_sum": 65549000.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -69,9 +53,25 @@
         "MF": 4,
         "FW": 2
       },
-      "ep_sum_starters": 424.8,
-      "ep_sum": 433.0,
-      "cost_sum": 65936000.0,
+      "ep_sum_starters": 424.4,
+      "ep_sum": 472.6,
+      "cost_sum": 65342000.0,
+      "starters": 10,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
+      "formation": "5-4-1",
+      "formation_raw": "5-4-1",
+      "shape": {
+        "GK": 1,
+        "DF": 5,
+        "MF": 4,
+        "FW": 1
+      },
+      "ep_sum_starters": 423.8,
+      "ep_sum": 584.9,
+      "cost_sum": 63325000.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -85,9 +85,9 @@
         "MF": 3,
         "FW": 3
       },
-      "ep_sum_starters": 387.8,
-      "ep_sum": 543.6,
-      "cost_sum": 66960000.0,
+      "ep_sum_starters": 387.4,
+      "ep_sum": 548.5,
+      "cost_sum": 66379000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -101,9 +101,9 @@
         "MF": 5,
         "FW": 2
       },
-      "ep_sum_starters": 385.1,
-      "ep_sum": 546.2,
-      "cost_sum": 66442000.0,
+      "ep_sum_starters": 386.0,
+      "ep_sum": 501.3,
+      "cost_sum": 65789000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -117,9 +117,9 @@
         "MF": 4,
         "FW": 3
       },
-      "ep_sum_starters": 384.5,
-      "ep_sum": 459.8,
-      "cost_sum": 66139000.0,
+      "ep_sum_starters": 384.6,
+      "ep_sum": 499.9,
+      "cost_sum": 65582000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -143,17 +143,17 @@
       "complete": false
     },
     {
-      "formation": "5-3-2",
-      "formation_raw": "5-3-2",
+      "formation": "4-5-1",
+      "formation_raw": "4-5-1",
       "shape": {
         "GK": 1,
-        "DF": 5,
-        "MF": 3,
-        "FW": 2
+        "DF": 4,
+        "MF": 5,
+        "FW": 1
       },
-      "ep_sum_starters": 454.9,
-      "ep_sum": 543.6,
-      "cost_sum": 66960000.0,
+      "ep_sum_starters": 453.1,
+      "ep_sum": 501.3,
+      "cost_sum": 65789000.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
@@ -167,42 +167,26 @@
         "MF": 4,
         "FW": 2
       },
-      "ep_sum_starters": 452.9,
-      "ep_sum": 461.1,
-      "cost_sum": 66553000.0,
+      "ep_sum_starters": 451.7,
+      "ep_sum": 499.9,
+      "cost_sum": 65582000.0,
       "starters": 10,
       "starters_target": 11,
       "complete": false
     },
     {
-      "formation": "4-5-1",
-      "formation_raw": "4-5-1",
+      "formation": "5-3-2",
+      "formation_raw": "5-3-2",
       "shape": {
         "GK": 1,
-        "DF": 4,
-        "MF": 5,
-        "FW": 1
-      },
-      "ep_sum_starters": 425.4,
-      "ep_sum": 540.7,
-      "cost_sum": 67017000.0,
-      "starters": 10,
-      "starters_target": 11,
-      "complete": false
-    },
-    {
-      "formation": "3-5-2",
-      "formation_raw": "3-5-2",
-      "shape": {
-        "GK": 1,
-        "DF": 3,
-        "MF": 5,
+        "DF": 5,
+        "MF": 3,
         "FW": 2
       },
-      "ep_sum_starters": 417.7,
-      "ep_sum": 573.5,
-      "cost_sum": 66682000.0,
-      "starters": 9,
+      "ep_sum_starters": 427.7,
+      "ep_sum": 543.0,
+      "cost_sum": 66954000.0,
+      "starters": 10,
       "starters_target": 11,
       "complete": false
     },
@@ -215,9 +199,25 @@
         "MF": 3,
         "FW": 3
       },
-      "ep_sum_starters": 387.8,
-      "ep_sum": 543.6,
-      "cost_sum": 66960000.0,
+      "ep_sum_starters": 420.0,
+      "ep_sum": 575.8,
+      "cost_sum": 66619000.0,
+      "starters": 9,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
+      "formation": "3-5-2",
+      "formation_raw": "3-5-2",
+      "shape": {
+        "GK": 1,
+        "DF": 3,
+        "MF": 5,
+        "FW": 2
+      },
+      "ep_sum_starters": 386.0,
+      "ep_sum": 501.3,
+      "cost_sum": 65789000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
@@ -231,19 +231,19 @@
         "MF": 4,
         "FW": 3
       },
-      "ep_sum_starters": 385.8,
-      "ep_sum": 461.1,
-      "cost_sum": 66553000.0,
+      "ep_sum_starters": 384.6,
+      "ep_sum": 499.9,
+      "cost_sum": 65582000.0,
       "starters": 9,
       "starters_target": 11,
       "complete": false
     }
   ],
-  "balance": 2324000.0,
-  "squad_value": 64703000.0,
+  "balance": 243000.0,
+  "squad_value": 66784000.0,
   "wealth": {
-    "balance": 2324000.0,
-    "squad_value": 64703000.0,
+    "balance": 243000.0,
+    "squad_value": 66784000.0,
     "total": 67027000.0,
     "liquidity_floor": 0.0,
     "budget_cap": 67027000.0
@@ -252,7 +252,7 @@
     "budget_cap": 67027000.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
-  "ideal_buy_cost": 57993000.0,
+  "ideal_buy_cost": 57987000.0,
   "perfect_squad": [
     {
       "slot": "GK1",
@@ -306,30 +306,6 @@
       "slot": "DF1",
       "position": "DF",
       "role": "starter",
-      "player_id": "63706",
-      "name": "Adrien Truffert",
-      "team": "Bournemouth",
-      "team_id": "52",
-      "ep_score": 67.1,
-      "price": 5232000.0,
-      "status": "buy",
-      "delta_5d": -0.0518,
-      "value_note": "falling",
-      "value_ratio": 12.82,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 276.9,
-      "ff_mister_avg": 7.1,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 67 · 5,232,000 € · buy · starter · Δ -5%",
-      "added_at": "2026-08-20T21:51:59.539605+00:00"
-    },
-    {
-      "slot": "DF2",
-      "position": "DF",
-      "role": "starter",
       "player_id": "22481",
       "name": "T. Mitchell",
       "team": "Crystal",
@@ -351,7 +327,7 @@
       "added_at": "2026-08-16T01:08:06.693002+00:00"
     },
     {
-      "slot": "DF3",
+      "slot": "DF2",
       "position": "DF",
       "role": "starter",
       "player_id": "18009",
@@ -375,7 +351,7 @@
       "added_at": "2026-08-16T01:08:06.691660+00:00"
     },
     {
-      "slot": "DF4",
+      "slot": "DF3",
       "position": "DF",
       "role": "starter",
       "player_id": "59761",
@@ -397,6 +373,30 @@
       "gk_tandem": false,
       "why": "EP 40 · 5,029,000 € · buy · starter · Δ -2%",
       "added_at": "2026-08-21T20:15:32.814102+00:00"
+    },
+    {
+      "slot": "DF4",
+      "position": "DF",
+      "role": "starter",
+      "player_id": "54945",
+      "name": "Malo Gusto",
+      "team": "Chelsea",
+      "team_id": "54",
+      "ep_score": 39.9,
+      "price": 2424000.0,
+      "status": "buy",
+      "delta_5d": 0.137,
+      "value_note": "rising",
+      "value_ratio": 16.46,
+      "lineup_prob": 89.0,
+      "ff_mister_points": 174.1,
+      "ff_mister_avg": 5.12,
+      "hist_ok": false,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 40 · 2,424,000 € · buy · starter · Δ 14%",
+      "added_at": "2026-08-22T12:14:20.916055+00:00"
     },
     {
       "slot": "DF5",
@@ -421,6 +421,30 @@
       "gk_tandem": false,
       "why": "EP 40 · 4,992,000 € · buy · starter · Δ -4%",
       "added_at": "2026-08-18T11:30:39.595269+00:00"
+    },
+    {
+      "slot": "DF6",
+      "position": "DF",
+      "role": "bench",
+      "player_id": "63706",
+      "name": "Adrien Truffert",
+      "team": "Bournemouth",
+      "team_id": "52",
+      "ep_score": 67.1,
+      "price": 5232000.0,
+      "status": "buy",
+      "delta_5d": -0.0518,
+      "value_note": "falling",
+      "value_ratio": 12.82,
+      "lineup_prob": 100.0,
+      "ff_mister_points": 276.9,
+      "ff_mister_avg": 7.1,
+      "hist_ok": false,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 67 · 5,232,000 € · buy · bench · Δ -5%",
+      "added_at": "2026-08-20T21:51:59.539605+00:00"
     },
     {
       "slot": "MF1",
@@ -541,30 +565,6 @@
       "gk_tandem": false,
       "why": "EP 41 · 16,732,000 € · buy · starter · Δ -1%",
       "added_at": "2026-08-20T21:51:59.534037+00:00"
-    },
-    {
-      "slot": "FW2",
-      "position": "FW",
-      "role": "bench",
-      "player_id": "52112",
-      "name": "Dango Ouattara",
-      "team": "Brentford",
-      "team_id": "619",
-      "ep_score": 40.5,
-      "price": 2430000.0,
-      "status": "buy",
-      "delta_5d": 0.1544,
-      "value_note": "rising",
-      "value_ratio": 16.67,
-      "lineup_prob": 84.0,
-      "ff_mister_points": 205.1,
-      "ff_mister_avg": 6.41,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 40 · 2,430,000 € · buy · bench · Δ 15%",
-      "added_at": "2026-08-22T06:57:51.997067+00:00"
     }
   ],
   "perfect_squad_aspirational": [
@@ -638,7 +638,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 72 · 7,256,000 € · keep · starter · Δ -2%",
-      "added_at": "2026-08-22T07:58:10.119705+00:00"
+      "added_at": "2026-08-22T12:14:21.074081+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 41 · 5,406,000 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-22T07:58:10.121893+00:00"
+      "added_at": "2026-08-22T12:14:21.077928+00:00"
     },
     {
       "slot": "DF5",
@@ -854,7 +854,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 8,649,000 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-22T07:58:10.118883+00:00"
+      "added_at": "2026-08-22T12:14:21.073274+00:00"
     },
     {
       "slot": "MF5",
@@ -908,7 +908,7 @@
   "moves": {
     "keep": [
       {
-        "slot": "DF2",
+        "slot": "DF1",
         "position": "DF",
         "role": "starter",
         "player_id": "22481",
@@ -1030,31 +1030,7 @@
         "added_at": "2026-08-16T01:08:06.701808+00:00"
       },
       {
-        "slot": "DF1",
-        "position": "DF",
-        "role": "starter",
-        "player_id": "63706",
-        "name": "Adrien Truffert",
-        "team": "Bournemouth",
-        "team_id": "52",
-        "ep_score": 67.1,
-        "price": 5232000.0,
-        "status": "buy",
-        "delta_5d": -0.0518,
-        "value_note": "falling",
-        "value_ratio": 12.82,
-        "lineup_prob": 100.0,
-        "ff_mister_points": 276.9,
-        "ff_mister_avg": 7.1,
-        "hist_ok": false,
-        "on_daily_market": false,
-        "owned": false,
-        "gk_tandem": false,
-        "why": "EP 67 · 5,232,000 € · buy · starter · Δ -5%",
-        "added_at": "2026-08-20T21:51:59.539605+00:00"
-      },
-      {
-        "slot": "DF3",
+        "slot": "DF2",
         "position": "DF",
         "role": "starter",
         "player_id": "18009",
@@ -1078,7 +1054,7 @@
         "added_at": "2026-08-16T01:08:06.691660+00:00"
       },
       {
-        "slot": "DF4",
+        "slot": "DF3",
         "position": "DF",
         "role": "starter",
         "player_id": "59761",
@@ -1100,6 +1076,30 @@
         "gk_tandem": false,
         "why": "EP 40 · 5,029,000 € · buy · starter · Δ -2%",
         "added_at": "2026-08-21T20:15:32.814102+00:00"
+      },
+      {
+        "slot": "DF4",
+        "position": "DF",
+        "role": "starter",
+        "player_id": "54945",
+        "name": "Malo Gusto",
+        "team": "Chelsea",
+        "team_id": "54",
+        "ep_score": 39.9,
+        "price": 2424000.0,
+        "status": "buy",
+        "delta_5d": 0.137,
+        "value_note": "rising",
+        "value_ratio": 16.46,
+        "lineup_prob": 89.0,
+        "ff_mister_points": 174.1,
+        "ff_mister_avg": 5.12,
+        "hist_ok": false,
+        "on_daily_market": false,
+        "owned": false,
+        "gk_tandem": false,
+        "why": "EP 40 · 2,424,000 € · buy · starter · Δ 14%",
+        "added_at": "2026-08-22T12:14:20.916055+00:00"
       },
       {
         "slot": "DF5",
@@ -1124,6 +1124,30 @@
         "gk_tandem": false,
         "why": "EP 40 · 4,992,000 € · buy · starter · Δ -4%",
         "added_at": "2026-08-18T11:30:39.595269+00:00"
+      },
+      {
+        "slot": "DF6",
+        "position": "DF",
+        "role": "bench",
+        "player_id": "63706",
+        "name": "Adrien Truffert",
+        "team": "Bournemouth",
+        "team_id": "52",
+        "ep_score": 67.1,
+        "price": 5232000.0,
+        "status": "buy",
+        "delta_5d": -0.0518,
+        "value_note": "falling",
+        "value_ratio": 12.82,
+        "lineup_prob": 100.0,
+        "ff_mister_points": 276.9,
+        "ff_mister_avg": 7.1,
+        "hist_ok": false,
+        "on_daily_market": false,
+        "owned": false,
+        "gk_tandem": false,
+        "why": "EP 67 · 5,232,000 € · buy · bench · Δ -5%",
+        "added_at": "2026-08-20T21:51:59.539605+00:00"
       },
       {
         "slot": "MF1",
@@ -1196,30 +1220,6 @@
         "gk_tandem": false,
         "why": "EP 41 · 16,732,000 € · buy · starter · Δ -1%",
         "added_at": "2026-08-20T21:51:59.534037+00:00"
-      },
-      {
-        "slot": "FW2",
-        "position": "FW",
-        "role": "bench",
-        "player_id": "52112",
-        "name": "Dango Ouattara",
-        "team": "Brentford",
-        "team_id": "619",
-        "ep_score": 40.5,
-        "price": 2430000.0,
-        "status": "buy",
-        "delta_5d": 0.1544,
-        "value_note": "rising",
-        "value_ratio": 16.67,
-        "lineup_prob": 84.0,
-        "ff_mister_points": 205.1,
-        "ff_mister_avg": 6.41,
-        "hist_ok": false,
-        "on_daily_market": false,
-        "owned": false,
-        "gk_tandem": false,
-        "why": "EP 40 · 2,430,000 € · buy · bench · Δ 15%",
-        "added_at": "2026-08-22T06:57:51.997067+00:00"
       }
     ],
     "sell": [
@@ -1307,13 +1307,77 @@
         "player_id": "15346",
         "name": "B. Saka",
         "position": "FW",
-        "ep_score": 48.5,
+        "ep_score": 46.9,
         "price": 19264000.0,
         "delta_5d": -1.0,
         "value_note": "falling",
-        "why": "Fuera del ideal · EP 48 · lista a ~19,264,000 € (VM); caja usable en ~48h · Δ -100%",
+        "why": "Fuera del ideal · EP 47 · lista a ~19,264,000 € (VM); caja usable en ~48h · Δ -100%",
         "list_at": 19264000.0,
         "expected_proceeds": 19264000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
+      },
+      {
+        "player_id": "71063",
+        "name": "M. Cissé",
+        "position": "DF",
+        "ep_score": 0.0,
+        "price": 188000.0,
+        "delta_5d": -0.0408,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 0 · lista a ~188,000 € (VM); caja usable en ~48h · Δ -4%",
+        "list_at": 188000.0,
+        "expected_proceeds": 188000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
+      },
+      {
+        "player_id": "68467",
+        "name": "B. Madjo",
+        "position": "FW",
+        "ep_score": 0.0,
+        "price": 184000.0,
+        "delta_5d": 0.0888,
+        "value_note": "rising",
+        "why": "Fuera del ideal · EP 0 · lista a ~184,000 € (VM); caja usable en ~48h · Δ 9%",
+        "list_at": 184000.0,
+        "expected_proceeds": 184000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
+      },
+      {
+        "player_id": "65729",
+        "name": "D. Bakwa",
+        "position": "FW",
+        "ep_score": 14.9,
+        "price": 185000.0,
+        "delta_5d": 0.0511,
+        "value_note": "rising",
+        "why": "Fuera del ideal · EP 15 · lista a ~185,000 € (VM); caja usable en ~48h · Δ 5%",
+        "list_at": 185000.0,
+        "expected_proceeds": 185000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 48.0
+      },
+      {
+        "player_id": "22739",
+        "name": "P. Struijk",
+        "position": "DF",
+        "ep_score": 38.4,
+        "price": 1524000.0,
+        "delta_5d": 0.102,
+        "value_note": "rising",
+        "why": "Fuera del ideal · EP 38 · lista a ~1,524,000 € (VM); caja usable en ~48h · Δ 10%",
+        "list_at": 1524000.0,
+        "expected_proceeds": 1524000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
@@ -1386,17 +1450,17 @@
     ]
   },
   "totals": {
-    "ep_sum": 543.6,
-    "ep_sum_starters": 454.9,
-    "cost_sum": 66960000.0,
-    "net_buys": 57993000.0,
+    "ep_sum": 543.0,
+    "ep_sum_starters": 427.7,
+    "cost_sum": 66954000.0,
+    "net_buys": 57987000.0,
     "slots_filled": 13,
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
     "funded_ideal": true,
     "formation": "5-3-2",
-    "ideal_buy_cost": 57993000.0,
+    "ideal_buy_cost": 57987000.0,
     "daily_primary_count": 0
   },
   "totals_aspirational": {
@@ -1411,7 +1475,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 2324000.0,
+  "residual_after_reserve": 243000.0,
   "primary_targets": [],
   "aspirational_targets": [
     {
@@ -1433,13 +1497,49 @@
       "role": "starter",
       "status": "buy",
       "need": "perfect_squad_aspirational"
+    },
+    {
+      "player_id": "52112",
+      "name": "Dango Ouattara",
+      "position": "FW",
+      "price": 2430000.0,
+      "ep_score": 40.5,
+      "role": "bench",
+      "status": "buy",
+      "need": "perfect_squad_aspirational"
     }
   ],
   "slots": [],
-  "dropped": [],
+  "dropped": [
+    {
+      "slot": "FW2",
+      "position": "FW",
+      "role": "bench",
+      "player_id": "52112",
+      "name": "Dango Ouattara",
+      "team": "Brentford",
+      "team_id": "619",
+      "ep_score": 40.5,
+      "price": 2430000.0,
+      "status": "dropped",
+      "delta_5d": 0.1544,
+      "value_note": "rising",
+      "value_ratio": 16.67,
+      "lineup_prob": 84.0,
+      "ff_mister_points": 205.1,
+      "ff_mister_avg": 6.41,
+      "hist_ok": false,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "why": "EP 40 · 2,430,000 € · buy · bench · Δ 15%",
+      "added_at": "2026-08-22T06:57:51.997067+00:00",
+      "miss_days": 1
+    }
+  ],
   "patch_policy": {
     "allow": false,
-    "max_spend": 2324000.0
+    "max_spend": 243000.0
   },
   "summary": {
     "slots": 13,
@@ -1450,12 +1550,12 @@
     "incomplete": true,
     "keep": 3,
     "buy": 10,
-    "sell": 10,
+    "sell": 14,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 543.6,
-    "ep_sum_starters": 454.9,
+    "ep_sum": 543.0,
+    "ep_sum_starters": 427.7,
     "mode": "operable",
     "formation": "5-3-2",
     "xi_rule": "formación 5-3-2 · titulares ≥70% + hist · oportunidad EP/€",
