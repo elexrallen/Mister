@@ -1,0 +1,17 @@
+{
+  "name": "Mister Fantasy Advisor",
+  "install": "sudo apt-get update && sudo apt-get install -y python3.12-venv && python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install -r requirements.txt",
+  "terminals": [
+    {
+      "name": "web",
+      "command": "cd public && ../.venv/bin/python -m http.server 8080",
+      "description": "Servidor estatico del dashboard/PWA (public/). Abrir http://127.0.0.1:8080/. Regenerar datos con '.venv/bin/python src/data_engine.py' (usa secrets MISTER_* para datos live; si no, cae a mock/seed). Tests: '.venv/bin/python scripts/test_*.py'."
+    }
+  ],
+  "ports": [
+    {
+      "name": "dashboard",
+      "port": 8080
+    }
+  ]
+}
