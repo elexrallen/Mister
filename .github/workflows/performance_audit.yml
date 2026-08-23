@@ -1,0 +1,67 @@
+# Audita xPts, once recomendado y pipeline contra el histórico.
+# En PRs corre los tests. En schedule / dispatch aplica umbrales al
+# histórico commitado (no bloquea el deploy diario).
+
+name: Performance audit
+
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    # Martes 08:00 UTC ≈ 10:00 CEST: la jornada de fin de semana ya está en el snapshot
+    - cron: "0 8 * * 2"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    name: Tests del auditor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run performance audit tests
+        run: python scripts/test_performance_audit.py
+
+  history:
+    name: Umbrales sobre histórico
+    runs-on: ubuntu-latest
+    # En PRs de código el histórico del branch basta; no hace falta secrets
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Audit leagues
+        run: python src/performance_audit.py --markdown --fail-on-gates --json-out performance-audit.json
+
+      - name: Upload report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-audit
+          path: performance-audit.json
+          if-no-files-found: ignore
