@@ -54,6 +54,7 @@ from scrapers.http_util import rate_limit_report, reset_rate_limits
 from competitive_actions import (
     annotate_market_budget_risk,
     build_gw_xi_advice,
+    build_offer_actions,
     build_recommended_gw_xi,
     build_rival_upgrade_targets,
     build_sell_opportunities,
@@ -71,7 +72,9 @@ from competitive_actions import (
     prune_parking_sells_without_buy,
     reconcile_avoid_conflicts,
     resolve_hours_to_jornada,
+    resolve_solvency_deadline,
     rival_demand_for_position,
+    sells_settle_before_deadline,
     sells_settle_before_d1,
     set_matchday_phase,
     solvency_strict_window,
@@ -770,7 +773,7 @@ def classify_market_opportunities(
     Clasifica oportunidades: carencias, titularidad, cobertura por posición.
     Insiste si falta profundidad; demota si la línea ya está cubierta.
     market_mode=fixed → precio listado sin sobrepuja.
-    Techo Mister = max_debt; solvencia pre-jornada bloquea deuda en D-1.
+    Techo Mister = max_debt; solvencia al inicio de jornada objetivo.
     """
     pos_prices: dict[str, list[float]] = {}
     for p in market:
@@ -1601,10 +1604,39 @@ def build_action_plan(
         if isinstance(diagnostico_plantilla, dict)
         else None,
     )
-    # Plan de venta a tiempo: shortfall cubierto solo si el cobro llega antes de D-1
+    solvency_deadline = resolve_solvency_deadline(
+        hours_to_jornada=hours_resolved,
+        matchday=matchday_ctx if isinstance(matchday_ctx, dict) else None,
+    )
+    hours_solvency = solvency_deadline.get("hours_to_solvency_deadline")
+    if hours_solvency is None:
+        hours_solvency = hours_resolved
+    solvency_target = str(solvency_deadline.get("solvency_target") or "esta")
+    sales_state = (
+        (diagnostico_plantilla or {}).get("sales_state")
+        or me.get("sales_state")
+        or {}
+    )
+    if not isinstance(sales_state, dict):
+        sales_state = {}
+    pending_offers = list(sales_state.get("pending_offers") or [])
+    offer_coverage = sum(
+        float(o.get("amount") or 0)
+        for o in pending_offers
+        if float(o.get("pct_of_vm") or 1.0) >= 0.92 or o.get("from_machine")
+    )
+    listed_vm = sum(
+        float(x.get("price") or x.get("market_value") or 0)
+        for x in (sales_state.get("listed") or [])
+    )
     sell_proceeds_timely = 0.0
-    if sells_settle_before_d1(hours_to_jornada=hours_resolved, cash_lag_hours=cash_lag):
+    liquidity_coverage = 0.0
+    if sells_settle_before_deadline(
+        hours_to_deadline=hours_solvency if hours_solvency is not None else None,
+        cash_lag_hours=cash_lag,
+    ):
         sell_proceeds_timely = float(funding.get("funding_shortfall") or 0)
+        liquidity_coverage = offer_coverage + listed_vm * 0.5
 
     for o in opportunities:
         ext = o.get("external") or {}
@@ -1634,6 +1666,7 @@ def build_action_plan(
             matchday=matchday_ctx if isinstance(matchday_ctx, dict) else None,
             sell_proceeds_timely=sell_proceeds_timely,
             cash_lag_hours=cash_lag,
+            liquidity_coverage=liquidity_coverage,
         )
         bf = str(fin.get("budget_fit") or o.get("budget_fit") or "blocked")
         debt_risk = bool(fin.get("debt_risk") or o.get("debt_risk"))
@@ -2008,11 +2041,13 @@ def build_action_plan(
             buy_now = False
             if solvency_blocked:
                 why_parts.append(
-                    "bloqueado: no puntuarías en negativo el día antes de la jornada"
+                    "bloqueado: sin plan de cobro antes del inicio de la "
+                    f"{solvency_target} jornada"
                 )
             elif debt_risk:
                 why_parts.append(
-                    "deuda temporal — vende antes de la jornada para poder puntuar"
+                    f"deuda temporal OK hasta maxDebt — vuelve a positivo antes del "
+                    f"inicio de la {solvency_target} jornada"
                 )
             elif crowds_out:
                 why_parts.append(
@@ -2027,7 +2062,8 @@ def build_action_plan(
                 )
         elif buy_now and debt_risk:
             why_parts.append(
-                "deuda temporal — vende antes de la jornada para poder puntuar"
+                f"deuda temporal OK hasta maxDebt — vuelve a positivo antes del "
+                f"inicio de la {solvency_target} jornada"
             )
 
         if leaves_budget and (buy_now or fills):
@@ -2187,7 +2223,8 @@ def build_action_plan(
             if bf == "blocked":
                 if solvency_blocked:
                     wait_bits.append(
-                        "bloqueado: no puntuarías en negativo el día antes de la jornada"
+                        "bloqueado: sin plan de cobro antes del inicio de la "
+                        f"{solvency_target} jornada"
                     )
                 else:
                     wait_bits.append(
@@ -2198,7 +2235,8 @@ def build_action_plan(
             elif bf == "stretch":
                 if debt_risk:
                     wait_bits.append(
-                        "deuda temporal — exige venta que cobre antes del día previo a la jornada"
+                        f"deuda temporal — exige cobro antes del inicio de la "
+                        f"{solvency_target} jornada"
                     )
                 else:
                     wait_bits.append(
@@ -2208,7 +2246,8 @@ def build_action_plan(
                     )
             elif debt_risk:
                 wait_bits.append(
-                    "deuda temporal — vende antes de la jornada para poder puntuar"
+                    f"deuda temporal OK hasta maxDebt — vuelve a positivo antes del "
+                    f"inicio de la {solvency_target} jornada"
                 )
             why_wait = "; ".join(dict.fromkeys(wait_bits)) or "Sin urgencia"
             if not fixed:
@@ -2260,8 +2299,22 @@ def build_action_plan(
         recommended_xi=recommended_xi,
         league_economy=(rules.get("economy") if isinstance(rules.get("economy"), dict) else None),
         market_mode=market_mode,
+        sales_state=sales_state,
     )
     plan.extend(sells)
+    squad_n = len(me.get("squad") or [])
+    need_slot = squad_n >= int(max_squad or 25) - 1
+    need_liq = balance < 0 or float(funding.get("funding_shortfall") or 0) > 0
+    offer_actions = build_offer_actions(
+        sales_state,
+        balance=balance,
+        need_liquidity=need_liq,
+        need_slot=need_slot,
+        cash_lag_hours=cash_lag,
+        hours_to_solvency_deadline=hours_solvency if hours_solvency is not None else None,
+        solvency_target=solvency_target,
+    )
+    plan.extend(offer_actions)
     promote_funded_swaps(
         plan,
         balance=balance,
@@ -2475,9 +2528,13 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     # Catálogo completo para plantilla ideal; no se persiste en latest_data.json
     full_pool: list[dict[str, Any]] = []
     gw_bundle: dict[str, Any] = {}
+    sales_state: dict[str, Any] = {}
     if isinstance(league, dict):
         full_pool = list(league.pop("pool_all", None) or [])
         gw_bundle = league.pop("gameweek", None) or {}
+        raw_sales = league.pop("sales_state", None)
+        if isinstance(raw_sales, dict):
+            sales_state = raw_sales
     honest_live = mister_source == "api" or bool(live_meta.get("honest_mode"))
 
     # Preferir competición real de la sesión si vino en live_meta
@@ -2512,6 +2569,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     price_series = load_recent_price_map_for_league(slug, days=config.TRADING_WINDOW_DAYS)
 
     me_raw = league["me"]
+    if sales_state:
+        me_raw = dict(me_raw)
+        me_raw["sales_state"] = sales_state
     squad = [
         enrich_player(p, perf_idx, allow_synthetic=not honest_live)
         for p in me_raw.get("squad", [])
@@ -2522,6 +2582,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     for src in (league.get("market") or []):
         pid = str(src.get("id") or "")
         if not pid or pid in market_seen:
+            continue
+        if src.get("listed_by_me") or src.get("on_sale"):
+            # Propios en venta: no son oportunidades de compra
             continue
         market_seen.add(pid)
         row = dict(src)
@@ -2757,6 +2820,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     if matchday_early and gw_bundle.get("schedule"):
         matchday_early["season_schedule"] = gw_bundle["schedule"]
     diagnostico_plantilla["matchday"] = matchday_early
+    diagnostico_plantilla["sales_state"] = sales_state
     hours_j = resolve_hours_to_jornada(
         days_to_kickoff=comp.get("days_to_kickoff"),
         matchday=matchday_early,
@@ -3125,6 +3189,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             if is_mine:
                 base["seller"] = "owned"
                 base["on_daily_market"] = False
+                if raw.get("listed_by_me") or raw.get("on_sale"):
+                    base["on_sale"] = True
+                    base["listed_for_sale"] = True
+                    base["listed_by_me"] = True
             elif is_free:
                 base.setdefault("seller", seller_hint or "free")
                 if base.get("on_daily_market") is None:
@@ -3379,11 +3447,21 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     hours_out = diagnostico_plantilla.get("hours_to_jornada")
     if hours_out is None:
         hours_out = hours_j
+    solvency_dl = resolve_solvency_deadline(
+        hours_to_jornada=float(hours_out) if hours_out is not None else None,
+        matchday=matchday_meta if isinstance(matchday_meta, dict) else None,
+    )
+    hours_solvency_out = solvency_dl.get("hours_to_solvency_deadline")
+    if hours_solvency_out is None:
+        hours_solvency_out = hours_out
     liquidity_now = liquidity_balance(bal, bal_future_out)
     solvency_ok = liquidity_now >= 0
     solvency_strict = solvency_strict_window(
-        float(hours_out) if hours_out is not None else None
+        float(hours_solvency_out) if hours_solvency_out is not None else None
     )
+    # En jornada en curso el negativo no anula puntos de ESTA; solo importa la siguiente
+    if solvency_dl.get("current_jornada_started") and not solvency_ok:
+        solvency_ok = True  # scoring de esta GW ya fijado al arranque
     budget_pressure = "low"
     shortfall = float(funding_info.get("funding_shortfall") or 0)
     target = float(funding_info.get("funding_target") or 0)
@@ -3520,12 +3598,16 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "solvency_ok": solvency_ok,
             "solvency_strict": solvency_strict,
             "hours_to_jornada": hours_out,
+            "hours_to_solvency_deadline": hours_solvency_out,
+            "solvency_target": solvency_dl.get("solvency_target"),
+            "current_jornada_started": bool(solvency_dl.get("current_jornada_started")),
             "squad_value": me.get("squad_value"),
             "rank": me.get("rank"),
             "points": me.get("points"),
             "formation": me.get("formation"),
             "squad": squad,
         },
+        "sales_state": sales_state,
         "kpis": {
             "balance": me.get("balance"),
             "balance_future": bal_future_out,
@@ -3534,6 +3616,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "solvency_ok": solvency_ok,
             "solvency_strict": solvency_strict,
             "hours_to_jornada": hours_out,
+            "hours_to_solvency_deadline": hours_solvency_out,
+            "solvency_target": solvency_dl.get("solvency_target"),
+            "listed_count": int(sales_state.get("listed_count") or 0),
+            "pending_offers": int(sales_state.get("pending_count") or 0),
             "squad_value": me.get("squad_value"),
             "rank": me.get("rank"),
             "top_free_remaining": len(free_agents),
@@ -3544,6 +3630,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "buy_now_count": sum(1 for a in action_plan if a["action"] == "buy_now"),
             "wait_count": sum(1 for a in action_plan if a["action"] == "wait"),
             "sell_count": sum(1 for a in action_plan if a["action"] == "sell"),
+            "offer_action_count": sum(
+                1 for a in action_plan if a["action"] in ("accept_offer", "decline_offer")
+            ),
             "clause_bid_count": sum(1 for a in action_plan if a["action"] == "clause_bid"),
             "budget_pressure": budget_pressure,
             "funding_target": funding_info.get("funding_target"),
@@ -3626,7 +3715,16 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                     "especulacion_trading",
                     "alerta_baja",
                 ],
-                "actions": ["buy_now", "clause_bid", "wait", "avoid", "sell", "scout"],
+                "actions": [
+                    "buy_now",
+                    "clause_bid",
+                    "wait",
+                    "avoid",
+                    "sell",
+                    "accept_offer",
+                    "decline_offer",
+                    "scout",
+                ],
             },
             "history_retention_days": config.HISTORY_RETENTION_DAYS,
             "model_calibration": calibration,

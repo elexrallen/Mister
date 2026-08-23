@@ -37,12 +37,12 @@ PHASE_LABELS = {
 
 PHASE_FOCUS = {
     "dia_partido": "El once ya casi no se toca: cierra capitán y suplencias antes de cada kickoff.",
-    "visperas": "Cierra el once y asegura saldo positivo: en negativo no se puntúa.",
+    "visperas": "Cierra el once y asegúrate de positivo al pitido: en negativo al arrancar no se puntúa.",
     "confirmacion": "Salen las previas. Confirma titularidades y corrige el once antes de que suban los precios.",
     "ventana_compra": "Gasta en el mejor 15 ahora. Liquidez = jugadores listados, no caja congelada.",
     "post_jornada": "Tras el cobro de la jornada, recompón el 15 y deja listados a los débiles.",
     "pretemporada": "Monta el mejor 15 posible con el mercado de hoy; lista débiles para el siguiente ciclo.",
-    "jornada_en_curso": "Jornada disputándose: solo cambios en vivo si la liga los permite.",
+    "jornada_en_curso": "Jornada en juego: puedes quedar en negativo; vuelve a + antes del inicio de la siguiente.",
 }
 
 PHASE_FOCUS_FIXED = {
@@ -73,6 +73,13 @@ def resolve_phase(
         return "pretemporada"
 
     hours = _f(hours_to_jornada)
+    gw_status = str(md.get("gameweek_status") or "").strip().lower()
+    try:
+        sts = float(md["seconds_to_start"]) if md.get("seconds_to_start") is not None else None
+    except (TypeError, ValueError):
+        sts = None
+    if gw_status in ("ongoing", "live", "started") or (sts is not None and sts < 0):
+        return "jornada_en_curso"
     if md.get("is_live") and hours is not None and hours <= 0:
         return "jornada_en_curso"
     if hours is None:
@@ -166,7 +173,18 @@ def build_daily_playbook(
         )
 
     buys = [a for a in plan if a.get("action") in ("buy_now", "clause_bid")]
-    sells = [a for a in plan if a.get("action") == "sell"]
+    sells = [
+        a
+        for a in plan
+        if a.get("action") == "sell" and a.get("queue_role") != "already_listed"
+    ]
+    offer_actions = [
+        a for a in plan if a.get("action") in ("accept_offer", "decline_offer")
+    ]
+    sales_state = (diag.get("sales_state") if isinstance(diag, dict) else None) or {}
+    listed_count = int(sales_state.get("listed_count") or 0)
+    pending_count = int(sales_state.get("pending_count") or len(offer_actions))
+    solvency_target = "siguiente" if phase == "jornada_en_curso" else "esta"
     avoid = [a for a in plan if a.get("action") == "avoid"]
     lineup_swaps = [a for a in plan if a.get("action") == "lineup"]
 
@@ -358,26 +376,61 @@ def build_daily_playbook(
             priority="Baja",
         )
 
-    # --- Dinero: en negativo no se puntúa ---
+    # --- Dinero: positivo al inicio de la jornada que puntúa ---
     if balance < 0 and phase in ("confirmacion", "visperas", "dia_partido"):
         add(
             "saldo_negativo",
             "Saldo negativo antes de la jornada",
-            f"Tienes {balance:,.0f} €. En muchas ligas Mister un saldo negativo al arrancar "
-            "la jornada anula los puntos: "
+            f"Tienes {balance:,.0f} €. Debes estar en positivo al arrancar esta jornada "
+            "para puntuar: "
             + ("vende o cancela fichajes pendientes." if fixed else "vende o cancela pujas."),
             priority="Alta",
         )
         warnings.append("Saldo negativo con la jornada encima.")
+    elif balance < 0 and phase == "jornada_en_curso":
+        add(
+            "saldo_negativo_siguiente",
+            "Negativo OK ahora — planifica la siguiente jornada",
+            f"Tienes {balance:,.0f} €. Esta jornada ya arrancó: el negativo no anula "
+            "sus puntos. Antes del inicio de la siguiente, acepta ofertas / lista / "
+            "rescinde para volver a positivo.",
+            priority="Media",
+            related=[a.get("player_id") for a in offer_actions[:3]],
+        )
+    if offer_actions:
+        names = ", ".join(str(a.get("name")) for a in offer_actions[:3])
+        add(
+            "ofertas_recibidas",
+            f"{len(offer_actions)} oferta(s) pendientes",
+            f"{names}. Revisa en Mister (ofertas recibidas): aceptar confirma la venta; "
+            "rechazar mantiene al jugador en venta. "
+            f"Prioriza aceptar si necesitas caja antes de la {solvency_target} jornada.",
+            priority="Alta",
+            related=[a.get("player_id") for a in offer_actions],
+        )
+    elif listed_count > 0 and pending_count == 0:
+        add(
+            "esperando_ofertas",
+            f"{listed_count} jugador(es) ya en venta",
+            "Esperando oferta de la máquina en el siguiente ciclo. No hace falta volver a listarlos.",
+            priority="Baja",
+            related=list(sales_state.get("listed_ids") or [])[:5],
+        )
 
     # --- Acciones de mercado según fase ---
-    if phase in ("ventana_compra", "post_jornada", "pretemporada"):
+    if phase in ("ventana_compra", "post_jornada", "pretemporada", "jornada_en_curso"):
         if buys:
             names = ", ".join(str(a.get("name")) for a in buys[:3])
             add(
                 "fichar",
                 f"{len(buys)} fichaje(s) en cola",
-                f"{names}. Es la parte del ciclo donde el precio aún no lleva prima de víspera. "
+                f"{names}. "
+                + (
+                    "Puedes endeudarte hasta maxDebt si vuelves a positivo antes del "
+                    f"inicio de la {solvency_target} jornada. "
+                    if phase == "jornada_en_curso"
+                    else "Es la parte del ciclo donde el precio aún no lleva prima de víspera. "
+                )
                 + (
                     "Si el recambio está en mercado, vende y ficha al momento."
                     if fixed
@@ -390,14 +443,14 @@ def build_daily_playbook(
             names = ", ".join(str(a.get("name")) for a in sells[:3])
             add(
                 "listar_ventas",
-                f"Listar {len(sells)} venta(s)",
+                f"Poner en venta {len(sells)} jugador(es)",
                 f"{names}. "
                 + (
                     "Vende ahora solo para fichar el recambio que está en el mercado."
                     if fixed
                     else (
-                        "Liquidez = jugadores listados, no reserva: la CPU ofertea al siguiente "
-                        "ciclo y así puedes vender y pujar si sale el upgrade."
+                        "Hoy solo listas: la máquina ofrece al siguiente ciclo y aceptar "
+                        "es opcional (así puedes vender y pujar si sale el upgrade)."
                     )
                 ),
                 priority="Media",

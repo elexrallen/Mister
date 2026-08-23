@@ -848,10 +848,30 @@ def parse_market_players(html: str) -> list[dict[str, Any]]:
         }
         if owner_id:
             row["owner_id"] = owner_id
+            # Rival vs propio se resuelve en tag_own_market_listings(my_uc)
             row["listed_by_rival"] = True
+            row["listed_by_me"] = False
         players.append(row)
     log.info("HTML /market → %s jugadores", len(players))
     return players
+
+
+def fetch_offers_received() -> dict[str, Any]:
+    """
+    POST /ajax/sw/offers-received — buzón de ofertas (máquina/rivales).
+    Fail-soft: dict vacío normalizado si falla.
+    """
+    from sales_state import parse_offers_received
+
+    try:
+        raw = ajax_post("/ajax/sw/offers-received", {"post": "offers-received"}, timeout=20)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ajax/sw/offers-received falló: %s", exc)
+        return parse_offers_received({})
+    parsed = parse_offers_received(raw)
+    n = len(parsed.get("pending_offers") or [])
+    log.info("Ofertas recibidas: pending=%s total=%s", n, (parsed.get("count") or {}).get("total"))
+    return parsed
 
 
 def parse_team_players(html: str) -> list[dict[str, Any]]:
@@ -1967,6 +1987,46 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         return None
 
     my_uc = str(fg_user.get("id_uc") or config.MISTER_TEAM_ID or "")
+    try:
+        from sales_state import build_sales_state, tag_own_market_listings
+
+        market = tag_own_market_listings(market, my_uc)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("tag_own_market_listings falló: %s", exc)
+
+    offers_parsed: dict[str, Any] = {}
+    try:
+        offers_parsed = fetch_offers_received()
+    except Exception as exc:  # noqa: BLE001
+        log.warning("fetch_offers_received falló: %s", exc)
+        offers_parsed = {}
+
+    try:
+        from sales_state import build_sales_state
+
+        sales_state = build_sales_state(
+            market=market,
+            offers_payload=offers_parsed,
+            squad=squad,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("build_sales_state falló: %s", exc)
+        sales_state = {
+            "listed": [],
+            "listed_ids": [],
+            "listed_count": 0,
+            "offers_received": [],
+            "pending_offers": [],
+            "pending_count": 0,
+            "count": {"total": 0, "pending": 0},
+            "mister_offers_url": "https://mister.mundodeportivo.com/market#market/offers-received",
+        }
+    log.info(
+        "sales_state listed=%s pending_offers=%s",
+        sales_state.get("listed_count"),
+        sales_state.get("pending_count"),
+    )
+
     rivals, me_row = parse_standings(standings_html, my_uc) if standings_html else ([], None)
     if rivals:
         rivals = enrich_rivals_with_squads(rivals)
@@ -1986,6 +2046,17 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         pool_fields_filled = apply_pool_fields_to_players(squad, pool_by_id)
         pool_fields_filled += apply_pool_fields_to_players(market, pool_by_id)
         log.info("Campos de jornada desde pool: %s jugadores", pool_fields_filled)
+        # Reaplicar on_sale tras reconcile (el pool no trae listados)
+        try:
+            from sales_state import build_sales_state
+
+            sales_state = build_sales_state(
+                market=market,
+                offers_payload=offers_parsed or sales_state,
+                squad=squad,
+            )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("build_sales_state (post-pool) falló: %s", exc)
     else:
         free_pool, free_note = fetch_free_agents_best_effort()
 
@@ -2081,6 +2152,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "squad": squad,
         },
         "market": market,
+        "sales_state": sales_state,
         "rivals": rivals,
         "owned_across_league": sorted(owned),
         "pool_top": free_pool,

@@ -20,10 +20,12 @@ from squad_analyzer import (
     quality_for_compare,
 )
 
-# Día antes de jornada: no endeudarse (Mister: saldo negativo → no puntúa).
+# Solvencia: positivo al inicio de la jornada que puntúa (esta o la siguiente).
 SOLVENCY_STRICT_HOURS = 48
-# Margen D-1: las ventas deben cobrar antes de (jornada - 24h).
-SOLVENCY_D1_BUFFER_HOURS = 24
+# Margen de cobro antes del kickoff de jornada objetivo (h).
+SOLVENCY_SETTLE_BUFFER_HOURS = 2
+# Compat: nombre antiguo (ya no es buffer D-1 de 24h).
+SOLVENCY_D1_BUFFER_HOURS = SOLVENCY_SETTLE_BUFFER_HOURS
 
 
 def _money(v: Any) -> float:
@@ -157,8 +159,107 @@ def resolve_hours_to_jornada(
     return None
 
 
+def resolve_solvency_deadline(
+    *,
+    hours_to_jornada: float | None = None,
+    matchday: dict[str, Any] | None = None,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """
+    Horas hasta el inicio de la jornada cuyo scoring aún puedes perder.
+
+    - Jornada actual ya empezada (ongoing / seconds_to_start < 0 / primer
+      partido pasado): deadline = first_match de la SIGUIENTE jornada.
+    - Si aún no ha arrancado: deadline = first_match de ESTA (o hours_to_jornada).
+    """
+    base = now or datetime.now(timezone.utc)
+    if base.tzinfo is None:
+        base = base.replace(tzinfo=timezone.utc)
+    md = matchday if isinstance(matchday, dict) else {}
+
+    def _hours_to_iso(raw: Any) -> float | None:
+        return _parse_kickoff_hours(raw, now=base)
+
+    current_started = False
+    sts = md.get("seconds_to_start")
+    try:
+        if sts is not None and float(sts) < 0:
+            current_started = True
+    except (TypeError, ValueError):
+        pass
+    gw_status = str(md.get("gameweek_status") or "").strip().lower()
+    if gw_status in ("ongoing", "live", "started"):
+        current_started = True
+    if md.get("is_live") and hours_to_jornada is not None:
+        try:
+            # is_live con countdown al próximo partido de la misma GW
+            if float(hours_to_jornada) >= 0 and gw_status == "ongoing":
+                current_started = True
+        except (TypeError, ValueError):
+            pass
+    first_h = _hours_to_iso(md.get("first_match"))
+    if first_h is not None and first_h < 0:
+        current_started = True
+
+    target = "esta"
+    hours: float | None = None
+    deadline_iso: str | None = None
+
+    if current_started:
+        target = "siguiente"
+        sched = md.get("season_schedule") or []
+        cur_j = md.get("jornada")
+        try:
+            cur_j_i = int(cur_j) if cur_j is not None else None
+        except (TypeError, ValueError):
+            cur_j_i = None
+        next_first: str | None = None
+        if isinstance(sched, list):
+            for g in sched:
+                if not isinstance(g, dict):
+                    continue
+                st = str(g.get("status") or "").strip().lower()
+                try:
+                    gj = int(g.get("jornada")) if g.get("jornada") is not None else None
+                except (TypeError, ValueError):
+                    gj = None
+                if st == "unstarted" or (cur_j_i is not None and gj is not None and gj > cur_j_i):
+                    next_first = str(g.get("first_match") or "") or None
+                    if next_first:
+                        break
+        hours = _hours_to_iso(next_first) if next_first else None
+        deadline_iso = next_first
+        if hours is None and hours_to_jornada is not None:
+            # Fallback: al menos el próximo partido no es el deadline de scoring
+            try:
+                # Sin schedule: no forzar strict por el próximo partido de esta GW
+                hours = max(float(hours_to_jornada), float(
+                    getattr(config, "SOLVENCY_STRICT_HOURS", SOLVENCY_STRICT_HOURS)
+                ) + 1.0)
+            except (TypeError, ValueError):
+                hours = None
+    else:
+        target = "esta"
+        hours = first_h if first_h is not None else (
+            float(hours_to_jornada) if hours_to_jornada is not None else None
+        )
+        deadline_iso = str(md.get("first_match") or "") or None
+        if hours is None and hours_to_jornada is not None:
+            try:
+                hours = float(hours_to_jornada)
+            except (TypeError, ValueError):
+                hours = None
+
+    return {
+        "hours_to_solvency_deadline": hours,
+        "solvency_target": target,
+        "current_jornada_started": current_started,
+        "deadline_iso": deadline_iso,
+    }
+
+
 def solvency_strict_window(hours_to_jornada: float | None) -> bool:
-    """True si no debemos endeudarnos (≤48h o sin fecha fiable)."""
+    """True si el deadline de solvencia está cerca (≤48h) o no hay fecha fiable."""
     if hours_to_jornada is None:
         return True
     return float(hours_to_jornada) <= float(
@@ -166,13 +267,13 @@ def solvency_strict_window(hours_to_jornada: float | None) -> bool:
     )
 
 
-def sells_settle_before_d1(
+def sells_settle_before_deadline(
     *,
-    hours_to_jornada: float | None,
+    hours_to_deadline: float | None,
     cash_lag_hours: float | None = None,
 ) -> bool:
-    """¿El cobro de ventas (~48h) llega antes del día previo a la jornada?"""
-    if hours_to_jornada is None:
+    """¿El cobro de ventas llega antes del inicio de la jornada objetivo?"""
+    if hours_to_deadline is None:
         return False
     lag = float(
         cash_lag_hours
@@ -180,9 +281,25 @@ def sells_settle_before_d1(
         else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2
     )
     buffer = float(
-        getattr(config, "SOLVENCY_D1_BUFFER_HOURS", SOLVENCY_D1_BUFFER_HOURS)
+        getattr(
+            config,
+            "SOLVENCY_SETTLE_BUFFER_HOURS",
+            getattr(config, "SOLVENCY_D1_BUFFER_HOURS", SOLVENCY_SETTLE_BUFFER_HOURS),
+        )
     )
-    return lag <= max(0.0, float(hours_to_jornada) - buffer)
+    return lag <= max(0.0, float(hours_to_deadline) - buffer)
+
+
+def sells_settle_before_d1(
+    *,
+    hours_to_jornada: float | None,
+    cash_lag_hours: float | None = None,
+) -> bool:
+    """Compat: cobro antes del deadline de solvencia (antes era D-1)."""
+    return sells_settle_before_deadline(
+        hours_to_deadline=hours_to_jornada,
+        cash_lag_hours=cash_lag_hours,
+    )
 
 
 def evaluate_bid_finance(
@@ -197,30 +314,43 @@ def evaluate_bid_finance(
     matchday: dict[str, Any] | None = None,
     sell_proceeds_timely: float = 0.0,
     cash_lag_hours: float | None = None,
+    liquidity_coverage: float = 0.0,
 ) -> dict[str, Any]:
     """
-    Dos techos: bid_cap (Mister maxDebt) y solvencia pre-jornada.
+    Dos techos: bid_cap (Mister maxDebt) y solvencia al inicio de jornada objetivo.
+    Deuda OK hasta maxDebt si hay cobertura (ventas/ofertas/rescindir) a tiempo.
     budget_fit: comfortable|tight|stretch|blocked
     """
     bal = float(balance or 0)
     bid_cap = mister_bid_cap(bal, max_debt)
     liquidity = liquidity_balance(bal, balance_future)
-    hours = resolve_hours_to_jornada(
+    hours_next = resolve_hours_to_jornada(
         hours_to_jornada=hours_to_jornada,
         days_to_kickoff=days_to_kickoff,
         matchday=matchday,
     )
-    strict = solvency_strict_window(hours)
-    sells_ok = float(sell_proceeds_timely or 0) > 0 and sells_settle_before_d1(
-        hours_to_jornada=hours,
+    deadline = resolve_solvency_deadline(
+        hours_to_jornada=hours_next,
+        matchday=matchday if isinstance(matchday, dict) else None,
+    )
+    hours = deadline.get("hours_to_solvency_deadline")
+    if hours is None:
+        hours = hours_next
+    strict = solvency_strict_window(hours if hours is not None else None)
+    sells_ok = float(sell_proceeds_timely or 0) > 0 and sells_settle_before_deadline(
+        hours_to_deadline=hours if hours is not None else None,
         cash_lag_hours=cash_lag_hours,
     )
     timely_sells = float(sell_proceeds_timely or 0) if sells_ok else 0.0
+    coverage = float(liquidity_coverage or 0.0) + timely_sells
 
     out: dict[str, Any] = {
         "bid_cap": bid_cap,
         "liquidity": liquidity,
-        "hours_to_jornada": hours,
+        "hours_to_jornada": hours_next,
+        "hours_to_solvency_deadline": hours,
+        "solvency_target": deadline.get("solvency_target") or "esta",
+        "current_jornada_started": bool(deadline.get("current_jornada_started")),
         "solvency_strict": strict,
         "debt_risk": False,
         "solvency_ok": True,
@@ -228,6 +358,7 @@ def evaluate_bid_finance(
         "projected_after": liquidity,
         "budget_fit": "blocked",
         "sells_timely": sells_ok,
+        "liquidity_coverage": coverage,
     }
 
     if cost is None:
@@ -236,7 +367,7 @@ def evaluate_bid_finance(
 
     c = float(cost)
     projected_no_sells = liquidity - c
-    projected = projected_no_sells + timely_sells
+    projected = projected_no_sells + coverage
     out["projected_after"] = projected
     out["debt_risk"] = projected_no_sells < 0 and c <= bid_cap
 
@@ -254,23 +385,25 @@ def evaluate_bid_finance(
             out["budget_fit"] = "blocked"
         if projected < 0:
             out["solvency_ok"] = False
-            if strict:
+            if strict and coverage <= 0:
                 out["solvency_blocked"] = True
         return out
 
-    # Solvencia: no puntuar en negativo el día antes
+    # Solvencia: positivo al inicio de la jornada objetivo
     if projected < 0:
         out["solvency_ok"] = False
         out["debt_risk"] = True
-        if strict:
+        if strict and coverage <= 0:
             out["solvency_blocked"] = True
             out["budget_fit"] = "blocked"
             return out
-        # Fuera de ventana sin cobro a tiempo → stretch (exige venta antes)
+        # Con plan de cobro o fuera de ventana → stretch (deuda temporal OK)
         out["budget_fit"] = "stretch"
+        out["solvency_ok"] = coverage > 0 and (projected_no_sells + coverage) >= 0
+        if out["solvency_ok"]:
+            out["solvency_blocked"] = False
         return out
 
-    # Cabe (con liquidez o con ventas que cobran antes de D-1)
     if out["debt_risk"]:
         out["budget_fit"] = "tight"
         out["solvency_ok"] = True
@@ -294,8 +427,9 @@ def budget_fit(
     matchday: dict[str, Any] | None = None,
     sell_proceeds_timely: float = 0.0,
     cash_lag_hours: float | None = None,
+    liquidity_coverage: float = 0.0,
 ) -> str:
-    """comfortable|tight|stretch|blocked (techo Mister + solvencia pre-jornada)."""
+    """comfortable|tight|stretch|blocked (techo Mister + solvencia jornada objetivo)."""
     return str(
         evaluate_bid_finance(
             cost,
@@ -308,6 +442,7 @@ def budget_fit(
             matchday=matchday,
             sell_proceeds_timely=sell_proceeds_timely,
             cash_lag_hours=cash_lag_hours,
+            liquidity_coverage=liquidity_coverage,
         ).get("budget_fit")
         or "blocked"
     )
@@ -2989,6 +3124,7 @@ def build_sell_opportunities(
     recommended_xi: dict[str, Any] | None = None,
     league_economy: dict[str, Any] | None = None,
     market_mode: str = "auction",
+    sales_state: dict[str, Any] | None = None,
 ) -> list[dict[str, Any]]:
     """
     Ventas orientadas a estrategia Fantasy:
@@ -3046,6 +3182,18 @@ def build_sell_opportunities(
         str(p) for p in (funding.get("positions") or []) if p
     ) or "carencias"
 
+    already_listed = {
+        str(x)
+        for x in ((sales_state or {}).get("listed_ids") or [])
+        if x
+    }
+    for p in squad:
+        if p.get("on_sale") or p.get("listed_for_sale"):
+            pid0 = str(p.get("id") or p.get("player_id") or "")
+            if pid0:
+                already_listed.add(pid0)
+    listed_count = len(already_listed)
+
     def _cash_phrase(amount: float, *, deferred: bool = False) -> str:
         return sell_cash_phrase(
             amount, deferred=deferred, cycle_hours=cycle_h, instant=fixed
@@ -3053,7 +3201,7 @@ def build_sell_opportunities(
 
     sells: list[dict[str, Any]] = []
     lineup_moves: list[dict[str, Any]] = []
-    seen: set[str] = set()
+    seen: set[str] = set(already_listed)  # no re-listar
     seen_lineup: set[str] = set()
 
     def add(item: dict[str, Any]) -> None:
@@ -3604,15 +3752,19 @@ def build_sell_opportunities(
         sale_limit = int(economy.get("sale_limit") or 5)
     except (TypeError, ValueError):
         sale_limit = 5
-    liq = resolve_liquidity_slots(
-        squad=squad,
-        recommended_xi=recommended_xi,
-        market_opportunities=market_opportunities,
-        target_board=target_board,
-        balance=balance,
-        sale_limit=sale_limit,
-        market_mode=market_mode,
-    )
+    remaining_sale_slots = max(0, sale_limit - listed_count)
+    if remaining_sale_slots <= 0:
+        liq = {"slots": [], "profiles": []}
+    else:
+        liq = resolve_liquidity_slots(
+            squad=squad,
+            recommended_xi=recommended_xi,
+            market_opportunities=market_opportunities,
+            target_board=target_board,
+            balance=balance,
+            sale_limit=remaining_sale_slots,
+            market_mode=market_mode,
+        )
     profile_by_slot: dict[str, dict[str, Any]] = {}
     for prof in liq.get("profiles") or []:
         sid = str(prof.get("slot_id") or "")
@@ -3649,7 +3801,8 @@ def build_sell_opportunities(
         else:
             why = (
                 f"Liquidez permanente: {_cash_phrase(price)}. "
-                "Listado para oferta CPU al siguiente ciclo."
+                "Pon en venta hoy — la máquina ofrece al siguiente ciclo; "
+                "aceptar es opcional."
             )
         item = base_item(
             slot,
@@ -3757,8 +3910,143 @@ def build_sell_opportunities(
             -_money(x.get("price")),
         )
     )
-    capped = sells[: max(1, sale_limit)]
-    return lineup_moves + capped + scouts
+    capped = sells[: max(0, remaining_sale_slots)]
+    waiting_listed: list[dict[str, Any]] = []
+    for lid in sorted(already_listed):
+        p = next((x for x in squad if str(x.get("id") or "") == lid), None)
+        if not p:
+            continue
+        price = _money(p.get("price") or p.get("market_value"))
+        waiting_listed.append(
+            {
+                "action": "sell",
+                "queue_role": "already_listed",
+                "player_id": lid,
+                "name": p.get("name"),
+                "position": p.get("position"),
+                "team": p.get("team"),
+                "price": price,
+                "market_value": price,
+                "sell_reason": "already_listed",
+                "urgency": "low",
+                "priority_score": 15,
+                "cash_lag_hours": lag_h,
+                "package_note": "Ya en venta — esperando oferta de la máquina",
+                "why": (
+                    "Ya está en venta. No hace falta volver a listarlo; "
+                    "cuando llegue la oferta, acepta o rechaza según liquidez."
+                ),
+                "on_sale": True,
+            }
+        )
+    return lineup_moves + capped + waiting_listed + scouts
+
+
+def build_offer_actions(
+    sales_state: dict[str, Any] | None,
+    *,
+    balance: float = 0.0,
+    need_liquidity: bool = False,
+    need_slot: bool = False,
+    cash_lag_hours: float | None = None,
+    hours_to_solvency_deadline: float | None = None,
+    solvency_target: str = "siguiente",
+) -> list[dict[str, Any]]:
+    """Recomendaciones accept/decline sobre ofertas pending del buzón Mister."""
+    state = sales_state if isinstance(sales_state, dict) else {}
+    pending = list(state.get("pending_offers") or [])
+    if not pending:
+        return []
+    url = state.get("mister_offers_url") or (
+        "https://mister.mundodeportivo.com/market#market/offers-received"
+    )
+    lag = float(cash_lag_hours if cash_lag_hours is not None else 48)
+    settle_ok = True
+    if hours_to_solvency_deadline is not None:
+        settle_ok = sells_settle_before_deadline(
+            hours_to_deadline=hours_to_solvency_deadline,
+            cash_lag_hours=lag,
+        )
+    actions: list[dict[str, Any]] = []
+    for offer in pending:
+        pid = str(offer.get("player_id") or "")
+        if not pid:
+            continue
+        amount = _money(offer.get("amount"))
+        vm = _money(offer.get("market_value")) or amount
+        pct = float(offer.get("pct_of_vm") or (amount / vm if vm > 0 else 1.0))
+        from_machine = bool(offer.get("from_machine"))
+        name = offer.get("name") or pid
+        # Heurística: aceptar si urge liquidez/plaza o la oferta es razonable (≥95% VM)
+        # o es de la máquina (suele ir cerca del VM). Rechazar si oferta floja y no urge.
+        accept = False
+        if need_liquidity or need_slot:
+            accept = True
+        elif from_machine and pct >= 0.92:
+            accept = True
+        elif pct >= 0.98:
+            accept = True
+        elif pct < 0.90 and not need_liquidity:
+            accept = False
+        else:
+            accept = pct >= 0.95
+
+        if accept:
+            action = "accept_offer"
+            label_note = "Acepta la oferta"
+            if not settle_ok and need_liquidity:
+                why = (
+                    f"Oferta de {offer.get('from_name') or 'Mister'} "
+                    f"({amount:,.0f} €, {pct * 100:.0f}% VM). "
+                    f"Acepta para volver a positivo antes del inicio de la "
+                    f"{solvency_target} jornada; el cobro llega en ~{int(lag)}h "
+                    f"(si urge más, rescinde)."
+                )
+            else:
+                why = (
+                    f"Oferta de {offer.get('from_name') or 'Mister'} "
+                    f"({amount:,.0f} € ≈ {pct * 100:.0f}% VM). "
+                    "Aceptar es opcional: confirma la venta; el cobro no es inmediato "
+                    f"en subasta (~{int(lag)}h)."
+                )
+            urgency = "high" if (need_liquidity or need_slot) else "medium"
+            prio = 92 if need_liquidity or need_slot else 78
+        else:
+            action = "decline_offer"
+            label_note = "Rechaza la oferta"
+            why = (
+                f"Oferta floja ({amount:,.0f} €, {pct * 100:.0f}% VM) y no urge liquidez. "
+                "Puedes rechazar y mantenerlo en venta a la espera de mejor oferta."
+            )
+            urgency = "low"
+            prio = 40
+
+        actions.append(
+            {
+                "action": action,
+                "queue_role": "review_offer",
+                "player_id": pid,
+                "name": name,
+                "position": offer.get("position"),
+                "bid": amount,
+                "price": amount,
+                "market_value": vm,
+                "offer_id": offer.get("offer_id"),
+                "id_bid": offer.get("id_bid"),
+                "from_machine": from_machine,
+                "from_name": offer.get("from_name"),
+                "pct_of_vm": pct,
+                "urgency": urgency,
+                "priority_score": prio,
+                "package_note": f"{label_note} — {amount:,.0f} €",
+                "why": why,
+                "mister_url": url,
+                "cash_lag_hours": lag,
+                "photo_url": offer.get("photo_url"),
+            }
+        )
+    actions.sort(key=lambda x: -int(x.get("priority_score") or 0))
+    return actions
 
 
 def _best_owned_reference(
@@ -4303,9 +4591,9 @@ def build_rival_upgrade_targets(
             urgency = "low"
             if fin and fin.get("solvency_blocked"):
                 why_bits.append(
-                    f"bloqueado: solvencia D-1 (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
+                    f"bloqueado: solvencia (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
                     if clause
-                    else "bloqueado: solvencia D-1"
+                    else "bloqueado: solvencia pre-jornada"
                 )
             else:
                 why_bits.append(
@@ -5216,9 +5504,10 @@ def finalize_action_plan(
             cupo = f"{squad_n}/{max_squad}"
             prev_note = (s.get("package_note") or "").strip()
             note = (
-                f"Abre plaza ({cupo}) — vende/rescinde antes de pujar de más"
+                f"Abre plaza ({cupo}) — rescinde ahora si urge el hueco; "
+                "listar solo pone en venta (la plaza se libera al aceptar la oferta)"
                 if free_slots <= 1 or slot_shortfall
-                else f"Cupo justo ({cupo}) — venta para poder hedgear/fichar"
+                else f"Cupo justo ({cupo}) — pon en venta o rescinde para poder hedgear/fichar"
             )
             s["package_note"] = note
             why_prev = (s.get("why") or "").strip()
@@ -5417,7 +5706,13 @@ def finalize_action_plan(
             line["exit_if_both"] = "sell_worse_next_cycle"
 
     buy_roles = ("primary", "primary_target", "secondary", "hedge")
-    top_roles = buy_roles + ("lineup_swap", "free_slot", "sell_now")
+    # Ofertas recibidas: rol de cola antes del ranking
+    for item in plan:
+        if item.get("action") in ("accept_offer", "decline_offer"):
+            item["queue_role"] = "review_offer"
+            item["package_id"] = package_id
+
+    top_roles = buy_roles + ("lineup_swap", "free_slot", "sell_now", "review_offer")
     hold_verb = "No fichar hoy" if fixed else "No pujar hoy"
     has_funded_buys = bool(funded_intent_ids)
 
@@ -5436,7 +5731,7 @@ def finalize_action_plan(
             continue
         if item.get("action") != "sell":
             continue
-        if item.get("queue_role") in ("free_slot", "sell_now"):
+        if item.get("queue_role") in ("free_slot", "sell_now", "already_listed"):
             continue
         item["queue_role"] = "sell_now"
         item["package_id"] = package_id
@@ -5448,8 +5743,9 @@ def finalize_action_plan(
                 item["package_note"] = "Vender hoy — cobra al instante al VM"
             else:
                 item["package_note"] = (
-                    f"Vender hoy — puedes listar ya (caja en ~{int(round(float(cash_lag_h)))}h "
-                    "salvo rescindir)"
+                    f"Pon en venta hoy — la máquina ofrece al siguiente ciclo; "
+                    f"aceptar es opcional (caja usable en ~{int(round(float(cash_lag_h)))}h; "
+                    "si urge, rescindir ≈ 80% VM)"
                 )
 
     has_sells = any(
@@ -5539,6 +5835,12 @@ def finalize_action_plan(
             item["_queue_rank"] = 9_000 + int(item.get("priority_score") or 0)
         elif role == "hedge":
             item["_queue_rank"] = 8_500 + int(item.get("priority_score") or 0)
+        elif role == "review_offer":
+            # Decisiones de oferta: por encima de nuevos listados
+            boost = 200 if item.get("action") == "accept_offer" else 0
+            item["_queue_rank"] = 10_350 + boost + int(item.get("priority_score") or 0)
+        elif role == "already_listed":
+            item["_queue_rank"] = 500 + int(item.get("priority_score") or 0)
         elif role == "sell_now":
             funded = bool(item.get("funds_for"))
             item["_queue_rank"] = (10_300 if funded else 8_000) + int(
@@ -5571,6 +5873,8 @@ def finalize_action_plan(
         "wait": 8,
         "avoid": 3,
         "sell": 5,
+        "accept_offer": 5,
+        "decline_offer": 3,
         "scout": 0 if fixed else 3,
     }
     max_pipeline_waits = 2

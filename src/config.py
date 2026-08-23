@@ -405,9 +405,13 @@ BOOTSTRAP_CYCLE_END_URGENT_HOURS = float(
     os.environ.get("BOOTSTRAP_CYCLE_END_URGENT_HOURS", "3")
 )
 
-# Solvencia pre-jornada: ≤48h → no endeudarse (saldo negativo = no puntúa)
+# Solvencia: positivo al INICIO de la jornada que puntúa (esta o la siguiente).
+# Ventana strict = deadline cercano sin plan de cobro a tiempo.
 SOLVENCY_STRICT_HOURS = 48
-SOLVENCY_D1_BUFFER_HOURS = 24
+# Margen de seguridad para cobro de ventas antes del kickoff de jornada (h).
+SOLVENCY_SETTLE_BUFFER_HOURS = 2
+# Legacy alias (antes D-1); preferir SOLVENCY_SETTLE_BUFFER_HOURS.
+SOLVENCY_D1_BUFFER_HOURS = SOLVENCY_SETTLE_BUFFER_HOURS
 # Cupo máximo de plantilla Mister (fallback si no hay team_limit)
 MAX_SQUAD_SIZE_LALIGA = 25
 MAX_SQUAD_SIZE_PREMIER = 22

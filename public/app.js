@@ -1300,8 +1300,12 @@
   };
 
   const sellSettlementBadge = (a) => {
-    if (!a || a.action !== "sell") return "";
+    if (!a || !["sell", "accept_offer"].includes(a.action)) return "";
+    if (a.queue_role === "already_listed" && a.action === "sell") {
+      return `<span class="badge badge-mint">Ya en venta</span>`;
+    }
     const lag = a.cash_lag_hours != null ? Number(a.cash_lag_hours) : 48;
+    if (!Number.isFinite(lag) || lag <= 0) return "";
     return `<span class="badge badge-duda">~${lag}h a caja</span>`;
   };
 
@@ -1409,7 +1413,11 @@
       buy_now: { label: "Fichar", verb: fixed ? "Ficha a" : "Puja por", cls: "is-buy" },
       lineup: { label: "Once", verb: "Mete a", cls: "is-buy" },
       clause_bid: { label: "Cláusula", verb: "Ve a por", cls: "is-buy" },
-      sell: { label: "Vender", verb: "Vende a", cls: "is-sell" },
+      sell: fixed
+        ? { label: "Vender", verb: "Vende a", cls: "is-sell" }
+        : { label: "Poner en venta", verb: "Pon en venta a", cls: "is-sell" },
+      accept_offer: { label: "Aceptar oferta", verb: "Acepta oferta por", cls: "is-sell" },
+      decline_offer: { label: "Rechazar oferta", verb: "Rechaza oferta por", cls: "is-wait" },
       avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
       wait: { label: fixed ? "No fichar" : "Esperar", verb: "Espera con", cls: "is-wait" },
       scout: { label: "Vigilar", verb: "Sigue a", cls: "is-scout" },
@@ -1503,6 +1511,9 @@
     if (action.action === "sell") {
       return action.list_at ?? action.expected_proceeds ?? action.price;
     }
+    if (action.action === "accept_offer" || action.action === "decline_offer") {
+      return action.bid ?? action.amount ?? action.price;
+    }
     if (action.action === "clause_bid") return action.clause ?? action.acquisition_cost;
     return action.bid ?? action.puja_recomendada ?? action.price;
   }
@@ -1528,6 +1539,7 @@
   function actionDetailFocusTab(item) {
     if (!item) return "market";
     if (item.action === "sell" || item.action === "lineup") return "squad";
+    if (item.action === "accept_offer" || item.action === "decline_offer") return "squad";
     if (item.action === "clause_bid" || item.action === "scout") return "radar";
     return "market";
   }
@@ -1661,7 +1673,7 @@
 
     const plan = (data.action_plan || []).map(tacticalRecord);
     const executable = plan.filter((item) =>
-      ["buy_now", "clause_bid", "sell"].includes(item.action)
+      ["buy_now", "clause_bid", "sell", "accept_offer", "decline_offer"].includes(item.action)
     );
     const ordered = executable.length
       ? [...executable, ...plan.filter((item) => !executable.includes(item))]
@@ -1679,6 +1691,26 @@
     const heroMeta = ACTIONS[hero.action] || ACTIONS.wait;
     const confidence = actionConfidence(hero);
     const amount = actionAmount(hero);
+    const debtBadge =
+      hero.debt_risk && !hero.solvency_blocked
+        ? `<span class="badge badge-duda">Deuda temporal · + antes de J${
+            (data.me && data.me.solvency_target) === "esta" ? "" : "+1"
+          }</span>`
+        : "";
+    const offerLink =
+      hero.mister_url ||
+      (data.sales_state && data.sales_state.mister_offers_url) ||
+      "https://mister.mundodeportivo.com/market#market/offers-received";
+    const offerCta =
+      hero.action === "accept_offer" || hero.action === "decline_offer"
+        ? `<a class="command-cta" href="${escapeHtml(offerLink)}" target="_blank" rel="noopener">
+          <span>${escapeHtml(heroMeta.label)} en Mister</span>
+          <span aria-hidden="true">↗</span>
+        </a>`
+        : `<button type="button" class="command-cta" data-player-id="${escapeHtml(hero.player_id || hero.id)}">
+          <span>${escapeHtml(heroMeta.label)}</span>
+          <span aria-hidden="true">↗</span>
+        </button>`;
     heroRoot.innerHTML = `<article class="command-hero ${heroMeta.cls}">
       <div class="command-copy">
         <p class="command-label">Acción prioritaria</p>
@@ -1686,16 +1718,16 @@
         <div class="command-player-meta">
           ${hero.position ? posChip(hero.position) : ""}
           <span>${escapeHtml(hero.team || "Equipo por confirmar")}</span>
+          ${sellSettlementBadge(hero)}
+          ${sellInstantAltBadge(hero)}
+          ${debtBadge}
         </div>
         <p class="command-reason">${escapeHtml(hero.why || hero.package_note || "Movimiento recomendado por el motor competitivo.")}</p>
         <div class="command-numbers">
           ${amount != null ? `<div><span>Importe</span><strong>${formatMoney(amount)}</strong></div>` : ""}
           <div><span>Confianza</span><strong>${confidence}%</strong></div>
         </div>
-        <button type="button" class="command-cta" data-player-id="${escapeHtml(hero.player_id || hero.id)}">
-          <span>${escapeHtml(heroMeta.label)}</span>
-          <span aria-hidden="true">↗</span>
-        </button>
+        ${offerCta}
       </div>
       <div class="command-visual">
         <span class="command-confidence">${confidence}%</span>
@@ -1735,7 +1767,7 @@
 
     bindAssetFallbacks(heroRoot);
     bindAssetFallbacks(listRoot);
-    heroRoot.querySelectorAll("[data-player-id]").forEach((button) => {
+    heroRoot.querySelectorAll("button.command-cta[data-player-id]").forEach((button) => {
       button.addEventListener("click", () =>
         focusPlayer(
           button.getAttribute("data-player-id"),
@@ -1747,7 +1779,16 @@
       button.addEventListener("click", () => {
         const idx = Number(button.getAttribute("data-action-index"));
         const item = followUps[idx];
-        if (item) openActionDetail(item);
+        if (!item) return;
+        if (item.action === "accept_offer" || item.action === "decline_offer") {
+          const url =
+            item.mister_url ||
+            (DATA.sales_state && DATA.sales_state.mister_offers_url) ||
+            "https://mister.mundodeportivo.com/market#market/offers-received";
+          window.open(url, "_blank", "noopener");
+          return;
+        }
+        openActionDetail(item);
       });
     });
   }
