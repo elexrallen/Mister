@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-23T16:00:14.129746+00:00",
+  "generated_at": "2026-08-23T16:12:24.512879+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -686,7 +686,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 85 · 11,906,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-23T16:00:14.030703+00:00"
+      "added_at": "2026-08-23T16:00:13.540253+00:00"
     },
     {
       "slot": "DF2",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 84 · 2,140,500 € · buy · starter",
-      "added_at": "2026-08-22T21:30:19.336160+00:00"
+      "added_at": "2026-08-23T16:12:24.410909+00:00"
     },
     {
       "slot": "DF3",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 77 · 11,863,500 € · buy · starter",
-      "added_at": "2026-08-23T16:00:14.034004+00:00"
+      "added_at": "2026-08-23T16:12:24.417682+00:00"
     },
     {
       "slot": "DF4",
@@ -806,7 +806,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 35 · 1,548,000 € · buy · bench · Δ 14%",
-      "added_at": "2026-08-23T16:00:14.074579+00:00"
+      "added_at": "2026-08-23T16:12:24.457774+00:00"
     },
     {
       "slot": "MF1",
@@ -902,7 +902,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 2,439,000 € · buy · bench · Δ 3%",
-      "added_at": "2026-08-23T16:00:14.075833+00:00"
+      "added_at": "2026-08-23T16:00:13.570528+00:00"
     },
     {
       "slot": "FW1",
@@ -950,7 +950,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 51 · 6,236,880 € · buy · starter · Δ 8%",
-      "added_at": "2026-08-23T16:00:14.030130+00:00"
+      "added_at": "2026-08-23T16:12:24.413875+00:00"
     },
     {
       "slot": "FW3",
@@ -974,7 +974,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 36 · 1,998,000 € · buy · bench · Δ -18%",
-      "added_at": "2026-08-23T16:00:14.075451+00:00"
+      "added_at": "2026-08-23T16:12:24.458620+00:00"
     }
   ],
   "moves": {
@@ -1682,158 +1682,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF1",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "28773",
-      "name": "Aitor Paredes",
-      "team": "Athletic",
-      "team_id": "1",
-      "ep_score": 84.5,
-      "price": 2140500.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 39.48,
-      "lineup_prob": 95.0,
-      "ff_mister_points": 9.0,
-      "ff_mister_avg": 9.0,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 84 · 2,140,500 € · buy · starter",
-      "added_at": "2026-08-22T21:30:19.336160+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF2",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "27333",
-      "name": "Eric García",
-      "team": "Barcelona",
-      "team_id": "3",
-      "ep_score": 79.9,
-      "price": 15658000.0,
-      "status": "dropped",
-      "delta_5d": -0.0176,
-      "value_note": "stable",
-      "value_ratio": 5.1,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 212.2,
-      "ff_mister_avg": 6.24,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 80 · 15,658,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-19T07:03:31.056979+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF3",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "49382",
-      "name": "Marcos Alonso",
-      "team": "Celta",
-      "team_id": "5",
-      "ep_score": 76.5,
-      "price": 7770000.0,
-      "status": "dropped",
-      "delta_5d": -0.0279,
-      "value_note": "stable",
-      "value_ratio": 9.85,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 7.0,
-      "ff_mister_avg": 7.0,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 76 · 7,770,000 € · buy · starter · Δ -3%",
-      "added_at": "2026-08-22T21:30:19.357753+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF4",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "33053",
-      "name": "Adrián de la Fuente",
-      "team": "Levante",
-      "team_id": "12",
-      "ep_score": 68.5,
-      "price": 6537000.0,
-      "status": "dropped",
-      "delta_5d": -0.0275,
-      "value_note": "stable",
-      "value_ratio": 10.48,
-      "lineup_prob": 90.0,
-      "ff_mister_points": 150.2,
-      "ff_mister_avg": 4.55,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 68 · 6,537,000 € · buy · starter · Δ -3%",
-      "added_at": "2026-08-23T07:00:19.521830+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF5",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "22668",
-      "name": "Lucas Torró",
-      "team": "Osasuna",
-      "team_id": "50",
-      "ep_score": 27.8,
-      "price": 1484000.0,
-      "status": "dropped",
-      "delta_5d": 0.0047,
-      "value_note": "stable",
-      "value_ratio": 18.73,
-      "lineup_prob": 50.0,
-      "ff_mister_points": 110.8,
-      "ff_mister_avg": 3.26,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 28 · 1,484,000 € · buy · bench · Δ 0%",
-      "added_at": "2026-08-23T07:00:19.536820+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "FW2",
-      "position": "FW",
-      "role": "bench",
-      "player_id": "19927",
-      "name": "Raúl García de Haro",
-      "team": "Osasuna",
-      "team_id": "50",
-      "ep_score": 26.0,
-      "price": 1491000.0,
-      "status": "dropped",
-      "delta_5d": 0.0297,
-      "value_note": "stable",
-      "value_ratio": 17.44,
-      "lineup_prob": 40.0,
-      "ff_mister_points": 126.0,
-      "ff_mister_avg": 3.5,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 26 · 1,491,000 € · buy · bench · Δ 3%",
-      "added_at": "2026-08-23T12:16:57.012195+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 0.0
