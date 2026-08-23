@@ -577,9 +577,9 @@
       );
       if (hit) return hit;
     }
-    // Rivales: buscar en sus plantillas
+    // Rivales: el JSON público ya no trae plantilla completa
     for (const r of DATA.rivals || []) {
-      const hit = (r.squad || []).find((p) => String(p.id || "") === id);
+      const hit = (r.key_players || r.squad || []).find((p) => String(p.id || "") === id);
       if (hit) return hit;
     }
     return null;
