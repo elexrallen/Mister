@@ -90,6 +90,7 @@ from target_board import (
     funding_plan_from_board,
     save_target_board,
 )
+from payload_slim import slim_public_payload
 from squad_analyzer import (
     analyze_squad,
     apply_realistic_need_caps,
@@ -157,10 +158,13 @@ def load_json(path: Path) -> dict[str, Any]:
         return json.load(fh)
 
 
-def save_json(path: Path, payload: dict[str, Any]) -> None:
+def save_json(path: Path, payload: dict[str, Any], *, compact: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as fh:
-        json.dump(payload, fh, ensure_ascii=False, indent=2)
+        if compact:
+            json.dump(payload, fh, ensure_ascii=False, separators=(",", ":"))
+        else:
+            json.dump(payload, fh, ensure_ascii=False, indent=2)
         fh.write("\n")
 
 
@@ -273,6 +277,7 @@ def _player_price_pairs_from_payload(payload: dict[str, Any]) -> dict[str, float
     for rival in payload.get("rivals") or []:
         if isinstance(rival, dict):
             _absorb(rival.get("squad"))
+            _absorb(rival.get("key_players"))
     return prices
 
 
@@ -3803,24 +3808,34 @@ def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS, history_d
 
 
 def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None = None) -> Path:
-    """Escribe JSON de la liga + history slim de precios; si es default, copia a latest_data.json."""
+    """Escribe JSON público recortado + history slim de precios (desde el payload completo)."""
     league_cfg = dict(league_cfg or config.get_league(payload.get("league_slug")))
     slug = str(league_cfg.get("slug") or config.DEFAULT_LEAGUE_SLUG)
     out_path = config.league_data_path(slug)
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    save_json(out_path, payload)
 
     hist_dir = config.league_history_dir(slug)
     hist_dir.mkdir(parents=True, exist_ok=True)
     day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # Precios / xPts / decisions salen del universo completo, no del JSON público
     save_json(hist_dir / f"{day}.json", build_price_history_snapshot(payload, day=day))
     prune_history(history_dir=hist_dir)
 
+    public = slim_public_payload(payload)
+    save_json(out_path, public, compact=True)
+
     is_default = slug == config.DEFAULT_LEAGUE_SLUG or bool(league_cfg.get("default"))
     if is_default:
-        save_json(config.LATEST_DATA_PATH, payload)
+        save_json(config.LATEST_DATA_PATH, public, compact=True)
 
-    log.info("Escrito %s (slug=%s default=%s)", out_path, slug, is_default)
+    log.info(
+        "Escrito %s slim (slug=%s default=%s market=%s free=%s)",
+        out_path,
+        slug,
+        is_default,
+        len(public.get("market_opportunities") or []),
+        len(public.get("free_agents_top") or []),
+    )
     return out_path
 
 

@@ -27,6 +27,7 @@ from data_engine import (  # noqa: E402
     prune_history,
     save_json,
 )
+from payload_slim import slim_public_payload  # noqa: E402
 from squad_analyzer import analyze_squad, merge_structural_into_diagnosis  # noqa: E402
 from target_board import (  # noqa: E402
     build_target_board,
@@ -150,7 +151,8 @@ def main(argv: list[str] | None = None) -> None:
             }
         )
     for riv in data.get("rivals") or []:
-        for p in riv.get("squad") or []:
+        # El JSON público ya no trae plantilla rival completa
+        for p in riv.get("squad") or riv.get("key_players") or []:
             _push_cand(
                 {
                     **p,
@@ -292,16 +294,16 @@ def main(argv: list[str] | None = None) -> None:
         kpis["budget_pressure"] = kpis.get("budget_pressure") or "low"
     data["kpis"] = kpis
 
-    save_json(path, data)
-    # History slim de precios por liga (no duplicar el payload completo)
     if slug:
         hist_dir = config.league_history_dir(str(slug))
         hist_dir.mkdir(parents=True, exist_ok=True)
         day = datetime.now(timezone.utc).date().isoformat()
         save_json(hist_dir / f"{day}.json", build_price_history_snapshot(data, day=day))
         prune_history(history_dir=hist_dir)
+    public = slim_public_payload(data)
+    save_json(path, public, compact=True)
     if (not args.league or slug == config.DEFAULT_LEAGUE_SLUG) and path != config.LATEST_DATA_PATH:
-        save_json(config.LATEST_DATA_PATH, data)
+        save_json(config.LATEST_DATA_PATH, public, compact=True)
 
     fw = diagnosis["by_position"]["FW"]
     buys = [a for a in action_plan if a.get("action") == "buy_now"]
