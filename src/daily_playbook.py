@@ -254,7 +254,7 @@ def build_daily_playbook(
     risky = [r for r in (xi.get("risky_slots") or []) if isinstance(r, dict)]
     if risky and phase != "post_jornada":
         detail = "; ".join(
-            f"{r.get('name')} ({r.get('position')}): {r.get('reason')}" for r in risky[:3]
+            f"{r.get('name')} ({r.get('position')}): {r.get('reason')}" for r in risky[:6]
         )
         switch = xi.get("formation_switch") or {}
         if switch.get("formation"):
@@ -268,6 +268,27 @@ def build_daily_playbook(
         )
         warnings.append(
             f"{len(risky)} titular(es) del once recomendado tienen riesgo alto de no jugar."
+        )
+
+    xi_needs = [
+        n
+        for n in (diag.get("structural_needs") or [])
+        if isinstance(n, dict) and n.get("need") == "xi_starter"
+    ]
+    if xi_needs:
+        bits = [str(n.get("reason") or f"Falta titular de {n.get('position')}") for n in xi_needs]
+        related: list[Any] = []
+        for n in xi_needs:
+            related.extend(n.get("occupant_ids") or [])
+        add(
+            "xi_mejoras",
+            f"{len(xi_needs)} posición(es) del once sin titular real",
+            (
+                " ".join(bits)
+                + " No es solo un aviso: esas plazas piden un titular en el mercado."
+            ),
+            priority="Alta",
+            related=related,
         )
 
     doubts_rows = [
@@ -563,7 +584,11 @@ def build_daily_playbook(
         )
 
     # --- Estructura de plantilla ---
-    needs = diag.get("structural_needs") or []
+    needs = [
+        n
+        for n in (diag.get("structural_needs") or [])
+        if isinstance(n, dict) and n.get("need") != "xi_starter"
+    ]
     if needs and phase in ("ventana_compra", "post_jornada", "pretemporada"):
         first = needs[0] if isinstance(needs[0], dict) else {}
         add(

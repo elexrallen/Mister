@@ -30,9 +30,11 @@ DF_STARTERS_MIN = int((getattr(config, "STARTERS_TARGET", None) or {}).get("DF",
 MF_STARTERS_MIN = int((getattr(config, "STARTERS_TARGET", None) or {}).get("MF", 3))
 FW_TOP_MIN = int((getattr(config, "STARTERS_TARGET", None) or {}).get("FW", 2))
 IDEAL_SQUAD = dict(getattr(config, "IDEAL_SQUAD", None) or {"GK": 2, "DF": 5, "MF": 5, "FW": 3})
+IDEAL_XI = dict(getattr(config, "IDEAL_XI", None) or {"GK": 1, "DF": 4, "MF": 3, "FW": 3})
 STARTERS_TARGET = dict(
     getattr(config, "STARTERS_TARGET", None) or {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
 )
+_XI_POS_LABEL = {"GK": "portería", "DF": "defensa", "MF": "centrocampo", "FW": "delantera"}
 LINEUP_STARTER = getattr(config, "LINEUP_PROB_TITULAR", 0.70)
 LINEUP_REGULAR = getattr(config, "LINEUP_PROB_REGULAR", 0.45)
 LINEUP_LOW = getattr(config, "LINEUP_PROB_LOW", 0.40)
@@ -66,6 +68,21 @@ def _is_unavailable(p: dict[str, Any]) -> bool:
     if p.get("gw_out") or (p.get("external") or {}).get("gw_out"):
         return True
     return False
+
+
+def _is_blank_gw(p: dict[str, Any]) -> bool:
+    """Equipo sin partido esta jornada (icono prohibido Mister)."""
+    if p.get("gw_blank"):
+        return True
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    return bool(ext.get("gw_blank"))
+
+
+def _can_fill_xi_this_gw(p: dict[str, Any]) -> bool:
+    """Titular real que puede ocupar un hueco del once ESTA jornada (no blank/out)."""
+    if _is_unavailable(p) or _is_blank_gw(p):
+        return False
+    return _is_starter(p)
 
 
 def _lineup_frac(p: dict[str, Any]) -> float | None:
@@ -605,13 +622,272 @@ def is_line_overstocked(
     """
     Línea sobrada: cupo ≥ ideal y titulares reales ≥ objetivo.
     Se recalcula cada snapshot (adaptativo; no hardcodea conteos).
+    Un hueco del once (xi_starter) anula el sobrecupo: esa plaza pide fichaje.
     """
     pos = position or "MF"
+    if has_xi_starter_need(diagnostico, pos):
+        return False
     ideal = int(IDEAL_SQUAD.get(pos, 3))
     starter_tgt = int(STARTERS_TARGET.get(pos, 1))
     healthy = _line_healthy_count(pos, diagnostico, squad)
     starters = _line_starters_real(pos, diagnostico, squad)
     return healthy >= ideal and starters >= starter_tgt
+
+
+def parse_xi_shape(
+    formation: str | None = None,
+    recommended_xi: dict[str, Any] | None = None,
+) -> dict[str, int]:
+    """'1-4-3-3' / '4-3-3' / recommended_xi.shape → cupos del once."""
+    default = dict(IDEAL_XI)
+    shape = (recommended_xi or {}).get("shape")
+    if isinstance(shape, dict):
+        out: dict[str, int] = {}
+        for pos in ("GK", "DF", "MF", "FW"):
+            try:
+                n = int(shape.get(pos) or 0)
+            except (TypeError, ValueError):
+                n = 0
+            if n > 0:
+                out[pos] = n
+        if sum(out.values()) == 11:
+            return out
+    if not formation:
+        return default
+    parts = [p.strip() for p in str(formation).replace("–", "-").split("-") if p.strip()]
+    nums: list[int] = []
+    for part in parts:
+        try:
+            nums.append(int(part))
+        except ValueError:
+            return default
+    if len(nums) == 4 and sum(nums) == 11:
+        return {"GK": nums[0], "DF": nums[1], "MF": nums[2], "FW": nums[3]}
+    if len(nums) == 3 and sum(nums) == 10:
+        return {"GK": 1, "DF": nums[0], "MF": nums[1], "FW": nums[2]}
+    return default
+
+
+def has_xi_starter_need(diagnostico: dict[str, Any] | None, position: str) -> bool:
+    pos = position or ""
+    for need in (diagnostico or {}).get("structural_needs") or []:
+        if not isinstance(need, dict):
+            continue
+        if need.get("need") == "xi_starter" and need.get("position") == pos:
+            return True
+    return False
+
+
+def compute_xi_slot_gaps(
+    squad: list[dict[str, Any]] | None,
+    *,
+    formation: str | None = None,
+    recommended_xi: dict[str, Any] | None = None,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    """
+    Huecos del once real de esta jornada.
+
+    STARTERS_TARGET (3 DF / 2 FW) diagnostica el 15. Un 4-3-3 pide 4 DF y 3 FW:
+    si el once se rellena con no titulares (o un titular en blank), esa plaza
+    es una carencia de mercado, no solo un aviso de riesgo.
+    """
+    shape = parse_xi_shape(formation, recommended_xi)
+    if recommended_xi and recommended_xi.get("formation"):
+        form_label = str(recommended_xi.get("formation"))
+    elif formation:
+        form_label = str(formation)
+    else:
+        form_label = "-".join(str(shape.get(p, 0)) for p in ("DF", "MF", "FW"))
+
+    xi_ids: set[str] = set()
+    risky_by_pos: dict[str, list[dict[str, Any]]] = {
+        "GK": [],
+        "DF": [],
+        "MF": [],
+        "FW": [],
+    }
+    for row in (recommended_xi or {}).get("risky_slots") or []:
+        if not isinstance(row, dict):
+            continue
+        pos = str(row.get("position") or "")
+        if pos in risky_by_pos:
+            risky_by_pos[pos].append(row)
+        if row.get("player_id"):
+            xi_ids.add(str(row.get("player_id")))
+    for row in (recommended_xi or {}).get("xi") or []:
+        if isinstance(row, dict) and row.get("player_id"):
+            xi_ids.add(str(row.get("player_id")))
+
+    by_pos: dict[str, list[dict[str, Any]]] = {"GK": [], "DF": [], "MF": [], "FW": []}
+    for player in squad or []:
+        pos = player.get("position") or "MF"
+        if pos in by_pos:
+            by_pos[pos].append(player)
+        if player.get("in_lineup") and player.get("id"):
+            xi_ids.add(str(player.get("id")))
+
+    needs: list[dict[str, Any]] = []
+    tips: list[dict[str, Any]] = []
+    gaps: list[dict[str, Any]] = []
+
+    for pos, slots in shape.items():
+        available = [p for p in by_pos[pos] if _can_fill_xi_this_gw(p)]
+        short = max(0, int(slots) - len(available))
+        occupants: list[dict[str, Any]] = []
+        for row in risky_by_pos.get(pos) or []:
+            occupants.append(
+                {
+                    "id": str(row.get("player_id") or ""),
+                    "name": row.get("name"),
+                    "reason": row.get("reason") or row.get("risk_reason"),
+                }
+            )
+        if not occupants:
+            for player in by_pos[pos]:
+                pid = str(player.get("id") or "")
+                in_xi = bool(player.get("in_lineup")) or pid in xi_ids
+                if not in_xi or _can_fill_xi_this_gw(player):
+                    continue
+                if _is_blank_gw(player):
+                    why = "Sin partido esta jornada (blank)"
+                elif _is_unavailable(player):
+                    why = "No disponible esta jornada"
+                else:
+                    lp = _lineup_frac(player)
+                    why = (
+                        f"Solo {lp * 100:.0f}% de titularidad"
+                        if lp is not None
+                        else "No es titular real"
+                    )
+                occupants.append({"id": pid, "name": player.get("name"), "reason": why})
+        occupants = [o for o in occupants if o.get("id")][: max(short, 1)]
+        gaps.append(
+            {
+                "position": pos,
+                "slots_needed": slots,
+                "starters_available": len(available),
+                "slots_short": short,
+                "occupants": occupants,
+            }
+        )
+        if short <= 0:
+            continue
+        names = ", ".join(str(o.get("name")) for o in occupants if o.get("name"))
+        if not names:
+            occupant_bit = " El once se rellena con no titulares."
+        elif len([o for o in occupants if o.get("name")]) == 1:
+            occupant_bit = f" {names} ocupa el hueco y no es titular esta jornada."
+        else:
+            occupant_bit = f" {names} ocupan el hueco y no son titulares esta jornada."
+        avail_n = len(available)
+        avail_word = "titular" if avail_n == 1 else "titulares"
+        avail_verb = "puede" if avail_n == 1 else "pueden"
+        reason = (
+            f"El {form_label} pide {slots} {pos} en el once; "
+            f"solo {avail_n} {avail_word} {avail_verb} ocuparlo esta jornada."
+            f"{occupant_bit}"
+        )
+        needs.append(
+            {
+                "need": "xi_starter",
+                "position": pos,
+                "priority": "Alta",
+                "max_price": None,
+                "slots_needed": slots,
+                "starters_available": len(available),
+                "slots_short": short,
+                "occupant_ids": [o.get("id") for o in occupants if o.get("id")],
+                "reason": reason,
+            }
+        )
+        tips.append(
+            _advice(
+                "alert" if short >= 2 or pos == "GK" else "suggestion",
+                f"xi_starter_{pos.lower()}",
+                f"Once: falta titular en {_XI_POS_LABEL.get(pos, pos)}",
+                reason,
+                position=pos,
+                related=[str(o.get("id")) for o in occupants if o.get("id")],
+            )
+        )
+
+    summary = {
+        "formation": form_label,
+        "shape": shape,
+        "gaps": [g for g in gaps if int(g.get("slots_short") or 0) > 0],
+        "slots_short": sum(int(g.get("slots_short") or 0) for g in gaps),
+    }
+    return needs, tips, summary
+
+
+def apply_xi_slot_needs(
+    diagnostico: dict[str, Any],
+    squad: list[dict[str, Any]] | None,
+    *,
+    formation: str | None = None,
+    recommended_xi: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Añade needs/tips `xi_starter` sin pisar el diagnóstico de temporada.
+    Un 4.º DF no titular o un portero en blank pasan a ser carencia de mercado.
+    """
+    needs_new, tips_new, summary = compute_xi_slot_gaps(
+        squad, formation=formation, recommended_xi=recommended_xi
+    )
+    diagnostico["xi_slot_gaps"] = summary
+    existing = list(diagnostico.get("structural_needs") or [])
+    seen = {(str(n.get("need")), str(n.get("position"))) for n in existing if isinstance(n, dict)}
+    for need in needs_new:
+        key = (str(need.get("need")), str(need.get("position")))
+        if key in seen:
+            for i, old in enumerate(existing):
+                if (str(old.get("need")), str(old.get("position"))) == key:
+                    merged = {**old, **need}
+                    if old.get("max_price") is not None and need.get("max_price") is None:
+                        merged["max_price"] = old.get("max_price")
+                    existing[i] = merged
+                    break
+        else:
+            existing.append(need)
+            seen.add(key)
+    diagnostico["structural_needs"] = existing
+
+    tips = list(diagnostico.get("consejos") or [])
+    tip_codes = {t.get("code") for t in tips}
+    for tip in tips_new:
+        code = tip.get("code")
+        if code in tip_codes:
+            for i, old in enumerate(tips):
+                if old.get("code") == code:
+                    tips[i] = tip
+                    break
+        else:
+            tips.append(tip)
+    order = {"alert": 0, "suggestion": 1, "ok": 2}
+    tips.sort(key=lambda x: order.get(x.get("level"), 9))
+    diagnostico["consejos"] = tips
+
+    lineas = dict(diagnostico.get("lineas") or {})
+    rank = {"ok": 0, "warning": 1, "critical": 2}
+    for need in needs_new:
+        pos = str(need.get("position") or "")
+        if not pos:
+            continue
+        info = dict(lineas.get(pos) or {})
+        try:
+            short = int(need.get("slots_short") or 1)
+        except (TypeError, ValueError):
+            short = 1
+        new_status = "critical" if pos == "GK" or short >= 2 else "warning"
+        if rank.get(new_status, 0) > rank.get(str(info.get("status") or "ok"), 0):
+            info["status"] = new_status
+        if info.get("coverage") == "ok":
+            info["coverage"] = "thin"
+        if need.get("reason"):
+            info["xi_slot_message"] = need.get("reason")
+        lineas[pos] = info
+    diagnostico["lineas"] = lineas
+    return diagnostico
 
 
 def _player_matches_gk_tandem(
@@ -739,6 +1015,22 @@ def assess_market_coverage(
 
     if is_upgrade and lacks_comparable_sample(player):
         is_upgrade = False
+
+    # Hueco del once (no titular / blank) manda sobre "línea ya cubierta"
+    if (
+        has_xi_starter_need(diagnostico, pos)
+        and not _is_unavailable(player)
+        and not _is_blank_gw(player)
+        and lp is not None
+        and lp >= LINEUP_STARTER
+    ):
+        fills_gap = True
+        line_covered = False
+        block_upgrade = False
+        if not label_override or label_override == "Ya cubierto":
+            label_override = "Cubre hueco del once"
+        if not lacks_comparable_sample(player):
+            is_upgrade = True
 
     label = None
     if label_override:
@@ -1535,6 +1827,8 @@ def analyze_squad(
     squad_value: float | None = None,
     points_phase: str = "preseason",
     market_universe: list[dict[str, Any]] | None = None,
+    formation: str | None = None,
+    recommended_xi: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Auditoría táctica + financiera completa.
@@ -1643,7 +1937,7 @@ def analyze_squad(
     order = {"alert": 0, "suggestion": 1, "ok": 2}
     tips.sort(key=lambda x: order.get(x.get("level"), 9))
 
-    return {
+    out = {
         "financiero": finance,
         "lineas": lineas,
         "parches": parches,
@@ -1660,6 +1954,13 @@ def analyze_squad(
             if (lineas.get(pos) or {}).get("coverage") in ("critical", "thin")
         ),
     }
+    apply_xi_slot_needs(
+        out,
+        squad,
+        formation=formation,
+        recommended_xi=recommended_xi,
+    )
+    return out
 
 
 def merge_structural_into_diagnosis(
@@ -1761,6 +2062,7 @@ def structural_market_boost(
             "df_starter",
             "mf_starter",
             "fw_top",
+            "xi_starter",
             "depth_gk",
             "depth_df",
             "depth_mf",
@@ -1831,6 +2133,16 @@ def structural_market_boost(
             else:
                 bonus = 30.0
                 this_label = "Delantero referencia"
+            if lp is not None and lp >= LINEUP_STARTER:
+                bonus += 10.0
+        elif ntype == "xi_starter" and npos and pos == npos:
+            if _is_blank_gw(player):
+                continue
+            lp = _lineup_frac(player)
+            if lp is not None and lp < LINEUP_REGULAR:
+                continue
+            bonus = 32.0
+            this_label = "Cubre hueco del once"
             if lp is not None and lp >= LINEUP_STARTER:
                 bonus += 10.0
         else:
