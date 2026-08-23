@@ -51,6 +51,7 @@ Sobre esa base el pipeline calcula:
 - `recommended_xi` con **capitán** elegido por `xpts × (multiplicador − 1)` y desempate por probabilidad de jugar y rival, si la liga tiene capitán activo.
 - `risky_slots[]` y `formation_switch`: huecos del once que un jugador con poca probabilidad de jugar convertiría en cero, y la formación alternativa que los evita.
 - `meta.model_calibration` (`src/model_calibration.py`): sesgo y error medio del xPts contra los puntos reales de las jornadas ya cerradas, desglosado por tramo de probabilidad de jugar, más los mayores aciertos y desvíos del último ciclo. El snapshot diario guarda la predicción para poder juzgarla después.
+- **Auditoría de rendimiento** (`src/performance_audit.py`): Spearman/lift del ranking, once recomendado vs alineado vs naive de precio, `buy_now` vs `avoid`, y salud del pipeline. Corre en el job diario (job summary) y en el workflow `Performance audit` con umbrales. Ver [docs/performance-audit.md](docs/performance-audit.md).
 - Mercado según fase: en `confirmacion` / `visperas` / `dia_partido` el `priority_score_buy` dobla el peso del xPts y reduce a la mitad el de objetivo del board, porque a esas horas se ficha para puntuar el sábado y no para revender en tres semanas.
 - `recommendations[]` y `squad_notes[]` desde `src/daily_playbook.py`.
 
@@ -68,9 +69,11 @@ El JSON incluye `recommendations[]` según:
 ```
 .
 ├── .github/workflows/daily_update.yml
+├── .github/workflows/performance_audit.yml
 ├── workers/refresh-proxy/   # Cloudflare Worker: botón Actualizar → Actions
 ├── src/
 │   ├── data_engine.py
+│   ├── performance_audit.py
 │   ├── config.py
 │   ├── mister_client.py
 │   ├── external_data.py

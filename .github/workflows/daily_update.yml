@@ -108,6 +108,10 @@ jobs:
           MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
           MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
 
+      - name: Performance audit (xPts, once, mercado)
+        continue-on-error: true
+        run: python src/performance_audit.py --markdown --fail-on-gates
+
       - name: Inject refresh-config (optional secret)
         env:
           REFRESH_CONFIG_JSON: ${{ secrets.REFRESH_CONFIG_JSON }}

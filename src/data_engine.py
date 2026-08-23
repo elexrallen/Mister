@@ -48,6 +48,7 @@ from fixture_difficulty import (
 from mister_gameweek import apply_blank_gameweek
 from expected_points import annotate_players_with_xpts
 from model_calibration import build_calibration
+from performance_audit import attach_audit_to_payload, slim_decisions, slim_pipeline
 from fotmob_service import enrich_players_with_fotmob
 from scrapers.ff_points import THIN_APPS, resolve_avg_scale, scale_threshold
 from scrapers.http_util import rate_limit_report, reset_rate_limits
@@ -413,6 +414,10 @@ def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = N
         "points_by_gw": points_by_gw,
         "gw_points": gw_points,
         "xpts": _player_xpts_from_payload(payload),
+        # Recorte de decisiones: permite auditar once y mercado a posteriori
+        # sin guardar el payload completo.
+        "decisions": slim_decisions(payload),
+        "pipeline": slim_pipeline(payload),
     }
 
 
@@ -2491,6 +2496,7 @@ def build_action_plan(
 # ---------------------------------------------------------------------------
 
 def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
+    t0 = datetime.now(timezone.utc)
     league_cfg = dict(league_cfg or config.get_league())
     slug = str(league_cfg.get("slug") or config.DEFAULT_LEAGUE_SLUG)
     season_start = str(
@@ -3759,6 +3765,25 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             ],
         },
     }
+    elapsed = round((datetime.now(timezone.utc) - t0).total_seconds(), 1)
+    payload["meta"]["pipeline_seconds"] = elapsed
+    log.info("Pipeline [%s]: %.1fs", slug, elapsed)
+    try:
+        history = load_history_snapshots(slug)
+        report = attach_audit_to_payload(
+            payload,
+            history + [build_price_history_snapshot(payload)],
+            slug=slug,
+        )
+        log.info(
+            "Auditoría [%s]: %s (spearman=%s mae=%s)",
+            slug,
+            report.get("status"),
+            (report.get("ranking") or {}).get("spearman"),
+            (report.get("calibration") or {}).get("mae"),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Auditoría de rendimiento omitida [%s]: %s", slug, exc)
     return payload
 
 
