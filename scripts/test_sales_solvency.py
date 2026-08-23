@@ -303,6 +303,120 @@ def test_offer_actions_prefers_bench_to_cover_slot():
     assert by_id["xi"]["offer_needed"] is False
 
 
+def test_offer_actions_keeps_prior_scorer_when_listed_cover():
+    """0 pts esta temporada no manda: conserva al titular de 5.4 Mixto y cubre con peores listados."""
+    actions = build_offer_actions(
+        {
+            "pending_offers": [
+                {
+                    "player_id": "18004",
+                    "name": "Ante Budimir",
+                    "amount": 16_582_180,
+                    "market_value": 16_356_000,
+                    "pct_of_vm": 1.0138,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                },
+                {
+                    "player_id": "56924",
+                    "name": "Etta Eyong",
+                    "amount": 3_963_750,
+                    "market_value": 3_887_000,
+                    "pct_of_vm": 1.0197,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                },
+                {
+                    "player_id": "29403",
+                    "name": "Pathé Ciss",
+                    "amount": 4_481_530,
+                    "market_value": 4_456_000,
+                    "pct_of_vm": 1.0057,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                },
+            ],
+            "listed": [
+                {"player_id": "340", "name": "Isco", "price": 11_740_000},
+                {"player_id": "70917", "name": "A. Sangante", "price": 2_059_000},
+            ],
+        },
+        balance=-15_864_844,
+        cash_needed=15_864_844,
+        cash_lag_hours=48,
+        hours_to_solvency_deadline=126,
+        solvency_target="siguiente",
+        squad=[
+            {
+                "id": "18004",
+                "name": "Ante Budimir",
+                "in_lineup": False,
+                "xpts": 5.68,
+                "gw_starter": True,
+                "lineup_prob": 0.9,
+                "points": 0,
+                "ff_apps": 0,
+                "ff_prior_avg": 5.41,
+                "ff_prior_apps": 37,
+            },
+            {
+                "id": "56924",
+                "name": "Etta Eyong",
+                "in_lineup": False,
+                "xpts": 0.0,
+                "gw_starter": False,
+                "lineup_prob": 0.4,
+                "points": 0,
+                "ff_apps": 1,
+                "ff_mister_avg": 0.0,
+                "ff_prior_avg": 3.58,
+                "ff_prior_apps": 33,
+            },
+            {
+                "id": "29403",
+                "name": "Pathé Ciss",
+                "in_lineup": True,
+                "xpts": 2.4,
+                "gw_starter": True,
+                "lineup_prob": 0.8,
+                "ff_apps": 2,
+                "ff_prior_avg": 3.69,
+                "ff_prior_apps": 29,
+            },
+            {
+                "id": "340",
+                "name": "Isco",
+                "in_lineup": True,
+                "xpts": 0.48,
+                "lineup_prob": 0.5,
+                "ff_apps": 1,
+                "ff_prior_avg": 4.13,
+                "ff_prior_apps": 8,
+            },
+            {
+                "id": "70917",
+                "name": "A. Sangante",
+                "in_lineup": True,
+                "xpts": 1.2,
+                "lineup_prob": 0.6,
+                "injury": True,
+            },
+        ],
+    )
+    by_id = {a["player_id"]: a for a in actions}
+    assert by_id["18004"]["action"] == "decline_offer"
+    assert by_id["18004"]["offer_needed"] is False
+    why_b = (by_id["18004"]["why"] or "").lower()
+    assert "opcional" not in why_b
+    assert "temp. pasada" in why_b
+    assert by_id["56924"]["action"] == "accept_offer"
+    assert by_id["56924"]["offer_needed"] is True
+    assert by_id["29403"]["offer_needed"] is False
+
+
 def test_playbook_splits_needed_and_surplus_offers():
     pb = build_daily_playbook(
         hours_to_jornada=3,
@@ -347,6 +461,7 @@ def main():
         test_offer_actions_only_needed_cover_debt,
         test_offer_actions_positive_balance_declines_even_if_fair,
         test_offer_actions_prefers_bench_to_cover_slot,
+        test_offer_actions_keeps_prior_scorer_when_listed_cover,
         test_playbook_splits_needed_and_surplus_offers,
     ]
     for t in tests:
