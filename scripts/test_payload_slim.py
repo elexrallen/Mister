@@ -129,6 +129,37 @@ def test_slim_is_idempotent() -> None:
     assert twice["market_opportunities"][0]["id"] == "m1"
 
 
+def test_committed_league_files_keep_ui_contract() -> None:
+    """Los latest_data.json del repo ya van slim: la PWA no se queda sin campos."""
+    files = [
+        ROOT / "public/data/leagues/premier-league-d0g38-4036/latest_data.json",
+        ROOT / "public/data/leagues/laliga-patio/latest_data.json",
+        ROOT / "public/data/latest_data.json",
+    ]
+    for path in files:
+        if not path.exists():
+            continue
+        data = json.loads(path.read_text(encoding="utf-8"))
+        assert data["meta"]["payload"]["slim"] is True
+        assert "squad" not in (data["rivals"][0] if data.get("rivals") else {})
+        market = data.get("market_opportunities") or []
+        assert market, path
+        row = next((p for p in market if p.get("puja_recomendada")), market[0])
+        for key in ("id", "name", "position", "price", "photo_url"):
+            assert row.get(key) not in (None, ""), (path.name, key)
+        assert not any("fdr_next" in p or "seasons" in p for p in market)
+        squad = (data.get("me") or {}).get("squad") or []
+        assert squad
+        assert any(p.get("xpts") is not None for p in squad)
+        assert len(data.get("free_agents_top") or []) <= FREE_AGENTS_PUBLIC_CAP
+        assert data.get("recommended_xi", {}).get("xi")
+        assert data.get("action_plan")
+        assert data.get("diagnostico_plantilla", {}).get("lineas")
+        # Compacto: una sola línea (+ newline)
+        assert path.read_text(encoding="utf-8").count("\n") <= 1
+        assert path.stat().st_size < 1_200_000, (path, path.stat().st_size)
+
+
 def test_compact_json_is_much_smaller_than_pretty() -> None:
     payload = {
         "me": {"squad": [_fat_player(str(i)) for i in range(15)]},
@@ -155,6 +186,7 @@ def main() -> None:
         test_slim_player_drops_bulk,
         test_slim_payload_caps_free_and_drops_rival_squads,
         test_slim_is_idempotent,
+        test_committed_league_files_keep_ui_contract,
         test_compact_json_is_much_smaller_than_pretty,
     ]
     for fn in tests:
