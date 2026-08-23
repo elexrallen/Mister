@@ -43,8 +43,10 @@ COMPETITION_MAP: dict[int, dict] = {
     },
 }
 
-# Overrides opcionales keyed por id_community (ganan sobre discovery salvo
-# campos que Mister aporta en vivo: provider/team_limit se fusionan en rules).
+# Overrides opcionales keyed por id_community (ganan sobre discovery en campos
+# de metadatos: slug, season_start, default, market_mode forzado, etc.).
+# Solo se aplican a comunidades que Mister sigue listando; no reintroducen
+# una liga abandonada cuando discovery devolvió un catálogo no vacío.
 LEAGUE_OVERRIDES: dict[str, dict] = {
     "2500716": {
         "slug": "laliga-patio",
@@ -190,18 +192,9 @@ def resolve_leagues(discovered: list[dict] | None = None) -> list[dict]:
             row["max_squad"] = meta.get("default_max_squad") or 25
         out.append(row)
 
-    # Overrides de comunidades no vistas en discovery (p.ej. mock parcial)
-    for cid, ov in LEAGUE_OVERRIDES.items():
-        if cid in seen_cid:
-            continue
-        # Solo añadir si el override es "completo" lo bastante para mock
-        if not ov.get("slug"):
-            continue
-        extra = _fallback_leagues_from_overrides()
-        for L in extra:
-            if str(L.get("id_community")) == cid:
-                out.append(L)
-                break
+    # Con discovery no vacío: solo comunidades que Mister sigue listando.
+    # No reinyectar LEAGUE_OVERRIDES ausentes (liga abandonada no debe volver al catálogo).
+    # Sin discovery, el early-return usa _fallback_leagues_from_overrides().
 
     if not out:
         return _fallback_leagues_from_overrides()

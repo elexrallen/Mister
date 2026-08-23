@@ -195,7 +195,13 @@ También puedes lanzar el workflow a mano con input `league` (`all`, un slug o `
 
 ## Multi-liga y normas Mister
 
-El motor **descubre** las comunidades de tu cuenta (`_FG_user.communities`) y, por cada una, lee las **normas** (`provider`, `team_limit`, cláusulas, cesiones, ritmo de mercado). Overrides opcionales en `LEAGUE_OVERRIDES` (`src/config.py`).
+El motor **descubre** las comunidades de tu cuenta (`_FG_user.communities`) y, por cada una, lee las **normas** (`provider`, `team_limit`, cláusulas, cesiones, ritmo de mercado). Overrides opcionales en `LEAGUE_OVERRIDES` (`src/config.py`) solo enriquecen ligas descubiertas (slug, `season_start`, default); **no reintroducen** una comunidad que ya no sale en Mister.
+
+Tras un sync `--league all` (p. ej. el job diario):
+
+- `public/data/leagues.json` se reescribe solo con las ligas del catálogo actual → el selector de la PWA muestra exactamente esas.
+- Se borran carpetas huérfanas bajo `public/data/leagues/<slug>/`.
+- Un sync parcial (`--league <slug>`) **conserva** el resto del índice; no limpia abandonadas.
 
 Guía de aprendizaje: [`docs/mister-rules.md`](docs/mister-rules.md).
 

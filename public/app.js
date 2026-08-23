@@ -3020,14 +3020,19 @@
     const errEl = document.getElementById("load-error");
     try {
       if (!LEAGUES_INDEX) LEAGUES_INDEX = await loadLeaguesIndex();
+      const indexLeagues = (LEAGUES_INDEX && LEAGUES_INDEX.leagues) || [];
+      const knownSlugs = new Set(indexLeagues.map((L) => L.slug).filter(Boolean));
       const defaultSlug =
         (LEAGUES_INDEX && LEAGUES_INDEX.default_slug) ||
-        ((LEAGUES_INDEX && LEAGUES_INDEX.leagues) || []).find((L) => L.default)?.slug ||
+        indexLeagues.find((L) => L.default)?.slug ||
+        indexLeagues[0]?.slug ||
         "laliga-patio";
       const stored = localStorage.getItem(LEAGUE_STORAGE_KEY);
+      // Si la liga guardada ya no está en el índice (abandonada), usar default
+      const storedOk = stored && (!knownSlugs.size || knownSlugs.has(stored));
       const slug =
-        slugOverride ||
-        stored ||
+        (slugOverride && (!knownSlugs.size || knownSlugs.has(slugOverride)) && slugOverride) ||
+        (storedOk && stored) ||
         defaultSlug;
       currentLeagueSlug = slug;
       fillLeagueSelect(LEAGUES_INDEX, slug);

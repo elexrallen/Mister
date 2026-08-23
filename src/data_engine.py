@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import shutil
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -3698,10 +3699,29 @@ def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None 
     return out_path
 
 
+def prune_orphan_league_dirs(active_slugs: set[str]) -> None:
+    """Borra public/data/leagues/<slug>/ que ya no están en el catálogo efectivo."""
+    root = config.LEAGUES_DIR
+    if not root.is_dir():
+        return
+    for child in root.iterdir():
+        if not child.is_dir():
+            continue
+        if child.name in active_slugs:
+            continue
+        try:
+            shutil.rmtree(child)
+            log.info("Eliminada carpeta de liga huérfana: %s", child.name)
+        except OSError as exc:
+            log.warning("No se pudo borrar liga huérfana %s: %s", child.name, exc)
+
+
 def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -> None:
     """
     Escribe leagues.json.
     Si merge=True (p.ej. --league slug), conserva entradas de otras ligas ya indexadas.
+    Si merge=False (--league all), el índice refleja solo el catálogo del run y se
+    podan carpetas huérfanas bajo public/data/leagues/.
     """
     by_slug: dict[str, dict[str, Any]] = {}
     if merge and config.LEAGUES_INDEX_PATH.is_file():
@@ -3715,7 +3735,7 @@ def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -
     for e in entries:
         if e.get("slug"):
             by_slug[str(e["slug"])] = e
-    # Orden del catálogo efectivo; el resto al final
+    # Orden del catálogo efectivo; con merge=True el resto (otras ligas) al final
     ordered: list[dict[str, Any]] = []
     seen: set[str] = set()
     for L in config.get_effective_leagues():
@@ -3723,9 +3743,10 @@ def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -
         if slug in by_slug:
             ordered.append(by_slug[slug])
             seen.add(slug)
-    for slug, e in by_slug.items():
-        if slug not in seen:
-            ordered.append(e)
+    if merge:
+        for slug, e in by_slug.items():
+            if slug not in seen:
+                ordered.append(e)
     index = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "default_slug": config.DEFAULT_LEAGUE_SLUG,
@@ -3733,6 +3754,8 @@ def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -
     }
     save_json(config.LEAGUES_INDEX_PATH, index)
     log.info("Índice ligas → %s (%s)", config.LEAGUES_INDEX_PATH, len(ordered))
+    if not merge:
+        prune_orphan_league_dirs({str(e["slug"]) for e in ordered if e.get("slug")})
 
 
 def main(argv: list[str] | None = None) -> int:

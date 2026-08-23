@@ -93,4 +93,4 @@ xPts parecidos gana siempre el titular más seguro.
 }
 ```
 
-El índice `public/data/leagues.json` resume las mismas normas por liga para el selector de la PWA.
+El índice `public/data/leagues.json` resume las mismas normas por liga para el selector de la PWA. Un sync `--league all` lo reescribe solo con las comunidades actuales de Mister y elimina carpetas huérfanas en `public/data/leagues/`.
