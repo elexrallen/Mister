@@ -18,6 +18,8 @@ from squad_analyzer import (
     ff_display_fields,
     lacks_comparable_sample,
     quality_for_compare,
+    _is_starter,
+    _lineup_frac,
 )
 
 # Solvencia: positivo al inicio de la jornada que puntúa (esta o la siguiente).
@@ -3959,78 +3961,181 @@ def _join_es_names(names: list[str]) -> str:
     return f"{', '.join(clean[:-1])} y {clean[-1]}"
 
 
-def _offer_player_context(
-    offer: dict[str, Any], squad: list[dict[str, Any]] | None
-) -> dict[str, Any]:
-    pid = str(offer.get("player_id") or "")
-    player = next(
-        (
-            p
-            for p in (squad or [])
-            if str(p.get("id") or p.get("player_id") or "") == pid
-        ),
-        None,
-    )
+def _squad_player(
+    pid: str, squad: list[dict[str, Any]] | None
+) -> dict[str, Any] | None:
+    for p in squad or []:
+        if str(p.get("id") or p.get("player_id") or "") == pid:
+            return p
+    return None
+
+
+def _keep_xpts_for_player(player: dict[str, Any] | None) -> float:
+    """Puntos que se pierden al vender: xPts, o media de la temporada pasada si la actual aún no cuenta."""
     if not isinstance(player, dict):
-        return {"in_lineup": False, "xpts": 0.0}
+        return 0.0
     try:
         xpts = float(player.get("xpts") or 0)
     except (TypeError, ValueError):
         xpts = 0.0
-    return {"in_lineup": bool(player.get("in_lineup")), "xpts": xpts}
+    lp = _lineup_frac(player)
+    p_play = float(lp) if lp is not None else 0.0
+    sig = comparable_ff_signal(player)
+    if sig.get("source") == "prior" and sig.get("avg") is not None:
+        try:
+            prior = float(sig["avg"])
+        except (TypeError, ValueError):
+            prior = 0.0
+        if prior > 0:
+            hist = prior * (p_play if p_play > 0 else 0.7)
+            xpts = max(xpts, hist)
+    return max(0.0, xpts)
 
 
-def _select_needed_offer_ids(
-    rows: list[dict[str, Any]],
+def _offer_player_context(
+    offer: dict[str, Any], squad: list[dict[str, Any]] | None
+) -> dict[str, Any]:
+    pid = str(offer.get("player_id") or "")
+    player = _squad_player(pid, squad)
+    if not isinstance(player, dict):
+        return {
+            "in_lineup": False,
+            "xpts": 0.0,
+            "keep_xpts": 0.0,
+            "real_starter": False,
+            "thin_sample": True,
+            "prior_avg": None,
+            "prior_apps": None,
+            "p_play": 0.0,
+        }
+    try:
+        xpts = float(player.get("xpts") or 0)
+    except (TypeError, ValueError):
+        xpts = 0.0
+    sig = comparable_ff_signal(player)
+    prior_avg = None
+    prior_apps = None
+    if sig.get("source") == "prior":
+        try:
+            prior_avg = float(sig["avg"]) if sig.get("avg") is not None else None
+        except (TypeError, ValueError):
+            prior_avg = None
+        try:
+            prior_apps = int(sig.get("apps") or 0) or None
+        except (TypeError, ValueError):
+            prior_apps = None
+    lp = _lineup_frac(player)
+    p_play = float(lp) if lp is not None else 0.0
+    try:
+        pts = float(player.get("points") or 0)
+    except (TypeError, ValueError):
+        pts = 0.0
+    return {
+        "in_lineup": bool(player.get("in_lineup")),
+        "xpts": xpts,
+        "keep_xpts": _keep_xpts_for_player(player),
+        "real_starter": bool(_is_starter(player) or player.get("gw_starter")),
+        "thin_sample": bool(sig.get("source") == "prior" or sig.get("current_thin")),
+        "prior_avg": prior_avg,
+        "prior_apps": prior_apps,
+        "p_play": p_play,
+        "points": pts,
+    }
+
+
+def _select_cover_items(
+    items: list[dict[str, Any]],
     *,
     cash_needed: float,
     slots_needed: int,
-) -> set[str]:
-    """Mínimo de ofertas que cubren caja y/o plaza, evitando el once si se puede."""
-    n = len(rows)
+) -> list[dict[str, Any]]:
+    """Cubre caja/plaza perdiendo el menor techo de puntos (no el delantero bueno)."""
+    n = len(items)
     if n == 0 or (cash_needed <= 0 and slots_needed <= 0):
-        return set()
+        return []
     if n > 12:
-        rows = sorted(
-            rows,
+        items = sorted(
+            items,
             key=lambda r: (
-                1 if r.get("in_lineup") else 0,
+                float(r.get("keep_xpts") or 0),
+                1 if r.get("real_starter") else 0,
                 -float(r.get("amount") or 0),
             ),
         )[:12]
-        n = len(rows)
+        n = len(items)
 
-    def pid_of(row: dict[str, Any]) -> str:
-        return str(row.get("player_id") or "")
-
-    best: tuple[int, int, float, float, int] | None = None
+    best: tuple[float, float, int, int, int] | None = None
     best_mask = 0
     for mask in range(1, 1 << n):
         cash = 0.0
         n_xi = 0
         n_off = 0
-        xpts_sum = 0.0
-        pct_sum = 0.0
-        for i, row in enumerate(rows):
+        keep_sum = 0.0
+        max_keep = 0.0
+        for i, row in enumerate(items):
             if not (mask & (1 << i)):
                 continue
             cash += float(row.get("amount") or 0)
             n_off += 1
-            if row.get("in_lineup"):
+            keep = float(row.get("keep_xpts") or 0)
+            keep_sum += keep
+            if keep > max_keep:
+                max_keep = keep
+            if row.get("real_starter") or row.get("in_lineup"):
                 n_xi += 1
-            xpts_sum += float(row.get("xpts") or 0)
-            pct_sum += float(row.get("pct") or 0)
         if cash_needed > 0 and cash + 1e-6 < cash_needed:
             continue
         if slots_needed > 0 and n_off < slots_needed:
             continue
-        key = (n_xi, n_off, xpts_sum, -pct_sum, mask)
+        key = (max_keep, keep_sum, n_xi, n_off, mask)
         if best is None or key < best:
             best = key
             best_mask = mask
     if best is None:
-        return {pid_of(row) for row in rows if pid_of(row)}
-    return {pid_of(rows[i]) for i in range(n) if best_mask & (1 << i) and pid_of(rows[i])}
+        return list(items)
+    return [items[i] for i in range(n) if best_mask & (1 << i)]
+
+
+def _future_listed_items(
+    state: dict[str, Any],
+    *,
+    pending_ids: set[str],
+    squad: list[dict[str, Any]] | None,
+    lag: float,
+    hours_to_deadline: float | None,
+) -> list[dict[str, Any]]:
+    """Listados sin oferta: cuentan como caja si el ciclo extra llega antes del deadline."""
+    cycle = float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    wait_lag = lag + cycle
+    if hours_to_deadline is None:
+        return []
+    if not sells_settle_before_deadline(
+        hours_to_deadline=hours_to_deadline,
+        cash_lag_hours=wait_lag,
+    ):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in state.get("listed") or []:
+        pid = str(item.get("player_id") or "")
+        if not pid or pid in pending_ids:
+            continue
+        vm = _money(item.get("price") or item.get("market_value"))
+        if vm <= 0:
+            continue
+        player = _squad_player(pid, squad)
+        ctx = _offer_player_context({"player_id": pid}, squad)
+        out.append(
+            {
+                "kind": "listed",
+                "player_id": pid,
+                "name": item.get("name") or (player or {}).get("name") or pid,
+                "amount": vm,
+                "keep_xpts": float(ctx.get("keep_xpts") or 0),
+                "real_starter": bool(ctx.get("real_starter")),
+                "in_lineup": bool(ctx.get("in_lineup")),
+            }
+        )
+    return out
 
 
 def build_offer_actions(
@@ -4087,6 +4192,7 @@ def build_offer_actions(
         ctx = _offer_player_context(offer, squad)
         prepared.append(
             {
+                "kind": "pending",
                 "offer": offer,
                 "player_id": pid,
                 "name": offer.get("name") or pid,
@@ -4097,15 +4203,43 @@ def build_offer_actions(
                 "from_name": offer.get("from_name") or "Mister",
                 "in_lineup": bool(ctx.get("in_lineup")),
                 "xpts": float(ctx.get("xpts") or 0),
+                "keep_xpts": float(ctx.get("keep_xpts") or 0),
+                "real_starter": bool(ctx.get("real_starter")),
+                "thin_sample": bool(ctx.get("thin_sample")),
+                "prior_avg": ctx.get("prior_avg"),
+                "prior_apps": ctx.get("prior_apps"),
+                "p_play": float(ctx.get("p_play") or 0),
+                "points": float(ctx.get("points") or 0),
             }
         )
-    needed_ids = _select_needed_offer_ids(
-        prepared, cash_needed=cash_needed, slots_needed=slots_needed
+    pending_ids = {str(r["player_id"]) for r in prepared}
+    listed_alts = _future_listed_items(
+        state,
+        pending_ids=pending_ids,
+        squad=squad,
+        lag=lag,
+        hours_to_deadline=hours_to_solvency_deadline,
     )
+    cover = _select_cover_items(
+        prepared + listed_alts,
+        cash_needed=cash_needed,
+        slots_needed=slots_needed,
+    )
+    needed_ids = {
+        str(r["player_id"]) for r in cover if r.get("kind") == "pending"
+    }
     needed_rows = [r for r in prepared if r["player_id"] in needed_ids]
-    needed_names = _join_es_names([str(r["name"]) for r in needed_rows])
-    needed_total = sum(float(r["amount"]) for r in needed_rows)
+    listed_cover = [r for r in cover if r.get("kind") == "listed"]
+    cover_names = _join_es_names(
+        [str(r["name"]) for r in needed_rows]
+        + [str(r["name"]) for r in listed_cover]
+    )
+    needed_names = cover_names
+    needed_total = sum(float(r["amount"]) for r in needed_rows) + sum(
+        float(r["amount"]) for r in listed_cover
+    )
     still_short = max(0.0, cash_needed - needed_total)
+    listed_note = _join_es_names([str(r["name"]) for r in listed_cover])
 
     actions: list[dict[str, Any]] = []
     for row in prepared:
@@ -4115,6 +4249,20 @@ def build_offer_actions(
         pct = row["pct"]
         name = row["name"]
         in_xi = bool(row["in_lineup"])
+        real_starter = bool(row.get("real_starter"))
+        thin = bool(row.get("thin_sample"))
+        prior_avg = row.get("prior_avg")
+        prior_apps = row.get("prior_apps")
+        p_play = float(row.get("p_play") or 0)
+        prior_bit = ""
+        if thin and prior_avg:
+            apps_bit = f" · {int(prior_apps)} PJ" if prior_apps else ""
+            prior_bit = f" Temp. pasada {float(prior_avg):.1f} Mixto{apps_bit}."
+        play_bit = ""
+        if p_play >= 0.7:
+            play_bit = f" Titular probable {p_play * 100:.0f}%."
+        elif real_starter:
+            play_bit = " Titular real."
         needed = pid in needed_ids
         pct_txt = f"{pct * 100:.0f}% VM"
         offer_need = "none"
@@ -4149,6 +4297,13 @@ def build_offer_actions(
                         f"de {cash_needed:,.0f} € (esta oferta {amount:,.0f} €, {pct_txt})."
                     )
                     label_note = "Acepta — necesaria para el negativo"
+                elif listed_note:
+                    why = (
+                        f"Necesitas esta venta para recortar el negativo de "
+                        f"{cash_needed:,.0f} € ({amount:,.0f} €, {pct_txt}) "
+                        "sin vender al titular de más puntos."
+                    )
+                    label_note = "Acepta — necesaria para el negativo"
                 else:
                     why = (
                         f"Necesitas esta venta: el saldo es -{cash_needed:,.0f} € y esta "
@@ -4157,8 +4312,12 @@ def build_offer_actions(
                     label_note = "Acepta — necesaria para el negativo"
                 if offer_need == "solvency_and_slot":
                     why += " Además libera plaza."
+                if listed_note:
+                    why += f" El resto lo cubren {listed_note} ya listados (oferta al siguiente ciclo)."
                 if in_xi:
                     why += " Está en el once, pero es lo que cubre el hueco."
+                elif real_starter:
+                    why += " Es titular real; es el coste de la caja."
                 if settle_ok:
                     why += (
                         f" El cobro llega en ~{lag_i}h, a tiempo para la "
@@ -4186,7 +4345,23 @@ def build_offer_actions(
                     f"No hace falta: con {needed_names} ya cubres el negativo. "
                     "Rechaza para no vender de más; el jugador sigue en venta."
                 )
-                if in_xi:
+                if thin and prior_bit and float(row.get("points") or 0) <= 0:
+                    why = (
+                        f"No hace falta venderlo para el negativo. "
+                        f"Esta temporada aún no cuenta (0 pts).{prior_bit}{play_bit} "
+                        f"Cubre con {needed_names}. Rechaza"
+                        + (
+                            " y mételo en el once."
+                            if real_starter and not in_xi
+                            else "."
+                        )
+                    )
+                elif real_starter and not in_xi:
+                    why = (
+                        f"No hace falta y es titular real {p_play * 100:.0f}%: "
+                        f"con {needed_names} ya cubres el negativo. Rechaza y mételo en el once."
+                    )
+                elif in_xi:
                     why = (
                         f"No hace falta y está en el once: con {needed_names} ya "
                         "cubres el negativo. Rechaza."
@@ -4228,6 +4403,9 @@ def build_offer_actions(
                 "from_name": row["from_name"],
                 "pct_of_vm": pct,
                 "in_lineup": in_xi,
+                "real_starter": real_starter,
+                "keep_xpts": float(row.get("keep_xpts") or 0),
+                "thin_sample": thin,
                 "offer_needed": needed,
                 "offer_need": offer_need,
                 "cash_needed": cash_needed,
