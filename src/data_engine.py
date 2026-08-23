@@ -93,6 +93,7 @@ from target_board import (
 from squad_analyzer import (
     analyze_squad,
     apply_realistic_need_caps,
+    apply_xi_slot_needs,
     assess_market_coverage,
     comparable_ff_signal,
     ff_display_fields,
@@ -2800,6 +2801,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         squad_value=float(me.get("squad_value") or 0) or None,
         points_phase=points_phase,
         market_universe=market_ext,
+        formation=me.get("formation"),
     )
     # Techos de need según caja real (antes de clasificar mercado)
     capped_needs = apply_realistic_need_caps(
@@ -3012,6 +3014,13 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         if isinstance(league_rules.get("captain"), dict)
         else None,
     )
+    apply_xi_slot_needs(
+        diagnostico_plantilla,
+        squad,
+        formation=me.get("formation"),
+        recommended_xi=recommended_xi,
+    )
+    diagnosis = merge_structural_into_diagnosis(diagnosis, diagnostico_plantilla)
     bootstrap_xi = resolve_bootstrap_xi(
         squad=squad,
         xi_summary=recommended_xi.get("summary") or {},
