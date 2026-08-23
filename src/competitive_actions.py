@@ -3206,8 +3206,14 @@ def build_sell_opportunities(
 
     def add(item: dict[str, Any]) -> None:
         pid = str(item["player_id"])
+        if pid in already_listed:
+            # Ya en venta en Mister: no generar otra recomendación de listar
+            return
         if pid in seen:
-            prev = next(x for x in sells if str(x["player_id"]) == pid)
+            prev = next((x for x in sells if str(x["player_id"]) == pid), None)
+            if prev is None:
+                # En seen por otra vía sin fila en sells — no duplicar
+                return
             urg = {"high": 0, "medium": 1, "low": 2}
             # Preferir el motivo de mayor score estratégico
             if urg.get(item.get("urgency"), 9) < urg.get(prev.get("urgency"), 9):
