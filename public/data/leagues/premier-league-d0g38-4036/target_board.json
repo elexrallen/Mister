@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-23T20:10:40.745897+00:00",
+  "generated_at": "2026-08-23T21:04:55.615900+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -542,7 +542,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 0 · 1,000,000 € · buy · bench · tándem mismo club · Δ -23%",
-      "added_at": "2026-08-23T20:10:40.698511+00:00"
+      "added_at": "2026-08-23T21:04:55.568978+00:00"
     },
     {
       "slot": "DF1",
@@ -638,7 +638,7 @@
       "owned": true,
       "gk_tandem": false,
       "why": "EP 73 · 8,818,000 € · keep · starter · Δ 3%",
-      "added_at": "2026-08-23T20:10:40.694205+00:00"
+      "added_at": "2026-08-23T21:04:55.564635+00:00"
     },
     {
       "slot": "MF2",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 44 · 6,358,500 € · buy · starter · Δ -100%",
-      "added_at": "2026-08-19T07:23:58.789337+00:00"
+      "added_at": "2026-08-23T21:04:55.564152+00:00"
     }
   ],
   "moves": {
@@ -1276,58 +1276,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF5",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "54889",
-      "name": "Jurrien Timber",
-      "team": "Arsenal",
-      "team_id": "51",
-      "ep_score": 35.9,
-      "price": 5970000.0,
-      "status": "dropped",
-      "delta_5d": -0.0214,
-      "value_note": "stable",
-      "value_ratio": 6.01,
-      "lineup_prob": 93.0,
-      "ff_mister_points": 219.0,
-      "ff_mister_avg": 7.3,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 36 · 5,970,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-22T12:20:30.893615+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF4",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "48972",
-      "name": "Marcus Tavernier",
-      "team": "Bournemouth",
-      "team_id": "52",
-      "ep_score": 43.8,
-      "price": 6358500.0,
-      "status": "dropped",
-      "delta_5d": -1.0,
-      "value_note": "falling",
-      "value_ratio": 6.89,
-      "lineup_prob": 91.0,
-      "ff_mister_points": 11.0,
-      "ff_mister_avg": 11.0,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 44 · 6,358,500 € · buy · starter · Δ -100%",
-      "added_at": "2026-08-19T07:23:58.789337+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 307413.0
