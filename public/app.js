@@ -1691,6 +1691,11 @@
     const heroMeta = ACTIONS[hero.action] || ACTIONS.wait;
     const confidence = actionConfidence(hero);
     const amount = actionAmount(hero);
+    const offerNeedBadge = (a) => {
+      if (!a || !["accept_offer", "decline_offer"].includes(a.action)) return "";
+      if (a.offer_needed) return `<span class="badge badge-mint">Necesaria</span>`;
+      return `<span class="badge badge-baja">No hace falta</span>`;
+    };
     const debtBadge =
       hero.debt_risk && !hero.solvency_blocked
         ? `<span class="badge badge-duda">Deuda temporal · + antes de J${
@@ -1718,6 +1723,7 @@
         <div class="command-player-meta">
           ${hero.position ? posChip(hero.position) : ""}
           <span>${escapeHtml(hero.team || "Equipo por confirmar")}</span>
+          ${offerNeedBadge(hero)}
           ${sellSettlementBadge(hero)}
           ${sellInstantAltBadge(hero)}
           ${debtBadge}
@@ -1752,11 +1758,14 @@
               <span class="tactical-action-main">
                 <span class="tactical-action-label">${escapeHtml(meta.label)}</span>
                 <strong>${escapeHtml(item.name || "")}</strong>
-                <small>${escapeHtml(item.team || "")}</small>
+                <small>${escapeHtml(
+                  item.package_note || item.team || ""
+                )}</small>
               </span>
               <span class="tactical-action-score">
                 <small>Confianza</small>
                 <strong>${itemConfidence}%</strong>
+                ${offerNeedBadge(item)}
                 ${money != null ? `<span>${formatMoney(money)}</span>` : ""}
               </span>
             </button>`;

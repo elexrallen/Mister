@@ -2303,16 +2303,18 @@ def build_action_plan(
     )
     plan.extend(sells)
     squad_n = len(me.get("squad") or [])
-    need_slot = squad_n >= int(max_squad or 25) - 1
-    need_liq = balance < 0 or float(funding.get("funding_shortfall") or 0) > 0
+    # Aceptar oferta = cobrar de verdad. Listar ya cubre pujas; el negativo sí exige caja.
+    cash_needed = max(0.0, -float(balance or 0))
+    slots_needed = 1 if squad_n >= int(max_squad or 25) else 0
     offer_actions = build_offer_actions(
         sales_state,
         balance=balance,
-        need_liquidity=need_liq,
-        need_slot=need_slot,
+        cash_needed=cash_needed,
+        slots_needed=slots_needed,
         cash_lag_hours=cash_lag,
         hours_to_solvency_deadline=hours_solvency if hours_solvency is not None else None,
         solvency_target=solvency_target,
+        squad=me.get("squad") or [],
     )
     plan.extend(offer_actions)
     promote_funded_swaps(
