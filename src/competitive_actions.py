@@ -3948,17 +3948,105 @@ def build_sell_opportunities(
     return lineup_moves + capped + waiting_listed + scouts
 
 
+def _join_es_names(names: list[str]) -> str:
+    clean = [str(n).strip() for n in names if str(n or "").strip()]
+    if not clean:
+        return ""
+    if len(clean) == 1:
+        return clean[0]
+    if len(clean) == 2:
+        return f"{clean[0]} y {clean[1]}"
+    return f"{', '.join(clean[:-1])} y {clean[-1]}"
+
+
+def _offer_player_context(
+    offer: dict[str, Any], squad: list[dict[str, Any]] | None
+) -> dict[str, Any]:
+    pid = str(offer.get("player_id") or "")
+    player = next(
+        (
+            p
+            for p in (squad or [])
+            if str(p.get("id") or p.get("player_id") or "") == pid
+        ),
+        None,
+    )
+    if not isinstance(player, dict):
+        return {"in_lineup": False, "xpts": 0.0}
+    try:
+        xpts = float(player.get("xpts") or 0)
+    except (TypeError, ValueError):
+        xpts = 0.0
+    return {"in_lineup": bool(player.get("in_lineup")), "xpts": xpts}
+
+
+def _select_needed_offer_ids(
+    rows: list[dict[str, Any]],
+    *,
+    cash_needed: float,
+    slots_needed: int,
+) -> set[str]:
+    """Mínimo de ofertas que cubren caja y/o plaza, evitando el once si se puede."""
+    n = len(rows)
+    if n == 0 or (cash_needed <= 0 and slots_needed <= 0):
+        return set()
+    if n > 12:
+        rows = sorted(
+            rows,
+            key=lambda r: (
+                1 if r.get("in_lineup") else 0,
+                -float(r.get("amount") or 0),
+            ),
+        )[:12]
+        n = len(rows)
+
+    def pid_of(row: dict[str, Any]) -> str:
+        return str(row.get("player_id") or "")
+
+    best: tuple[int, int, float, float, int] | None = None
+    best_mask = 0
+    for mask in range(1, 1 << n):
+        cash = 0.0
+        n_xi = 0
+        n_off = 0
+        xpts_sum = 0.0
+        pct_sum = 0.0
+        for i, row in enumerate(rows):
+            if not (mask & (1 << i)):
+                continue
+            cash += float(row.get("amount") or 0)
+            n_off += 1
+            if row.get("in_lineup"):
+                n_xi += 1
+            xpts_sum += float(row.get("xpts") or 0)
+            pct_sum += float(row.get("pct") or 0)
+        if cash_needed > 0 and cash + 1e-6 < cash_needed:
+            continue
+        if slots_needed > 0 and n_off < slots_needed:
+            continue
+        key = (n_xi, n_off, xpts_sum, -pct_sum, mask)
+        if best is None or key < best:
+            best = key
+            best_mask = mask
+    if best is None:
+        return {pid_of(row) for row in rows if pid_of(row)}
+    return {pid_of(rows[i]) for i in range(n) if best_mask & (1 << i) and pid_of(rows[i])}
+
+
 def build_offer_actions(
     sales_state: dict[str, Any] | None,
     *,
     balance: float = 0.0,
     need_liquidity: bool = False,
     need_slot: bool = False,
+    cash_needed: float | None = None,
+    slots_needed: int | None = None,
     cash_lag_hours: float | None = None,
     hours_to_solvency_deadline: float | None = None,
     solvency_target: str = "siguiente",
+    squad: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Recomendaciones accept/decline sobre ofertas pending del buzón Mister."""
+    """Veredicto accept/decline por oferta pending: si hace falta venderla, y por qué."""
     state = sales_state if isinstance(sales_state, dict) else {}
     pending = list(state.get("pending_offers") or [])
     if not pending:
@@ -3973,7 +4061,22 @@ def build_offer_actions(
             hours_to_deadline=hours_to_solvency_deadline,
             cash_lag_hours=lag,
         )
-    actions: list[dict[str, Any]] = []
+    gap = max(0.0, -_money(balance))
+    if cash_needed is None:
+        cash_needed = gap
+        if need_liquidity and cash_needed <= 0:
+            cash_needed = 1.0
+    else:
+        cash_needed = max(0.0, _money(cash_needed))
+    if slots_needed is None:
+        slots_needed = 1 if need_slot else 0
+    else:
+        try:
+            slots_needed = max(0, int(slots_needed))
+        except (TypeError, ValueError):
+            slots_needed = 1 if need_slot else 0
+
+    prepared: list[dict[str, Any]] = []
     for offer in pending:
         pid = str(offer.get("player_id") or "")
         if not pid:
@@ -3981,51 +4084,133 @@ def build_offer_actions(
         amount = _money(offer.get("amount"))
         vm = _money(offer.get("market_value")) or amount
         pct = float(offer.get("pct_of_vm") or (amount / vm if vm > 0 else 1.0))
-        from_machine = bool(offer.get("from_machine"))
-        name = offer.get("name") or pid
-        # Heurística: aceptar si urge liquidez/plaza o la oferta es razonable (≥95% VM)
-        # o es de la máquina (suele ir cerca del VM). Rechazar si oferta floja y no urge.
-        accept = False
-        if need_liquidity or need_slot:
-            accept = True
-        elif from_machine and pct >= 0.92:
-            accept = True
-        elif pct >= 0.98:
-            accept = True
-        elif pct < 0.90 and not need_liquidity:
-            accept = False
-        else:
-            accept = pct >= 0.95
+        ctx = _offer_player_context(offer, squad)
+        prepared.append(
+            {
+                "offer": offer,
+                "player_id": pid,
+                "name": offer.get("name") or pid,
+                "amount": amount,
+                "vm": vm,
+                "pct": pct,
+                "from_machine": bool(offer.get("from_machine")),
+                "from_name": offer.get("from_name") or "Mister",
+                "in_lineup": bool(ctx.get("in_lineup")),
+                "xpts": float(ctx.get("xpts") or 0),
+            }
+        )
+    needed_ids = _select_needed_offer_ids(
+        prepared, cash_needed=cash_needed, slots_needed=slots_needed
+    )
+    needed_rows = [r for r in prepared if r["player_id"] in needed_ids]
+    needed_names = _join_es_names([str(r["name"]) for r in needed_rows])
+    needed_total = sum(float(r["amount"]) for r in needed_rows)
+    still_short = max(0.0, cash_needed - needed_total)
 
-        if accept:
+    actions: list[dict[str, Any]] = []
+    for row in prepared:
+        offer = row["offer"]
+        pid = row["player_id"]
+        amount = row["amount"]
+        pct = row["pct"]
+        name = row["name"]
+        in_xi = bool(row["in_lineup"])
+        needed = pid in needed_ids
+        pct_txt = f"{pct * 100:.0f}% VM"
+        offer_need = "none"
+        if needed and cash_needed > 0 and slots_needed > 0:
+            offer_need = "solvency_and_slot"
+        elif needed and cash_needed > 0:
+            offer_need = "solvency"
+        elif needed:
+            offer_need = "slot"
+
+        others = _join_es_names(
+            [str(r["name"]) for r in needed_rows if r["player_id"] != pid]
+        )
+        lag_i = int(round(lag))
+        if needed:
             action = "accept_offer"
-            label_note = "Acepta la oferta"
-            if not settle_ok and need_liquidity:
-                why = (
-                    f"Oferta de {offer.get('from_name') or 'Mister'} "
-                    f"({amount:,.0f} €, {pct * 100:.0f}% VM). "
-                    f"Acepta para volver a positivo antes del inicio de la "
-                    f"{solvency_target} jornada; el cobro llega en ~{int(lag)}h "
-                    f"(si urge más, rescinde)."
-                )
+            if offer_need in ("solvency", "solvency_and_slot"):
+                if still_short > 1:
+                    why = (
+                        f"Necesitas esta venta para recortar el negativo de "
+                        f"{cash_needed:,.0f} € (oferta {amount:,.0f} €, {pct_txt})"
+                    )
+                    if others:
+                        why += f", junto con {others}"
+                    why += (
+                        f"; aún faltarían ~{still_short:,.0f} €: lista más o rescinde."
+                    )
+                    label_note = "Acepta — necesaria, aún no cubre"
+                elif others:
+                    why = (
+                        f"Necesitas esta venta junto con {others}: cubren el negativo "
+                        f"de {cash_needed:,.0f} € (esta oferta {amount:,.0f} €, {pct_txt})."
+                    )
+                    label_note = "Acepta — necesaria para el negativo"
+                else:
+                    why = (
+                        f"Necesitas esta venta: el saldo es -{cash_needed:,.0f} € y esta "
+                        f"oferta ({amount:,.0f} €, {pct_txt}) lo cubre."
+                    )
+                    label_note = "Acepta — necesaria para el negativo"
+                if offer_need == "solvency_and_slot":
+                    why += " Además libera plaza."
+                if in_xi:
+                    why += " Está en el once, pero es lo que cubre el hueco."
+                if settle_ok:
+                    why += (
+                        f" El cobro llega en ~{lag_i}h, a tiempo para la "
+                        f"{solvency_target} jornada."
+                    )
+                else:
+                    why += (
+                        f" El cobro tarda ~{lag_i}h y puede no llegar a tiempo: "
+                        "si urge más, rescinde."
+                    )
             else:
                 why = (
-                    f"Oferta de {offer.get('from_name') or 'Mister'} "
-                    f"({amount:,.0f} € ≈ {pct * 100:.0f}% VM). "
-                    "Aceptar es opcional: confirma la venta; el cobro no es inmediato "
-                    f"en subasta (~{int(lag)}h)."
+                    f"Necesitas esta venta para liberar plaza (plantilla al cupo). "
+                    f"Oferta {amount:,.0f} €, {pct_txt}."
                 )
-            urgency = "high" if (need_liquidity or need_slot) else "medium"
-            prio = 92 if need_liquidity or need_slot else 78
+                if in_xi:
+                    why += " Está en el once: es el coste de abrir hueco."
+                label_note = "Acepta — necesaria para plaza"
+            urgency = "high"
+            prio = 92 if offer_need != "slot" else 88
         else:
             action = "decline_offer"
-            label_note = "Rechaza la oferta"
-            why = (
-                f"Oferta floja ({amount:,.0f} €, {pct * 100:.0f}% VM) y no urge liquidez. "
-                "Puedes rechazar y mantenerlo en venta a la espera de mejor oferta."
-            )
+            if cash_needed > 0 and needed_names:
+                why = (
+                    f"No hace falta: con {needed_names} ya cubres el negativo. "
+                    "Rechaza para no vender de más; el jugador sigue en venta."
+                )
+                if in_xi:
+                    why = (
+                        f"No hace falta y está en el once: con {needed_names} ya "
+                        "cubres el negativo. Rechaza."
+                    )
+                label_note = "Rechaza — no hace falta para caja"
+            elif cash_needed > 0:
+                why = (
+                    f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}) y no entra "
+                    "en lo que necesitas para cubrir el negativo."
+                )
+                label_note = "Rechaza — oferta floja"
+            else:
+                why = (
+                    "No necesitas vender: saldo cubierto. Rechaza y conserva al "
+                    "jugador; sigue en venta."
+                )
+                if pct < 0.90:
+                    why = (
+                        f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}) y no "
+                        "necesitas esa caja."
+                    )
+                label_note = "Rechaza — no hace falta"
             urgency = "low"
-            prio = 40
+            prio = 36 if in_xi else 40
 
         actions.append(
             {
@@ -4036,12 +4221,16 @@ def build_offer_actions(
                 "position": offer.get("position"),
                 "bid": amount,
                 "price": amount,
-                "market_value": vm,
+                "market_value": row["vm"],
                 "offer_id": offer.get("offer_id"),
                 "id_bid": offer.get("id_bid"),
-                "from_machine": from_machine,
-                "from_name": offer.get("from_name"),
+                "from_machine": row["from_machine"],
+                "from_name": row["from_name"],
                 "pct_of_vm": pct,
+                "in_lineup": in_xi,
+                "offer_needed": needed,
+                "offer_need": offer_need,
+                "cash_needed": cash_needed,
                 "urgency": urgency,
                 "priority_score": prio,
                 "package_note": f"{label_note} — {amount:,.0f} €",
@@ -4051,7 +4240,13 @@ def build_offer_actions(
                 "photo_url": offer.get("photo_url"),
             }
         )
-    actions.sort(key=lambda x: -int(x.get("priority_score") or 0))
+    actions.sort(
+        key=lambda x: (
+            0 if x.get("offer_needed") else 1,
+            0 if x.get("action") == "accept_offer" else 1,
+            -int(x.get("priority_score") or 0),
+        )
+    )
     return actions
 
 

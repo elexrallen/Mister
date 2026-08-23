@@ -398,16 +398,31 @@ def build_daily_playbook(
             related=[a.get("player_id") for a in offer_actions[:3]],
         )
     if offer_actions:
-        names = ", ".join(str(a.get("name")) for a in offer_actions[:3])
-        add(
-            "ofertas_recibidas",
-            f"{len(offer_actions)} oferta(s) pendientes",
-            f"{names}. Revisa en Mister (ofertas recibidas): aceptar confirma la venta; "
-            "rechazar mantiene al jugador en venta. "
-            f"Prioriza aceptar si necesitas caja antes de la {solvency_target} jornada.",
-            priority="Alta",
-            related=[a.get("player_id") for a in offer_actions],
-        )
+        needed_offers = [a for a in offer_actions if a.get("offer_needed")]
+        surplus_offers = [a for a in offer_actions if not a.get("offer_needed")]
+        if needed_offers:
+            names = ", ".join(str(a.get("name")) for a in needed_offers[:3])
+            why0 = (needed_offers[0].get("why") or "").strip()
+            add(
+                "ofertas_necesarias",
+                f"Acepta {len(needed_offers)} oferta(s): {names}",
+                why0
+                or (
+                    f"{names}. Necesitas esa caja antes de la {solvency_target} jornada."
+                ),
+                priority="Alta",
+                related=[a.get("player_id") for a in needed_offers],
+            )
+        if surplus_offers:
+            names = ", ".join(str(a.get("name")) for a in surplus_offers[:3])
+            why0 = (surplus_offers[0].get("why") or "").strip()
+            add(
+                "ofertas_no_necesarias",
+                f"No hace falta aceptar {len(surplus_offers)} oferta(s)",
+                why0 or f"{names}. Rechaza para no vender de más; siguen en venta.",
+                priority="Media",
+                related=[a.get("player_id") for a in surplus_offers],
+            )
     elif listed_count > 0 and pending_count == 0:
         add(
             "esperando_ofertas",
