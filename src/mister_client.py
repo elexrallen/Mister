@@ -1353,7 +1353,7 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         "owner_name": (str(raw.get("uc_name")).strip() if raw.get("uc_name") else None),
         "clause": clause,
         "clause_known": clause is not None,
-        "is_mine": bool(raw.get("is_mine")),
+        "is_mine": flag_is_true(raw.get("is_mine")),
         "id_market": raw.get("id_market"),
         "min_bid": value if is_free else None,
         "data_quality": {
@@ -1430,40 +1430,126 @@ POOL_ONLY_FIELDS = (
 )
 
 
+def flag_is_true(value: Any) -> bool:
+    """Mister manda is_mine como 0/1; un str '0' no debe contar como mío."""
+    if value is True or value == 1:
+        return True
+    if isinstance(value, str) and value.strip().lower() in {"1", "true", "yes"}:
+        return True
+    return False
+
+
+def _owner_id(row: dict[str, Any] | None) -> str:
+    if not row:
+        return ""
+    owner = row.get("owner_id")
+    if owner in (None, "", 0, "0", False):
+        return ""
+    return str(owner)
+
+
+def player_is_mine(row: dict[str, Any] | None, my_uc: str | None) -> bool:
+    if not row:
+        return False
+    my = str(my_uc or "").strip()
+    if flag_is_true(row.get("is_mine")):
+        return True
+    owner = _owner_id(row)
+    return bool(my) and owner == my
+
+
+def squad_player_ids(players: list[dict[str, Any]] | None) -> set[str]:
+    out: set[str] = set()
+    for p in players or []:
+        pid = str(p.get("id") or p.get("player_id") or "").strip()
+        if pid:
+            out.add(pid)
+    return out
+
+
+def _pool_row_as_squad(src: dict[str, Any]) -> dict[str, Any]:
+    row = dict(src)
+    row["in_lineup"] = False
+    row["from_lineup_only"] = False
+    row["seller"] = "owned"
+    return row
+
+
 def reconcile_squad_with_pool(
     squad: list[dict[str, Any]],
     pool: list[dict[str, Any]],
     my_uc: str | None,
+    *,
+    foreign_ids: set[str] | None = None,
+    roster_ids: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     """
-    El HTML de /team deja vendidos en el once guardado (lineup-player).
-    El pool /ajax/sw/players es la autoridad de ownership (id_uc / is_mine).
+    El HTML de /team deja vendidos en el once guardado (lineup-player) y a
+    veces también en la lista lateral. El pool /ajax/sw/players es la
+    autoridad de ownership (id_uc / is_mine). El perfil público /users/me y
+    las plantillas rivales confirman ventas que el pool aún no ha movido.
     """
-    if not squad or not pool:
-        return squad
-    by_id = {str(p.get("id")): p for p in pool if p.get("id")}
-    my = str(my_uc or "")
+    squad = list(squad or [])
+    by_id = {str(p.get("id")): p for p in (pool or []) if p.get("id")}
+    my = str(my_uc or "").strip()
+    foreign = {str(x).strip() for x in (foreign_ids or set()) if str(x).strip()}
+    roster = {str(x).strip() for x in (roster_ids or set()) if str(x).strip()}
+    roster_ok = len(roster) >= 8
+    mine_from_pool = {
+        pid for pid, src in by_id.items() if player_is_mine(src, my)
+    }
+
     kept: list[dict[str, Any]] = []
     dropped: list[str] = []
+    kept_ids: set[str] = set()
+    added_n = 0
+
     for p in squad:
-        src = by_id.get(str(p.get("id")))
-        if not src:
+        pid = str(p.get("id") or "").strip()
+        name = str(p.get("name") or pid)
+        if not pid:
             kept.append(p)
             continue
-        owner = src.get("owner_id")
-        owner_s = str(owner) if owner not in (None, "", 0, "0") else ""
-        is_mine = bool(src.get("is_mine")) or (bool(my) and owner_s == my)
-        owned_by_other = bool(owner_s) and owner_s != my
-        ghost_xi = bool(p.get("from_lineup_only")) and not is_mine
-        if is_mine:
-            kept.append(p)
+        if roster_ok and pid not in roster:
+            dropped.append(name)
             continue
-        if owned_by_other or ghost_xi:
-            dropped.append(str(p.get("name") or p.get("id")))
+        if pid in foreign:
+            dropped.append(name)
+            continue
+        src = by_id.get(pid)
+        if src is not None:
+            if player_is_mine(src, my):
+                kept.append(p)
+                kept_ids.add(pid)
+                continue
+            dropped.append(name)
+            continue
+        ghost_xi = bool(p.get("from_lineup_only"))
+        if ghost_xi and len(mine_from_pool) >= 11:
+            dropped.append(name)
             continue
         kept.append(p)
+        kept_ids.add(pid)
+
+    for pid, src in by_id.items():
+        if pid in kept_ids or not player_is_mine(src, my):
+            continue
+        if roster_ok and pid not in roster:
+            continue
+        if pid in foreign:
+            continue
+        kept.append(_pool_row_as_squad(src))
+        kept_ids.add(pid)
+        added_n += 1
+
     if dropped:
-        log.info("Plantilla: fuera %s vendido(s)/once fantasma: %s", len(dropped), ", ".join(dropped))
+        log.info(
+            "Plantilla: fuera %s vendido(s)/once fantasma: %s",
+            len(dropped),
+            ", ".join(dropped),
+        )
+    if added_n:
+        log.info("Plantilla: +%s del pool (fichaje aún no pintado en /team)", added_n)
     return kept
 
 
@@ -2031,35 +2117,81 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     rivals, me_row = parse_standings(standings_html, my_uc) if standings_html else ([], None)
     if rivals:
         rivals = enrich_rivals_with_squads(rivals)
+    # IDs rivales del HTML /users (antes de que el pool pise plantillas).
+    # Si vendí a un rival, su perfil ya lo tiene aunque /team conserve el XI.
+    html_foreign_ids: set[str] = set()
+    for rival in rivals:
+        html_foreign_ids |= squad_player_ids(rival.get("squad"))
+
+    own_roster: list[dict[str, Any]] = []
+    profile_path = (me_row or {}).get("profile_path") or (f"users/{my_uc}" if my_uc else "")
+    if profile_path:
+        path = str(profile_path)
+        if not path.startswith("/"):
+            path = "/" + path
+        try:
+            own_roster = parse_user_squad(fetch_html(path))
+            log.info("Perfil propio /users → %s jugadores", len(own_roster))
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Perfil propio %s falló: %s", path, exc)
+            own_roster = []
 
     # Catálogo completo (~500): libres + ownership real por id_uc
     full_pool, pool_meta = fetch_full_player_pool()
     free_pool: list[dict[str, Any]] = []
     free_note = "unavailable"
     pool_fields_filled = 0
+    market_foreign_ids = {
+        str(p.get("id"))
+        for p in market
+        if p.get("id")
+        and (
+            p.get("listed_by_rival")
+            or (
+                _owner_id(p)
+                and _owner_id(p) != str(my_uc or "")
+            )
+        )
+    }
     if full_pool:
         free_pool = [p for p in full_pool if not p.get("owner_id")]
         free_note = str(pool_meta.get("source") or "mister_sw_players")
         rivals = apply_pool_squads_to_rivals(rivals, full_pool, my_uc)
-        # El HTML no pinta streak/prev_value/match_info: se completan del pool.
+    else:
+        free_pool, free_note = fetch_free_agents_best_effort()
+
+    pool_foreign_ids: set[str] = set()
+    for rival in rivals:
+        pool_foreign_ids |= squad_player_ids(rival.get("squad"))
+    foreign_ids = html_foreign_ids | pool_foreign_ids | market_foreign_ids
+    prev_n = len(squad)
+    squad = reconcile_squad_with_pool(
+        squad,
+        full_pool or [],
+        my_uc,
+        foreign_ids=foreign_ids,
+        roster_ids=squad_player_ids(own_roster),
+    )
+    if len(squad) != prev_n:
+        log.info("Plantilla reconciliada: %s → %s", prev_n, len(squad))
+
+    if full_pool:
         pool_by_id = {str(p.get("id")): p for p in full_pool}
-        squad = reconcile_squad_with_pool(squad, full_pool, my_uc)
         pool_fields_filled = apply_pool_fields_to_players(squad, pool_by_id)
         pool_fields_filled += apply_pool_fields_to_players(market, pool_by_id)
         log.info("Campos de jornada desde pool: %s jugadores", pool_fields_filled)
-        # Reaplicar on_sale tras reconcile (el pool no trae listados)
-        try:
-            from sales_state import build_sales_state
 
-            sales_state = build_sales_state(
-                market=market,
-                offers_payload=offers_parsed or sales_state,
-                squad=squad,
-            )
-        except Exception as exc:  # noqa: BLE001
-            log.warning("build_sales_state (post-pool) falló: %s", exc)
-    else:
-        free_pool, free_note = fetch_free_agents_best_effort()
+    # Reaplicar on_sale tras reconcile (el pool no trae listados; puede haber altas)
+    try:
+        from sales_state import build_sales_state
+
+        sales_state = build_sales_state(
+            market=market,
+            offers_payload=offers_parsed or sales_state,
+            squad=squad,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("build_sales_state (post-reconcile) falló: %s", exc)
 
     gameweek = fetch_gameweek_bundle(
         feed_html,
