@@ -10,14 +10,26 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import config
 
+try:
+    from zoneinfo import ZoneInfo
+
+    _MADRID_TZ = ZoneInfo("Europe/Madrid")
+except Exception:  # noqa: BLE001
+    _MADRID_TZ = timezone(timedelta(hours=2))
+
 # LFM rápido (p. ej. MD con CAPITÁN): ciclos diarios anclados (hora local España ≈ UTC+2 en verano;
 # Mister publica 5h / 13h / 21h en reglas de concurso).
 LFM_FAST_CYCLE_ANCHORS_UTC = (3, 11, 19)  # 5h/13h/21h CEST ≈ 3/11/19 UTC
+
+# Mister rota a las 5 / 13 / 21 hora España. El advisor corre ~30 min después.
+MADRID_MARKET_HOURS = (5, 13, 21)
+MADRID_REFRESH_MINUTE = 30
+CYCLE_REFRESH_WINDOW_MINUTES = 50
 
 
 def derive_cycle_hours(
@@ -87,6 +99,75 @@ def _next_anchor_cycle_end(
         return best
     # mañana primer ancla
     return day_start + 86400 + anchors_utc[0] * 3600
+
+
+def madrid_now(now: datetime | None = None) -> datetime:
+    """Ahora en Europe/Madrid (DST incluido)."""
+    utc = now if now is not None else datetime.now(timezone.utc)
+    if utc.tzinfo is None:
+        utc = utc.replace(tzinfo=timezone.utc)
+    return utc.astimezone(_MADRID_TZ)
+
+
+def cycle_refresh_targets(now: datetime | None = None) -> list[datetime]:
+    """Instantes 05:30 / 13:30 / 21:30 Europe/Madrid alrededor de `now`."""
+    local = madrid_now(now)
+    out: list[datetime] = []
+    for day_offset in (-1, 0, 1):
+        day = (local + timedelta(days=day_offset)).date()
+        for hour in MADRID_MARKET_HOURS:
+            out.append(
+                datetime(
+                    day.year,
+                    day.month,
+                    day.day,
+                    hour,
+                    MADRID_REFRESH_MINUTE,
+                    tzinfo=_MADRID_TZ,
+                )
+            )
+    return out
+
+
+def should_run_cycle_refresh(
+    now: datetime | None = None,
+    *,
+    force: bool = False,
+    window_minutes: int = CYCLE_REFRESH_WINDOW_MINUTES,
+) -> dict[str, Any]:
+    """
+    True si estamos en la ventana posterior a 05:30 / 13:30 / 21:30 Madrid.
+
+    GitHub Cron dispara a las 03:30/04:30, 11:30/12:30 y 19:30/20:30 UTC
+    (verano e invierno). Solo una de cada pareja cae en la ventana.
+    No correr *antes* del :30: Mister acaba de rotar a las :00.
+    """
+    if force:
+        return {
+            "run": True,
+            "reason": "forced",
+            "minutes_after": None,
+            "local_time": None,
+        }
+    utc = now if now is not None else datetime.now(timezone.utc)
+    if utc.tzinfo is None:
+        utc = utc.replace(tzinfo=timezone.utc)
+    local = utc.astimezone(_MADRID_TZ)
+    best: float | None = None
+    for target in cycle_refresh_targets(utc):
+        delta_min = (utc - target.astimezone(timezone.utc)).total_seconds() / 60.0
+        if delta_min < -1:
+            continue
+        if best is None or delta_min < best:
+            best = delta_min
+    run = best is not None and best <= float(window_minutes)
+    return {
+        "run": run,
+        "reason": "in_window" if run else "outside_window",
+        "minutes_after": round(best, 1) if best is not None else None,
+        "local_time": local.strftime("%Y-%m-%dT%H:%M"),
+        "window_minutes": window_minutes,
+    }
 
 
 def _hours_until(ts: float, *, now_ts: float | None = None) -> float:

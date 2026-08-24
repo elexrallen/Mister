@@ -35,7 +35,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=58" />
+  <link rel="stylesheet" href="./styles.css?v=59" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -208,20 +208,20 @@
     <section aria-labelledby="actions-title" class="panel panel-flush" id="daily-plan-panel">
       <div class="panel-head">
         <p class="section-kicker">Centro de mando</p>
-        <h2 id="actions-title" class="section-title">Tu plan de hoy</h2>
-        <p id="actions-hint" class="section-hint">Poner en venta ≠ cobrar hoy (salvo rescindir / precio fijo). Ofertas pendientes mandan sobre listar de nuevo.</p>
+        <h2 id="actions-title" class="section-title">Plan de este ciclo</h2>
+        <p id="actions-hint" class="section-hint">Solo movimientos de este ciclo. Listar cobra el siguiente (oferta del sistema ≈ VM).</p>
       </div>
-      <div id="today-hero" class="today-hero" aria-live="polite">
-        <p class="tactical-loading">Calculando prioridad…</p>
+      <div id="today-hero" class="today-hero cycle-plan-hero" aria-live="polite">
+        <p class="tactical-loading">Calculando el ciclo…</p>
       </div>
       <div class="today-list-head">
         <div>
-          <p class="section-kicker">Siguiente jugada</p>
-          <h3>Acciones por prioridad</h3>
+          <p class="section-kicker">Movimientos</p>
+          <h3>Este ciclo</h3>
         </div>
         <span id="today-action-count">—</span>
       </div>
-      <div id="action-queue" class="action-queue-list" aria-live="polite">
+      <div id="action-queue" class="action-queue-list cycle-move-groups" aria-live="polite">
         <p class="text-slate-500 text-sm px-4 py-6">Cargando…</p>
       </div>
     </section>
@@ -361,6 +361,7 @@
                 <th><button type="button" class="th-sort" data-list="squad" data-key="name">Jugador</button></th>
                 <th><button type="button" class="th-sort" data-list="squad" data-key="position">Pos</button></th>
                 <th><button type="button" class="th-sort" data-list="squad" data-key="price">Precio</button></th>
+                <th><button type="button" class="th-sort" data-list="squad" data-key="delta">Δ5d</button></th>
                 <th><button type="button" class="th-sort" data-list="squad" data-key="form">Forma</button></th>
                 <th><button type="button" class="th-sort" data-list="squad" data-key="lineup">Alineación</button></th>
                 <th><button type="button" class="th-sort" data-list="squad" data-key="fotmob">FotMob</button></th>
@@ -505,6 +506,6 @@
     </div>
   </div>
 
-  <script src="./app.js?v=58" defer></script>
+  <script src="./app.js?v=59" defer></script>
 </body>
 </html>

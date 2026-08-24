@@ -469,14 +469,24 @@ def external_competition_key(
     return None
 
 HISTORY_RETENTION_DAYS = 30
+# ~3 snapshots/día × 30 días; el prune corta por fecha, no por recuento
+HISTORY_SNAPSHOTS_MAX = 90
 CHOLLO_DELTA_MIN = 0.08
 TRADING_WINDOW_DAYS = 5
+# 5 días × 3 ciclos de mercado
+TRADING_WINDOW_SNAPSHOTS = 15
 # Revalorización: sin hueco/upgrade claro, fichar flechas al alza con perspectiva
 APPRECIATION_DELTA_MIN = 0.04  # +4% en ~5d
 APPRECIATION_MAX_BUYS = 2
 APPRECIATION_MAX_PRICE = 8_000_000  # no meter pasta gorda solo por Δprecio
 APPRECIATION_MIN_SCORE = 18.0
 APPRECIATION_LINEUP_MIN = 0.45  # regular usable para que el VM siga subiendo
+# Plan de ciclo: oferta del sistema por debajo de esto = outlier (no el “un poco”)
+CYCLE_OFFER_OUTLIER_PCT = 0.82
+# Señal fuerte de subida (el 10% del ejemplo; 8% ya merece rotar)
+CYCLE_STRONG_RISE = 0.08
+CYCLE_MAX_BIDS = 3
+CYCLE_MAX_LISTS = 5
 
 # Pool completo Mister via POST /ajax/sw/players (páginas de 50)
 MISTER_POOL_PAGE_SIZE = 50

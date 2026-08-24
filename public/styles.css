@@ -3149,6 +3149,106 @@ body[data-view="today"] #today-opportunities-panel {
   padding: 0.8rem;
 }
 
+.cycle-plan-copy {
+  padding: 1.1rem 1.2rem 1.25rem;
+  background: linear-gradient(110deg, #0d151e 0%, #0a1119 100%);
+  border: 1px solid rgba(217, 255, 0, 0.35);
+}
+
+.cycle-plan-copy h3 {
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  margin: 0.15rem 0 0.7rem;
+}
+
+.cycle-plan-copy .command-reason {
+  max-width: 46rem;
+  color: #c5d0dc;
+  font-size: 0.98rem;
+  line-height: 1.45;
+}
+
+.cycle-plan-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.1rem;
+  margin-top: 0.9rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.cycle-move-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.4rem 0.8rem 1rem;
+}
+
+.cycle-move-group h4 {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7dd3c7;
+  margin: 0 0 0.45rem;
+}
+
+.cycle-move-chip {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  text-align: left;
+  padding: 0.55rem 0.65rem;
+  margin-bottom: 0.4rem;
+  background: rgba(13, 21, 30, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: inherit;
+}
+
+.cycle-move-chip.is-buy {
+  border-color: rgba(45, 212, 191, 0.28);
+}
+
+.cycle-move-chip.is-sell {
+  border-color: rgba(251, 146, 60, 0.35);
+}
+
+.cycle-move-chip.is-avoid {
+  border-color: rgba(244, 63, 94, 0.3);
+}
+
+.cycle-move-main {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cycle-move-main strong {
+  font-size: 0.95rem;
+}
+
+.cycle-move-main small {
+  color: #94a3b8;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+
+.cycle-move-score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
 .command-hero {
   position: relative;
   display: grid;

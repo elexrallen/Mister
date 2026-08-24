@@ -51,6 +51,7 @@
     squad: [
       { key: "position", label: "Posición" },
       { key: "price", label: "Precio" },
+      { key: "delta", label: "Tendencia" },
       { key: "form", label: "Forma" },
       { key: "lineup", label: "Alineación" },
       { key: "mister", label: "Media Mister" },
@@ -110,6 +111,8 @@
       name: (p) => String(p.name || "").toLowerCase(),
       position: (p) => POS_ORDER[p.position] ?? 9,
       price: (p) => Number(p.price) || 0,
+      delta: (p) =>
+        p.delta_5d != null ? Number(p.delta_5d) : p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0,
       form: (p) => {
         const mister = p.form != null ? Number(p.form) : p.mister_avg != null ? Number(p.mister_avg) : null;
         if (mister != null && mister > 0) return mister;
@@ -301,6 +304,23 @@
     const v = Number(n) * 100;
     const sign = v > 0 ? "+" : "";
     return `${sign}${v.toFixed(1)}%`;
+  };
+
+  const trendDeltaClass = (p) => {
+    const d = p && p.delta_5d != null ? Number(p.delta_5d) : null;
+    if (d == null) {
+      if (p && p.trend === "up") return "delta-up";
+      if (p && p.trend === "down") return "delta-down";
+      return "";
+    }
+    return d >= 0 ? "delta-up" : "delta-down";
+  };
+
+  const trendDeltaLabel = (p) => {
+    if (p && p.delta_5d != null) return pct(Number(p.delta_5d));
+    if (p && p.trend === "up") return "↑";
+    if (p && p.trend === "down") return "↓";
+    return "—";
   };
 
   const fmtDate = (iso) => {
@@ -1665,146 +1685,124 @@
     });
   }
 
-  function renderTacticalPlan(data) {
+  function cycleClockLabel(data) {
+    const cycle =
+      (data.cycle_plan && data.cycle_plan.cycle) ||
+      ((data.diagnostico_plantilla || {}).market_cycle) ||
+      {};
+    const hours = cycle.hours_to_end != null ? Number(cycle.hours_to_end) : null;
+    if (hours == null || Number.isNaN(hours)) return "";
+    if (hours < 1) {
+      const mins = Math.max(1, Math.round(hours * 60));
+      return `${mins} min para el cierre de ciclo`;
+    }
+    return `${hours.toFixed(1).replace(".0", "")} h para el cierre de ciclo`;
+  }
+
+  function renderCyclePlan(data) {
     const heroRoot = document.getElementById("today-hero");
     const listRoot = document.getElementById("action-queue");
     const countRoot = document.getElementById("today-action-count");
+    const hint = document.getElementById("actions-hint");
     if (!heroRoot || !listRoot) return;
 
-    const plan = (data.action_plan || []).map(tacticalRecord);
-    const executable = plan.filter((item) =>
-      ["buy_now", "clause_bid", "sell", "accept_offer", "decline_offer"].includes(item.action)
-    );
-    const ordered = executable.length
-      ? [...executable, ...plan.filter((item) => !executable.includes(item))]
-      : plan;
-
-    if (!ordered.length) {
-      heroRoot.innerHTML = `<div class="command-empty"><strong>Sin jugada urgente</strong><span>Tu equipo no necesita movimientos claros ahora.</span></div>`;
+    const plan = data.cycle_plan;
+    if (!plan) {
+      heroRoot.innerHTML = `<article class="cycle-plan-copy">
+        <p class="command-label">Ciclo de mercado</p>
+        <h3>Plan de este ciclo</h3>
+        <p class="command-reason">Regenera los datos para ver el plan de este ciclo (ventas, listados y pujas).</p>
+      </article>`;
       listRoot.innerHTML = "";
-      if (countRoot) countRoot.textContent = "0 acciones";
+      if (countRoot) countRoot.textContent = "—";
       return;
     }
+    const moves = Array.isArray(plan.moves) ? plan.moves : [];
+    const clock = cycleClockLabel(data);
+    if (hint) {
+      hint.textContent = clock
+        ? `${clock}. Listar cobra el siguiente ciclo (oferta del sistema ≈ VM).`
+        : "Solo movimientos de este ciclo. Listar cobra el siguiente (oferta del sistema ≈ VM).";
+    }
 
-    const hero = ordered[0];
-    const ACTIONS = tacticalActions(data);
-    const heroMeta = ACTIONS[hero.action] || ACTIONS.wait;
-    const confidence = actionConfidence(hero);
-    const amount = actionAmount(hero);
-    const offerNeedBadge = (a) => {
-      if (!a || !["accept_offer", "decline_offer"].includes(a.action)) return "";
-      if (a.offer_needed) {
-        if (a.offer_need === "complete_listing") {
-          return `<span class="badge badge-mint">Cierra la venta</span>`;
-        }
-        return `<span class="badge badge-mint">Necesaria</span>`;
-      }
-      return `<span class="badge badge-baja">No hace falta</span>`;
-    };
-    const debtBadge =
-      hero.debt_risk && !hero.solvency_blocked
-        ? `<span class="badge badge-duda">Deuda temporal · + antes de J${
-            (data.me && data.me.solvency_target) === "esta" ? "" : "+1"
-          }</span>`
-        : "";
-    const offerLink =
-      hero.mister_url ||
-      (data.sales_state && data.sales_state.mister_offers_url) ||
-      "https://mister.mundodeportivo.com/market#market/offers-received";
-    const offerCta =
-      hero.action === "accept_offer" || hero.action === "decline_offer"
-        ? `<a class="command-cta" href="${escapeHtml(offerLink)}" target="_blank" rel="noopener">
-          <span>${escapeHtml(heroMeta.label)} en Mister</span>
-          <span aria-hidden="true">↗</span>
-        </a>`
-        : `<button type="button" class="command-cta" data-player-id="${escapeHtml(hero.player_id || hero.id)}">
-          <span>${escapeHtml(heroMeta.label)}</span>
-          <span aria-hidden="true">↗</span>
-        </button>`;
-    heroRoot.innerHTML = `<article class="command-hero ${heroMeta.cls}">
-      <div class="command-copy">
-        <p class="command-label">Acción prioritaria</p>
-        <h3><span>${escapeHtml(heroMeta.verb)}</span> ${escapeHtml(hero.name || "")}</h3>
-        <div class="command-player-meta">
-          ${hero.position ? posChip(hero.position) : ""}
-          <span>${escapeHtml(hero.team || "Equipo por confirmar")}</span>
-          ${offerNeedBadge(hero)}
-          ${sellSettlementBadge(hero)}
-          ${sellInstantAltBadge(hero)}
-          ${debtBadge}
-        </div>
-        <p class="command-reason">${escapeHtml(hero.why || hero.package_note || "Movimiento recomendado por el motor competitivo.")}</p>
-        <div class="command-numbers">
-          ${amount != null ? `<div><span>Importe</span><strong>${formatMoney(amount)}</strong></div>` : ""}
-          <div><span>Confianza</span><strong>${confidence}%</strong></div>
-        </div>
-        ${offerCta}
-      </div>
-      <div class="command-visual">
-        <span class="command-confidence">${confidence}%</span>
-        ${playerMedia(hero, "is-hero")}
-        <span class="pitch-markings" aria-hidden="true"></span>
+    const headline = plan.headline || "Plan de este ciclo";
+    const narrative =
+      plan.narrative ||
+      "Este ciclo no hay movimientos de mercado. Plantilla y listados no ofrecen un intercambio rentable ahora.";
+    const cons = plan.constraints || {};
+    const squadVm = plan.squad_value || (data.kpis || {}).squad_value_trend || {};
+    const squadDelta =
+      squadVm.delta_5d != null ? pct(Number(squadVm.delta_5d)) : null;
+
+    heroRoot.innerHTML = `<article class="cycle-plan-copy">
+      <p class="command-label">${escapeHtml(clock || "Ciclo de mercado")}</p>
+      <h3>${escapeHtml(headline)}</h3>
+      <p class="command-reason">${escapeHtml(narrative)}</p>
+      <div class="cycle-plan-meta">
+        <span>Plantilla ${Number(cons.squad_size || 0)}/${Number(cons.max_squad || 0)}</span>
+        <span>En venta ${Number(cons.listed_count || 0)}/${Number(cons.sale_limit || 0)}</span>
+        ${squadDelta ? `<span class="${Number(squadVm.delta_5d) >= 0 ? "delta-up" : "delta-down"}">VM ${escapeHtml(squadDelta)}</span>` : ""}
       </div>
     </article>`;
 
-    const followUps = ordered.slice(1);
-    listRoot.innerHTML = followUps.length
-      ? followUps
-          .map((item, index) => {
-            const meta = ACTIONS[item.action] || ACTIONS.wait;
-            const itemConfidence = actionConfidence(item);
-            const money = actionAmount(item);
-            const targetTab = actionDetailFocusTab(item);
-            return `<button type="button" class="tactical-action-row ${meta.cls}" data-action-index="${index}" data-player-id="${escapeHtml(
-              item.player_id || item.id
-            )}" data-focus-tab="${targetTab}">
-              <span class="tactical-action-rank">${String(index + 2).padStart(2, "0")}</span>
-              ${playerMedia(item, "is-row")}
-              <span class="tactical-action-main">
-                <span class="tactical-action-label">${escapeHtml(meta.label)}</span>
+    const groups = [
+      { kinds: ["accept_offer"], label: "Vender", cls: "is-sell" },
+      { kinds: ["list_for_sale"], label: "Poner en venta", cls: "is-sell" },
+      { kinds: ["bid"], label: isFixedMarket(data) ? "Fichar" : "Pujar", cls: "is-buy" },
+      { kinds: ["decline_offer"], label: "No cerrar", cls: "is-avoid" },
+    ];
+    const sections = groups
+      .map((g) => {
+        const items = moves.filter((m) => g.kinds.includes(m.kind || m.action));
+        if (!items.length) return "";
+        const chips = items
+          .map((item) => {
+            const rec = tacticalRecord(item);
+            const money = item.amount ?? item.bid ?? item.expected_proceeds ?? item.price;
+            const dLabel = trendDeltaLabel(item);
+            return `<button type="button" class="cycle-move-chip ${g.cls}" data-player-id="${escapeHtml(
+              rec.player_id || rec.id || ""
+            )}" data-focus-tab="${item.kind === "list_for_sale" || item.kind === "accept_offer" ? "squad" : "market"}">
+              ${playerMedia(rec, "is-row")}
+              <span class="cycle-move-main">
                 <strong>${escapeHtml(item.name || "")}</strong>
-                <small>${escapeHtml(
-                  item.package_note || item.team || ""
-                )}</small>
+                <small>${escapeHtml(item.why || g.label)}</small>
               </span>
-              <span class="tactical-action-score">
-                <small>Confianza</small>
-                <strong>${itemConfidence}%</strong>
-                ${offerNeedBadge(item)}
+              <span class="cycle-move-score">
                 ${money != null ? `<span>${formatMoney(money)}</span>` : ""}
+                <span class="${trendDeltaClass(item)}">${escapeHtml(dLabel)}</span>
               </span>
             </button>`;
           })
-          .join("")
-      : `<p class="queue-empty">No hay más acciones necesarias hoy.</p>`;
-    if (countRoot) countRoot.textContent = `${ordered.length} ${ordered.length === 1 ? "acción" : "acciones"}`;
+          .join("");
+        return `<section class="cycle-move-group">
+          <h4>${escapeHtml(g.label)}</h4>
+          ${chips}
+        </section>`;
+      })
+      .join("");
 
+    listRoot.innerHTML = sections
+      ? sections
+      : `<p class="queue-empty">Este ciclo no hay movimientos de mercado.</p>`;
+    if (countRoot) {
+      const n = moves.length;
+      countRoot.textContent = n ? `${n} ${n === 1 ? "movimiento" : "movimientos"}` : "Sin movimientos";
+    }
     bindAssetFallbacks(heroRoot);
     bindAssetFallbacks(listRoot);
-    heroRoot.querySelectorAll("button.command-cta[data-player-id]").forEach((button) => {
-      button.addEventListener("click", () =>
-        focusPlayer(
-          button.getAttribute("data-player-id"),
-          button.getAttribute("data-focus-tab") || actionDetailFocusTab(hero)
-        )
-      );
-    });
-    listRoot.querySelectorAll(".tactical-action-row").forEach((button) => {
-      button.addEventListener("click", () => {
-        const idx = Number(button.getAttribute("data-action-index"));
-        const item = followUps[idx];
-        if (!item) return;
-        if (item.action === "accept_offer" || item.action === "decline_offer") {
-          const url =
-            item.mister_url ||
-            (DATA.sales_state && DATA.sales_state.mister_offers_url) ||
-            "https://mister.mundodeportivo.com/market#market/offers-received";
-          window.open(url, "_blank", "noopener");
-          return;
-        }
-        openActionDetail(item);
+    listRoot.querySelectorAll(".cycle-move-chip").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-player-id");
+        const tab = btn.getAttribute("data-focus-tab") || "market";
+        if (!id) return;
+        focusPlayer(id, tab);
       });
     });
+  }
+
+  function renderTacticalPlan(data) {
+    renderCyclePlan(data);
   }
 
   function renderTodayOpportunities(data) {
@@ -2309,7 +2307,6 @@
     }
     tbody.innerHTML = rows
       .map((p) => {
-        const d = Number(p.delta_5d || 0);
         return `<tr data-player-id="${escapeHtml(p.id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
           <td>
             <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
@@ -2321,15 +2318,7 @@
           <td>${gameweekCell(p)}</td>
           <td class="text-slate-300 text-xs">${escapeHtml(p.category_label || p.category || "")}</td>
           <td>${formatMoney(p.price)}</td>
-          <td class="${d >= 0 ? "delta-up" : "delta-down"}">${
-            p.delta_5d != null
-              ? pct(d)
-              : p.trend === "up"
-                ? "↑"
-                : p.trend === "down"
-                  ? "↓"
-                  : "—"
-          }</td>
+          <td class="${trendDeltaClass(p)}">${escapeHtml(trendDeltaLabel(p))}</td>
           <td>${fotmobCell(p)}</td>
           <td class="text-mint-400 font-medium">${formatMoney(p.puja_recomendada)}</td>
           ${isFixedMarket() ? "" : `<td>${formatMoney(p.puja_techo)}</td>`}
@@ -2341,9 +2330,6 @@
       cards.innerHTML = rows
         .map((p) => {
           const rec = tacticalRecord(p);
-          const d = Number(p.delta_5d || 0);
-          const deltaLabel =
-            p.delta_5d != null ? pct(d) : p.trend === "up" ? "↑" : p.trend === "down" ? "↓" : "—";
           return tacticalCard(rec, {
             kicker: escapeHtml(p.position || "—"),
             badge: priorityBadge(p.priority),
@@ -2352,7 +2338,7 @@
             stats:
               tacticalStat("Precio", formatMoney(p.price)) +
               tacticalStat(isFixedMarket() ? "Fichaje" : "Puja", formatMoney(p.puja_recomendada), "is-acid") +
-              tacticalStat("Δ5d", deltaLabel, d >= 0 ? "delta-up" : "delta-down") +
+              tacticalStat("Δ5d", trendDeltaLabel(p), trendDeltaClass(p)) +
               tacticalStat("xPts", p.xpts != null ? Number(p.xpts).toFixed(1) : "—"),
           });
         })
@@ -2394,7 +2380,14 @@
     ];
     barsEl.innerHTML = `
       <div class="budget-meta">
-        <span>Plantilla ${formatMoney(fin.valor_plantilla)} · Saldo ${formatMoney(fin.saldo)}</span>
+        <span>Plantilla ${formatMoney(fin.valor_plantilla)} · Saldo ${formatMoney(fin.saldo)}${
+          (() => {
+            const trend = (DATA.cycle_plan && DATA.cycle_plan.squad_value) || (DATA.kpis || {}).squad_value_trend || {};
+            if (trend.delta_5d == null) return "";
+            const d = Number(trend.delta_5d);
+            return ` · <span class="${d >= 0 ? "delta-up" : "delta-down"}">Δ5d ${pct(d)}</span>`;
+          })()
+        }</span>
         <span class="text-mint-400">Total equipo ${formatMoney(fin.valor_total_equipo)}</span>
       </div>
       <div class="budget-track" role="img" aria-label="Distribución del valor de plantilla">
@@ -2581,6 +2574,9 @@
               </td>
               <td>${posChip(p.position)}</td>
               <td>${formatMoney(p.price)}</td>
+              <td class="${trendDeltaClass(p)}">${escapeHtml(trendDeltaLabel(p))}${
+                p.decelerating ? ` <span class="text-xs text-amber-400">frena</span>` : ""
+              }</td>
               <td>${formCell(p)}</td>
               <td>${p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"}</td>
               <td>${fotmobCell(p)}</td>
@@ -2588,7 +2584,7 @@
             </tr>`
           )
           .join("")
-      : `<tr><td colspan="7" class="text-slate-500">Sin resultados.</td></tr>`;
+      : `<tr><td colspan="8" class="text-slate-500">Sin resultados.</td></tr>`;
     if (cards) {
       const lineLabels = { GK: "Portería", DF: "Defensa", MF: "Medio", FW: "Delantera" };
       const grouped = { GK: [], DF: [], MF: [], FW: [] };
@@ -2615,12 +2611,12 @@
                       meta: `${ffAvgLine(p)}${signalChips(p)}`,
                       stats:
                         tacticalStat("Precio", formatMoney(p.price)) +
+                        tacticalStat("Δ5d", trendDeltaLabel(p), trendDeltaClass(p)) +
                         tacticalStat("Forma", formPlain(p)) +
                         tacticalStat(
                           "Once",
                           p.lineup_prob != null ? `${Math.round(Number(p.lineup_prob) * 100)}%` : "—"
-                        ) +
-                        tacticalStat("FotMob", fotmobPlain(p)),
+                        ),
                     });
                   })
                   .join("")}</div>

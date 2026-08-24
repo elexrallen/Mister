@@ -8,7 +8,7 @@ Pipeline batch multi-fuente:
   3) API-Football o seed local → rendimiento multi-temporada
   4) Algoritmos → carencias, oportunidades, libres TOP, recomendaciones
 
-Salida: public/data/leagues/<slug>/latest_data.json (+ snapshot de precios del día).
+Salida: public/data/leagues/<slug>/latest_data.json (+ snapshots de precio por ciclo).
 """
 
 from __future__ import annotations
@@ -111,6 +111,7 @@ from market_cycle import (
     resolve_bootstrap_xi,
     resolve_market_cycle,
 )
+from cycle_plan import attach_value_trends, build_cycle_plan, squad_value_summary
 
 logging.basicConfig(
     level=logging.INFO,
@@ -403,16 +404,41 @@ def _player_xpts_from_payload(payload: dict[str, Any]) -> dict[str, list[float]]
     return out
 
 
+def history_snapshot_stem(now: datetime | None = None) -> str:
+    """Nombre de fichero por ciclo: YYYY-MM-DDTHH (hora UTC)."""
+    dt = now or datetime.now(timezone.utc)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H")
+
+
+def _snapshot_date_from_stem(stem: str):
+    date_part = (stem or "").split("T", 1)[0]
+    return datetime.strptime(date_part, "%Y-%m-%d").date()
+
+
+def _history_file_cap(days: int) -> int:
+    """Ciclos ≈ 3/día: no quedarse corto con el recuento de ficheros."""
+    base = max(1, int(days or 5))
+    snaps = int(getattr(config, "TRADING_WINDOW_SNAPSHOTS", 15) or 15)
+    cap = max(base, snaps, base * 3)
+    hard = int(getattr(config, "HISTORY_SNAPSHOTS_MAX", 90) or 90)
+    return min(cap, hard)
+
+
 def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = None) -> dict[str, Any]:
     """
-    Snapshot slim diario: precios + puntos por jornada (no el payload completo).
+    Snapshot slim de precios (un fichero por ciclo) + puntos por jornada.
     Los puntos permiten medir a posteriori si las decisiones acertaron.
     """
-    day = day or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    now = datetime.now(timezone.utc)
+    day = day or now.strftime("%Y-%m-%d")
     points_by_gw, gw_points = _player_points_from_payload(payload)
     matchday = payload.get("matchday") if isinstance(payload.get("matchday"), dict) else {}
     return {
         "date": day,
+        "captured_at": now.isoformat(),
+        "cycle_hour_utc": now.hour,
         "league_slug": payload.get("league_slug"),
         "jornada": matchday.get("jornada"),
         "gameweek_status": matchday.get("gameweek_status"),
@@ -428,12 +454,13 @@ def build_price_history_snapshot(payload: dict[str, Any], *, day: str | None = N
 
 
 def load_history_snapshots(slug: str, days: int = 45) -> list[dict[str, Any]]:
-    """Snapshots diarios de la liga, del más antiguo al más reciente."""
+    """Snapshots de la liga (diario legacy o por ciclo), del más antiguo al más reciente."""
     history_dir = config.league_history_dir(slug)
     if not history_dir.exists():
         return []
     out: list[dict[str, Any]] = []
-    for snap_path in sorted(history_dir.glob("*.json"))[-days:]:
+    cap = _history_file_cap(days)
+    for snap_path in sorted(history_dir.glob("*.json"))[-cap:]:
         try:
             snap = load_json(snap_path)
         except Exception:  # noqa: BLE001
@@ -483,7 +510,7 @@ def _prices_from_history_file(snap: dict[str, Any]) -> dict[str, float]:
 def _series_from_history_dir(history_dir: Path, days: int) -> dict[str, list[float]]:
     if not history_dir.exists():
         return {}
-    snaps = sorted(history_dir.glob("*.json"))[-days:]
+    snaps = sorted(history_dir.glob("*.json"))[-_history_file_cap(days):]
     series: dict[str, list[float]] = {}
     for snap_path in snaps:
         try:
@@ -2591,6 +2618,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         enrich_player(p, perf_idx, allow_synthetic=not honest_live)
         for p in me_raw.get("squad", [])
     ]
+    attach_value_trends(squad, price_series)
     # Mercado del día + libres del pool completo (dedupe) → universo de fichaje
     market_seen: set[str] = {str(p.get("id")) for p in me_raw.get("squad", []) if p.get("id")}
     market_combined: list[dict[str, Any]] = []
@@ -2890,6 +2918,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         days_to_kickoff=comp.get("days_to_kickoff"),
         matchday=matchday_early,
     )
+    attach_value_trends(opportunities, price_series)
     rivals = [estimate_rival_liquidity(r) for r in league.get("rivals", [])]
 
     # FF production también en plantillas rivales (misma competición; skip en fixed)
@@ -3402,6 +3431,20 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     attach_mister_assets(rival_upgrades, player_index=asset_index)
     attach_mister_assets(free_agents, player_index=asset_index)
 
+    cycle_plan = build_cycle_plan(
+        me=me,
+        squad=squad,
+        opportunities=opportunities,
+        sales_state=sales_state,
+        recommended_xi=recommended_xi,
+        league_rules=league_rules,
+        market_cycle=market_cycle,
+        market_mode=market_mode,
+        max_squad=config.league_max_squad(league_cfg),
+    )
+    attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
+    squad_vm = squad_value_summary(squad)
+
     matchday_meta = matchday_early
     gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
     # recommended_xi ya calculado tras bootstrap (antes del action plan)
@@ -3644,6 +3687,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "listed_count": int(sales_state.get("listed_count") or 0),
             "pending_offers": int(sales_state.get("pending_count") or 0),
             "squad_value": me.get("squad_value"),
+            "squad_value_delta_5d": (squad_vm or {}).get("delta_5d"),
+            "squad_value_trend": squad_vm,
             "rank": me.get("rank"),
             "top_free_remaining": len(free_agents),
             "pool_size": live_meta.get("pool_size") or 0,
@@ -3714,6 +3759,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         },
         "target_board": target_board,
         "daily_package": daily_package,
+        "cycle_plan": cycle_plan,
         "action_plan": action_plan,
         "rival_upgrades": rival_upgrades,
         "market_opportunities": opportunities,
@@ -3809,7 +3855,7 @@ def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS, history_d
     cutoff = datetime.now(timezone.utc).date() - timedelta(days=retention_days)
     for path in hdir.glob("*.json"):
         try:
-            day = datetime.strptime(path.stem, "%Y-%m-%d").date()
+            day = _snapshot_date_from_stem(path.stem)
         except ValueError:
             continue
         if day < cutoff:
@@ -3826,9 +3872,11 @@ def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None 
 
     hist_dir = config.league_history_dir(slug)
     hist_dir.mkdir(parents=True, exist_ok=True)
-    day = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    # Precios / xPts / decisions salen del universo completo, no del JSON público
-    save_json(hist_dir / f"{day}.json", build_price_history_snapshot(payload, day=day))
+    now = datetime.now(timezone.utc)
+    day = now.strftime("%Y-%m-%d")
+    stem = history_snapshot_stem(now)
+    # Un fichero por ciclo (YYYY-MM-DDTHH) para detectar aceleración intra-día
+    save_json(hist_dir / f"{stem}.json", build_price_history_snapshot(payload, day=day))
     prune_history(history_dir=hist_dir)
 
     public = slim_public_payload(payload)

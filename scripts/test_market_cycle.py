@@ -13,6 +13,8 @@ from competitive_actions import (  # noqa: E402
     sell_cash_phrase,
     sell_settlement_fields,
 )
+from datetime import datetime, timezone
+
 from market_cycle import (  # noqa: E402
     adjust_funding_for_bootstrap,
     bootstrap_buy_cap,
@@ -20,6 +22,7 @@ from market_cycle import (  # noqa: E402
     derive_cycle_hours,
     resolve_bootstrap_xi,
     resolve_market_cycle,
+    should_run_cycle_refresh,
     xi_gap_positions,
 )
 
@@ -136,6 +139,33 @@ def test_fixed_cash_lag_is_zero() -> None:
     _assert(fields.get("settlement") == "instant", fields)
 
 
+def test_cycle_refresh_window_madrid() -> None:
+    # Verano CEST = UTC+2 → 05:30 Madrid = 03:30 UTC
+    summer_on = should_run_cycle_refresh(
+        datetime(2026, 8, 24, 3, 32, tzinfo=timezone.utc)
+    )
+    _assert(summer_on["run"], summer_on)
+    summer_off = should_run_cycle_refresh(
+        datetime(2026, 8, 24, 4, 32, tzinfo=timezone.utc)
+    )
+    _assert(not summer_off["run"], summer_off)
+    before = should_run_cycle_refresh(
+        datetime(2026, 8, 24, 3, 10, tzinfo=timezone.utc)
+    )
+    _assert(not before["run"], before)
+    # Invierno CET = UTC+1 → 05:30 Madrid = 04:30 UTC
+    winter_on = should_run_cycle_refresh(
+        datetime(2026, 1, 15, 4, 32, tzinfo=timezone.utc)
+    )
+    _assert(winter_on["run"], winter_on)
+    winter_off = should_run_cycle_refresh(
+        datetime(2026, 1, 15, 3, 32, tzinfo=timezone.utc)
+    )
+    _assert(not winter_off["run"], winter_off)
+    forced = should_run_cycle_refresh(force=True)
+    _assert(forced["run"] and forced["reason"] == "forced", forced)
+
+
 if __name__ == "__main__":
     test_derive_cycle_hours()
     test_bootstrap_active_short_squad()
@@ -144,4 +174,5 @@ if __name__ == "__main__":
     test_bootstrap_buy_cap()
     test_sell_copy_uses_league_cycle()
     test_fixed_cash_lag_is_zero()
+    test_cycle_refresh_window_madrid()
     print("test_market_cycle: OK")

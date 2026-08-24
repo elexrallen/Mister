@@ -166,7 +166,11 @@ def load_history_snapshots(slug: str, days: int = 45) -> list[dict[str, Any]]:
     if not history_dir.exists():
         return []
     out: list[dict[str, Any]] = []
-    for snap_path in sorted(history_dir.glob("*.json"))[-days:]:
+    cap = min(
+        max(int(days or 45), int(days or 45) * 3),
+        int(getattr(config, "HISTORY_SNAPSHOTS_MAX", 90) or 90),
+    )
+    for snap_path in sorted(history_dir.glob("*.json"))[-cap:]:
         try:
             snap = json.loads(snap_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
