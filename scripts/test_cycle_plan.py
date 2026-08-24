@@ -37,6 +37,16 @@ def test_value_trend_deceleration() -> None:
     _assert(t["accel"] is not None and t["accel"] < 0, t)
 
 
+def test_value_trend_follows_mister_down_arrow() -> None:
+    """Neto a 5d positivo no cuenta como 'subiendo' si Mister marca bajada."""
+    series = {"1": [1.757e6, 1.809e6, 1.865e6, 1.911e6, 1.932e6, 1.893e6, 1.893e6]}
+    t = compute_value_trend("1", 1.893e6, series, price_delta_1d=-0.020186, trend="down")
+    _assert(t["delta_5d"] is not None and t["delta_5d"] > 0.05, t)
+    _assert(t["delta_cycle"] is not None and t["delta_cycle"] < 0, t)
+    _assert(t["rising"] is False, t)
+    _assert(t["decelerating"] is True, t)
+
+
 def test_attach_trends_on_squad() -> None:
     squad = [{"id": "a", "name": "A", "price": 5_000_000}]
     attach_value_trends(squad, {"a": [4_000_000, 4_400_000, 5_000_000]})
@@ -485,6 +495,7 @@ def test_history_snapshot_stems() -> None:
 
 if __name__ == "__main__":
     test_value_trend_deceleration()
+    test_value_trend_follows_mister_down_arrow()
     test_attach_trends_on_squad()
     test_full_squad_lists_does_not_bid()
     test_free_slot_bids_same_cycle()

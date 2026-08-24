@@ -91,8 +91,11 @@
       name: (p) => String(p.name || "").toLowerCase(),
       position: (p) => POS_ORDER[p.position] ?? 9,
       price: (p) => Number(p.price) || 0,
-      delta: (p) =>
-        p.delta_5d != null ? Number(p.delta_5d) : p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0,
+      delta: (p) => {
+        const now = lastPriceDelta(p);
+        if (now != null) return now;
+        return p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0;
+      },
       fotmob: (p) => {
         const fm = p.fotmob_stats || {};
         const v = fm.rating_promedio ?? (p.external || {}).recent_rating;
@@ -111,8 +114,11 @@
       name: (p) => String(p.name || "").toLowerCase(),
       position: (p) => POS_ORDER[p.position] ?? 9,
       price: (p) => Number(p.price) || 0,
-      delta: (p) =>
-        p.delta_5d != null ? Number(p.delta_5d) : p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0,
+      delta: (p) => {
+        const now = lastPriceDelta(p);
+        if (now != null) return now;
+        return p.trend === "up" ? 1 : p.trend === "down" ? -1 : 0;
+      },
       form: (p) => {
         const mister = p.form != null ? Number(p.form) : p.mister_avg != null ? Number(p.mister_avg) : null;
         if (mister != null && mister > 0) return mister;
@@ -306,20 +312,41 @@
     return `${sign}${v.toFixed(1)}%`;
   };
 
-  const trendDeltaClass = (p) => {
-    const d = p && p.delta_5d != null ? Number(p.delta_5d) : null;
-    if (d == null) {
-      if (p && p.trend === "up") return "delta-up";
-      if (p && p.trend === "down") return "delta-down";
-      return "";
+  /** Último cambio de VM (flecha Mister / ciclo), no el neto a 5 días. */
+  const lastPriceDelta = (p) => {
+    if (!p) return null;
+    for (const key of ["price_delta_1d", "delta_cycle", "delta_1d"]) {
+      if (p[key] == null || p[key] === "") continue;
+      const n = Number(p[key]);
+      if (Number.isNaN(n)) continue;
+      if (key === "delta_cycle" && Math.abs(n) < 1e-6) continue;
+      return n;
     }
-    return d >= 0 ? "delta-up" : "delta-down";
+    return null;
+  };
+
+  const trendDeltaClass = (p) => {
+    const now = lastPriceDelta(p);
+    if (now != null) return now >= 0 ? "delta-up" : "delta-down";
+    if (p && p.trend === "up") return "delta-up";
+    if (p && p.trend === "down") return "delta-down";
+    const d5 = p && p.delta_5d != null ? Number(p.delta_5d) : null;
+    if (d5 != null) return d5 >= 0 ? "delta-up" : "delta-down";
+    return "";
   };
 
   const trendDeltaLabel = (p) => {
-    if (p && p.delta_5d != null) return pct(Number(p.delta_5d));
-    if (p && p.trend === "up") return "↑";
+    const now = lastPriceDelta(p);
+    const d5 = p && p.delta_5d != null ? Number(p.delta_5d) : null;
+    if (now != null) {
+      if (d5 != null && Math.abs(d5 - now) >= 0.03) {
+        return `${pct(now)} · 5d ${pct(d5)}`;
+      }
+      return pct(now);
+    }
     if (p && p.trend === "down") return "↓";
+    if (p && p.trend === "up") return "↑";
+    if (d5 != null) return pct(d5);
     return "—";
   };
 
@@ -2338,7 +2365,7 @@
             stats:
               tacticalStat("Precio", formatMoney(p.price)) +
               tacticalStat(isFixedMarket() ? "Fichaje" : "Puja", formatMoney(p.puja_recomendada), "is-acid") +
-              tacticalStat("Δ5d", trendDeltaLabel(p), trendDeltaClass(p)) +
+              tacticalStat("Δ", trendDeltaLabel(p), trendDeltaClass(p)) +
               tacticalStat("xPts", p.xpts != null ? Number(p.xpts).toFixed(1) : "—"),
           });
         })
@@ -2611,7 +2638,7 @@
                       meta: `${ffAvgLine(p)}${signalChips(p)}`,
                       stats:
                         tacticalStat("Precio", formatMoney(p.price)) +
-                        tacticalStat("Δ5d", trendDeltaLabel(p), trendDeltaClass(p)) +
+                        tacticalStat("Δ", trendDeltaLabel(p), trendDeltaClass(p)) +
                         tacticalStat("Forma", formPlain(p)) +
                         tacticalStat(
                           "Once",

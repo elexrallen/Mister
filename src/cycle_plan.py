@@ -67,19 +67,27 @@ def compute_value_trend(
     delta_5d = None
     accel = None
 
-    if len(prices) >= 2 and prices[-2] > 0:
-        delta_cycle = (prices[-1] - prices[-2]) / prices[-2]
-    lookback = min(3, max(1, len(prices) - 1))
-    if len(prices) >= 2 and prices[-1 - lookback] > 0:
-        delta_1d = (prices[-1] - prices[-1 - lookback]) / prices[-1 - lookback]
-    if len(prices) >= 2 and prices[0] > 0:
+    distinct: list[float] = []
+    for px in prices:
+        if px is None or px <= 0:
+            continue
+        if not distinct or abs(px - distinct[-1]) > 0.01:
+            distinct.append(float(px))
+
+    if len(distinct) >= 2:
+        delta_cycle = (distinct[-1] - distinct[-2]) / distinct[-2]
+        if delta_1d is None:
+            delta_1d = delta_cycle
+        if distinct[0] > 0:
+            delta_5d = (distinct[-1] - distinct[0]) / distinct[0]
+    elif len(prices) >= 2 and prices[0] > 0:
         delta_5d = (prices[-1] - prices[0]) / prices[0]
-    if len(prices) >= 4 and prices[0] > 0:
-        mid_i = len(prices) // 2
-        mid_p = prices[mid_i]
+    if len(distinct) >= 4 and distinct[0] > 0:
+        mid_i = len(distinct) // 2
+        mid_p = distinct[mid_i]
         if mid_p > 0:
-            first_leg = (mid_p - prices[0]) / prices[0]
-            second_leg = (prices[-1] - mid_p) / mid_p
+            first_leg = (mid_p - distinct[0]) / distinct[0]
+            second_leg = (distinct[-1] - mid_p) / mid_p
             accel = second_leg - first_leg
 
     if delta_5d is None and delta_1d is not None:
@@ -89,17 +97,25 @@ def compute_value_trend(
     elif delta_5d is None and trend == "down":
         delta_5d = -0.02
 
+    last_down = bool(
+        trend == "down"
+        or (delta_1d is not None and delta_1d < -0.003)
+        or (delta_cycle is not None and delta_cycle < -0.003)
+    )
+    last_up = bool(
+        trend == "up"
+        or (delta_1d is not None and delta_1d >= 0.01)
+        or (delta_cycle is not None and delta_cycle >= 0.01)
+    )
     decelerating = bool(
         delta_5d is not None
         and delta_5d > 0
-        and accel is not None
-        and accel < -0.005
+        and (
+            last_down
+            or (accel is not None and accel < -0.005)
+        )
     )
-    rising = bool(
-        (delta_5d is not None and delta_5d >= float(getattr(config, "APPRECIATION_DELTA_MIN", 0.04)))
-        or trend == "up"
-        or (delta_cycle is not None and delta_cycle >= 0.02)
-    )
+    rising = bool(last_up and not last_down)
     return {
         "delta_cycle": round(delta_cycle, 4) if delta_cycle is not None else None,
         "delta_1d": round(delta_1d, 4) if delta_1d is not None else None,
@@ -233,7 +249,14 @@ def _keep_riding(p: dict[str, Any]) -> bool:
     """Sigue subiendo lo bastante como para no venderlo solo porque 'frena'."""
     d5 = _f(p.get("delta_5d"))
     floor = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
-    return d5 is not None and d5 >= floor
+    if d5 is None or d5 < floor:
+        return False
+    if p.get("trend") == "down":
+        return False
+    now = _f(p.get("price_delta_1d")) or _f(p.get("delta_cycle")) or _f(p.get("delta_1d"))
+    if now is not None and now < 0:
+        return False
+    return True
 
 
 def _market_much_hotter(owned_delta: float | None, market_row: dict[str, Any] | None) -> bool:
