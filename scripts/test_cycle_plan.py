@@ -509,6 +509,59 @@ def test_history_snapshot_stems() -> None:
     _assert(str(_snapshot_date_from_stem("2026-08-24")) == "2026-08-24", "legacy daily stem")
 
 
+def test_cycle_plan_does_not_list_sold_players() -> None:
+    """Mukiele / Nmecha vendidos no deben salir en 'Pon en venta'."""
+    from mister_client import reconcile_squad_with_pool
+
+    html_squad = [
+        {
+            "id": "65186",
+            "name": "N. Mukiele",
+            "position": "DF",
+            "price": 5_350_000,
+            "from_lineup_only": False,
+            "lineup_prob": 0.2,
+            "in_lineup": True,
+        },
+        {
+            "id": "11145",
+            "name": "L. Nmecha",
+            "position": "FW",
+            "price": 1_893_000,
+            "from_lineup_only": False,
+            "lineup_prob": 0.2,
+            "in_lineup": True,
+        },
+        {
+            "id": "1859",
+            "name": "D. Solanke",
+            "position": "FW",
+            "price": 2_300_000,
+            "from_lineup_only": False,
+            "lineup_prob": 0.9,
+            "in_lineup": True,
+        },
+    ]
+    pool = [
+        {"id": "65186", "name": "N. Mukiele", "owner_id": None, "is_mine": 0},
+        {"id": "11145", "name": "L. Nmecha", "owner_id": "999", "is_mine": 0},
+        {"id": "1859", "name": "D. Solanke", "owner_id": "me", "is_mine": 1},
+    ]
+    squad = reconcile_squad_with_pool(html_squad, pool, "me")
+    plan = build_cycle_plan(
+        me={"balance": 1_000_000, "squad": squad},
+        squad=squad,
+        recommended_xi={"xi": [{"player_id": "1859"}]},
+        sales_state={"listed_ids": [], "pending_offers": []},
+        market_mode="auction",
+        max_squad=25,
+        league_rules={"sale_limit": 5, "max_squad": 25},
+    )
+    listed = [m.get("name") for m in plan["moves"] if m.get("kind") == KIND_LIST]
+    _assert("N. Mukiele" not in listed, listed)
+    _assert("L. Nmecha" not in listed, listed)
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_value_trend_follows_mister_down_arrow()
@@ -527,4 +580,5 @@ if __name__ == "__main__":
     test_does_not_list_riser_when_full_but_market_not_hotter()
     test_lists_fading_bench_with_free_slots()
     test_history_snapshot_stems()
+    test_cycle_plan_does_not_list_sold_players()
     print("test_cycle_plan: OK")
