@@ -2314,7 +2314,8 @@ def build_action_plan(
     )
     plan.extend(sells)
     squad_n = len(me.get("squad") or [])
-    # Aceptar oferta = cobrar de verdad. Listar ya cubre pujas; el negativo sí exige caja.
+    # Aceptar oferta justa = cerrar la venta listada. El negativo sí exige
+    # el conjunto mínimo que cubre; con saldo cubierto no se rechaza ~VM.
     cash_needed = max(0.0, -float(balance or 0))
     slots_needed = 1 if squad_n >= int(max_squad or 25) else 0
     offer_actions = build_offer_actions(

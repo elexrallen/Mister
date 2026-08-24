@@ -28,6 +28,10 @@ SOLVENCY_STRICT_HOURS = 48
 SOLVENCY_SETTLE_BUFFER_HOURS = 2
 # Compat: nombre antiguo (ya no es buffer D-1 de 24h).
 SOLVENCY_D1_BUFFER_HOURS = SOLVENCY_SETTLE_BUFFER_HOURS
+# Oferta de la máquina/rival por debajo de esto = floja; a partir de aquí cierra
+# una venta que ya habíamos pedido listar. Rechazar en Mister saca al jugador
+# del mercado: listar → rechazar → volver a listar es un bucle vacío.
+FAIR_OFFER_PCT = 0.90
 
 
 def _money(v: Any) -> float:
@@ -3809,8 +3813,8 @@ def build_sell_opportunities(
         else:
             why = (
                 f"Liquidez permanente: {_cash_phrase(price)}. "
-                "Pon en venta hoy — la máquina ofrece al siguiente ciclo; "
-                "aceptar es opcional."
+                "Pon en venta hoy — la máquina ofrece al siguiente ciclo ~VM; "
+                "acepta esa oferta: por eso lo listas."
             )
         item = base_item(
             slot,
@@ -3919,8 +3923,16 @@ def build_sell_opportunities(
         )
     )
     capped = sells[: max(0, remaining_sale_slots)]
+    pending_offer_ids = {
+        str(o.get("player_id") or "")
+        for o in ((sales_state or {}).get("pending_offers") or [])
+        if o.get("player_id")
+    }
     waiting_listed: list[dict[str, Any]] = []
     for lid in sorted(already_listed):
+        if lid in pending_offer_ids:
+            # La oferta pendiente es el veredicto; no fingir que "espera oferta".
+            continue
         p = next((x for x in squad if str(x.get("id") or "") == lid), None)
         if not p:
             continue
@@ -3942,7 +3954,7 @@ def build_sell_opportunities(
                 "package_note": "Ya en venta — esperando oferta de la máquina",
                 "why": (
                     "Ya está en venta. No hace falta volver a listarlo; "
-                    "cuando llegue la oferta, acepta o rechaza según liquidez."
+                    "cuando la máquina ofrezca ~VM, acepta: por eso lo listaste."
                 ),
                 "on_sale": True,
             }
@@ -4138,6 +4150,15 @@ def _future_listed_items(
     return out
 
 
+def _is_offer_keeper(row: dict[str, Any]) -> bool:
+    """Titular real (≥70% de jugar) que no deberíamos vender si no hace falta caja/plaza."""
+    try:
+        p_play = float(row.get("p_play") or 0)
+    except (TypeError, ValueError):
+        p_play = 0.0
+    return bool(row.get("real_starter")) and p_play >= 0.7
+
+
 def build_offer_actions(
     sales_state: dict[str, Any] | None,
     *,
@@ -4151,7 +4172,13 @@ def build_offer_actions(
     solvency_target: str = "siguiente",
     squad: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Veredicto accept/decline por oferta pending: si hace falta venderla, y por qué."""
+    """Veredicto accept/decline por oferta pending.
+
+    Si hace falta caja o plaza, solo se acepta el conjunto mínimo que cubre.
+    Si el saldo ya está cubierto, una oferta justa (~≥90% VM) cierra la venta
+    que ya se pidió listar: en Mister rechazar saca al jugador del mercado,
+    y volver a pedir que lo listes al día siguiente es un bucle vacío.
+    """
     state = sales_state if isinstance(sales_state, dict) else {}
     pending = list(state.get("pending_offers") or [])
     if not pending:
@@ -4265,6 +4292,17 @@ def build_offer_actions(
             play_bit = " Titular real."
         needed = pid in needed_ids
         pct_txt = f"{pct * 100:.0f}% VM"
+        fair = pct + 1e-9 >= FAIR_OFFER_PCT
+        keeper = _is_offer_keeper(row)
+        # Sin hueco de caja/plaza: una oferta justa cierra la venta que ya
+        # pedimos listar. Rechazar en Mister saca al jugador del mercado.
+        complete_listing = (
+            not needed
+            and cash_needed <= 0
+            and slots_needed <= 0
+            and fair
+            and not keeper
+        )
         offer_need = "none"
         if needed and cash_needed > 0 and slots_needed > 0:
             offer_need = "solvency_and_slot"
@@ -4272,6 +4310,8 @@ def build_offer_actions(
             offer_need = "solvency"
         elif needed:
             offer_need = "slot"
+        elif complete_listing:
+            offer_need = "complete_listing"
 
         others = _join_es_names(
             [str(r["name"]) for r in needed_rows if r["player_id"] != pid]
@@ -4338,12 +4378,25 @@ def build_offer_actions(
                 label_note = "Acepta — necesaria para plaza"
             urgency = "high"
             prio = 92 if offer_need != "slot" else 88
+        elif complete_listing:
+            action = "accept_offer"
+            who = "la máquina" if row.get("from_machine") else (row.get("from_name") or "el rival")
+            why = (
+                f"Lo pusimos en venta y {who} ofrece {amount:,.0f} € ({pct_txt}). "
+                "Acepta y cierra la venta: rechazar lo saca del mercado y mañana "
+                "te pediríamos volver a listarlo."
+            )
+            if in_xi and not keeper:
+                why += " Está en el once Mister, pero no es titular real."
+            label_note = "Acepta — cierra la venta listada"
+            urgency = "medium"
+            prio = 80
         else:
             action = "decline_offer"
             if cash_needed > 0 and needed_names:
                 why = (
                     f"No hace falta: con {needed_names} ya cubres el negativo. "
-                    "Rechaza para no vender de más; el jugador sigue en venta."
+                    "Rechaza para no vender de más."
                 )
                 if thin and prior_bit and float(row.get("points") or 0) <= 0:
                     why = (
@@ -4373,16 +4426,24 @@ def build_offer_actions(
                     "en lo que necesitas para cubrir el negativo."
                 )
                 label_note = "Rechaza — oferta floja"
+            elif keeper:
+                why = (
+                    f"No lo vendas: es titular probable ({p_play * 100:.0f}%) y el "
+                    "saldo ya está cubierto. Rechaza; al rechazar sale del mercado "
+                    "— no lo vuelvas a listar."
+                )
+                label_note = "Rechaza — titular que conviene quedar"
+            elif not fair:
+                why = (
+                    f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}). "
+                    "Si sigues queriendo venderlo, vuelve a listarlo mañana."
+                )
+                label_note = "Rechaza — oferta floja"
             else:
                 why = (
-                    "No necesitas vender: saldo cubierto. Rechaza y conserva al "
-                    "jugador; sigue en venta."
+                    "No hace falta venderlo ahora. Rechaza; al rechazar sale del "
+                    "mercado — no lo vuelvas a listar salvo que pase a sobrar."
                 )
-                if pct < 0.90:
-                    why = (
-                        f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}) y no "
-                        "necesitas esa caja."
-                    )
                 label_note = "Rechaza — no hace falta"
             urgency = "low"
             prio = 36 if in_xi else 40
@@ -4406,7 +4467,7 @@ def build_offer_actions(
                 "real_starter": real_starter,
                 "keep_xpts": float(row.get("keep_xpts") or 0),
                 "thin_sample": thin,
-                "offer_needed": needed,
+                "offer_needed": needed or complete_listing,
                 "offer_need": offer_need,
                 "cash_needed": cash_needed,
                 "urgency": urgency,
@@ -6122,8 +6183,8 @@ def finalize_action_plan(
                 item["package_note"] = "Vender hoy — cobra al instante al VM"
             else:
                 item["package_note"] = (
-                    f"Pon en venta hoy — la máquina ofrece al siguiente ciclo; "
-                    f"aceptar es opcional (caja usable en ~{int(round(float(cash_lag_h)))}h; "
+                    f"Pon en venta hoy — la máquina ofrece al siguiente ciclo ~VM; "
+                    f"acepta esa oferta (caja usable en ~{int(round(float(cash_lag_h)))}h; "
                     "si urge, rescindir ≈ 80% VM)"
                 )
 
@@ -6253,7 +6314,7 @@ def finalize_action_plan(
         "avoid": 3,
         "sell": 5,
         "accept_offer": 5,
-        "decline_offer": 3,
+        "decline_offer": 5,
         "scout": 0 if fixed else 3,
     }
     max_pipeline_waits = 2
