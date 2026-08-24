@@ -1711,7 +1711,7 @@
       heroRoot.innerHTML = `<article class="cycle-plan-copy">
         <p class="command-label">Ciclo de mercado</p>
         <h3>Plan de este ciclo</h3>
-        <p class="command-reason">Regenera los datos para ver el plan de este ciclo (ventas, listados y pujas).</p>
+        <p class="cycle-plan-narrative">Regenera los datos para ver el plan de este ciclo (ventas, listados y pujas).</p>
       </article>`;
       listRoot.innerHTML = "";
       if (countRoot) countRoot.textContent = "—";
@@ -1737,7 +1737,7 @@
     heroRoot.innerHTML = `<article class="cycle-plan-copy">
       <p class="command-label">${escapeHtml(clock || "Ciclo de mercado")}</p>
       <h3>${escapeHtml(headline)}</h3>
-      <p class="command-reason">${escapeHtml(narrative)}</p>
+      <p class="cycle-plan-narrative">${escapeHtml(narrative)}</p>
       <div class="cycle-plan-meta">
         <span>Plantilla ${Number(cons.squad_size || 0)}/${Number(cons.max_squad || 0)}</span>
         <span>En venta ${Number(cons.listed_count || 0)}/${Number(cons.sale_limit || 0)}</span>

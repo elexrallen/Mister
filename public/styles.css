@@ -3128,7 +3128,7 @@ body[data-view="today"] #today-opportunities-panel {
 }
 
 #daily-plan-panel {
-  overflow: hidden;
+  overflow: visible;
   background: #060b11;
   border-color: #2a3743;
 }
@@ -3149,26 +3149,39 @@ body[data-view="today"] #today-opportunities-panel {
   padding: 0.8rem;
 }
 
+.today-hero.cycle-plan-hero {
+  overflow: visible;
+  height: auto;
+  min-height: 0;
+}
+
 .cycle-plan-copy {
   padding: 1.1rem 1.2rem 1.25rem;
   background: linear-gradient(110deg, #0d151e 0%, #0a1119 100%);
   border: 1px solid rgba(217, 255, 0, 0.35);
+  overflow: visible;
 }
 
 .cycle-plan-copy h3 {
   font-family: "Barlow Condensed", sans-serif;
-  font-size: clamp(1.8rem, 6vw, 2.8rem);
+  font-size: clamp(1.45rem, 4.5vw, 2.1rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  line-height: 1.05;
+  line-height: 1.1;
   margin: 0.15rem 0 0.7rem;
 }
 
-.cycle-plan-copy .command-reason {
-  max-width: 46rem;
+.cycle-plan-narrative {
+  display: block;
+  max-width: none;
+  margin: 0;
+  overflow: visible;
   color: #c5d0dc;
-  font-size: 0.98rem;
-  line-height: 1.45;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  white-space: normal;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
 }
 
 .cycle-plan-meta {
@@ -3235,9 +3248,12 @@ body[data-view="today"] #today-opportunities-panel {
 }
 
 .cycle-move-main small {
+  display: block;
+  overflow: visible;
   color: #94a3b8;
   font-size: 0.75rem;
-  line-height: 1.35;
+  line-height: 1.4;
+  white-space: normal;
 }
 
 .cycle-move-score {
@@ -4128,6 +4144,26 @@ body[data-view="today"] #tactical-kpis .kpi-value {
     grid-column: 1;
     grid-row: 2 / span 2;
     padding: 1rem;
+  }
+
+  #daily-plan-panel .cycle-plan-hero {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-self: start;
+    overflow: visible;
+    min-height: 0;
+    height: auto;
+  }
+
+  #daily-plan-panel .cycle-plan-hero ~ .today-list-head {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    align-self: start;
+  }
+
+  #daily-plan-panel .cycle-move-groups {
+    grid-column: 1 / -1;
+    grid-row: 4;
   }
 
   .today-list-head {
