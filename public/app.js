@@ -1693,7 +1693,12 @@
     const amount = actionAmount(hero);
     const offerNeedBadge = (a) => {
       if (!a || !["accept_offer", "decline_offer"].includes(a.action)) return "";
-      if (a.offer_needed) return `<span class="badge badge-mint">Necesaria</span>`;
+      if (a.offer_needed) {
+        if (a.offer_need === "complete_listing") {
+          return `<span class="badge badge-mint">Cierra la venta</span>`;
+        }
+        return `<span class="badge badge-mint">Necesaria</span>`;
+      }
       return `<span class="badge badge-baja">No hace falta</span>`;
     };
     const debtBadge =

@@ -563,7 +563,10 @@ def test_playbook_spend_15_copy() -> None:
     _assert(bonus, "bonus post-jornada visible")
     _assert("hoy" in bonus["detail"].lower() or "pujar" in bonus["detail"].lower(), bonus)
     sells = next(c for c in pb["checklist"] if c["id"] == "listar_ventas")
-    _assert("listados" in sells["detail"].lower(), sells)
+    detail = sells["detail"].lower()
+    _assert("acepta esa oferta" in detail, sells)
+    _assert("saca del mercado" in detail, sells)
+    _assert("opcional" not in detail, sells)
 
 
 def test_playbook_visperas_follows_buy_now() -> None:

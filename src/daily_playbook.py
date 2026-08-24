@@ -440,7 +440,7 @@ def build_daily_playbook(
             add(
                 "ofertas_no_necesarias",
                 f"No hace falta aceptar {len(surplus_offers)} oferta(s)",
-                why0 or f"{names}. Rechaza para no vender de más; siguen en venta.",
+                why0 or f"{names}. Rechaza para no vender de más.",
                 priority="Media",
                 related=[a.get("player_id") for a in surplus_offers],
             )
@@ -485,8 +485,9 @@ def build_daily_playbook(
                     "Vende ahora solo para fichar el recambio que está en el mercado."
                     if fixed
                     else (
-                        "Hoy solo listas: la máquina ofrece al siguiente ciclo y aceptar "
-                        "es opcional (así puedes vender y pujar si sale el upgrade)."
+                        "Hoy listas: la máquina ofrece al siguiente ciclo ~VM. "
+                        "Acepta esa oferta: por eso lo pones en venta. Rechazar "
+                        "lo saca del mercado y mañana te pediríamos listarlo otra vez."
                     )
                 ),
                 priority="Media",

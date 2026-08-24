@@ -237,7 +237,8 @@ def test_offer_actions_only_needed_cover_debt():
     assert "once" in (by_id["29403"]["why"] or "").lower()
 
 
-def test_offer_actions_positive_balance_declines_even_if_fair():
+def test_offer_actions_positive_balance_accepts_fair_listed_sale():
+    """Listar y luego rechazar una oferta justa de la máquina es un bucle: Mister te saca del mercado."""
     actions = build_offer_actions(
         {
             "pending_offers": [
@@ -256,10 +257,135 @@ def test_offer_actions_positive_balance_declines_even_if_fair():
         balance=1_000_000,
         cash_needed=0,
     )
+    assert actions and actions[0]["action"] == "accept_offer"
+    assert actions[0]["offer_needed"] is True
+    assert actions[0]["offer_need"] == "complete_listing"
+    assert "opcional" not in (actions[0].get("why") or "").lower()
+    assert "cierra la venta" in (actions[0].get("why") or "").lower()
+    assert "saca del mercado" in (actions[0].get("why") or "").lower()
+
+
+def test_offer_actions_declines_keeper_when_cash_ok():
+    actions = build_offer_actions(
+        {
+            "pending_offers": [
+                {
+                    "player_id": "star",
+                    "name": "Titular",
+                    "amount": 8_000_000,
+                    "market_value": 8_000_000,
+                    "pct_of_vm": 1.0,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                }
+            ]
+        },
+        balance=1_000_000,
+        cash_needed=0,
+        squad=[
+            {
+                "id": "star",
+                "name": "Titular",
+                "in_lineup": True,
+                "gw_starter": True,
+                "lineup_prob": 0.9,
+                "xpts": 8,
+            }
+        ],
+    )
     assert actions and actions[0]["action"] == "decline_offer"
     assert actions[0]["offer_needed"] is False
-    assert "opcional" not in (actions[0].get("why") or "").lower()
-    assert "no necesitas vender" in (actions[0].get("why") or "").lower()
+    why = (actions[0].get("why") or "").lower()
+    assert "sigue en venta" not in why
+    assert "titular" in why
+
+
+def test_offer_actions_declines_poor_offer_when_cash_ok():
+    actions = build_offer_actions(
+        {
+            "pending_offers": [
+                {
+                    "player_id": "2",
+                    "name": "B",
+                    "amount": 3_000_000,
+                    "market_value": 5_000_000,
+                    "pct_of_vm": 0.6,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                }
+            ]
+        },
+        balance=1_000_000,
+        cash_needed=0,
+    )
+    assert actions and actions[0]["action"] == "decline_offer"
+    assert "oferta floja" in (actions[0].get("why") or "").lower()
+
+
+def test_premier_listed_offers_are_not_a_reject_relist_loop():
+    """Premier: 5 listados, saldo positivo, ofertas ~VM → aceptar, no rechazar."""
+    pending = [
+        ("1859", "Solanke", 2_239_730, 2_309_000, 0.97),
+        ("11145", "Nmecha", 1_951_320, 1_932_000, 1.01),
+        ("65186", "Mukiele", 5_630_560, 5_414_000, 1.04),
+        ("22739", "Struijk", 1_480_320, 1_542_000, 0.96),
+        ("23381", "Ait Nouri", 2_706_660, 2_734_000, 0.99),
+    ]
+    actions = build_offer_actions(
+        {
+            "pending_offers": [
+                {
+                    "player_id": pid,
+                    "name": name,
+                    "amount": amount,
+                    "market_value": vm,
+                    "pct_of_vm": pct,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                }
+                for pid, name, amount, vm, pct in pending
+            ]
+        },
+        balance=307_413,
+        cash_needed=0,
+        squad=[
+            {"id": pid, "name": name, "in_lineup": pid in ("1859", "11145", "65186", "23381"), "lineup_prob": 0.18, "xpts": 1.0}
+            for pid, name, *_ in pending
+        ],
+    )
+    assert len(actions) == 5
+    assert all(a["action"] == "accept_offer" for a in actions)
+    assert all(a["offer_need"] == "complete_listing" for a in actions)
+
+
+def test_already_listed_skips_players_with_pending_offer():
+    from competitive_actions import build_sell_opportunities
+
+    squad = [
+        {"id": "1", "name": "Listado", "position": "MF", "price": 3_000_000, "on_sale": True},
+        {"id": "2", "name": "Esperando", "position": "MF", "price": 3_000_000, "on_sale": True},
+        {"id": "xi", "name": "Titular", "position": "MF", "price": 5_000_000, "lineup_prob": 0.9},
+    ]
+    sells = build_sell_opportunities(
+        {"squad": squad, "balance": 1_000_000, "rank": 8},
+        {"alerts": [], "by_position": {}},
+        [],
+        recommended_xi={"xi": [{"player_id": "xi"}]},
+        league_economy={"sale_limit": 5},
+        sales_state={
+            "listed_ids": ["1", "2"],
+            "pending_offers": [{"player_id": "1", "status": "pending"}],
+        },
+    )
+    listed_wait = [
+        s for s in sells if s.get("action") == "sell" and s.get("queue_role") == "already_listed"
+    ]
+    ids = {s["player_id"] for s in listed_wait}
+    assert "1" not in ids
+    assert "2" in ids
 
 
 def test_offer_actions_prefers_bench_to_cover_slot():
@@ -459,7 +585,11 @@ def main():
         test_settle_before_deadline,
         test_offer_actions_accept_when_need_liquidity,
         test_offer_actions_only_needed_cover_debt,
-        test_offer_actions_positive_balance_declines_even_if_fair,
+        test_offer_actions_positive_balance_accepts_fair_listed_sale,
+        test_offer_actions_declines_keeper_when_cash_ok,
+        test_offer_actions_declines_poor_offer_when_cash_ok,
+        test_premier_listed_offers_are_not_a_reject_relist_loop,
+        test_already_listed_skips_players_with_pending_offer,
         test_offer_actions_prefers_bench_to_cover_slot,
         test_offer_actions_keeps_prior_scorer_when_listed_cover,
         test_playbook_splits_needed_and_surplus_offers,
