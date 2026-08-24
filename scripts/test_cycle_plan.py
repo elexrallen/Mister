@@ -47,6 +47,22 @@ def test_value_trend_follows_mister_down_arrow() -> None:
     _assert(t["decelerating"] is True, t)
 
 
+def test_trend_uses_vm_not_ask_and_skips_zeros() -> None:
+    """Listado a 2.71M con VM 1.71M: el Δ es sobre el VM, ignorando ceros del history."""
+    row = {
+        "id": "berg",
+        "name": "Bergvall",
+        "price": 2_710_000,
+        "market_value": 1_710_000,
+        "price_delta_1d": 0.0,
+        "trend": None,
+    }
+    series = {"berg": [1_610_000, 1_635_000, 1_669_000, 0, 0, 1_710_000]}
+    attach_value_trends([row], series)
+    _assert(row["delta_5d"] is not None and 0.04 < row["delta_5d"] < 0.12, row)
+    _assert(row["delta_cycle"] is not None and abs(row["delta_cycle"]) < 0.08, row)
+
+
 def test_attach_trends_on_squad() -> None:
     squad = [{"id": "a", "name": "A", "price": 5_000_000}]
     attach_value_trends(squad, {"a": [4_000_000, 4_400_000, 5_000_000]})
@@ -496,6 +512,7 @@ def test_history_snapshot_stems() -> None:
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_value_trend_follows_mister_down_arrow()
+    test_trend_uses_vm_not_ask_and_skips_zeros()
     test_attach_trends_on_squad()
     test_full_squad_lists_does_not_bid()
     test_free_slot_bids_same_cycle()

@@ -305,6 +305,12 @@
     }).format(v);
   };
 
+  const vmPrice = (p) => {
+    const mv = p && p.market_value != null ? Number(p.market_value) : 0;
+    if (mv > 0) return mv;
+    return p && p.price != null ? Number(p.price) : 0;
+  };
+
   const pct = (n) => {
     if (n == null) return "—";
     const v = Number(n) * 100;
@@ -1856,10 +1862,10 @@
     root.innerHTML = picks
       .map((raw) => {
         const player = tacticalRecord(raw);
-        const delta = player.delta_5d != null ? Number(player.delta_5d) : null;
+        const now = lastPriceDelta(player);
+        const delta = now != null ? now : player.delta_5d != null ? Number(player.delta_5d) : null;
         const direction = delta != null ? (delta >= 0 ? "up" : "down") : player.trend || "flat";
-        const trendText =
-          delta != null ? pct(delta) : direction === "up" ? "Subiendo" : direction === "down" ? "Bajando" : "Estable";
+        const trendText = trendDeltaLabel(player);
         return `<article class="opportunity-card" data-player-id="${escapeHtml(player.id || player.player_id)}" tabindex="0" role="button">
           <div class="opportunity-top">
             ${playerMedia(player, "is-opportunity")}
@@ -1871,7 +1877,7 @@
             <p>${escapeHtml(player.team || "")}</p>
           </div>
           <div class="opportunity-values">
-            <div><span>Precio actual</span><strong>${formatMoney(player.price)}</strong></div>
+            <div><span>Precio actual</span><strong>${formatMoney(vmPrice(player))}</strong></div>
             <div class="trend-${escapeHtml(direction)}"><span>Tendencia 5d</span><strong>${escapeHtml(trendText)}</strong></div>
           </div>
           <div class="trend-track ${escapeHtml(direction)}" aria-hidden="true"><span></span></div>
@@ -2344,7 +2350,7 @@
           <td>${signalChips(p)} ${ffAvgLine(p)}</td>
           <td>${gameweekCell(p)}</td>
           <td class="text-slate-300 text-xs">${escapeHtml(p.category_label || p.category || "")}</td>
-          <td>${formatMoney(p.price)}</td>
+          <td>${formatMoney(vmPrice(p))}</td>
           <td class="${trendDeltaClass(p)}">${escapeHtml(trendDeltaLabel(p))}</td>
           <td>${fotmobCell(p)}</td>
           <td class="text-mint-400 font-medium">${formatMoney(p.puja_recomendada)}</td>
@@ -2363,7 +2369,7 @@
             sub: escapeHtml(p.team || ""),
             meta: `${externalStatusBadge(p)}${ffAvgLine(p)}${signalChips(p)}${fixtureChip(p)}`,
             stats:
-              tacticalStat("Precio", formatMoney(p.price)) +
+              tacticalStat("Precio", formatMoney(vmPrice(p))) +
               tacticalStat(isFixedMarket() ? "Fichaje" : "Puja", formatMoney(p.puja_recomendada), "is-acid") +
               tacticalStat("Δ", trendDeltaLabel(p), trendDeltaClass(p)) +
               tacticalStat("xPts", p.xpts != null ? Number(p.xpts).toFixed(1) : "—"),

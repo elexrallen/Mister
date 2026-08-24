@@ -1333,6 +1333,7 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         "photo_url": photo_url or mister_player_photo_url(pid),
         "team_logo_url": team_logo_url or mister_team_logo_url(team_id),
         "price": value,
+        "market_value": value,
         "points": int(raw.get("points") or 0),
         "form": form,
         "mister_avg": form,

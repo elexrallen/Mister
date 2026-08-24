@@ -42,6 +42,11 @@ def _price(row: dict[str, Any]) -> float:
     return _money(row.get("price") or row.get("market_value") or row.get("cost"))
 
 
+def _vm(row: dict[str, Any]) -> float:
+    """VM de Mister, no el precio de salida/ask de un listado."""
+    return _money(row.get("market_value") or row.get("price") or row.get("cost"))
+
+
 def compute_value_trend(
     player_id: str,
     current_price: float,
@@ -140,7 +145,7 @@ def attach_value_trends(
             continue
         trend = compute_value_trend(
             pid,
-            _price(row),
+            _vm(row),
             series,
             price_delta_1d=_f(row.get("price_delta_1d") or row.get("delta_1d")),
             trend=row.get("trend"),

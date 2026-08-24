@@ -265,13 +265,16 @@ def _player_price_pairs_from_payload(payload: dict[str, Any]) -> dict[str, float
             if not isinstance(p, dict):
                 continue
             pid = p.get("id")
-            price = p.get("price")
-            if pid is None or price is None:
+            raw = p.get("market_value") if p.get("market_value") not in (None, "", 0) else p.get("price")
+            if pid is None or raw is None:
                 continue
             try:
-                prices[str(pid)] = float(price)
+                val = float(raw)
             except (TypeError, ValueError):
                 continue
+            if val <= 0:
+                continue
+            prices[str(pid)] = val
 
     _absorb(payload.get("market_opportunities"))
     _absorb((payload.get("me") or {}).get("squad"))
@@ -518,7 +521,13 @@ def _series_from_history_dir(history_dir: Path, days: int) -> dict[str, list[flo
         except Exception:  # noqa: BLE001
             continue
         for pid, price in _prices_from_history_file(snap).items():
-            series.setdefault(pid, []).append(price)
+            try:
+                val = float(price)
+            except (TypeError, ValueError):
+                continue
+            if val <= 0:
+                continue
+            series.setdefault(pid, []).append(val)
     return series
 
 
@@ -539,13 +548,19 @@ def load_recent_price_map_for_league(slug: str, days: int = 5) -> dict[str, list
 
 
 def compute_delta_from_history(player_id: str, current_price: float, series: dict[str, list[float]]) -> float | None:
-    prices = series.get(str(player_id)) or []
+    prices = [p for p in (series.get(str(player_id)) or []) if p and p > 0]
+    try:
+        current = float(current_price or 0)
+    except (TypeError, ValueError):
+        current = 0.0
+    if current > 0:
+        prices = prices + [current]
     if len(prices) < 2:
         return None
     base = prices[0]
     if base <= 0:
         return None
-    return (current_price - base) / base
+    return (prices[-1] - base) / base
 
 
 # ---------------------------------------------------------------------------
