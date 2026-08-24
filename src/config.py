@@ -485,6 +485,8 @@ APPRECIATION_LINEUP_MIN = 0.45  # regular usable para que el VM siga subiendo
 CYCLE_OFFER_OUTLIER_PCT = 0.82
 # Señal fuerte de subida (el 10% del ejemplo; 8% ya merece rotar)
 CYCLE_STRONG_RISE = 0.08
+# Para listar a alguien que aún sube fuerte: el mercado debe superarlo por este margen
+CYCLE_LIST_SWAP_MARGIN = 0.08
 CYCLE_MAX_BIDS = 3
 CYCLE_MAX_LISTS = 5
 

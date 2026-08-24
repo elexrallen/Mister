@@ -133,6 +133,56 @@ def test_free_slot_bids_same_cycle() -> None:
     _assert(plan["constraints"]["free_slots"] == 2, plan["constraints"])
 
 
+def test_does_not_bid_falling_gap_filler() -> None:
+    """Cubre hueco + VM −19% no es puja: es un parche que se deprecia."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "pdiaz",
+            "name": "P. Díaz",
+            "position": "MF",
+            "price": 1_000_000,
+            "bid": 1_050_000,
+            "puja_recomendada": 1_050_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": -0.19,
+            "rising": False,
+            "lineup_prob": 0.4,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "xpts": 0.4,
+        },
+        {
+            "id": "hot",
+            "name": "Rueda",
+            "position": "DF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.44,
+            "rising": True,
+            "lineup_prob": 0.7,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("P. Díaz" not in bid_names, bid_names)
+    _assert("Rueda" in bid_names, bid_names)
+
+
 def test_accept_offer_frees_slot_to_bid() -> None:
     squad = [
         {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
@@ -286,6 +336,142 @@ def test_empty_plan_has_no_wait_copy() -> None:
     _assert(plan["headline"] == "Sin movimientos de mercado", plan["headline"])
 
 
+def _hot_market(delta: float, name: str = "Hot") -> dict:
+    return {
+        "id": "hot",
+        "name": name,
+        "position": "MF",
+        "price": 3_000_000,
+        "bid": 3_000_000,
+        "puja_recomendada": 3_000_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "delta_5d": delta,
+        "rising": True,
+        "lineup_prob": 0.7,
+        "budget_fit": "comfortable",
+    }
+
+
+def _bench_riser(delta: float, name: str = "Cepeda") -> dict:
+    return {
+        "id": "bench",
+        "name": name,
+        "position": "FW",
+        "price": 1_700_000,
+        "lineup_prob": 0.2,
+        "xpts": 2.0,
+        "delta_5d": delta,
+        "accel": -0.04,
+        "decelerating": True,
+    }
+
+
+def test_does_not_list_strong_risers_with_free_slots() -> None:
+    """18/25 y +40% en banquillo: se conserva; se puede pujar sin venderlo."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        _bench_riser(0.40, "Cepeda"),
+        {
+            "id": "perez",
+            "name": "Pérez",
+            "position": "DF",
+            "price": 800_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.2,
+            "delta_5d": 2.97,
+            "decelerating": True,
+            "accel": -0.05,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 8_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[_hot_market(0.44, "Rueda")],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Cepeda" not in listed_names, listed_names)
+    _assert("Pérez" not in listed_names, listed_names)
+    _assert(any(m["kind"] == KIND_BID for m in plan["moves"]), plan["moves"])
+    _assert("frenando" not in plan["narrative"].lower(), plan["narrative"])
+
+
+def test_lists_riser_only_when_full_and_market_hotter() -> None:
+    """Plantilla llena + mercado +25% vs banquillo +10% → listar para rotar VM."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {"id": "xi2", "name": "Titular2", "position": "MF", "price": 7_000_000, "lineup_prob": 0.85, "xpts": 7},
+        _bench_riser(0.10, "Ciss"),
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[_hot_market(0.25, "Hot")],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1", "xi2"),
+        league_rules={"max_squad": 3, "sale_limit": 5},
+        max_squad=3,
+    )
+    listed = [m for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert(len(listed) == 1 and listed[0]["name"] == "Ciss", listed)
+    _assert(listed[0].get("list_reason") == "swap", listed[0])
+    _assert("llena" in listed[0]["why"].lower() or "tope" in plan["narrative"].lower(), listed[0]["why"])
+    _assert(KIND_BID not in [m["kind"] for m in plan["moves"]], plan["moves"])
+
+
+def test_does_not_list_riser_when_full_but_market_not_hotter() -> None:
+    """Lleno pero el mercado solo está +4pp por encima: se conserva el +40%."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {"id": "xi2", "name": "Titular2", "position": "MF", "price": 7_000_000, "lineup_prob": 0.85, "xpts": 7},
+        _bench_riser(0.40, "Cepeda"),
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[_hot_market(0.44, "Rueda")],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1", "xi2"),
+        league_rules={"max_squad": 3, "sale_limit": 5},
+        max_squad=3,
+    )
+    listed_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Cepeda" not in listed_names, listed_names)
+
+
+def test_lists_fading_bench_with_free_slots() -> None:
+    """Banquillo que ya no sube sí se lista aunque haya plazas: el VM no tira."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {
+            "id": "dead",
+            "name": "Parche",
+            "position": "MF",
+            "price": 2_000_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.5,
+            "delta_5d": -0.04,
+            "decelerating": False,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert(len(listed) == 1 and listed[0]["name"] == "Parche", listed)
+    _assert(listed[0].get("list_reason") == "fade", listed[0])
+
+
 def test_history_snapshot_stems() -> None:
     from datetime import datetime, timezone
 
@@ -302,10 +488,15 @@ if __name__ == "__main__":
     test_attach_trends_on_squad()
     test_full_squad_lists_does_not_bid()
     test_free_slot_bids_same_cycle()
+    test_does_not_bid_falling_gap_filler()
     test_accept_offer_frees_slot_to_bid()
     test_outlier_offer_is_declined()
     test_sale_limit_caps_listings()
     test_does_not_list_xi()
     test_empty_plan_has_no_wait_copy()
+    test_does_not_list_strong_risers_with_free_slots()
+    test_lists_riser_only_when_full_and_market_hotter()
+    test_does_not_list_riser_when_full_but_market_not_hotter()
+    test_lists_fading_bench_with_free_slots()
     test_history_snapshot_stems()
     print("test_cycle_plan: OK")

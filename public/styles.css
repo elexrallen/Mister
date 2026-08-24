@@ -3202,6 +3202,10 @@ body[data-view="today"] #today-opportunities-panel {
   padding: 0.4rem 0.8rem 1rem;
 }
 
+.cycle-move-group {
+  min-width: 0;
+}
+
 .cycle-move-group h4 {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
@@ -3214,7 +3218,7 @@ body[data-view="today"] #today-opportunities-panel {
   width: 100%;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
+  align-items: start;
   gap: 0.7rem;
   text-align: left;
   padding: 0.55rem 0.65rem;
@@ -3254,6 +3258,23 @@ body[data-view="today"] #today-opportunities-panel {
   font-size: 0.75rem;
   line-height: 1.4;
   white-space: normal;
+  text-overflow: unset;
+  -webkit-line-clamp: unset;
+  -webkit-box-orient: unset;
+  word-break: break-word;
+}
+
+.cycle-move-chip .tactical-player-media.is-row {
+  margin-top: 0.15rem;
+}
+
+#daily-plan-panel .action-queue-list.cycle-move-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-height: none;
+  overflow: visible;
+  padding: 0.4rem 0.8rem 1.1rem;
 }
 
 .cycle-move-score {
@@ -3921,7 +3942,7 @@ body[data-view="today"] #tactical-kpis .kpi-value {
   text-transform: uppercase;
 }
 
-/* Plan de hoy — móvil/tablet: sin solapes en el hero + scroll de acciones */
+/* Plan de hoy — móvil/tablet: sin solapes en el hero */
 @media (max-width: 1023.98px) {
   body[data-view="today"] #daily-plan-panel .action-queue-list {
     max-height: min(22rem, 46dvh);
@@ -3929,6 +3950,13 @@ body[data-view="today"] #tactical-kpis .kpi-value {
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-gutter: stable;
+  }
+
+  body[data-view="today"] #daily-plan-panel .action-queue-list.cycle-move-groups {
+    max-height: none;
+    overflow: visible;
+    overscroll-behavior: auto;
+    scrollbar-gutter: auto;
   }
 
   .command-hero {
@@ -4161,7 +4189,8 @@ body[data-view="today"] #tactical-kpis .kpi-value {
     align-self: start;
   }
 
-  #daily-plan-panel .cycle-move-groups {
+  #daily-plan-panel .cycle-move-groups,
+  #daily-plan-panel .action-queue-list.cycle-move-groups {
     grid-column: 1 / -1;
     grid-row: 4;
   }
@@ -4178,6 +4207,16 @@ body[data-view="today"] #tactical-kpis .kpi-value {
     grid-row: 3;
     align-self: start;
     padding: 0 1rem 1rem 0;
+  }
+
+  #daily-plan-panel .action-queue-list.cycle-move-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+    gap: 1.1rem 1.25rem;
+    align-items: start;
+    padding: 0.15rem 1rem 1.15rem;
+    max-height: none;
+    overflow: visible;
   }
 
   .command-hero {
@@ -4235,6 +4274,11 @@ body[data-view="today"] #tactical-kpis .kpi-value {
     max-height: min(26rem, 68vh);
     overflow-y: auto;
     overscroll-behavior: contain;
+  }
+
+  #daily-plan-panel .action-queue-list.cycle-move-groups {
+    max-height: none;
+    overflow: visible;
   }
 }
 

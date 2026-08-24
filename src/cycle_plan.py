@@ -229,8 +229,27 @@ def _production(p: dict[str, Any]) -> float:
     return 0.0
 
 
+def _keep_riding(p: dict[str, Any]) -> bool:
+    """Sigue subiendo lo bastante como para no venderlo solo porque 'frena'."""
+    d5 = _f(p.get("delta_5d"))
+    floor = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
+    return d5 is not None and d5 >= floor
+
+
+def _market_much_hotter(owned_delta: float | None, market_row: dict[str, Any] | None) -> bool:
+    """El listado del mercado revaloriza claramente más que la pieza propia."""
+    if market_row is None or owned_delta is None:
+        return False
+    md = _f(market_row.get("delta_5d"))
+    if md is None:
+        return False
+    margin = float(getattr(config, "CYCLE_LIST_SWAP_MARGIN", 0.08) or 0.08)
+    floor = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
+    return md >= floor and md >= owned_delta + margin
+
+
 def _list_score(p: dict[str, Any]) -> float:
-    """Más alto = mejor candidato a listar (banquillo que se frena)."""
+    """Más alto = mejor candidato a listar (banquillo cuyo VM ya no tira)."""
     score = 0.0
     if p.get("decelerating"):
         score += 40.0
@@ -243,7 +262,7 @@ def _list_score(p: dict[str, Any]) -> float:
         elif d5 < 0.08:
             score += 6.0
         else:
-            score -= 12.0
+            score -= 28.0
     acc = _f(p.get("accel"))
     if acc is not None and acc < 0:
         score += 12.0
@@ -262,17 +281,35 @@ def _list_score(p: dict[str, Any]) -> float:
     return score
 
 
+def _starter_coverage_hole(p: dict[str, Any]) -> bool:
+    """Hueco real del once: titular usable (≥70%) que cubre una carencia."""
+    if not (p.get("fills_coverage_gap") or p.get("fills_structural") or p.get("fills_need")):
+        return False
+    lp = _lineup_pct(p)
+    return lp is not None and lp >= 70.0
+
+
 def _bid_score(p: dict[str, Any]) -> float:
     appr, _why = appreciation_play_score(p)
     score = float(appr)
     d5 = _f(p.get("delta_5d")) or 0.0
     strong = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
+    fills_gap = bool(
+        p.get("fills_coverage_gap") or p.get("fills_structural") or p.get("fills_need")
+    )
     if d5 >= 0.10:
         score += 20.0
     elif d5 >= strong:
         score += 12.0
-    if p.get("fills_coverage_gap") or p.get("fills_structural") or p.get("fills_need"):
+    elif d5 <= -strong:
+        score -= 36.0
+    elif d5 < 0:
+        score -= 14.0
+    # Un parche barato que se cae de VM no es un hueco que merezca puja.
+    if fills_gap and d5 >= 0:
         score += 28.0
+    elif _starter_coverage_hole(p):
+        score += 12.0
     if p.get("is_upgrade") or p.get("upgrade_worth_buy"):
         score += 14.0
     if not p.get("on_daily_market") and p.get("seller") != "market":
@@ -327,7 +364,8 @@ def build_cycle_plan(
 
     1) Aceptar ofertas del sistema (salvo outlier a la baja).
     2) Pujar/fichar si hay plazas libres (tras aceptar) y caja real.
-    3) Listar banquillo que se frena (el sistema compra el ciclo siguiente).
+    3) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
+       con plantilla llena y un recambio de mercado que suba claramente más.
     """
     me = me or {}
     squad = list(squad or me.get("squad") or [])
@@ -410,6 +448,10 @@ def build_cycle_plan(
         cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
         if cost <= 0:
             continue
+        d5 = _f(o.get("delta_5d"))
+        strong = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
+        if d5 is not None and d5 <= -strong and not _starter_coverage_hole(o):
+            continue
         score = _bid_score(o)
         if score < 12:
             continue
@@ -460,29 +502,67 @@ def build_cycle_plan(
         if _pid(o) not in {_pid(b) for b in bids}
     ][:3]
 
-    list_cands: list[tuple[float, dict[str, Any]]] = []
+    fade_cands: list[tuple[float, dict[str, Any]]] = []
+    swap_cands: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
     for p in squad:
         pid = _pid(p)
         if not pid or pid in listed_ids or pid in accept_ids:
             continue
         if pid in xi_ids:
             continue
+        d5 = _f(p.get("delta_5d"))
+        if _keep_riding(p):
+            # Con plazas libres se puede fichar lo que más sube y conservar esta pieza.
+            if free_slots > 0:
+                continue
+            beaters = [o for _s, o in bid_cands if _market_much_hotter(d5, o)]
+            if not beaters:
+                continue
+            best_beater = max(beaters, key=lambda o: _f(o.get("delta_5d")) or 0.0)
+            swap_cands.append((-(d5 or 0.0), p, best_beater))
+            continue
         score = _list_score(p)
         if score < 28:
             continue
-        list_cands.append((score, p))
-    list_cands.sort(key=lambda x: -x[0])
+        fade_cands.append((score, p))
+    swap_cands.sort(key=lambda x: x[0])
+    fade_cands.sort(key=lambda x: -x[0])
 
     lists: list[dict[str, Any]] = []
-    for score, p in list_cands:
+    swap_cap = min(max_lists, min(max_bids, len(bid_cands)))
+    for _rank, p, beater in swap_cands:
+        if len(lists) >= swap_cap:
+            break
+        d5 = _f(p.get("delta_5d"))
+        md = _f(beater.get("delta_5d"))
+        why = (
+            f"Plantilla llena ({squad_n}/{cap}). "
+            f"{beater.get('name')} revaloriza {_fmt_pct(md)} frente a su {_fmt_pct(d5)}. "
+            f"Listarlo libera plaza el próximo ciclo (cobro ≈ {_fmt_money(_price(p))})."
+        )
+        lists.append(
+            _player_ref(
+                p,
+                kind=KIND_LIST,
+                why=why,
+                extra={
+                    "expected_proceeds": _price(p),
+                    "amount": _price(p),
+                    "list_reason": "swap",
+                    "swap_for_name": beater.get("name"),
+                    "swap_for_delta_5d": md,
+                },
+            )
+        )
+    for score, p in fade_cands:
         if len(lists) >= max_lists:
             break
         d5 = _f(p.get("delta_5d"))
         bits = []
-        if p.get("decelerating"):
-            bits.append("la revalorización se está frenando")
-        elif d5 is not None and d5 <= 0:
+        if d5 is not None and d5 <= 0:
             bits.append("el VM ya no sube")
+        elif p.get("decelerating"):
+            bits.append("el VM se está quedando plano")
         else:
             bits.append("no entra en el once")
         if _lineup_pct(p) is not None and (_lineup_pct(p) or 0) < 45:
@@ -496,7 +576,11 @@ def build_cycle_plan(
                 p,
                 kind=KIND_LIST,
                 why=why,
-                extra={"expected_proceeds": _price(p), "amount": _price(p)},
+                extra={
+                    "expected_proceeds": _price(p),
+                    "amount": _price(p),
+                    "list_reason": "fade",
+                },
             )
         )
     moves.extend(lists)
@@ -617,11 +701,7 @@ def _compose_narrative(
         )
     if lists:
         names = _join_names([m.get("name") or "" for m in lists])
-        fade = "no entran en el once y su revalorización se está frenando"
-        if any(m.get("decelerating") for m in lists):
-            fade = "no entran en el once y su revalorización se está frenando"
-        else:
-            fade = "no entran en el once y conviene sacarles el valor de mercado"
+        swaps = [m for m in lists if m.get("list_reason") == "swap"]
         follow = ""
         if next_targets and constraints.get("free_slots_after_accepts", 0) <= 0:
             nxt = _join_names(
@@ -643,6 +723,20 @@ def _compose_narrative(
                 )
         elif not bids:
             follow = " El sistema los comprará el próximo ciclo (cobro ≈ valor de mercado)."
+        if swaps and len(swaps) == len(lists):
+            fade = "plantilla al tope y el mercado revaloriza más"
+        elif any((_f(m.get("delta_5d")) or 0) <= 0 for m in lists):
+            fade = (
+                "no entra en el once y su VM ya no tira"
+                if len(lists) == 1
+                else "no entran en el once y su VM ya no tira"
+            )
+        else:
+            fade = (
+                "no entra en el once y conviene sacarle el valor de mercado"
+                if len(lists) == 1
+                else "no entran en el once y conviene sacarles el valor de mercado"
+            )
         parts.append(f"Pon en venta a {names}: {fade}.{follow}")
 
     if not parts:
