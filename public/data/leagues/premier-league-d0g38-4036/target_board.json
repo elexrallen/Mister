@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T12:29:07.592068+00:00",
+  "generated_at": "2026-08-25T13:21:42.514154+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -102,8 +102,8 @@
         "FW": 2
       },
       "ep_sum_starters": 315.0,
-      "ep_sum": 353.4,
-      "cost_sum": 51347622.0,
+      "ep_sum": 315.0,
+      "cost_sum": 49799622.0,
       "starters": 7,
       "starters_target": 11,
       "complete": false
@@ -118,8 +118,8 @@
         "FW": 3
       },
       "ep_sum_starters": 315.0,
-      "ep_sum": 353.4,
-      "cost_sum": 51347622.0,
+      "ep_sum": 315.0,
+      "cost_sum": 49799622.0,
       "starters": 7,
       "starters_target": 11,
       "complete": false
@@ -155,6 +155,38 @@
       "ep_sum": 411.3,
       "cost_sum": 51552000.0,
       "starters": 8,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
+      "formation": "3-5-2",
+      "formation_raw": "3-5-2",
+      "shape": {
+        "GK": 1,
+        "DF": 3,
+        "MF": 5,
+        "FW": 2
+      },
+      "ep_sum_starters": 342.8,
+      "ep_sum": 342.8,
+      "cost_sum": 50863622.0,
+      "starters": 7,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
+      "formation": "3-4-3",
+      "formation_raw": "3-4-3",
+      "shape": {
+        "GK": 1,
+        "DF": 3,
+        "MF": 4,
+        "FW": 3
+      },
+      "ep_sum_starters": 342.8,
+      "ep_sum": 342.8,
+      "cost_sum": 50863622.0,
+      "starters": 7,
       "starters_target": 11,
       "complete": false
     },
@@ -205,51 +237,19 @@
       "starters": 7,
       "starters_target": 11,
       "complete": false
-    },
-    {
-      "formation": "3-5-2",
-      "formation_raw": "3-5-2",
-      "shape": {
-        "GK": 1,
-        "DF": 3,
-        "MF": 5,
-        "FW": 2
-      },
-      "ep_sum_starters": 315.0,
-      "ep_sum": 353.4,
-      "cost_sum": 51347622.0,
-      "starters": 7,
-      "starters_target": 11,
-      "complete": false
-    },
-    {
-      "formation": "3-4-3",
-      "formation_raw": "3-4-3",
-      "shape": {
-        "GK": 1,
-        "DF": 3,
-        "MF": 4,
-        "FW": 3
-      },
-      "ep_sum_starters": 315.0,
-      "ep_sum": 353.4,
-      "cost_sum": 51347622.0,
-      "starters": 7,
-      "starters_target": 11,
-      "complete": false
     }
   ],
-  "balance": 3519113.0,
-  "squad_value": 48440000.0,
+  "balance": 721124.0,
+  "squad_value": 50968000.0,
   "wealth": {
-    "balance": 3519113.0,
-    "squad_value": 48440000.0,
-    "total": 51959113.0,
+    "balance": 721124.0,
+    "squad_value": 50968000.0,
+    "total": 51689124.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 51959113.0
+    "budget_cap": 51689124.0
   },
   "budget_operable": {
-    "budget_cap": 51959113.0,
+    "budget_cap": 51689124.0,
     "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)"
   },
   "ideal_buy_cost": 40934500.0,
@@ -662,7 +662,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 7,078,500 € · buy · starter · Δ -8%",
-      "added_at": "2026-08-25T12:29:07.569755+00:00"
+      "added_at": "2026-08-25T13:21:42.492279+00:00"
     },
     {
       "slot": "MF1",
@@ -1234,7 +1234,7 @@
     "slots_target": 15,
     "sell_to_fund": 0.0,
     "funded": true,
-    "funded_ideal": true,
+    "funded_ideal": false,
     "formation": "5-3-2",
     "ideal_buy_cost": 40934500.0,
     "daily_primary_count": 0
@@ -1251,7 +1251,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 3519113.0,
+  "residual_after_reserve": 721124.0,
   "primary_targets": [],
   "aspirational_targets": [
     {
@@ -1269,7 +1269,7 @@
   "dropped": [],
   "patch_policy": {
     "allow": false,
-    "max_spend": 2500000.0
+    "max_spend": 721124.0
   },
   "summary": {
     "slots": 10,
