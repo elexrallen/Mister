@@ -677,6 +677,50 @@ def test_starter_live_rise_is_a_bid() -> None:
     _assert("Vivo" in bid_names, (bid_names, score, why, row))
 
 
+def test_rival_owned_is_not_appreciation() -> None:
+    """Subida viva en plantilla rival no es revalorización: no vende al VM."""
+    row = {
+        "id": "riv",
+        "name": "RivalUp",
+        "position": "MF",
+        "price": 1_500_000,
+        "market_value": 1_500_000,
+        "clause": 4_000_000,
+        "seller": "rival",
+        "owner_id": "99",
+        "owner_name": "Otro",
+        "on_daily_market": False,
+        "lineup_prob": 0.85,
+        "budget_fit": "comfortable",
+    }
+    attach_value_trends([row], {"riv": [1_350_000, 1_420_000, 1_500_000]})
+    score, why = appreciation_play_score(row)
+    _assert(score == 0, (score, why))
+    _assert(any("rival" in str(b).lower() for b in why), why)
+
+
+def test_rival_listed_on_market_can_appreciate() -> None:
+    """Si el rival lo pone en el mercado del día, sí se puede pujar al precio de salida."""
+    row = {
+        "id": "listed",
+        "name": "Listado",
+        "position": "MF",
+        "price": 1_500_000,
+        "market_value": 1_500_000,
+        "bid": 1_500_000,
+        "puja_recomendada": 1_500_000,
+        "seller": "market",
+        "on_daily_market": True,
+        "listed_by_rival": True,
+        "listed_by_name": "Otro",
+        "lineup_prob": 0.85,
+        "budget_fit": "comfortable",
+    }
+    attach_value_trends([row], {"listed": [1_350_000, 1_420_000, 1_500_000]})
+    score, why = appreciation_play_score(row)
+    _assert(score > 0, (score, why))
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_consecutive_up_counts_live_legs()
@@ -700,4 +744,6 @@ if __name__ == "__main__":
     test_spike_without_minutes_is_not_a_bid()
     test_spike_already_falling_is_not_a_bid()
     test_starter_live_rise_is_a_bid()
+    test_rival_owned_is_not_appreciation()
+    test_rival_listed_on_market_can_appreciate()
     print("test_cycle_plan: OK")

@@ -56,9 +56,11 @@ def _closed_gw_snaps() -> list[dict]:
         "captain_id": "a",
         "actions": [
             {"player_id": "a", "action": "buy_now", "price": 100},
-            {"player_id": "e", "action": "avoid", "price": 80},
             {"player_id": "c", "action": "buy_now", "price": 50},
+            {"player_id": "f", "action": "buy_now", "price": 40},
+            {"player_id": "e", "action": "avoid", "price": 80},
             {"player_id": "d", "action": "avoid", "price": 90},
+            {"player_id": "g", "action": "avoid", "price": 70},
         ],
     }
     return [
@@ -66,13 +68,15 @@ def _closed_gw_snaps() -> list[dict]:
             "date": "2026-08-10",
             "jornada": 1,
             "gameweek_status": "pending",
-            "prices": {"a": 100, "b": 90, "c": 50, "d": 200, "e": 80},
+            "prices": {"a": 100, "b": 90, "c": 50, "d": 200, "e": 80, "f": 40, "g": 70},
             "xpts": {
                 "a": [8.0, 0.9],
                 "b": [6.0, 0.85],
                 "c": [5.0, 0.8],
                 "d": [4.0, 0.7],
                 "e": [1.0, 0.2],
+                "f": [4.5, 0.75],
+                "g": [1.5, 0.25],
             },
             "decisions": decisions,
         },
@@ -80,8 +84,8 @@ def _closed_gw_snaps() -> list[dict]:
             "date": "2026-08-12",
             "jornada": 1,
             "gameweek_status": "ongoing",
-            "prices": {"a": 110, "b": 90, "c": 60, "d": 180, "e": 70},
-            "gw_points": {"a": 10, "b": 7, "c": 6, "d": 1, "e": 0},
+            "prices": {"a": 110, "b": 90, "c": 60, "d": 180, "e": 70, "f": 48, "g": 60},
+            "gw_points": {"a": 10, "b": 7, "c": 6, "d": 1, "e": 0, "f": 5, "g": 0},
             "xpts": {"a": [99.0, 0.9]},
         },
         {
@@ -131,9 +135,41 @@ def test_market_buy_now_beats_avoid() -> None:
 
 def test_market_fails_when_avoids_score_more() -> None:
     snaps = _closed_gw_snaps()
-    snaps[1]["gw_points"] = {"a": 0, "c": 1, "e": 9, "d": 8, "b": 0}
+    snaps[1]["gw_points"] = {"a": 0, "c": 1, "f": 0, "e": 9, "d": 8, "g": 9, "b": 0}
     rep = evaluate_market(snaps, current_jornada=2)
     assert rep["status"] == "fail", rep
+
+
+def test_market_ignores_mid_gw_null_status() -> None:
+    """Un snapshot mid-GW sin gameweek_status no es predicción pre-partido."""
+    snaps = [
+        {
+            "date": "2026-08-24",
+            "jornada": 1,
+            "gameweek_status": None,
+            "prices": {"x": 100, "y": 100, "z": 100, "u": 100, "v": 100, "w": 100},
+            "decisions": {
+                "actions": [
+                    {"player_id": "x", "action": "buy_now", "price": 100},
+                    {"player_id": "y", "action": "buy_now", "price": 100},
+                    {"player_id": "z", "action": "buy_now", "price": 100},
+                    {"player_id": "u", "action": "avoid", "price": 100},
+                    {"player_id": "v", "action": "avoid", "price": 100},
+                    {"player_id": "w", "action": "avoid", "price": 100},
+                ]
+            },
+        },
+        {
+            "date": "2026-08-25",
+            "jornada": 1,
+            "gameweek_status": "finished",
+            "gw_points": {"x": 0, "y": 0, "z": 0, "u": 9, "v": 8, "w": 7},
+            "prices": {"x": 90, "y": 90, "z": 90, "u": 110, "v": 110, "w": 110},
+        },
+    ]
+    rep = evaluate_market(snaps, current_jornada=2)
+    assert rep["status"] in ("empty", "thin"), rep
+    assert rep["status"] != "fail", rep
 
 
 def test_pipeline_flags_mock_and_rate_limit() -> None:
@@ -174,8 +210,10 @@ def test_audit_league_passes_healthy_history() -> None:
             "actions": [
                 {"player_id": "0", "action": "buy_now", "price": 10},
                 {"player_id": "1", "action": "buy_now", "price": 10},
+                {"player_id": "2", "action": "buy_now", "price": 10},
                 {"player_id": "30", "action": "avoid", "price": 10},
                 {"player_id": "31", "action": "avoid", "price": 10},
+                {"player_id": "32", "action": "avoid", "price": 10},
             ],
         },
         "prices": {str(i): float(100 - i) for i in range(40)},
@@ -284,6 +322,7 @@ def main() -> None:
         test_xi_empty_without_decisions,
         test_market_buy_now_beats_avoid,
         test_market_fails_when_avoids_score_more,
+        test_market_ignores_mid_gw_null_status,
         test_pipeline_flags_mock_and_rate_limit,
         test_audit_league_passes_healthy_history,
         test_gates_fail_on_anti_predictive_model,

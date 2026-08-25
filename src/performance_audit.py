@@ -30,8 +30,13 @@ log = logging.getLogger("performance_audit")
 
 BUY_ACTIONS = frozenset({"buy_now", "clause_bid"})
 AVOID_ACTIONS = frozenset({"avoid"})
-PRE_KICKOFF_STATUS = frozenset({"", "pending", "scheduled", "preview", "pre"})
+# Pre-kickoff real: no incluir ""/None (un snapshot a mitad de GW sin status
+# no es predicción). `unstarted` es el estado Mister antes del primer partido.
+PRE_KICKOFF_STATUS = frozenset({"pending", "scheduled", "preview", "pre", "unstarted"})
 LIVE_STATUS = frozenset({"ongoing", "live", "finished", "closed"})
+# Comparar buy vs avoid exige muestra mínima por lado (2 jugadores no bastan).
+MIN_MARKET_SIDE = 3
+MIN_MARKET_ACTIONS = 4
 
 # Umbrales: con una jornada mixto real (~J1 2026) el titular tiene MAE ~0.75 y
 # Spearman > 0.3. Si caemos por debajo, el modelo ha dejado de ordenar.
@@ -212,12 +217,13 @@ def discover_league_slugs() -> list[str]:
 
 
 def _prediction_quality(status: str) -> int:
-    st = str(status or "").lower()
+    st = str(status or "").lower().strip()
     if st in LIVE_STATUS:
         return 0
     if st in PRE_KICKOFF_STATUS:
         return 1
-    return 1 if not st else 0
+    # status vacío / desconocido: no es predicción pre-partido
+    return 0
 
 
 def collect_closed_rows(
@@ -325,15 +331,32 @@ def _naive_top_ids(
     return ranked[:n]
 
 
+def _decision_richness(snap: dict[str, Any]) -> int:
+    """¿El snapshot guarda once/acciones auditables? 0 = solo precios/xPts."""
+    decisions = snap.get("decisions") if isinstance(snap.get("decisions"), dict) else {}
+    if decisions.get("xi_ids"):
+        return 2
+    if decisions.get("actions"):
+        return 1
+    return 0
+
+
 def _last_prediction_snapshot(snaps: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """
+    Mejor snapshot de predicción: pre-kickoff gana, pero un `unstarted`
+    sin `decisions` no debe tapar un mid-GW que sí guarda el once.
+    """
     best = None
-    best_q = -1
+    best_key: tuple[int, int, int, str] = (-1, -1, -1, "")
     for snap in snaps:
         q = _prediction_quality(str(snap.get("gameweek_status") or ""))
+        rich = _decision_richness(snap)
         date = str(snap.get("date") or "")
-        if q > best_q or (q == best_q and best is not None and date >= str(best.get("date") or "")):
+        # has_dec primero: sin consejos no sirve para once/mercado
+        key = (1 if rich > 0 else 0, q, rich, date)
+        if key > best_key:
             best = snap
-            best_q = q
+            best_key = key
     return best
 
 
@@ -471,7 +494,13 @@ def evaluate_market(
     for jornada, snaps in by_gw.items():
         if current_jornada is not None and jornada == current_jornada:
             continue
-        pred = _last_prediction_snapshot(snaps)
+        # Solo consejos previos al primer partido: mid-GW / finished no cuentan.
+        pre_snaps = [
+            s
+            for s in snaps
+            if _prediction_quality(str(s.get("gameweek_status") or "")) > 0
+        ]
+        pred = _last_prediction_snapshot(pre_snaps) if pre_snaps else None
         result = _result_snapshot(snaps)
         if not pred:
             continue
@@ -506,7 +535,7 @@ def evaluate_market(
                 if delta is not None:
                     avoid_delta.append(delta)
 
-    if sample_actions < 4:
+    if sample_actions < MIN_MARKET_ACTIONS:
         return {
             "status": "empty" if sample_actions == 0 else "thin",
             "sample": sample_actions,
@@ -515,15 +544,22 @@ def evaluate_market(
             "buy_now_price_delta": None,
             "avoid_price_delta": None,
             "reading": (
-                "Aún no hay acciones `buy_now`/`avoid` guardadas en el histórico "
-                "para juzgar el mercado a posteriori."
+                "Aún no hay acciones `buy_now`/`avoid` pre-partido guardadas "
+                "en el histórico para juzgar el mercado a posteriori."
             ),
         }
 
     buy_mean = _mean(buy_pts)
     avoid_mean = _mean(avoid_pts)
     status = "ok"
-    if buy_mean is not None and avoid_mean is not None and buy_mean + 0.4 < avoid_mean:
+    thin_compare = (
+        buy_mean is not None
+        and avoid_mean is not None
+        and (len(buy_pts) < MIN_MARKET_SIDE or len(avoid_pts) < MIN_MARKET_SIDE)
+    )
+    if thin_compare:
+        status = "thin"
+    elif buy_mean is not None and avoid_mean is not None and buy_mean + 0.4 < avoid_mean:
         status = "fail"
     elif buy_mean is not None and avoid_mean is not None and buy_mean < avoid_mean:
         status = "warn"
@@ -535,6 +571,11 @@ def evaluate_market(
     buy_d = _mean(buy_delta)
     if buy_d is not None:
         reading += f"; Δprecio medio buy_now {buy_d:+.0f} €"
+    if thin_compare:
+        reading += (
+            f" (muestra fina: buy={len(buy_pts)} avoid={len(avoid_pts)}; "
+            f"hace falta ≥{MIN_MARKET_SIDE} por lado)"
+        )
     reading += "."
     return {
         "status": status,

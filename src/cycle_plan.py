@@ -539,7 +539,15 @@ def build_cycle_plan(
             extra = {
                 "bid": cost,
                 "amount": cost,
-                "appreciation_play": bool(o.get("appreciation_play") or (d5 or 0) >= 0.04),
+                "appreciation_play": bool(
+                    o.get("appreciation_play")
+                    or (
+                        (d5 or 0) >= 0.04
+                        and o.get("rising")
+                        and not o.get("decelerating")
+                        and appreciation_play_score(o)[0] > 0
+                    )
+                ),
             }
             bids.append(_player_ref(o, kind=KIND_BID, why=why, extra=extra))
             spent += cost
