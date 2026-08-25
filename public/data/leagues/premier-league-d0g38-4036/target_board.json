@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T12:00:17.947967+00:00",
+  "generated_at": "2026-08-25T12:29:07.592068+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -102,8 +102,8 @@
         "FW": 2
       },
       "ep_sum_starters": 315.0,
-      "ep_sum": 315.0,
-      "cost_sum": 50067624.0,
+      "ep_sum": 353.4,
+      "cost_sum": 51347622.0,
       "starters": 7,
       "starters_target": 11,
       "complete": false
@@ -118,8 +118,8 @@
         "FW": 3
       },
       "ep_sum_starters": 315.0,
-      "ep_sum": 315.0,
-      "cost_sum": 50067624.0,
+      "ep_sum": 353.4,
+      "cost_sum": 51347622.0,
       "starters": 7,
       "starters_target": 11,
       "complete": false
@@ -155,38 +155,6 @@
       "ep_sum": 411.3,
       "cost_sum": 51552000.0,
       "starters": 8,
-      "starters_target": 11,
-      "complete": false
-    },
-    {
-      "formation": "3-5-2",
-      "formation_raw": "3-5-2",
-      "shape": {
-        "GK": 1,
-        "DF": 3,
-        "MF": 5,
-        "FW": 2
-      },
-      "ep_sum_starters": 342.8,
-      "ep_sum": 342.8,
-      "cost_sum": 51131624.0,
-      "starters": 7,
-      "starters_target": 11,
-      "complete": false
-    },
-    {
-      "formation": "3-4-3",
-      "formation_raw": "3-4-3",
-      "shape": {
-        "GK": 1,
-        "DF": 3,
-        "MF": 4,
-        "FW": 3
-      },
-      "ep_sum_starters": 342.8,
-      "ep_sum": 342.8,
-      "cost_sum": 51131624.0,
-      "starters": 7,
       "starters_target": 11,
       "complete": false
     },
@@ -234,6 +202,38 @@
       "ep_sum_starters": 336.0,
       "ep_sum": 411.3,
       "cost_sum": 51552000.0,
+      "starters": 7,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
+      "formation": "3-5-2",
+      "formation_raw": "3-5-2",
+      "shape": {
+        "GK": 1,
+        "DF": 3,
+        "MF": 5,
+        "FW": 2
+      },
+      "ep_sum_starters": 315.0,
+      "ep_sum": 353.4,
+      "cost_sum": 51347622.0,
+      "starters": 7,
+      "starters_target": 11,
+      "complete": false
+    },
+    {
+      "formation": "3-4-3",
+      "formation_raw": "3-4-3",
+      "shape": {
+        "GK": 1,
+        "DF": 3,
+        "MF": 4,
+        "FW": 3
+      },
+      "ep_sum_starters": 315.0,
+      "ep_sum": 353.4,
+      "cost_sum": 51347622.0,
       "starters": 7,
       "starters_target": 11,
       "complete": false
@@ -518,7 +518,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 42 · 8,237,000 € · buy · starter · tándem mismo club · Δ 2%",
-      "added_at": "2026-08-25T12:00:17.925560+00:00"
+      "added_at": "2026-08-25T12:00:17.843907+00:00"
     },
     {
       "slot": "GK2",
@@ -542,7 +542,7 @@
       "owned": false,
       "gk_tandem": true,
       "why": "EP 0 · 1,000,000 € · buy · bench · tándem mismo club · Δ -23%",
-      "added_at": "2026-08-25T12:00:17.934283+00:00"
+      "added_at": "2026-08-25T12:00:17.850938+00:00"
     },
     {
       "slot": "DF1",
@@ -566,7 +566,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 65 · 5,057,000 € · buy · starter · Δ -7%",
-      "added_at": "2026-08-25T12:00:17.927310+00:00"
+      "added_at": "2026-08-25T12:00:17.845639+00:00"
     },
     {
       "slot": "DF2",
@@ -590,7 +590,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 62 · 4,495,500 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-25T12:00:17.926878+00:00"
+      "added_at": "2026-08-25T12:00:17.845206+00:00"
     },
     {
       "slot": "DF3",
@@ -614,7 +614,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 40 · 3,393,000 € · buy · starter · Δ 22%",
-      "added_at": "2026-08-25T12:00:17.926002+00:00"
+      "added_at": "2026-08-25T12:00:17.844345+00:00"
     },
     {
       "slot": "DF4",
@@ -638,7 +638,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 3,993,000 € · buy · starter · Δ 17%",
-      "added_at": "2026-08-25T12:00:17.926448+00:00"
+      "added_at": "2026-08-25T12:00:17.844778+00:00"
     },
     {
       "slot": "DF5",
@@ -662,7 +662,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 37 · 7,078,500 € · buy · starter · Δ -8%",
-      "added_at": "2026-08-25T04:15:03.424483+00:00"
+      "added_at": "2026-08-25T12:29:07.569755+00:00"
     },
     {
       "slot": "MF1",
@@ -710,7 +710,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 44 · 6,969,000 € · buy · starter · Δ 12%",
-      "added_at": "2026-08-25T12:00:17.928034+00:00"
+      "added_at": "2026-08-25T12:00:17.846367+00:00"
     },
     {
       "slot": "MF3",
@@ -734,7 +734,7 @@
       "owned": false,
       "gk_tandem": false,
       "why": "EP 38 · 2,180,000 € · buy · bench · Δ 21%",
-      "added_at": "2026-08-25T12:00:17.934536+00:00"
+      "added_at": "2026-08-25T12:00:17.851184+00:00"
     }
   ],
   "moves": {
@@ -1266,183 +1266,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "GK1",
-      "position": "GK",
-      "role": "starter",
-      "player_id": "1779",
-      "name": "Emiliano Martínez",
-      "team": "Aston",
-      "team_id": "402",
-      "ep_score": 36.5,
-      "price": 9852510.0,
-      "status": "dropped",
-      "delta_5d": -0.0637,
-      "value_note": "falling",
-      "value_ratio": 3.7,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 169.9,
-      "ff_mister_avg": 5.48,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": true,
-      "why": "EP 36 · 9,852,510 € · buy · starter · tándem mismo club · Δ -6%",
-      "added_at": "2026-08-25T04:15:03.422115+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "GK2",
-      "position": "GK",
-      "role": "bench",
-      "player_id": "64402",
-      "name": "Marco Bizot",
-      "team": "Aston",
-      "team_id": "402",
-      "ep_score": 37.3,
-      "price": 1000000.0,
-      "status": "dropped",
-      "delta_5d": 0.1514,
-      "value_note": "rising",
-      "value_ratio": 37.3,
-      "lineup_prob": 86.0,
-      "ff_mister_points": 2.0,
-      "ff_mister_avg": 2.0,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": true,
-      "why": "EP 37 · 1,000,000 € · buy · bench · tándem mismo club · Δ 15%",
-      "added_at": "2026-08-25T04:15:03.431579+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF1",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "61026",
-      "name": "Michael Kayode",
-      "team": "Brentford",
-      "team_id": "619",
-      "ep_score": 79.2,
-      "price": 7987500.0,
-      "status": "dropped",
-      "delta_5d": 0.0163,
-      "value_note": "stable",
-      "value_ratio": 9.92,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 13.0,
-      "ff_mister_avg": 13.0,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 79 · 7,987,500 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-23T16:03:15.852846+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF2",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "64177",
-      "name": "Maxim De Cuyper",
-      "team": "Brighton",
-      "team_id": "178",
-      "ep_score": 77.5,
-      "price": 2314000.0,
-      "status": "dropped",
-      "delta_5d": 0.2211,
-      "value_note": "rising",
-      "value_ratio": 33.49,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 15.0,
-      "ff_mister_avg": 15.0,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 78 · 2,314,000 € · buy · starter · Δ 22%",
-      "added_at": "2026-08-25T04:15:03.423698+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF4",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "59761",
-      "name": "Ferdi Kadıoğlu",
-      "team": "Brighton",
-      "team_id": "178",
-      "ep_score": 36.9,
-      "price": 7078500.0,
-      "status": "dropped",
-      "delta_5d": -0.0337,
-      "value_note": "stable",
-      "value_ratio": 5.21,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 220.9,
-      "ff_mister_avg": 5.97,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 37 · 7,078,500 € · buy · starter · Δ -3%",
-      "added_at": "2026-08-25T04:15:03.424483+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF2",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "55755",
-      "name": "Jack Hinshelwood",
-      "team": "Brighton",
-      "team_id": "178",
-      "ep_score": 71.9,
-      "price": 3738000.0,
-      "status": "dropped",
-      "delta_5d": 0.1926,
-      "value_note": "rising",
-      "value_ratio": 19.23,
-      "lineup_prob": 74.0,
-      "ff_mister_points": 19.0,
-      "ff_mister_avg": 19.0,
-      "hist_ok": true,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 72 · 3,738,000 € · buy · starter · Δ 19%",
-      "added_at": "2026-08-25T04:15:03.427051+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF3",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "60832",
-      "name": "Diego Gómez",
-      "team": "Brighton",
-      "team_id": "178",
-      "ep_score": 46.2,
-      "price": 2760000.0,
-      "status": "dropped",
-      "delta_5d": 0.1758,
-      "value_note": "rising",
-      "value_ratio": 16.74,
-      "lineup_prob": 81.0,
-      "ff_mister_points": 10.0,
-      "ff_mister_avg": 10.0,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 46 · 2,760,000 € · buy · starter · Δ 18%",
-      "added_at": "2026-08-25T04:15:03.426432+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 2500000.0
