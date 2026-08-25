@@ -677,6 +677,119 @@ def test_starter_live_rise_is_a_bid() -> None:
     _assert("Vivo" in bid_names, (bid_names, score, why, row))
 
 
+def test_rival_listed_on_market_is_not_appreciation() -> None:
+    """Listado de rival: el sistema se lo lleva al VM, no hay flip."""
+    row = {
+        "id": "listed",
+        "name": "Listado",
+        "position": "MF",
+        "price": 1_500_000,
+        "market_value": 1_500_000,
+        "bid": 1_500_000,
+        "puja_recomendada": 1_500_000,
+        "seller": "market",
+        "on_daily_market": True,
+        "listed_by_rival": True,
+        "listed_by_name": "Otro",
+        "lineup_prob": 0.85,
+        "budget_fit": "comfortable",
+        "fills_need": True,
+        "fills_structural": True,
+        "delta_5d": 0.16,
+        "rising": True,
+        "decelerating": False,
+    }
+    attach_value_trends([row], {"listed": [1_350_000, 1_420_000, 1_500_000]})
+    score, why = appreciation_play_score(row)
+    _assert(score == 0, (score, why))
+    _assert(any("rival" in str(b).lower() or "sistema" in str(b).lower() for b in why), why)
+
+
+def test_cycle_plan_bids_only_free_agents_for_appreciation() -> None:
+    """Hoy: Durán libre sí; Álvarez/Tárrega en venta de rivales no."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    free = {
+        "id": "duran",
+        "name": "P. Durán",
+        "position": "FW",
+        "price": 313_000,
+        "market_value": 313_000,
+        "bid": 344_300,
+        "puja_recomendada": 344_300,
+        "on_daily_market": True,
+        "seller": "market",
+        "listed_by_rival": False,
+        "lineup_prob": 0.5,
+        "fills_need": True,
+        "fills_coverage_gap": True,
+        "budget_fit": "comfortable",
+        "gw_starter": True,
+    }
+    alvarez = {
+        "id": "alvarez",
+        "name": "C. Álvarez",
+        "position": "MF",
+        "price": 4_090_000,
+        "market_value": 4_090_000,
+        "bid": 4_212_700,
+        "puja_recomendada": 4_212_700,
+        "on_daily_market": True,
+        "seller": "market",
+        "listed_by_rival": True,
+        "listed_by_name": "Manuel",
+        "owner_id": "15399848",
+        "lineup_prob": 0.5,
+        "fills_need": True,
+        "fills_structural": True,
+        "budget_fit": "comfortable",
+        "gw_starter": True,
+    }
+    tarrega = {
+        "id": "tarrega",
+        "name": "C. Tárrega",
+        "position": "DF",
+        "price": 2_414_000,
+        "market_value": 2_414_000,
+        "bid": 2_510_560,
+        "puja_recomendada": 2_510_560,
+        "on_daily_market": True,
+        "seller": "market",
+        "listed_by_rival": True,
+        "listed_by_name": "Abel",
+        "owner_id": "15399131",
+        "lineup_prob": 0.9,
+        "is_upgrade": True,
+        "overstocked": True,
+        "budget_fit": "comfortable",
+    }
+    attach_value_trends(
+        [free, alvarez, tarrega],
+        {
+            "duran": [160_000, 220_000, 313_000],
+            "alvarez": [3_520_000, 3_800_000, 4_090_000],
+            "tarrega": [1_970_000, 2_180_000, 2_414_000],
+        },
+    )
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[free, alvarez, tarrega],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    next_names = [t["name"] for t in plan.get("next_cycle_targets") or []]
+    _assert("P. Durán" in bid_names, bid_names)
+    _assert("C. Álvarez" not in bid_names, bid_names)
+    _assert("C. Tárrega" not in bid_names, bid_names)
+    _assert("C. Álvarez" not in next_names, next_names)
+    _assert("C. Tárrega" not in next_names, next_names)
+
+
 def test_rival_owned_is_not_appreciation() -> None:
     """Subida viva en plantilla rival no es revalorización: no vende al VM."""
     row = {
@@ -697,28 +810,6 @@ def test_rival_owned_is_not_appreciation() -> None:
     score, why = appreciation_play_score(row)
     _assert(score == 0, (score, why))
     _assert(any("rival" in str(b).lower() for b in why), why)
-
-
-def test_rival_listed_on_market_can_appreciate() -> None:
-    """Si el rival lo pone en el mercado del día, sí se puede pujar al precio de salida."""
-    row = {
-        "id": "listed",
-        "name": "Listado",
-        "position": "MF",
-        "price": 1_500_000,
-        "market_value": 1_500_000,
-        "bid": 1_500_000,
-        "puja_recomendada": 1_500_000,
-        "seller": "market",
-        "on_daily_market": True,
-        "listed_by_rival": True,
-        "listed_by_name": "Otro",
-        "lineup_prob": 0.85,
-        "budget_fit": "comfortable",
-    }
-    attach_value_trends([row], {"listed": [1_350_000, 1_420_000, 1_500_000]})
-    score, why = appreciation_play_score(row)
-    _assert(score > 0, (score, why))
 
 
 if __name__ == "__main__":
@@ -745,5 +836,6 @@ if __name__ == "__main__":
     test_spike_already_falling_is_not_a_bid()
     test_starter_live_rise_is_a_bid()
     test_rival_owned_is_not_appreciation()
-    test_rival_listed_on_market_can_appreciate()
+    test_rival_listed_on_market_is_not_appreciation()
+    test_cycle_plan_bids_only_free_agents_for_appreciation()
     print("test_cycle_plan: OK")

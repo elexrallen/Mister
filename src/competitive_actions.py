@@ -2084,11 +2084,28 @@ def trade_asset_score(item: dict[str, Any]) -> float:
     return round(score, 1)
 
 
+def is_rival_market_listing(item: dict[str, Any]) -> bool:
+    """Listado de un rival en el mercado de hoy (no es un libre).
+
+    Pujar al VM no es negocio: el vendedor acepta la oferta del sistema
+    (≈ valor de mercado) antes que la nuestra. La revalorización solo
+    cuenta jugadores libres del mercado.
+    """
+    if item.get("listed_by_me") or item.get("owned") or item.get("is_mine"):
+        return False
+    if item.get("listed_by_rival"):
+        return True
+    on_daily = bool(
+        item.get("on_daily_market") or str(item.get("seller") or "").lower() == "market"
+    )
+    if not on_daily:
+        return False
+    owner = item.get("listed_by_owner_id") or item.get("owner_id")
+    return bool(owner and str(owner) not in ("", "0"))
+
+
 def _held_by_rival(item: dict[str, Any]) -> bool:
-    """
-    En plantilla rival y no comprable al VM/puja de mercado.
-    Si el rival lo ha puesto en el mercado del día, sí se puede pujar.
-    """
+    """En plantilla rival y no comprable al VM (cláusula / fuera de mercado)."""
     seller = str(item.get("seller") or "").lower()
     if item.get("on_daily_market") or seller == "market":
         return False
@@ -2098,6 +2115,11 @@ def _held_by_rival(item: dict[str, Any]) -> bool:
     if owner and str(owner) not in ("", "0") and not item.get("owned") and not item.get("is_mine"):
         return True
     return False
+
+
+def _blocks_appreciation(item: dict[str, Any]) -> bool:
+    """Sin flip al VM: cláusula rival, o listado de rival (oferta CPU gana)."""
+    return _held_by_rival(item) or is_rival_market_listing(item)
 
 
 def _has_play_minutes(item: dict[str, Any]) -> bool:
@@ -2146,6 +2168,8 @@ def appreciation_play_score(item: dict[str, Any]) -> tuple[float, list[str]]:
     avail = _ext_avail(item)
     if avail in ("injured", "suspended"):
         return 0.0, [f"baja ({avail})"]
+    if is_rival_market_listing(item):
+        return 0.0, ["listado de rival: el sistema se lo lleva al VM"]
     if _held_by_rival(item):
         return 0.0, ["de un rival: no vende al VM"]
 
@@ -2267,7 +2291,7 @@ def is_appreciation_candidate(item: dict[str, Any]) -> bool:
     """¿Candidato a fichar por revalorización (no por hueco/upgrade)?"""
     if not item.get("on_daily_market") and item.get("seller") != "market":
         return False
-    if _held_by_rival(item):
+    if _blocks_appreciation(item):
         return False
     if item.get("budget_fit") not in ("comfortable", "tight", None):
         return False
@@ -2322,7 +2346,7 @@ def promote_appreciation_plays(
             continue
         if not bool(item.get("on_daily_market")):
             continue
-        if _held_by_rival(item):
+        if _blocks_appreciation(item):
             continue
         if item.get("budget_fit") not in ("comfortable", "tight"):
             continue
