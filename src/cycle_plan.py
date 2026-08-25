@@ -16,6 +16,7 @@ from competitive_actions import (
     _lineup_pct,
     _money,
     appreciation_play_score,
+    is_rival_market_listing,
     xi_owned_ids,
 )
 
@@ -415,6 +416,8 @@ def build_cycle_plan(
 
     1) Aceptar ofertas del sistema (salvo outlier a la baja).
     2) Pujar/fichar si hay plazas libres (tras aceptar) y caja real.
+       Revalorización: solo libres del mercado, no listados de rivales
+       (el sistema oferta ≈ VM y el vendedor acepta esa antes que la nuestra).
     3) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
        con plantilla llena y un recambio de mercado que suba claramente más.
     """
@@ -495,6 +498,9 @@ def build_cycle_plan(
         if o.get("solvency_blocked") or o.get("debt_risk"):
             continue
         if o.get("gw_out") or (o.get("external") or {}).get("availability") in ("injured", "suspended"):
+            continue
+        if is_rival_market_listing(o):
+            # El rival acepta la oferta del sistema al VM; no hay flip.
             continue
         cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
         if cost <= 0:
