@@ -41,6 +41,8 @@ _PLAYER_KEYS = (
     "accel",
     "decelerating",
     "rising",
+    "consecutive_up",
+    "abs_gain",
     "price_delta_1d",
     "points",
     "gw_points",

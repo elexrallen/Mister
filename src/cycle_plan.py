@@ -11,6 +11,8 @@ from typing import Any
 
 import config
 from competitive_actions import (
+    _has_play_minutes,
+    _is_floor_vm,
     _lineup_pct,
     _money,
     appreciation_play_score,
@@ -58,6 +60,7 @@ def compute_value_trend(
     """
     delta_cycle / delta_1d / delta_5d / accel a partir de la serie de snapshots.
     Decelera si sigue en positivo pero la segunda mitad de la ventana sube menos.
+    consecutive_up: tramos finales de VM que suben de verdad (≥1%).
     """
     prices = list((series or {}).get(str(player_id)) or [])
     try:
@@ -121,6 +124,19 @@ def compute_value_trend(
         )
     )
     rising = bool(last_up and not last_down)
+    consecutive_up = 0
+    up_step = 0.01
+    for i in range(len(distinct) - 1, 0, -1):
+        prev, cur = distinct[i - 1], distinct[i]
+        if prev > 0 and (cur - prev) / prev >= up_step:
+            consecutive_up += 1
+        else:
+            break
+    abs_gain = 0.0
+    if consecutive_up and len(distinct) > consecutive_up:
+        abs_gain = float(distinct[-1] - distinct[-1 - consecutive_up])
+    elif len(distinct) >= 2:
+        abs_gain = float(distinct[-1] - distinct[0])
     return {
         "delta_cycle": round(delta_cycle, 4) if delta_cycle is not None else None,
         "delta_1d": round(delta_1d, 4) if delta_1d is not None else None,
@@ -128,6 +144,8 @@ def compute_value_trend(
         "accel": round(accel, 4) if accel is not None else None,
         "decelerating": decelerating,
         "rising": rising,
+        "consecutive_up": consecutive_up,
+        "abs_gain": round(abs_gain, 2),
     }
 
 
@@ -325,18 +343,23 @@ def _bid_score(p: dict[str, Any]) -> float:
     fills_gap = bool(
         p.get("fills_coverage_gap") or p.get("fills_structural") or p.get("fills_need")
     )
-    if d5 >= 0.10:
-        score += 20.0
-    elif d5 >= strong:
-        score += 12.0
+    if p.get("decelerating"):
+        score -= 24.0
+    elif appr > 0:
+        if d5 >= 0.10:
+            score += 20.0
+        elif d5 >= strong:
+            score += 12.0
     elif d5 <= -strong:
         score -= 36.0
     elif d5 < 0:
         score -= 14.0
-    # Un parche barato que se cae de VM no es un hueco que merezca puja.
-    if fills_gap and d5 >= 0:
+    # Hueco real: titular usable con VM de verdad. Un parche 200k que no
+    # juega no se cuela como puja de revalorización.
+    live_gap = fills_gap and d5 >= 0 and not p.get("decelerating")
+    if live_gap and _has_play_minutes(p) and not _is_floor_vm(p):
         score += 28.0
-    elif _starter_coverage_hole(p):
+    elif _starter_coverage_hole(p) and not _is_floor_vm(p) and not p.get("decelerating"):
         score += 12.0
     if p.get("is_upgrade") or p.get("upgrade_worth_buy"):
         score += 14.0

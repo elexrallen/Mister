@@ -2084,10 +2084,44 @@ def trade_asset_score(item: dict[str, Any]) -> float:
     return round(score, 1)
 
 
+def _has_play_minutes(item: dict[str, Any]) -> bool:
+    """Titularidad usable o titular de jornada: sin minutos el VM no se sostiene."""
+    lp = _lineup_pct(item)
+    lineup_min = float(getattr(config, "APPRECIATION_LINEUP_MIN", 0.45)) * 100.0
+    if lp is not None and lp >= lineup_min:
+        return True
+    return bool(item.get("gw_starter") or (item.get("external") or {}).get("gw_starter"))
+
+
+def _live_abs_gain(item: dict[str, Any]) -> float:
+    try:
+        gain = float(item.get("abs_gain") or 0)
+    except (TypeError, ValueError):
+        gain = 0.0
+    if gain > 0:
+        return gain
+    vm = _money(item.get("market_value") or item.get("price") or item.get("cost"))
+    try:
+        delta = float(item["delta_5d"]) if item.get("delta_5d") is not None else None
+    except (TypeError, ValueError):
+        delta = None
+    if vm > 0 and delta is not None and delta > -0.99:
+        return vm - (vm / (1.0 + delta))
+    return 0.0
+
+
+def _is_floor_vm(item: dict[str, Any]) -> bool:
+    """160k→210k (+50k) no es negocio: hace falta VM o ganancia absoluta de verdad."""
+    vm = _money(item.get("market_value") or item.get("price") or item.get("cost"))
+    min_vm = float(getattr(config, "APPRECIATION_MIN_VM", 400_000))
+    min_abs = float(getattr(config, "APPRECIATION_MIN_ABS_GAIN", 80_000))
+    return vm < min_vm and _live_abs_gain(item) < min_abs
+
+
 def appreciation_play_score(item: dict[str, Any]) -> tuple[float, list[str]]:
     """
-    Puntuación de revalorización: sube de VM + perspectiva de seguir subiendo
-    (titularidad / producción / no baja).
+    Puntuación de revalorización: subida viva (sigue al alza, no pico de un
+    cierre) + minutos + salto en euros, no solo Δ5d de un suelo barato.
     """
     why: list[str] = []
     score = 0.0
@@ -2104,16 +2138,49 @@ def appreciation_play_score(item: dict[str, Any]) -> tuple[float, list[str]]:
     except (TypeError, ValueError):
         delta = None
     trend = item.get("trend")
-    rising = bool(trend == "up" or (delta is not None and delta >= float(
-        getattr(config, "APPRECIATION_DELTA_MIN", 0.04)
-    )))
-    if not rising:
-        return 0.0, ["sin revalorización clara"]
+    d_cycle = None
+    try:
+        if item.get("delta_cycle") is not None:
+            d_cycle = float(item["delta_cycle"])
+        elif item.get("price_delta_1d") is not None:
+            d_cycle = float(item["price_delta_1d"])
+        elif item.get("delta_1d") is not None:
+            d_cycle = float(item["delta_1d"])
+    except (TypeError, ValueError):
+        d_cycle = None
 
-    if delta is not None:
-        score += min(28.0, float(delta) * 120.0)
-        why.append(f"sube {delta * 100:.1f}%")
-    elif trend == "up":
+    if item.get("rising") is False:
+        return 0.0, ["no sube este ciclo"]
+    if item.get("decelerating"):
+        return 0.0, ["la subida ya frena"]
+    rising = item.get("rising")
+    if rising is not True:
+        last_up = bool(
+            trend == "up"
+            or (d_cycle is not None and d_cycle >= 0.01)
+        )
+        if not last_up:
+            return 0.0, ["sin revalorización viva"]
+
+    min_consec = int(getattr(config, "APPRECIATION_MIN_CONSECUTIVE_UP", 2) or 2)
+    consec = item.get("consecutive_up")
+    if consec is not None:
+        try:
+            if int(consec) < min_consec:
+                return 0.0, ["spike de un ciclo"]
+        except (TypeError, ValueError):
+            pass
+
+    if not _has_play_minutes(item):
+        return 0.0, ["no juega: el VM no se sostiene"]
+    if _is_floor_vm(item):
+        return 0.0, ["suelo de VM: el salto no es dinero"]
+
+    live_delta = d_cycle if d_cycle is not None and d_cycle > 0 else delta
+    if live_delta is not None and live_delta > 0:
+        score += min(28.0, float(live_delta) * 120.0)
+        why.append(f"sube {live_delta * 100:.1f}%")
+    elif trend == "up" or item.get("rising"):
         score += 10.0
         why.append("flecha al alza")
 
@@ -2125,12 +2192,9 @@ def appreciation_play_score(item: dict[str, Any]) -> tuple[float, list[str]]:
     elif lp is not None and lp >= lineup_min:
         score += 8.0
         why.append(f"rotación usable {lp:.0f}%")
-    elif item.get("gw_starter") or (item.get("external") or {}).get("gw_starter"):
+    else:
         score += 10.0
         why.append("titular FF jornada")
-    else:
-        score -= 8.0
-        why.append("poca perspectiva de minutos")
 
     if avail == "doubt":
         score -= 6.0

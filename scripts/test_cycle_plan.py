@@ -18,6 +18,7 @@ from cycle_plan import (  # noqa: E402
     compute_value_trend,
     squad_value_summary,
 )
+from competitive_actions import appreciation_play_score  # noqa: E402
 
 
 def _assert(cond: bool, msg: str) -> None:
@@ -35,6 +36,17 @@ def test_value_trend_deceleration() -> None:
     _assert(t["delta_5d"] is not None and t["delta_5d"] > 0, t)
     _assert(t["decelerating"] is True, t)
     _assert(t["accel"] is not None and t["accel"] < 0, t)
+    _assert("consecutive_up" in t, t)
+
+
+def test_consecutive_up_counts_live_legs() -> None:
+    t = compute_value_trend("1", 210_000, {"1": [160_000, 185_000, 210_000]})
+    _assert(t["consecutive_up"] == 2, t)
+    _assert(t["rising"] is True, t)
+    _assert(t["abs_gain"] >= 49_000, t)
+    down = compute_value_trend("1", 180_000, {"1": [160_000, 185_000, 210_000, 180_000]})
+    _assert(down["consecutive_up"] == 0, down)
+    _assert(down["rising"] is False, down)
 
 
 def test_value_trend_follows_mister_down_arrow() -> None:
@@ -562,8 +574,112 @@ def test_cycle_plan_does_not_list_sold_players() -> None:
     _assert("L. Nmecha" not in listed, listed)
 
 
+def _spike_row(**extra: object) -> dict:
+    row = {
+        "id": "spike",
+        "name": "Pico",
+        "position": "MF",
+        "price": 210_000,
+        "market_value": 210_000,
+        "bid": 210_000,
+        "puja_recomendada": 210_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "lineup_prob": 0.0,
+        "fills_need": True,
+        "budget_fit": "comfortable",
+    }
+    row.update(extra)
+    return row
+
+
+def test_spike_without_minutes_is_not_a_bid() -> None:
+    """160k→185k→210k y 0% de once: pico de VM, no puja."""
+    row = _spike_row()
+    attach_value_trends([row], {"spike": [160_000, 185_000, 210_000]})
+    _assert(row["consecutive_up"] == 2, row)
+    _assert(row["rising"] is True, row)
+    score, why = appreciation_play_score(row)
+    _assert(score == 0, (score, why))
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[row],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("Pico" not in bid_names, bid_names)
+
+
+def test_spike_already_falling_is_not_a_bid() -> None:
+    """Último ciclo 210→180: aunque el neto 5d siga verde, no pujar."""
+    row = _spike_row(price=180_000, market_value=180_000, bid=180_000, puja_recomendada=180_000)
+    attach_value_trends([row], {"spike": [160_000, 185_000, 210_000, 180_000]})
+    _assert(row["rising"] is False, row)
+    score, why = appreciation_play_score(row)
+    _assert(score == 0, (score, why))
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[row],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("Pico" not in bid_names, bid_names)
+
+
+def test_starter_live_rise_is_a_bid() -> None:
+    """Titular usable, 2 ciclos al alza, VM 1.5M: sí puntúa y entra como puja."""
+    row = {
+        "id": "live",
+        "name": "Vivo",
+        "position": "MF",
+        "price": 1_500_000,
+        "market_value": 1_500_000,
+        "bid": 1_500_000,
+        "puja_recomendada": 1_500_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "lineup_prob": 0.8,
+        "budget_fit": "comfortable",
+    }
+    attach_value_trends([row], {"live": [1_350_000, 1_420_000, 1_500_000]})
+    _assert(row["consecutive_up"] >= 2, row)
+    _assert(row["rising"] is True, row)
+    _assert(row.get("decelerating") is False, row)
+    score, why = appreciation_play_score(row)
+    _assert(score > 0, (score, why))
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[row],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("Vivo" in bid_names, (bid_names, score, why, row))
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
+    test_consecutive_up_counts_live_legs()
     test_value_trend_follows_mister_down_arrow()
     test_trend_uses_vm_not_ask_and_skips_zeros()
     test_attach_trends_on_squad()
@@ -581,4 +697,7 @@ if __name__ == "__main__":
     test_lists_fading_bench_with_free_slots()
     test_history_snapshot_stems()
     test_cycle_plan_does_not_list_sold_players()
+    test_spike_without_minutes_is_not_a_bid()
+    test_spike_already_falling_is_not_a_bid()
+    test_starter_live_rise_is_a_bid()
     print("test_cycle_plan: OK")

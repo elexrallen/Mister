@@ -481,6 +481,10 @@ APPRECIATION_MAX_BUYS = 2
 APPRECIATION_MAX_PRICE = 8_000_000  # no meter pasta gorda solo por Δprecio
 APPRECIATION_MIN_SCORE = 18.0
 APPRECIATION_LINEUP_MIN = 0.45  # regular usable para que el VM siga subiendo
+# Subida viva: no puntuar picos de un cierre (160k→210k de quien no juega)
+APPRECIATION_MIN_CONSECUTIVE_UP = 2
+APPRECIATION_MIN_VM = 400_000
+APPRECIATION_MIN_ABS_GAIN = 80_000
 # Plan de ciclo: oferta del sistema por debajo de esto = outlier (no el “un poco”)
 CYCLE_OFFER_OUTLIER_PCT = 0.82
 # Señal fuerte de subida (el 10% del ejemplo; 8% ya merece rotar)
