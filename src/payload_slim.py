@@ -14,6 +14,9 @@ from typing import Any
 
 # Libres TOP que la pestaña Radar puede recorrer. El pool completo no pinta.
 FREE_AGENTS_PUBLIC_CAP = 48
+# Ranking Mister “más robado por cláusula”. El aviso oficial llega hasta 100;
+# el dashboard enseña el top útil.
+CLAUSES_RANKING_PUBLIC_CAP = 25
 
 # Ficha de listado (mercado / libres / plantilla). Lo que app.js lee.
 _PLAYER_KEYS = (
@@ -110,6 +113,9 @@ _PLAYER_KEYS = (
     "is_primary_target",
     "clause",
     "clause_known",
+    "clause_rank",
+    "clause_multiplier",
+    "owner_kind",
     "profile_url",
     "queue_role",
     "package_note",
@@ -298,6 +304,9 @@ def slim_public_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     out["free_agents_top"] = slim_player_list(
         out.get("free_agents_top"), cap=FREE_AGENTS_PUBLIC_CAP
     )
+    out["clauses_ranking"] = slim_player_list(
+        out.get("clauses_ranking"), cap=CLAUSES_RANKING_PUBLIC_CAP
+    )
     out["rivals"] = [
         slim_rival(r) for r in (out.get("rivals") or []) if isinstance(r, dict)
     ]
@@ -315,9 +324,11 @@ def slim_public_payload(payload: dict[str, Any] | None) -> dict[str, Any]:
     meta["payload"] = {
         "slim": True,
         "free_agents_cap": FREE_AGENTS_PUBLIC_CAP,
+        "clauses_ranking_cap": CLAUSES_RANKING_PUBLIC_CAP,
         "rival_squads": False,
         "market_n": len(out.get("market_opportunities") or []),
         "free_n": len(out.get("free_agents_top") or []),
+        "clauses_ranking_n": len(out.get("clauses_ranking") or []),
     }
     out["meta"] = meta
     return out

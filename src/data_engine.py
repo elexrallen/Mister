@@ -31,6 +31,7 @@ from mister_client import (
     fetch_live_league,
     mister_player_photo_url,
     mister_team_logo_url,
+    player_is_mine,
 )
 from league_rules import (
     ff_hint_for_provider,
@@ -90,7 +91,7 @@ from target_board import (
     funding_plan_from_board,
     save_target_board,
 )
-from payload_slim import slim_public_payload
+from payload_slim import CLAUSES_RANKING_PUBLIC_CAP, slim_public_payload
 from squad_analyzer import (
     analyze_squad,
     apply_realistic_need_caps,
@@ -1335,6 +1336,127 @@ def find_free_agents_top(
         )
     )
     return free
+
+
+def _clause_rank_int(raw: Any) -> int | None:
+    """Rank Mister 1-based; 0 / null / basura no cuentan."""
+    try:
+        if raw is None or raw is False:
+            return None
+        rank = int(raw)
+    except (TypeError, ValueError):
+        return None
+    return rank if rank > 0 else None
+
+
+def find_clauses_ranking(
+    pool: list[dict[str, Any]] | None,
+    *,
+    clauses_enabled: bool,
+    me: dict[str, Any] | None = None,
+    squad: list[dict[str, Any]] | None = None,
+    rivals: list[dict[str, Any]] | None = None,
+    cap: int = CLAUSES_RANKING_PUBLIC_CAP,
+) -> list[dict[str, Any]]:
+    """
+    Top N más robados por cláusula (clausesRank de Mister, menor = más robado).
+    Vacío si la liga no usa cláusulas. El dueño es el de ESTA comunidad.
+    """
+    if not clauses_enabled or not pool:
+        return []
+
+    me = me or {}
+    my_uc = str(me.get("team_id") or "").strip()
+    squad_ids = {str(p.get("id") or "") for p in (squad or []) if p.get("id")}
+
+    rival_by_uc: dict[str, dict[str, Any]] = {}
+    extra_by_id: dict[str, dict[str, Any]] = {}
+    for src in squad or []:
+        pid = str(src.get("id") or "")
+        if pid:
+            extra_by_id[pid] = src
+    for riv in rivals or []:
+        uc = str(riv.get("team_id") or "").strip()
+        if uc:
+            rival_by_uc[uc] = riv
+        for src in riv.get("squad") or []:
+            pid = str(src.get("id") or "")
+            if not pid:
+                continue
+            prev = extra_by_id.get(pid)
+            if prev is None or (
+                prev.get("clause_multiplier") is None and src.get("clause_multiplier") is not None
+            ):
+                extra_by_id[pid] = src
+
+    ranked: list[tuple[int, str, dict[str, Any]]] = []
+    for raw in pool:
+        rank = _clause_rank_int(raw.get("clause_rank"))
+        if rank is None:
+            continue
+        pid = str(raw.get("id") or "").strip()
+        name = str(raw.get("name") or "").strip()
+        if not pid or not name:
+            continue
+        ranked.append((rank, name.lower(), raw))
+    ranked.sort(key=lambda t: (t[0], t[1]))
+
+    out: list[dict[str, Any]] = []
+    for rank, _name, raw in ranked[: max(0, int(cap))]:
+        pid = str(raw.get("id") or "")
+        extra = extra_by_id.get(pid) or {}
+        oid = str(raw.get("owner_id") or extra.get("owner_id") or "").strip()
+        if oid in ("0",):
+            oid = ""
+        mine = pid in squad_ids or player_is_mine(raw, my_uc) or player_is_mine(extra, my_uc)
+        if mine:
+            kind = "mine"
+            owner_name = me.get("team_name") or me.get("manager") or "Tú"
+        elif oid:
+            kind = "rival"
+            riv = rival_by_uc.get(oid) or {}
+            owner_name = (
+                raw.get("owner_name")
+                or extra.get("owner_name")
+                or riv.get("team_name")
+                or riv.get("manager")
+            )
+        else:
+            kind = "free"
+            owner_name = None
+
+        multiplier = extra.get("clause_multiplier")
+        if multiplier is None:
+            multiplier = raw.get("clause_multiplier")
+        clause = extra.get("clause") if extra.get("clause") is not None else raw.get("clause")
+        clause_known = extra.get("clause_known")
+        if clause_known is None:
+            clause_known = raw.get("clause_known")
+        if clause_known is None:
+            clause_known = clause is not None
+
+        row: dict[str, Any] = {
+            "id": pid,
+            "player_id": pid,
+            "name": raw.get("name"),
+            "position": raw.get("position"),
+            "team": raw.get("team"),
+            "team_id": raw.get("team_id"),
+            "photo_url": raw.get("photo_url") or extra.get("photo_url"),
+            "team_logo_url": raw.get("team_logo_url") or extra.get("team_logo_url"),
+            "price": raw.get("price") or raw.get("market_value"),
+            "market_value": raw.get("market_value") or raw.get("price"),
+            "clause": clause,
+            "clause_known": bool(clause_known),
+            "clause_rank": rank,
+            "owner_kind": kind,
+            "owner_id": oid or None,
+            "owner_name": owner_name,
+        }
+        if multiplier is not None:
+            row["clause_multiplier"] = multiplier
+        out.append(row)
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -3142,6 +3264,13 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 
     # Tablero: plantilla perfecta desde TODO el pool de la liga
     my_uc = str(live_meta.get("id_uc") or me.get("team_id") or "")
+    clauses_ranking = find_clauses_ranking(
+        full_pool,
+        clauses_enabled=clauses_enabled,
+        me={**me, "team_id": my_uc},
+        squad=squad,
+        rivals=rivals,
+    )
     enriched_by_id: dict[str, dict[str, Any]] = {}
     for src in (squad, market_ext, opportunities):
         for p in src or []:
@@ -3445,6 +3574,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     attach_mister_assets(action_plan, player_index=asset_index)
     attach_mister_assets(rival_upgrades, player_index=asset_index)
     attach_mister_assets(free_agents, player_index=asset_index)
+    attach_mister_assets(clauses_ranking, player_index=asset_index)
 
     cycle_plan = build_cycle_plan(
         me=me,
@@ -3782,6 +3912,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "diagnostico_plantilla": diagnostico_plantilla,
         "rivals": rivals,
         "free_agents_top": free_agents,
+        "clauses_ranking": clauses_ranking,
         "recommendations": recommendations,
         "squad_notes": squad_notes,
         "daily_playbook": playbook,
@@ -3902,12 +4033,13 @@ def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None 
         save_json(config.LATEST_DATA_PATH, public, compact=True)
 
     log.info(
-        "Escrito %s slim (slug=%s default=%s market=%s free=%s)",
+        "Escrito %s slim (slug=%s default=%s market=%s free=%s clauses=%s)",
         out_path,
         slug,
         is_default,
         len(public.get("market_opportunities") or []),
         len(public.get("free_agents_top") or []),
+        len(public.get("clauses_ranking") or []),
     )
     return out_path
 

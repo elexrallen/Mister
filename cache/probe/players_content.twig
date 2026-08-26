@@ -1,0 +1,338 @@
+{% import (isAjax ? 'macros.twig?' ~ cfg.twig : 'macros.twig') as macros %}
+
+<style>
+  .sw > .sw-topbar, #fg-content .sw-topbar { display: none }
+</style>
+
+<div class="sw-topbar">
+  {{ macros.swTopLogo(cfg) }}
+  <div class="sw-top">
+    <div class="sw-top-left">
+      <button class="btn btn--secondary btn--md go-back">
+        {{ svg('back') }}
+      </button>
+    </div>
+    <div class="sw-top-center"></div>
+    <div class="sw-top-right">
+      <button class="btn btn--secondary btn--md btn-favorite" data-id="{{ player.id }}" data-action="{{ player.isFavorite == 1 ? 'remove' : 'add' }}" data-type="player">
+        {{ svg(player.isFavorite == 1 ? 'star-filled' : 'star') }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="player-profile-header">
+  <div class="wrapper">
+    <div class="player-info">
+      <div class="left">
+        <div class="team-position">
+          <a class="btn {% if player.team.id > 0 %}btn-sw-link{% endif %}" {% if player.team.id > 0 %}href="teams/{{ player.team.id }}/{{ player.team.name|slug }}"{% endif %} data-event="clicked_team">
+            {{ teamLogo(player.team.logoUrl, 22) }}
+          </a>
+          {{ playerPosition(player.position, 'pos--lg') }}
+        </div>
+        <div class="name">{{ player.name|splitName('firstName') }}</div>
+        <div class="surname">{{ player.name|splitName('lastName') }}</div>
+      </div>
+      <div class="right">
+        <div class="player-avatar player-avatar--lg {% if player.status %}st-{{ player.status }}{% endif %}">
+          <img src="{{ player.photoUrl }}" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="player-stats-wrapper">
+    <div class="wrapper">
+      <div class="label-value thin-scrollbar">
+        <div class="item">
+          <div class="label">{{ trans('Puntos') }}</div>
+          <div class="value">{{ player.points|pointsFormat }}</div>
+        </div>
+        <div class="item">
+          <div class="label">{{ trans('Media') }}</div>
+          <div class="value">{{ player.avg|number_format(1) }}</div>
+        </div>
+        <div class="item">
+          <div class="label">{{ trans('Valor') }}</div>
+          <div class="value">{{ player.value|number_format }}</div>
+        </div>
+        {% if player.owner.id > 0 and player.owner.id_community == user.id_community and user.clauses == 1 %}
+          <div class="item item-clause">
+            <div class="label">{{ trans('Cláusula') }}</div>
+            <div class="value">{{ player.clause.value|number_format }}</div>
+          </div>
+        {% endif %}
+        <div class="item">
+          <div class="label">{{ trans('Partidos') }}</div>
+          <div class="value">{{ player_extra.matches }}</div>
+        </div>
+        <div class="item">
+          <div class="label">{{ trans('Goles') }}</div>
+          <div class="value">{{ player_extra.goals }}</div>
+        </div>
+        <div class="item">
+          <div class="label">{{ trans('Tarjetas') }}</div>
+          <div class="value">{{ player_extra.cards }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrapper wrapper--spaced sw-profile">
+
+  <div class="player-notices">
+    {% if player.clause.shield %}
+      <div class="box box--spaced">
+        {{ svg('lock', 20, 'red') }}
+        <p><span>{{ trans('Blindado') }} ·</span> {{ trans('PLAYER_SHIELD_EXPIRES_ON', { expire: player.clause.shield}) }}.</p>
+      </div>
+    {% endif %}
+    {% if player.injury.description %}
+      <div class="box box--spaced">
+        {{ svg(player.status, 20) }}
+        {% if cfg.language.code == 'es' %}
+          <p><strong>{{ player.injury.description }} ·</strong> {{ player.injury.duration }}.</p>
+        {% else %}
+          <p><strong>{{ trans(player.injury.duration) }}</strong></p>
+        {% endif %}
+      </div>
+    {% endif %}
+    {% if player.clausesRanking > 0 and player.clausesRanking <= 100 and player.owner.id == user.id_uc and player.clause.multiplier < 4 %}
+      <div class="box box--spaced">
+        <div class="emoji">💥</div>
+        <p>{{ trans('PLAYER_CLAUSES_RANKING_TOP', { top: player.clausesRanking }) }}</p>
+      </div>
+    {% endif %}
+    {% if player.owner.id > 0 %}
+      <div class="box box--spaced">
+        {{ macros.pic_user('xs', player.owner.avatar.color, player.owner.avatar.initials, player.owner.avatar.pic) }}
+        {% if player.transfer.origin == 'loan' %}
+          <p>{{ trans('PLAYER_PROFILE_LOAN_LOG', { owner: player.loan.ownerName, loanedTo: player.owner.name, expire: player.loan.backDate, price: (player.transfer.price|number_format) }) }}</p>
+        {% else %}
+          <p>{{ trans('PLAYER_PROFILE_TRANSFER_LOG', { owner: player.owner.name, date: player.transfer.date, price: (player.transfer.price|number_format) }) }}</p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+
+  {% if next_match[player.id] %}
+    {{ macros.profileNextGame(cfg, next_match[player.id], player.team.id, home[player.id].avg, away[player.id].avg) }}
+  {% endif %}
+
+  {% if cfg.showAds and player.videoFrame %}
+    <div class="player-video-wrapper-offset"></div>
+    <div id="player-video-wrapper"></div>
+  {% endif %}
+
+  {% include isAjax ? 'components/profile/points-2025.twig?' ~ cfg.twig : 'components/profile/points-2025.twig' %}
+  {% include isAjax ? 'components/profile/value.twig?' ~ cfg.twig : 'components/profile/value.twig' %}
+
+  {% if isAjax and ads.sw_roba_1 is defined and cfg.device == 'mobile' %}
+    <div class="ad ad-content-player">
+      {{ ads.sw_roba_1|raw }}
+    </div>
+  {% elseif ads.roba is defined and cfg.device == 'mobile' %}
+    <div class="ad ad-content-player">
+      {{ ads.roba|raw }}
+    </div>
+  {% endif %}
+
+  {% if player.bio.age %}
+    <div class="section-title">
+      <h4>{{ trans('Detalles') }}</h4>
+    </div>
+    <div class="label-value-wrapper label-value">
+      <div class="item">
+        <div class="label">{{ trans('Edad') }}</div>
+        <div class="value">{{ player.bio.age }}</div>
+      </div>
+      {% if player.bio.height %}
+        <div class="item">
+          <div class="label">{{ trans('Altura') }}</div>
+          <div class="value">{{ (player.bio.height / 100)|number_format(2) }}m</div>
+        </div>
+      {% endif %}
+      {% if player.bio.weight %}
+        <div class="item">
+          <div class="label">{{ trans('Peso') }}</div>
+          <div class="value">{{ player.bio.weight }}kg</div>
+        </div>
+      {% endif %}
+      {#% if player.bio.country|length > 0 %}
+        <div class="item">
+          <div class="label">{{ trans('Nacionalidad') }}</div>
+          <div class="value">{{ player.bio.country.flag ~ ' ' ~ player.bio.country.country }}</div>
+        </div>
+      {% endif %#}
+    </div>
+  {% endif %}
+
+  {% if owners|length > 0 %}
+    <div class="section-title">
+      <h4>{{ trans('Últimos movimientos') }}</h4>
+    </div>
+    <div class="box box-records">
+      <ul>
+        {% for i in owners %}
+          <li>
+            <div class="left">
+              <div class="label">{{ i.date }} · {{ i.transferType }}</div>
+              <div class="value">{{ trans('PLAYER_PROFILE_MOVE', { from: i.from, to: i.to }) }}</div>
+            </div>
+            <div class="right">{{ (i.type == 'loan_back') ? '-' : i.price|number_format }}</div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
+
+  <div class="boxes-2">
+
+    <div class="box-wrapper">
+      <div class="section-title">
+        <h4>{{ trans('Historial de valores') }}</h4>
+      </div>
+      <div class="box box-records">
+        <ul>
+          {% for i in values %}
+            <li>
+              <div class="left">
+                <div class="label">{{ i.time }}</div>
+                <div class="value">
+                  {{ i.change != 0 ? i.change|abs|number_format : '=' }}
+                  <span class="value-arrow {{ i.change < 0 ? 'red' : (i.change > 0 ? 'green' : '') }}">{{ i.change > 0 ? '↑' : (i.change < 0 ? '↓' : '') }}</span>
+                </div>
+              </div>
+              <div class="right">{{ (i.value / 1000000)|number_format(1) }}M</div>
+            </li>
+          {% else %}
+            <li class="alert alert-no-info">{{ trans('Información no disponible') }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <div class="box-wrapper">
+      <div class="section-title">
+        <h4>{{ trans('Historial de puntos') }}</h4>
+      </div>
+      <div class="box box-records">
+        <ul>
+          {% for i in points_history %}
+            <li>
+              {{ teamLogo(i.teamLogoUrl) }}
+              <div class="left">
+                <div class="label">{{ i.season }}</div>
+                <div class="value">{{ trans('PLAYER_PROFILE_AVERAGE', { n: i.avg|number_format(1) }) }}</div>
+              </div>
+              <div class="right">{{ i.points|pointsFormat }}</div>
+            </li>
+          {% else %}
+            <li class="alert alert-no-info">{{ trans('Información no disponible') }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  {% if isAjax and ((player.owner.id > 0 and player.owner.id_community == user.id_community) or player.market.id > 0) %}
+    <style>:root { --spacing-bottom-sw-buttons: 70px }</style>
+    <div class="bottom-placeholder"></div>
+    <div class="bottom-actions">
+      <div class="wrapper">
+        {% if player.transfer.origin == 'loan' %}
+          <button class="btn btn--accent btn--md">{{ trans('Cedido') }}</button>
+        {% else %}
+          {% if player.owner.id != user.id_uc %}
+            <button class="btn btn-popup btn-bid btn--lg {{ player.bid.isActive ? 'btn--accent' : 'btn--primary' }}"
+              data-popup="{{ user.type == 'lfm' ? 'sign' : (player.bid.type == 'loan' ? 'loan-request' : 'bid') }}"
+              data-style="primary"
+              data-text="{{ user.type == 'lfm' ? trans('Fichar') : (player.owner.id > 0 ? trans('Ofertar') : trans('Pujar')) }}"
+              data-preload="player-community-info"
+              data-id_owner="{{ player.owner.id|default(0) }}"
+              data-id_player="{{ player.id }}">
+              {% if player.bid.isActive %}
+                {% if player.bid.type == 'loan' %}
+                  {{ trans('Cesión') }}
+                {% elseif player.bid.barter|length > 0 %}
+                  {{ (player.bid.amount / 1000000)|number_format(1) }}M <div class="player-avatar player-avatar--xs" data-players="{{ player.bid.barter|length }}"><img src="{{ player.bid.barter[player.bid.barter|keys|first].photoUrl }}" loading="lazy"></div>
+                {% else %}
+                  {{ player.bid.amount|number_format }}
+                {% endif %}
+              {% else %}
+                {% if user.type == 'lfm' %}
+                  {{ trans('Fichar') }}
+                {% elseif player.owner.id > 0 %}
+                  {{ trans('Ofertar') }}
+                {% else %}
+                  {{ trans('Pujar') }}
+                {% endif %}
+              {% endif %}
+            </button>
+          {% elseif player.owner.id == user.id_uc %}
+            <button class="btn btn-popup btn-sell btn--lg {{ (player.market.id and player.market.isPublic == 1 and player.owner.id == user.id_uc) ? 'btn--accent' : 'btn--primary' }}"
+              data-popup="{{ user.type == 'lfm' ? 'sell' : 'sale' }}"
+              data-style="primary"
+              data-text="{{ trans('PLAYER_MANAGE') }}"
+              data-preload="player-community-info"
+              data-id_owner="{{ player.owner.id }}"
+              data-id_player="{{ player.id }}"
+            >{{ (player.market.id and player.market.isPublic == 1 and player.owner.id == user.id_uc) ? trans('En venta') : trans('PLAYER_MANAGE') }}</button>
+          {% endif %}
+
+          {% if player.owner.id > 0 and player.owner.id_community == user.id_community and user.clauses == 1 %}
+            {% if player.owner.id == user.id_uc %}
+              <button class="btn btn-popup btn--primary btn--lg btn-clause"
+                data-popup="clause-set"
+                data-style="primary"
+                data-text="{{ trans('Modificar cláusula') }}"
+                data-preload="player-community-info"
+                data-id_owner="{{ player.owner.id }}"
+                data-id_player="{{ player.id }}"
+                data-event="show_clause"
+              >{{ trans('Modificar cláusula') }}</button>
+            {% else %}
+              {% if player.clause.shield != 0 %}
+                <button class="btn btn-shield btn--accent btn--lg" data-shield="{{ player.clause.shield }}">{{ trans('Blindado') }}</button>
+              {% else %}
+                <button class="btn btn-popup btn--primary btn--lg btn-clause"
+                  data-popup="clause-pay"
+                  data-style="primary"
+                  data-text="{{ trans('Pagar cláusula') }}"
+                  data-preload="player-community-info"
+                  data-id_owner="{{ player.owner.id }}"
+                  data-id_player="{{ player.id }}"
+                  data-event="show_clause"
+                >{{ trans('Pagar cláusula') }}</button>
+              {% endif %}
+            {% endif %}
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+
+{% if isAjax and ads.sw_sky_left is defined and cfg.device == 'desktop' %}
+  <div class="sw-ad-sky-left">
+    {{ ads.sw_sky_left|raw }}
+  </div>
+  <div class="sw-ad-sky-right">
+    {{ ads.sw_sky_right|raw }}
+  </div>
+{% endif %}
+
+{% if isAjax and ads.sw_bottom is defined and cfg.device == 'mobile' and cfg.adsReduction == false %}
+  <div class="sw-ad-bottom">
+    <style>:root { --spacing-bottom-sw-ad: 100px }</style>
+    {{ ads.sw_bottom|raw }}
+  </div>
+  <div class="sw-ad-bottom-placeholder"></div>
+{% endif %}
+
+{% if open is not defined %}
+  {% include 'players_js.twig?' ~ cfg.twig %}
+{% endif %}

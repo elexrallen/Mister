@@ -35,7 +35,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=63" />
+  <link rel="stylesheet" href="./styles.css?v=64" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -380,6 +380,27 @@
             <h2 class="section-title">Rivales</h2>
           </div>
         </header>
+        <section class="tactical-block" id="clauses-ranking-panel" aria-labelledby="clauses-ranking-title" hidden>
+        <h3 id="clauses-ranking-title" class="tactical-block-title">Más robados por cláusula</h3>
+        <p class="section-hint">Ranking de Mister en esta competición. Si es tuyo y la cláusula no está al máximo, protégelo.</p>
+        <div class="list-sort" data-list="clauses" aria-label="Ordenar más robados"></div>
+        <div id="clauses-ranking-cards" class="card-list mb-6"></div>
+        <div class="table-wrap desktop-only mb-8">
+          <table class="data-table" id="table-clauses-ranking">
+            <thead>
+              <tr>
+                <th><button type="button" class="th-sort" data-list="clauses" data-key="rank">#</button></th>
+                <th><button type="button" class="th-sort" data-list="clauses" data-key="name">Jugador</button></th>
+                <th><button type="button" class="th-sort" data-list="clauses" data-key="position">Pos</button></th>
+                <th><button type="button" class="th-sort" data-list="clauses" data-key="owner">Dueño</button></th>
+                <th><button type="button" class="th-sort" data-list="clauses" data-key="clause">Cláusula</button></th>
+                <th><button type="button" class="th-sort" data-list="clauses" data-key="value">Valor</button></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        </section>
         <section class="tactical-block" aria-labelledby="upgrades-title">
         <h3 id="upgrades-title" class="tactical-block-title">Objetivos</h3>
         <p class="section-hint">Cláusula o vigilar en plantillas rivales</p>
@@ -506,6 +527,6 @@
     </div>
   </div>
 
-  <script src="./app.js?v=63" defer></script>
+  <script src="./app.js?v=64" defer></script>
 </body>
 </html>

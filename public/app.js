@@ -33,6 +33,7 @@
     upgrades: { key: "score", dir: "desc" },
     free: { key: "roi", dir: "desc" },
     rivals: { key: "rank", dir: "asc" },
+    clauses: { key: "rank", dir: "asc" },
   };
 
   const SORT_OPTIONS = {
@@ -75,6 +76,14 @@
       { key: "reliability", label: "Fiabilidad" },
       { key: "name", label: "Nombre" },
       { key: "position", label: "Posición" },
+    ],
+    clauses: [
+      { key: "rank", label: "Más robado" },
+      { key: "name", label: "Nombre" },
+      { key: "position", label: "Posición" },
+      { key: "owner", label: "Dueño" },
+      { key: "clause", label: "Cláusula" },
+      { key: "value", label: "Valor" },
     ],
     rivals: [
       { key: "rank", label: "Clasificación" },
@@ -156,6 +165,14 @@
       ppg: (p) => (p.avg_ppg != null ? Number(p.avg_ppg) : -1),
       reliability: (p) => (p.reliability != null ? Number(p.reliability) : -1),
       roi: (p) => (p.roi_ppg_per_million != null ? Number(p.roi_ppg_per_million) : -1),
+    },
+    clauses: {
+      rank: (p) => Number(p.clause_rank) || 9999,
+      name: (p) => String(p.name || "").toLowerCase(),
+      position: (p) => POS_ORDER[p.position] ?? 9,
+      owner: (p) => String(p.owner_name || p.owner_kind || "").toLowerCase(),
+      clause: (p) => (p.clause_known && p.clause != null ? Number(p.clause) : Number.POSITIVE_INFINITY),
+      value: (p) => Number(p.market_value || p.price) || 0,
     },
     rivals: {
       rank: (p) => Number(p.rank) || 99,
@@ -418,6 +435,31 @@
     return `${badge}${extras.join(" ")}${link}`;
   };
 
+  function clauseRankProtects(p) {
+    const rank = Number(p && p.clause_rank);
+    if (!Number.isFinite(rank) || rank < 1 || rank > 100) return false;
+    const mult = p.clause_multiplier;
+    if (mult != null && Number(mult) >= 4) return false;
+    return true;
+  }
+
+  function clauseRankBadge(p) {
+    if (!clauseRankProtects(p)) return "";
+    return `<span class="badge badge-duda">Top ${Number(p.clause_rank)}</span>`;
+  }
+
+  function clausesOwnerLabel(p) {
+    if (p.owner_kind === "mine") return p.owner_name ? `Tuyo · ${p.owner_name}` : "Tuyo";
+    if (p.owner_kind === "free") return "Libre";
+    return p.owner_name || "Rival";
+  }
+
+  function clausesOwnerBadge(p) {
+    if (p.owner_kind === "mine") return `<span class="badge badge-alta">Tuyo</span>`;
+    if (p.owner_kind === "free") return `<span class="badge badge-mint">Libre</span>`;
+    return `<span class="badge badge-duda">Rival</span>`;
+  }
+
   const fotmobCell = (p) => {
     const fm = p.fotmob_stats || {};
     let rating = fm.rating_promedio;
@@ -619,6 +661,7 @@
     const pools = [
       DATA.market_opportunities,
       DATA.free_agents_top,
+      DATA.clauses_ranking,
       (DATA.me && DATA.me.squad) || [],
       DATA.rival_upgrades,
       DATA.action_plan,
@@ -1452,11 +1495,13 @@
       const upgradeCards = document.getElementById("upgrade-cards");
       const upgradeTable = document.getElementById("table-rival-upgrades");
       const upgradeSort = radarPanel.querySelector('.list-sort[data-list="upgrades"]');
+      const clausesPanel = document.getElementById("clauses-ranking-panel");
       [upgradesTitle, upgradeCards, upgradeTable && upgradeTable.closest(".table-wrap"), upgradeSort].forEach(
         (el) => {
           if (el) el.hidden = fixed;
         }
       );
+      if (clausesPanel && fixed) clausesPanel.hidden = true;
     }
   }
 
@@ -2602,7 +2647,7 @@
           .map(
             (p) => `<tr data-player-id="${escapeHtml(p.id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
               <td>
-                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
+                <div class="font-medium text-white player-name-link">${escapeHtml(p.name)} ${clauseRankBadge(p)}</div>
                 <div class="text-xs text-slate-500">${escapeHtml(p.team || "")}</div>
               </td>
               <td>${posChip(p.position)}</td>
@@ -2639,7 +2684,7 @@
                     const rec = tacticalRecord(p);
                     return tacticalCard(rec, {
                       kicker: escapeHtml(p.position || "—"),
-                      badge: externalStatusBadge(p),
+                      badge: `${externalStatusBadge(p)} ${clauseRankBadge(p)}`,
                       sub: escapeHtml(p.team || ""),
                       meta: `${ffAvgLine(p)}${signalChips(p)}`,
                       stats:
@@ -2665,6 +2710,63 @@
 
   function renderRadar() {
     const f = getFilters();
+    const clausesOn = ((DATA.league || {}).rules || {}).clauses !== false && !isFixedMarket(DATA);
+    const clausePanel = document.getElementById("clauses-ranking-panel");
+    const clauseBody = document.querySelector("#table-clauses-ranking tbody");
+    const clauseCards = document.getElementById("clauses-ranking-cards");
+    const stolen = clausesOn
+      ? sortRows(
+          "clauses",
+          (DATA.clauses_ranking || []).filter((p) => matchPlayer(p, f))
+        )
+      : [];
+    if (clausePanel) clausePanel.hidden = !clausesOn || !(DATA.clauses_ranking || []).length;
+    if (clauseBody) {
+      clauseBody.innerHTML = stolen.length
+        ? stolen
+            .map(
+              (p) => `<tr data-player-id="${escapeHtml(p.id || p.player_id)}" class="player-row is-clickable" title="Abrir ficha FF / fuente" role="link" tabindex="0">
+            <td class="text-slate-400">${p.clause_rank ?? "—"}</td>
+            <td>
+              <div class="font-medium text-white player-name-link">${escapeHtml(p.name)}</div>
+              <div class="text-xs text-slate-500">${escapeHtml(p.team || "")}</div>
+            </td>
+            <td>${posChip(p.position)}</td>
+            <td>${clausesOwnerBadge(p)} <span class="text-slate-400 text-xs">${escapeHtml(clausesOwnerLabel(p))}</span></td>
+            <td>${p.clause_known && p.clause != null ? formatMoney(p.clause) : "—"}</td>
+            <td>${formatMoney(p.market_value || p.price)}</td>
+          </tr>`
+            )
+            .join("")
+        : `<tr><td colspan="6" class="text-slate-500">Sin ranking de cláusulas con estos filtros.</td></tr>`;
+    }
+    if (clauseCards) {
+      clauseCards.innerHTML = stolen.length
+        ? stolen
+            .map((p) => {
+              const rec = tacticalRecord(p);
+              const mineNote =
+                p.owner_kind === "mine" && clauseRankProtects(p)
+                  ? "Protégelo: sube la cláusula o usa el blindaje."
+                  : "";
+              return tacticalCard(rec, {
+                kicker: `Top ${p.clause_rank ?? "—"}`,
+                badge: clausesOwnerBadge(p),
+                sub: escapeHtml(`${p.team || "—"} · ${clausesOwnerLabel(p)}`),
+                stats:
+                  tacticalStat(
+                    "Cláusula",
+                    p.clause_known && p.clause != null ? formatMoney(p.clause) : "—",
+                    "is-acid"
+                  ) + tacticalStat("Valor", formatMoney(p.market_value || p.price)),
+                note: mineNote,
+              });
+            })
+            .join("")
+        : `<p class="empty-state">Sin ranking de cláusulas con estos filtros.</p>`;
+      bindAssetFallbacks(clauseCards);
+    }
+
     const upBody = document.querySelector("#table-rival-upgrades tbody");
     const upCards = document.getElementById("upgrade-cards");
     const ups = sortRows(
@@ -2779,6 +2881,8 @@
       bindAssetFallbacks(freeCards);
     }
 
+    bindPlayerOpenClicks(clauseBody, "radar");
+    bindPlayerOpenClicks(clauseCards, "radar");
     bindPlayerOpenClicks(upBody, "radar");
     bindPlayerOpenClicks(upCards, "radar");
     bindPlayerOpenClicks(freeBody, "radar");
