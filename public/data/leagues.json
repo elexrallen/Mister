@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-25T19:58:45.932690+00:00",
+  "generated_at": "2026-08-26T04:15:54.315283+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,9 +10,9 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-08-25T19:55:25.270550+00:00",
+      "generated_at": "2026-08-26T04:12:49.694135+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
-      "balance": 16350916,
+      "balance": 14786914,
       "rank": 1,
       "market_mode": "auction",
       "max_squad": 25,
@@ -59,9 +59,9 @@
       "id_competition": 3,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-08-25T19:58:45.877087+00:00",
+      "generated_at": "2026-08-26T04:15:54.257877+00:00",
       "path": "leagues/premier-league-d0g38-4036/latest_data.json",
-      "balance": -1166898,
+      "balance": -2408898,
       "rank": 7,
       "market_mode": "auction",
       "max_squad": 25,
