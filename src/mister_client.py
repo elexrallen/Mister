@@ -136,6 +136,92 @@ def fetch_html(path: str, timeout: int = 30) -> str:
     return resp.text
 
 
+def fetch_feed_cards(
+    *,
+    page_size: int | None = None,
+    max_pages: int | None = None,
+    seen_ids: set[str] | None = None,
+    seen_fps: set[str] | None = None,
+    stop_on_caught_up: bool = False,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """
+    POST /ajax/feed — el HTML de /feed solo trae ~20 tarjetas; el resto
+    llega al hacer scroll (offset += cardsPerPage) hasta status=end.
+    """
+    from rival_finances import parse_feed_ajax_cards, unseen_feed_events, unseen_prizes
+
+    size = int(page_size or getattr(config, "MISTER_FEED_PAGE_SIZE", 20))
+    cap = int(max_pages or getattr(config, "MISTER_FEED_MAX_PAGES", 40))
+    cards: list[dict[str, Any]] = []
+    seen_card: set[str] = set()
+    pages = 0
+    caught_up = False
+    last_status = ""
+    for page in range(max(1, cap)):
+        offset = page * size
+        try:
+            raw = ajax_post(
+                "/ajax/feed",
+                {
+                    "end": False,
+                    "loading": False,
+                    "offset": offset,
+                    "cardsPerPage": size,
+                },
+                timeout=30,
+            )
+        except Exception as exc:  # noqa: BLE001
+            log.warning("ajax/feed offset=%s falló: %s", offset, exc)
+            last_status = "error"
+            break
+        if not isinstance(raw, dict):
+            last_status = "invalid"
+            break
+        last_status = str(raw.get("status") or "")
+        if last_status == "end":
+            break
+        chunk = raw.get("data")
+        if not isinstance(chunk, list) or not chunk:
+            break
+        pages += 1
+        page_new: list[dict[str, Any]] = []
+        for card in chunk:
+            if not isinstance(card, dict):
+                continue
+            cid = str(card.get("id") or "")
+            if cid and cid in seen_card:
+                continue
+            if cid:
+                seen_card.add(cid)
+            page_new.append(card)
+            cards.append(card)
+        if stop_on_caught_up and (seen_ids is not None or seen_fps is not None):
+            tx, prizes = parse_feed_ajax_cards(page_new)
+            new_tx = unseen_feed_events(tx, set(seen_ids or []), set(seen_fps or []))
+            new_pr = unseen_prizes(prizes, set(seen_ids or []))
+            if (tx or prizes) and not new_tx and not new_pr:
+                caught_up = True
+                log.info("Feed ajax: al día en offset=%s (página %s)", offset, pages)
+                break
+        if last_status != "ok":
+            break
+    meta = {
+        "pages": pages,
+        "cards": len(cards),
+        "status": last_status or ("ok" if cards else "empty"),
+        "caught_up": caught_up,
+        "source": "ajax_feed",
+    }
+    log.info(
+        "Feed ajax: cards=%s pages=%s status=%s caught_up=%s",
+        meta["cards"],
+        pages,
+        meta["status"],
+        caught_up,
+    )
+    return cards, meta
+
+
 def fetch_player_community_info(player_id: str | int) -> dict[str, Any] | None:
     """
     POST /ajax/player-community-info — cláusula real (clause.value), valor y dueño.
@@ -1418,6 +1504,158 @@ def fetch_full_player_pool() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     return players, meta
 
 
+def mister_player_slug(name: str) -> str:
+    """Slug aproximado para POST /ajax/sw/players (id basta; el slug ayuda)."""
+    nk = unicodedata.normalize("NFKD", name or "")
+    ascii_name = "".join(c for c in nk if not unicodedata.combining(c))
+    slug = re.sub(r"[^a-z0-9]+", "-", ascii_name.lower()).strip("-")
+    return slug
+
+
+def fetch_player_sw_profile(player_id: str | int, slug: str = "") -> dict[str, Any] | None:
+    """POST /ajax/sw/players con id — ficha (owners, values_chart, transfer)."""
+    try:
+        raw = ajax_post(
+            "/ajax/sw/players",
+            {
+                "post": "players",
+                "id": str(player_id),
+                "slug": slug or "",
+                "comments": 0,
+            },
+            timeout=25,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ficha jugador id=%s falló: %s", player_id, exc)
+        return None
+    if not isinstance(raw, dict):
+        return None
+    return raw
+
+
+def _profile_cache_dir(community_id: str | None) -> Any:
+    cid = str(community_id or "default").strip() or "default"
+    path = config.ROOT_DIR / "cache" / "player_profiles" / cid
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+def fetch_player_profiles(
+    pool: list[dict[str, Any]],
+    extra_ids: list[str] | None = None,
+    *,
+    community_id: str | None = None,
+    max_lookups: int | None = None,
+    include_free: bool = False,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """
+    Fichas ajax/sw/players. Bootstrap: include_free=True (toda la liga).
+    Cachea por id: si el owner (o 'libre') no cambió, no refetch.
+    """
+    from rival_finances import parse_player_profile, profile_from_jsonable, profile_to_jsonable
+
+    cap = int(
+        max_lookups
+        if max_lookups is not None
+        else getattr(config, "MISTER_PROFILE_BOOTSTRAP_MAX", None)
+        or getattr(config, "MISTER_PROFILE_MAX", 600)
+    )
+    cache_dir = _profile_cache_dir(community_id)
+    wanted: list[tuple[str, str, str]] = []
+    seen: set[str] = set()
+    for p in pool or []:
+        pid = str(p.get("id") or "").strip()
+        oid = str(p.get("owner_id") or "").strip()
+        if not pid or pid in seen:
+            continue
+        if not include_free and not oid:
+            continue
+        seen.add(pid)
+        wanted.append((pid, mister_player_slug(str(p.get("name") or "")), oid))
+    for pid in extra_ids or []:
+        sid = str(pid or "").strip()
+        if not sid or sid in seen:
+            continue
+        seen.add(sid)
+        wanted.append((sid, "", ""))
+    wanted = wanted[: max(0, cap)]
+
+    profiles: list[dict[str, Any]] = []
+    fetched = 0
+    cached_n = 0
+    for pid, slug, owner_id in wanted:
+        cache_path = cache_dir / f"{pid}.json"
+        cached_blob: dict[str, Any] | None = None
+        if cache_path.exists():
+            try:
+                cached_blob = json.loads(cache_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                cached_blob = None
+        cached_prof = profile_from_jsonable(
+            cached_blob.get("profile") if isinstance(cached_blob, dict) else None
+        )
+        cached_owner = str((cached_blob or {}).get("owner_id") or "")
+        # Libre: owner_id vacío; si sigue libre, no hace falta volver a pedir la ficha.
+        if cached_prof and cached_owner == owner_id:
+            profiles.append(cached_prof)
+            cached_n += 1
+            continue
+        raw = fetch_player_sw_profile(pid, slug)
+        fetched += 1
+        parsed = parse_player_profile(raw) if raw else None
+        if not parsed:
+            if cached_prof:
+                profiles.append(cached_prof)
+                cached_n += 1
+            continue
+        profiles.append(parsed)
+        try:
+            cache_path.write_text(
+                json.dumps(
+                    {
+                        "owner_id": parsed.get("owner_id") or owner_id,
+                        "profile": profile_to_jsonable(parsed),
+                    },
+                    ensure_ascii=False,
+                ),
+                encoding="utf-8",
+            )
+        except OSError as exc:
+            log.warning("no se pudo cachear ficha %s: %s", pid, exc)
+    meta = {
+        "wanted": len(wanted),
+        "profiles": len(profiles),
+        "fetched": fetched,
+        "cached": cached_n,
+    }
+    log.info(
+        "Fichas jugador: %s (fetch=%s cache=%s cap=%s free=%s)",
+        meta["profiles"],
+        fetched,
+        cached_n,
+        cap,
+        include_free,
+    )
+    return profiles, meta
+
+
+def fetch_owned_player_profiles(
+    pool: list[dict[str, Any]],
+    extra_ids: list[str] | None = None,
+    *,
+    community_id: str | None = None,
+    max_lookups: int | None = None,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Compat: solo jugadores con dueño."""
+    return fetch_player_profiles(
+        pool,
+        extra_ids=extra_ids,
+        community_id=community_id,
+        max_lookups=max_lookups,
+        include_free=False,
+    )
+
+
 #  Campos que solo trae el pool AJAX (el HTML de /market y /team no los pinta)
 POOL_ONLY_FIELDS = (
     "recent_gw_points",
@@ -2240,6 +2478,133 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     except (TypeError, ValueError):
         id_competition_i = None
 
+    finance_meta: dict[str, Any] = {}
+    try:
+        from datetime import date as date_cls
+
+        from rival_finances import (
+            load_finance_snapshot,
+            parse_feed_ajax_cards,
+            parse_feed_prizes,
+            parse_feed_transfers,
+            run_rival_finances,
+            snapshot_needs_bootstrap,
+            sorteo_date_from_ts,
+            start_mode_for_league,
+        )
+
+        cid = str(community)
+        ov = dict(config.LEAGUE_OVERRIDES.get(cid) or {})
+        raw_sorteo = ov.get("sorteo_date")
+        if isinstance(raw_sorteo, str) and raw_sorteo:
+            try:
+                y, m, d = (int(x) for x in raw_sorteo.split("-")[:3])
+                sorteo = date_cls(y, m, d)
+            except (TypeError, ValueError):
+                sorteo = sorteo_date_from_ts(
+                    fg_user.get("created_ts") or fg_user.get("uc_created")
+                )
+        else:
+            sorteo = sorteo_date_from_ts(
+                fg_user.get("created_ts") or fg_user.get("uc_created")
+            )
+        start_budget = float(
+            ov.get("starting_budget")
+            or getattr(config, "DEFAULT_STARTING_BUDGET", 50_000_000)
+        )
+        comms = fg_user.get("communities") if isinstance(fg_user.get("communities"), dict) else {}
+        comm_row = comms.get(cid) if isinstance(comms.get(cid), dict) else {}
+        debt_lvl = comm_row.get("max_debt") if comm_row else None
+        if debt_lvl is None:
+            debt_lvl = (admin_data or {}).get("max_debt") if isinstance(admin_data, dict) else None
+        smode = start_mode_for_league(
+            str(fg_user.get("type") or ""),
+            str(fg_user.get("mode") or ""),
+            str(ov.get("start_mode") or "") or None,
+        )
+        max_age = int(getattr(config, "MISTER_FINANCE_FEED_MAX_AGE_DAYS", 25))
+        snap = load_finance_snapshot(cid)
+        need_boot, boot_reason = snapshot_needs_bootstrap(
+            snap,
+            rivals=rivals,
+            me_uc=my_uc or None,
+            sorteo_date=sorteo,
+            start_mode=smode,
+            starting_budget=start_budget,
+            max_age_days=max_age,
+        )
+        seen_ids = set(str(x) for x in (snap or {}).get("seen_ids") or [])
+        seen_fps = set(str(x) for x in (snap or {}).get("seen_fps") or [])
+        # Incremental: paramos al llegar a tarjetas ya aplicadas. Bootstrap: feed entero.
+        feed_cards, feed_ajax_meta = fetch_feed_cards(
+            stop_on_caught_up=not need_boot,
+            seen_ids=seen_ids,
+            seen_fps=seen_fps,
+        )
+        feed_tx, feed_pr = parse_feed_ajax_cards(feed_cards)
+        if not feed_tx and not feed_pr:
+            feed_tx = parse_feed_transfers(feed_html)
+            feed_pr = parse_feed_prizes(feed_html)
+            feed_ajax_meta["fallback"] = "html"
+        extra_ids = [str(e.get("player_id") or "") for e in feed_tx if e.get("player_id")]
+        profiles: list[dict[str, Any]] = []
+        prof_meta: dict[str, Any] = {
+            "wanted": 0,
+            "profiles": 0,
+            "fetched": 0,
+            "cached": 0,
+            "skipped": True,
+        }
+        if need_boot:
+            cap = int(getattr(config, "MISTER_PROFILE_BOOTSTRAP_MAX", 600))
+            log.info(
+                "Finanzas rivales: bootstrap fichas (%s, cap=%s, pool=%s)",
+                boot_reason,
+                cap,
+                len(full_pool or []),
+            )
+            profiles, prof_meta = fetch_player_profiles(
+                full_pool or [],
+                extra_ids=extra_ids,
+                community_id=cid,
+                max_lookups=cap,
+                include_free=True,
+            )
+        else:
+            log.info("Finanzas rivales: snapshot fresco, solo feed")
+        rivals, finance_meta = run_rival_finances(
+            community_id=cid,
+            rivals=rivals,
+            me_uc=my_uc or None,
+            me_balance=float(bal),
+            me_squad_value=float(squad_value or 0),
+            profiles=profiles,
+            feed_transfers=feed_tx,
+            feed_prizes=feed_pr,
+            starting_budget=start_budget,
+            sorteo_date=sorteo,
+            start_mode=smode,
+            max_debt_level=debt_lvl,
+            snapshot=snap,
+            persist=True,
+            max_age_days=max_age,
+        )
+        finance_meta["profiles_meta"] = prof_meta
+        finance_meta["feed_ajax"] = feed_ajax_meta
+        log.info(
+            "Finanzas rivales: mode=%s reason=%s profiles=%s ledger=%s prizes=%s me_est=%s me_err=%s",
+            finance_meta.get("update_mode"),
+            finance_meta.get("bootstrap_reason"),
+            finance_meta.get("profiles"),
+            finance_meta.get("ledger_events"),
+            finance_meta.get("prizes_events"),
+            finance_meta.get("me_estimated"),
+            finance_meta.get("me_error"),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("Finanzas rivales falló: %s", exc)
+        finance_meta = {"source": "unavailable", "error": str(exc)}
+
     notes = [
         "Saldo: /ajax/balance",
         "Plantilla: HTML /team",
@@ -2262,6 +2627,24 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         notes.append(f"Libres detectados vía {free_note}: {len(free_pool)}")
     else:
         notes.append("Sin lista fiable de libres / pool global")
+    if finance_meta.get("update_mode") == "bootstrap":
+        notes.append(
+            "Caja/puja rivales: bootstrap de todas las fichas "
+            f"(reason={finance_meta.get('bootstrap_reason')}, "
+            f"fichas={finance_meta.get('profiles')})"
+        )
+    elif finance_meta.get("update_mode") == "feed_incremental":
+        notes.append(
+            "Caja/puja rivales: snapshot + feed "
+            f"(Δtransf={finance_meta.get('new_transfers')}, "
+            f"Δpremios={finance_meta.get('new_prizes')})"
+        )
+    elif finance_meta.get("source") == "player_profiles+feed":
+        notes.append(
+            "Caja/puja rivales: fichas jugador + feed "
+            f"(ledger={finance_meta.get('ledger_events')}, "
+            f"premios={finance_meta.get('prizes_events')})"
+        )
 
     return {
         "league": {
@@ -2309,7 +2692,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "id_community": str(community),
             "competition": competition or None,
             "id_competition": id_competition_i,
-                        "id_uc": my_uc or None,
+            "id_uc": my_uc or None,
             "source": "mister_html+ajax_balance+sw_players",
             "honest_mode": True,
             "notes": notes,
@@ -2322,5 +2705,6 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "team_limit": fg_user.get("team_limit"),
             "league_type": fg_user.get("type"),
             "league_mode": fg_user.get("mode"),
+            "rival_finances": finance_meta,
         },
     }

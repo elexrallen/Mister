@@ -88,7 +88,8 @@
     rivals: [
       { key: "rank", label: "Clasificación" },
       { key: "points", label: "Puntos" },
-      { key: "liquidity", label: "Liquidez / valor" },
+      { key: "liquidity", label: "Caja est." },
+      { key: "bid_cap", label: "Puja máx est." },
       { key: "team", label: "Equipo" },
       { key: "manager", label: "Manager" },
       { key: "activity", label: "Actividad" },
@@ -180,11 +181,9 @@
       manager: (p) => String(p.manager || "").toLowerCase(),
       points: (p) => Number(p.points) || 0,
       liquidity: (p) =>
-        p.liquidity_estimated != null
-          ? Number(p.liquidity_estimated)
-          : p.squad_value != null
-            ? Number(p.squad_value)
-            : 0,
+        p.liquidity_estimated != null ? Number(p.liquidity_estimated) : Number.NEGATIVE_INFINITY,
+      bid_cap: (p) =>
+        p.bid_cap_estimated != null ? Number(p.bid_cap_estimated) : Number.NEGATIVE_INFINITY,
       activity: (p) => String(p.activity || "").toLowerCase(),
     },
   };
@@ -2900,11 +2899,10 @@
         <td>${escapeHtml(r.manager || "")}</td>
         <td>${r.points ?? "—"}</td>
         <td class="text-mint-400">${
-          r.liquidity_estimated != null
-            ? formatMoney(r.liquidity_estimated)
-            : r.squad_value != null
-              ? formatMoney(r.squad_value) + " val."
-              : "—"
+          r.liquidity_estimated != null ? formatMoney(r.liquidity_estimated) : "—"
+        }</td>
+        <td class="text-mint-400">${
+          r.bid_cap_estimated != null ? formatMoney(r.bid_cap_estimated) : "—"
         }</td>
         <td><span class="badge badge-baja">${escapeHtml(r.activity || "—")}</span></td>
         <td>${
@@ -2940,10 +2938,14 @@
                       "Caja",
                       r.liquidity_estimated != null
                         ? formatMoney(r.liquidity_estimated)
-                        : r.squad_value != null
-                          ? formatMoney(r.squad_value)
-                          : "—",
+                        : "—",
                       "is-acid"
+                    ) +
+                    tacticalStat(
+                      "Puja máx",
+                      r.bid_cap_estimated != null
+                        ? formatMoney(r.bid_cap_estimated)
+                        : "—"
                     ),
                 }
               );

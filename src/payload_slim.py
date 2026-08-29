@@ -164,6 +164,8 @@ _RIVAL_KEYS = (
     "squad_size",
     "squad_value",
     "liquidity_estimated",
+    "bid_cap_estimated",
+    "recent_net",
     "position_gaps",
     "activity",
     "key_players",

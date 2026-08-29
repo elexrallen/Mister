@@ -53,6 +53,9 @@ LEAGUE_OVERRIDES: dict[str, dict] = {
         "name": "Liga del patio",
         "season_start": "2026-08-15",
         "default": True,
+        "starting_budget": 50_000_000,
+        "sorteo_date": "2026-07-24",
+        "start_mode": "random_minus_vm",
     },
     "906674": {
         "slug": "premier",
@@ -499,3 +502,11 @@ MISTER_POOL_PAGE_SIZE = 50
 MISTER_POOL_MAX_OFFSET = 2000
 # Techo de filtros value/clause (0 en el filtro = nadie; hay que abrir rango)
 MISTER_POOL_VALUE_CEILING = 100_000_000
+# Bootstrap de caja rival: barrido de TODAS las fichas (plantilla + libres).
+# Los refresh posteriores solo aplican el feed sobre cache/rival_finances/{cid}.json.
+MISTER_PROFILE_MAX = 600
+MISTER_PROFILE_BOOTSTRAP_MAX = 600
+MISTER_FINANCE_FEED_MAX_AGE_DAYS = 25
+MISTER_FEED_PAGE_SIZE = 20
+MISTER_FEED_MAX_PAGES = 40
+DEFAULT_STARTING_BUDGET = 50_000_000

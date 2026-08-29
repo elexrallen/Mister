@@ -1221,23 +1221,45 @@ def classify_market_opportunities(
 
 def estimate_rival_liquidity(rival: dict[str, Any]) -> dict[str, Any]:
     """
-    Si Mister no da saldo rival, NO lo inventamos.
-    Conservamos squad_value de clasificación como señal de poder de plantilla.
+    Conserva squad_value de clasificación. Si hay ledger estimado, lo respeta
+    y deriva actividad del neto de movimientos.
     """
     if rival.get("liquidity_estimated") is not None:
         estimated = money(rival["liquidity_estimated"])
         buys = sum(float(b.get("price", 0)) for b in rival.get("recent_buys") or [])
         sells = sum(float(s.get("price", 0)) for s in rival.get("recent_sells") or [])
         net_recent = sells - buys
+        if rival.get("recent_net") is not None:
+            try:
+                net_recent = float(rival["recent_net"])
+            except (TypeError, ValueError):
+                pass
+        activity = rival.get("activity")
+        if not activity or activity == "desconocida":
+            activity = (
+                "alta"
+                if abs(net_recent) >= 8_000_000
+                else ("media" if abs(net_recent) >= 3_000_000 else "baja")
+            )
+        bid_cap = rival.get("bid_cap_estimated")
+        if bid_cap is None:
+            frac = rival.get("debt_credit_fraction")
+            try:
+                frac_f = float(frac) if frac is not None else 0.25
+            except (TypeError, ValueError):
+                frac_f = 0.25
+            bid_cap = int(round(estimated + float(rival.get("squad_value") or 0) * frac_f))
         return {
             **rival,
             "liquidity_estimated": estimated,
+            "bid_cap_estimated": money(bid_cap),
             "recent_net": money(net_recent),
-            "activity": "alta" if abs(net_recent) >= 8_000_000 else ("media" if abs(net_recent) >= 3_000_000 else "baja"),
+            "activity": activity,
         }
     return {
         **rival,
         "liquidity_estimated": None,
+        "bid_cap_estimated": None,
         "recent_net": 0,
         "activity": "desconocida",
     }
@@ -3785,6 +3807,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "confidence": external_meta.get("fdr_confidence"),
             },
             "rivals_squads": bool(live_meta.get("rivals_squads_ok")),
+            "rival_finances": live_meta.get("rival_finances") or None,
             "clauses": clause_meta.get("clauses", "skip"),
             "clauses_known": clause_meta.get("known", 0),
             "points_phase": points_phase,
