@@ -1,5 +1,18 @@
 # Doctrina diaria
 
+La pestaña **Hoy** cuenta una sola historia: el **once objetivo de la jornada**
+(`gw_target_xi`, 11 del pool ordenados por xPts, da igual si los tienes), el
+hueco frente a tu once (`N/11` exactos y Δ xPts) y solo los movimientos de
+este ciclo que pueden cerrar un hueco alcanzable (mercado de hoy, libre o
+cláusula pagable). El cruce (rival, casa/fuera, H2H de esta temporada) explica
+la ficha; no inventa un segundo ranking. SofaScore no se scrapea: si la liga
+puntúa en ese provider, Mister ya entrega esos puntos.
+
+El xPts encoge la producción hacia el histórico FF mientras hay menos de 5
+partidos útiles (la media Mister y la racha corta no se cuentan dos veces).
+Un mal arranque no tumba a un fijo histórico; sí lo hace perder el puesto,
+una lesión o un blank.
+
 El ciclo de una jornada en Mister siempre es el mismo:
 
 ```

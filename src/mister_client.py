@@ -1933,6 +1933,9 @@ def fetch_gameweek_bundle(
         bundle["played_opponents"] = mister_gameweek.build_played_opponents(
             comp, before_jornada=jornada if isinstance(jornada, int) else None
         )
+        bundle["played_fixtures"] = mister_gameweek.build_played_fixtures(
+            comp, before_jornada=jornada if isinstance(jornada, int) else None
+        )
     return bundle
 
 

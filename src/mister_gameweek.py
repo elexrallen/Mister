@@ -492,6 +492,63 @@ def build_played_opponents(
     return out
 
 
+def build_played_fixtures(
+    comp_data: dict[str, Any] | None,
+    *,
+    before_jornada: int | None = None,
+) -> dict[str, list[dict[str, Any]]]:
+    """
+    Partidos ya disputados por equipo, con localía.
+
+    `{team_id: [{jornada, opponent_id, is_home, goals_for, goals_against}]}`.
+    Sirve para etiquetar la racha y el H2H de esta temporada.
+    """
+    games_by_gw = (comp_data or {}).get("games")
+    if not isinstance(games_by_gw, dict):
+        return {}
+    try:
+        gw_keys = sorted(games_by_gw, key=lambda k: int(k))
+    except (TypeError, ValueError):
+        return {}
+
+    out: dict[str, list[dict[str, Any]]] = {}
+    for key in gw_keys:
+        try:
+            jornada = int(key)
+        except (TypeError, ValueError):
+            continue
+        if before_jornada is not None and jornada >= before_jornada:
+            break
+        for game in games_by_gw.get(key) or []:
+            if not isinstance(game, dict):
+                continue
+            home_id = str(game.get("id_home") or "")
+            away_id = str(game.get("id_away") or "")
+            if not home_id or not away_id:
+                continue
+            gh = game.get("goals_home")
+            ga = game.get("goals_away")
+            out.setdefault(home_id, []).append(
+                {
+                    "jornada": jornada,
+                    "opponent_id": away_id,
+                    "is_home": True,
+                    "goals_for": gh,
+                    "goals_against": ga,
+                }
+            )
+            out.setdefault(away_id, []).append(
+                {
+                    "jornada": jornada,
+                    "opponent_id": home_id,
+                    "is_home": False,
+                    "goals_for": ga,
+                    "goals_against": gh,
+                }
+            )
+    return out
+
+
 def build_team_schedule(
     comp_data: dict[str, Any] | None,
     *,

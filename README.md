@@ -20,7 +20,7 @@ terceros. Las fuentes externas solo cubren lo que Mister no da.
 |-----------|--------|------------|--------|
 | 1 | **Mister** (`MISTER_TOKEN`): `ajax/sw/players`, `/feed`, `ajax/sw/gameweek`, `ajax/sw/competition`, balances y plantillas rivales | Mercado, plantilla, saldos, cláusulas, `recent_gw_points`, `price_delta_1d`, `next_opponent_team_id`, jornada y kickoffs, reglas | Autoridad |
 | 2 | **Fútbol Fantasy** | Probabilidad de titularidad (`gw_lineup_prob`), previa de alineaciones, lesionados y sancionados, producción por temporada (`ff_mister_avg`) | Autoridad complementaria |
-| 3 | **FotMob** | Nota, minutos, goles y xG de los últimos 5 partidos | Opcional, acotado a plantilla + candidatos del board |
+| 3 | **FotMob** | Nota, minutos, goles y xG de los últimos 5 partidos | Opcional, acotado a plantilla + mercado + top del pool (once objetivo) |
 | 4 | **Jornada Perfecta** | Dudas y `gw_*` | Respaldo: solo se ejecuta si la previa de FF sale `partial` o `fail` |
 | 5 | `public/data/leagues/<slug>/history/YYYY-MM-DD.json` | Serie propia de precios y puntos por jornada | Derivada |
 | 6 | API-Football o `src/performance_history.json` | PPG / minutos de temporadas previas | Derivada |
@@ -49,6 +49,7 @@ Sobre esa base el pipeline calcula:
 - `fdr` / `fdr_label` / `fdr_why` / `opponent_name` / `is_home` (`src/fixture_difficulty.py`): dificultad del rival en escala 1..5. La fuerza de cada equipo encadena clasificación real → prior de calidad de plantilla (valor del pool + media FF previa, disponible desde J1) → puntos fantasy que concede cada equipo por posición. El rival mueve hasta ±22% los puntos esperados y la localía ~5% por lado; nunca se devuelve un neutro plano si hay prior.
 - `xpts` / `xpts_floor` / `xpts_why` (`src/expected_points.py`): puntos esperados de la jornada como `p_juega × producción_base × ajuste_fdr`, escalados por el `provider` de la liga.
 - `recommended_xi` con **capitán** elegido por `xpts × (multiplicador − 1)` y desempate por probabilidad de jugar y rival, si la liga tiene capitán activo.
+- `gw_target_xi`: once de máximo xPts **de todo el pool** (sin filtro de dueño ni caja), cobertura dual vs tu once y contexto de cruce. Es el hero de Hoy.
 - `risky_slots[]` y `formation_switch`: huecos del once que un jugador con poca probabilidad de jugar convertiría en cero, y la formación alternativa que los evita.
 - `meta.model_calibration` (`src/model_calibration.py`): sesgo y error medio del xPts contra los puntos reales de las jornadas ya cerradas, desglosado por tramo de probabilidad de jugar, más los mayores aciertos y desvíos del último ciclo. El snapshot diario guarda la predicción para poder juzgarla después.
 - **Auditoría de rendimiento** (`src/performance_audit.py`): Spearman/lift del ranking, once recomendado vs alineado vs naive de precio, `buy_now` vs `avoid`, y salud del pipeline. Corre en el job diario (job summary) y en el workflow `Performance audit` con umbrales. Ver [docs/performance-audit.md](docs/performance-audit.md).

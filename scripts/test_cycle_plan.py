@@ -812,6 +812,57 @@ def test_rival_owned_is_not_appreciation() -> None:
     _assert(any("rival" in str(b).lower() for b in why), why)
 
 
+def test_reachable_target_gets_bid_priority() -> None:
+    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    market = [
+        {
+            "id": "quiet",
+            "name": "Quiet",
+            "position": "MF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.11,
+            "rising": True,
+            "lineup_prob": 0.8,
+        },
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 3_000_000,
+            "bid": 3_000_000,
+            "puja_recomendada": 3_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.02,
+            "rising": True,
+            "lineup_prob": 0.85,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids and bids[0]["name"] == "Objetivo", plan["moves"])
+    _assert(bids[0].get("closes_gw_target") is True, bids[0])
+    _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_consecutive_up_counts_live_legs()
@@ -838,4 +889,5 @@ if __name__ == "__main__":
     test_rival_owned_is_not_appreciation()
     test_rival_listed_on_market_is_not_appreciation()
     test_cycle_plan_bids_only_free_agents_for_appreciation()
+    test_reachable_target_gets_bid_priority()
     print("test_cycle_plan: OK")

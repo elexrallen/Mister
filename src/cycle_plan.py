@@ -399,6 +399,31 @@ def _offer_pct(offer: dict[str, Any], player: dict[str, Any] | None = None) -> f
     return amount / vm
 
 
+def _reachable_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
+    """Huecos del once objetivo que este ciclo puede cerrar."""
+    ids: set[str] = set()
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    for slot in coverage.get("missing_slots") or []:
+        if not isinstance(slot, dict):
+            continue
+        reach = str(slot.get("reachable") or "")
+        if reach in ("daily_market", "free", "clause"):
+            pid = _pid(slot)
+            if pid:
+                ids.add(pid)
+    for row in (gw_target_xi or {}).get("xi") or []:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("ownership") or "") not in ("daily_market", "free"):
+            continue
+        if str(row.get("reachable") or "") == "no":
+            continue
+        pid = _pid(row)
+        if pid:
+            ids.add(pid)
+    return ids
+
+
 def build_cycle_plan(
     *,
     me: dict[str, Any] | None = None,
@@ -406,6 +431,7 @@ def build_cycle_plan(
     opportunities: list[dict[str, Any]] | None = None,
     sales_state: dict[str, Any] | None = None,
     recommended_xi: dict[str, Any] | None = None,
+    gw_target_xi: dict[str, Any] | None = None,
     league_rules: dict[str, Any] | None = None,
     market_cycle: dict[str, Any] | None = None,
     market_mode: str = "auction",
@@ -431,6 +457,7 @@ def build_cycle_plan(
     state = sales_state or me.get("sales_state") or {}
     rules = league_rules or {}
     xi_ids = xi_owned_ids(recommended_xi)
+    target_ids = _reachable_target_ids(gw_target_xi)
     listed_ids = {str(x) for x in (state.get("listed_ids") or []) if x}
     for p in squad:
         pid = _pid(p)
@@ -510,7 +537,12 @@ def build_cycle_plan(
         if d5 is not None and d5 <= -strong and not _starter_coverage_hole(o):
             continue
         score = _bid_score(o)
-        if score < 12:
+        closes_target = pid in target_ids
+        if closes_target:
+            score += 36.0
+            o = dict(o)
+            o["closes_gw_target"] = True
+        if score < 12 and not closes_target:
             continue
         bid_cands.append((score, o))
     bid_cands.sort(key=lambda x: -x[0])
@@ -530,6 +562,8 @@ def build_cycle_plan(
                 continue
             d5 = _f(o.get("delta_5d"))
             why_bits = []
+            if o.get("closes_gw_target"):
+                why_bits.append("entra en el once objetivo de la jornada")
             if o.get("fills_coverage_gap") or o.get("fills_structural") or o.get("fills_need"):
                 why_bits.append("cubre un hueco de plantilla")
             if d5 is not None:
@@ -545,6 +579,7 @@ def build_cycle_plan(
             extra = {
                 "bid": cost,
                 "amount": cost,
+                "closes_gw_target": bool(o.get("closes_gw_target")),
                 "appreciation_play": bool(
                     o.get("appreciation_play")
                     or (

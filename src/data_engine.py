@@ -48,6 +48,8 @@ from fixture_difficulty import (
 )
 from mister_gameweek import apply_blank_gameweek
 from expected_points import annotate_players_with_xpts
+from matchup_context import annotate_players_with_matchup
+from gw_target_xi import build_gw_target_xi
 from model_calibration import build_calibration
 from performance_audit import attach_audit_to_payload, slim_decisions, slim_pipeline
 from fotmob_service import enrich_players_with_fotmob
@@ -176,47 +178,66 @@ def money(n: float | int) -> int:
 
 
 FOTMOB_MARKET_FOCUS = 24
+FOTMOB_POOL_FOCUS = 36
+
+
+def _fotmob_interest(p: dict[str, Any]) -> float:
+    ext = p.get("external") or {}
+    score = 0.0
+    try:
+        score += float(p.get("mister_avg") or p.get("form") or 0) * 2.0
+    except (TypeError, ValueError):
+        pass
+    try:
+        score += float(p.get("xpts") or 0) * 1.5
+    except (TypeError, ValueError):
+        pass
+    try:
+        score += float(p.get("gw_points_sum") or 0) * 0.2
+    except (TypeError, ValueError):
+        pass
+    try:
+        score += float(p.get("ff_mister_avg") or ext.get("ff_mister_avg") or 0) * 1.2
+    except (TypeError, ValueError):
+        pass
+    prob = ext.get("gw_lineup_prob") or p.get("gw_lineup_prob")
+    try:
+        score += float(prob) / 20.0 if prob is not None else 0.0
+    except (TypeError, ValueError):
+        pass
+    if ext.get("is_top_ff"):
+        score += 3.0
+    return score
 
 
 def fotmob_focus_ids(
     squad: list[dict[str, Any]],
     market: list[dict[str, Any]],
     *,
+    extra: list[dict[str, Any]] | None = None,
     market_limit: int = FOTMOB_MARKET_FOCUS,
+    extra_limit: int = FOTMOB_POOL_FOCUS,
 ) -> set[str]:
     """
-    Jugadores que merecen una petición a FotMob: toda la plantilla propia y los
-    candidatos de mercado con más papeletas de acabar en el board. El resto del
-    universo se queda sin nota y no gasta presupuesto de red.
+    Plantilla propia + candidatos de mercado + top del pool (once objetivo).
+    El resto no gasta presupuesto de red.
     """
     ids = {str(p.get("id")) for p in squad if p.get("id")}
 
-    def _interest(p: dict[str, Any]) -> float:
-        ext = p.get("external") or {}
-        score = 0.0
-        try:
-            score += float(p.get("mister_avg") or p.get("form") or 0) * 2.0
-        except (TypeError, ValueError):
-            pass
-        try:
-            score += float(p.get("gw_points_sum") or 0) * 0.2
-        except (TypeError, ValueError):
-            pass
-        prob = ext.get("gw_lineup_prob")
-        try:
-            score += float(prob) / 20.0 if prob is not None else 0.0
-        except (TypeError, ValueError):
-            pass
-        if ext.get("is_top_ff"):
-            score += 3.0
-        return score
-
     ranked = sorted(
         (p for p in market if p.get("id") and str(p.get("id")) not in ids),
-        key=_interest,
+        key=_fotmob_interest,
         reverse=True,
     )
     for p in ranked[: max(0, int(market_limit))]:
+        ids.add(str(p.get("id")))
+
+    extra_ranked = sorted(
+        (p for p in (extra or []) if p.get("id") and str(p.get("id")) not in ids),
+        key=_fotmob_interest,
+        reverse=True,
+    )
+    for p in extra_ranked[: max(0, int(extra_limit))]:
         ids.add(str(p.get("id")))
     return ids
 
@@ -2879,12 +2900,38 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         }
         log.info("Skip externos: sin mapping para id_competition=%s", id_competition_i)
 
-    # FotMob: nota / minutos / goles / xG últimos 5, solo plantilla + candidatos
-    # reales del mercado (el resto del universo no llega nunca al board).
-    universe_ext, fotmob_meta = enrich_players_with_fotmob(
-        universe_ext,
-        focus_ids=fotmob_focus_ids(universe_ext[: len(squad)], universe_ext[len(squad) :]),
+    # FotMob: plantilla + mercado prioritario + top del pool (once objetivo).
+    seen_fm = {str(p.get("id")) for p in universe_ext if p.get("id")}
+    fotmob_extra = [p for p in full_pool if p.get("id") and str(p.get("id")) not in seen_fm]
+    fotmob_focus = fotmob_focus_ids(
+        universe_ext[: len(squad)],
+        universe_ext[len(squad) :],
+        extra=fotmob_extra,
     )
+    n_universe = len(universe_ext)
+    fotmob_input = universe_ext + fotmob_extra
+    fotmob_enriched, fotmob_meta = enrich_players_with_fotmob(
+        fotmob_input,
+        focus_ids=fotmob_focus,
+        max_lookups=70,
+    )
+    universe_ext = fotmob_enriched[:n_universe]
+    extra_by_id = {
+        str(p.get("id")): p
+        for p in fotmob_enriched[n_universe:]
+        if p.get("id")
+    }
+    for p in full_pool:
+        hit = extra_by_id.get(str(p.get("id") or ""))
+        if not hit:
+            continue
+        if hit.get("fotmob_stats"):
+            p["fotmob_stats"] = hit["fotmob_stats"]
+        ext_hit = hit.get("external") if isinstance(hit.get("external"), dict) else {}
+        if ext_hit.get("recent_rating") is not None:
+            ext = dict(p.get("external") or {})
+            ext["recent_rating"] = ext_hit["recent_rating"]
+            p["external"] = ext
     external_meta["fotmob"] = fotmob_meta.get("fotmob", "skip")
     external_meta["fotmob_matched"] = fotmob_meta.get("matched", 0)
     external_meta["fotmob_filled"] = fotmob_meta.get("filled", 0)
@@ -2954,6 +3001,15 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         team_names=team_names,
     )
     n_xpts = annotate_players_with_xpts(xpts_targets, league_rules=scoring_rules)
+    annotate_players_with_matchup(
+        xpts_targets,
+        played_fixtures=(
+            gw_bundle.get("played_fixtures")
+            if isinstance(gw_bundle.get("played_fixtures"), dict)
+            else None
+        ),
+        team_names=team_names,
+    )
     external_meta["fdr_confidence"] = team_strength.get("confidence")
     external_meta["fdr_source"] = team_strength.get("source")
     external_meta["fdr_table_weight"] = team_strength.get("table_weight")
@@ -3207,6 +3263,18 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         captain_rule=league_rules.get("captain")
         if isinstance(league_rules.get("captain"), dict)
         else None,
+    )
+    my_uc = str(live_meta.get("id_uc") or me.get("team_id") or "")
+    gw_target_xi = build_gw_target_xi(
+        full_pool or (list(squad) + list(market_ext)),
+        squad=squad,
+        recommended_xi=recommended_xi,
+        matchday=matchday_early or {},
+        captain_rule=league_rules.get("captain")
+        if isinstance(league_rules.get("captain"), dict)
+        else None,
+        me={**me, "team_id": my_uc},
+        league_rules=league_rules,
     )
     apply_xi_slot_needs(
         diagnostico_plantilla,
@@ -3604,6 +3672,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         opportunities=opportunities,
         sales_state=sales_state,
         recommended_xi=recommended_xi,
+        gw_target_xi=gw_target_xi,
         league_rules=league_rules,
         market_cycle=market_cycle,
         market_mode=market_mode,
@@ -3626,6 +3695,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         }
     attach_mister_assets(gw_xi_advice, player_index=asset_index)
     attach_mister_assets(recommended_xi.get("players") or [], player_index=asset_index)
+    attach_mister_assets(recommended_xi.get("xi") or [], player_index=asset_index)
+    attach_mister_assets(gw_target_xi.get("xi") or [], player_index=asset_index)
 
     # ¿Acertó el xPts la jornada pasada? Sin esto los pesos se afinan a ciegas
     calibration = build_calibration(
@@ -3942,6 +4013,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         "matchday": matchday_meta,
         "gw_xi_advice": gw_xi_advice,
         "recommended_xi": recommended_xi,
+        "gw_target_xi": gw_target_xi,
         "meta": {
             "filters_hint": {
                 "positions": ["GK", "DF", "MF", "FW"],

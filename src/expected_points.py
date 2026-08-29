@@ -6,8 +6,8 @@ Puntos esperados por jornada (xPts).
 Donde:
   - `p_juega`  combina la previa de Mister (once probable, confirmado o no),
     el % de FutbolFantasy y los minutos reales derivados de la racha Mister.
-  - `produccion_base` mezcla la media de la temporada en curso, la racha
-    reciente y la media histórica de FF, todo en la escala del provider.
+  - `produccion_base` mezcla histórico FF, racha y media Mister. Con menos
+    de 5 partidos el histórico manda; media y racha corta no se doblecuentan.
   - `ajuste_fdr` viene de `fixture_difficulty` (rival y localía).
 
 Regla de oro: una jornada se pierde por ceros, no por falta de estrellas. Por eso
@@ -32,12 +32,10 @@ P_PLAY_PROBABLE_XI = 0.82
 P_PLAY_OUT_OF_PREVIEW = 0.18
 P_PLAY_UNKNOWN = 0.45
 
-# Pesos de la producción base (se renormalizan con las fuentes disponibles)
-W_RECENT = 0.35
-W_SEASON = 0.30
-W_HISTORIC = 0.35
-# Jornadas jugadas a partir de las cuales la racha reciente es señal fiable
+# Jornadas a partir de las cuales la racha deja de ser ruido
 RECENT_MIN_SAMPLE = 5
+# A partir de aquí manda la temporada en curso sobre el histórico
+SEASON_TRUST_SAMPLE = 10
 
 
 def _num(value: Any) -> float | None:
@@ -146,35 +144,84 @@ def probability_of_playing(player: dict[str, Any]) -> tuple[float, str]:
     return P_PLAY_UNKNOWN, "Sin señal de titularidad"
 
 
-def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
-    """Puntos esperados por partido jugado, en la escala del provider."""
-    parts: list[tuple[float, float, str]] = []
-
-    played = _played_points(player)
-    if len(played) >= RECENT_MIN_SAMPLE:
-        parts.append((W_RECENT, sum(played) / len(played), f"racha {len(played)}j"))
-    elif played:
-        parts.append((W_RECENT * 0.5, sum(played) / len(played), "racha corta"))
-
-    season_avg = _num(player.get("mister_avg")) or _num(player.get("form"))
-    if season_avg and season_avg > 0:
-        parts.append((W_SEASON, season_avg, "media Mister"))
-
+def _historic_avg(player: dict[str, Any]) -> float | None:
     ext = _ext(player)
     hist = _num(player.get("ff_mister_avg")) or _num(ext.get("ff_mister_avg"))
     if hist is None:
         hist = _num(ext.get("ff_prior_avg"))
-    if hist and hist > 0:
-        parts.append((W_HISTORIC, hist, "histórico FF"))
+    if hist is None or hist <= 0:
+        return None
+    return hist
 
-    if not parts:
-        # Sin ninguna señal de producción: media discreta del provider
-        return scale * 0.55, "sin histórico"
 
-    total_w = sum(w for w, _, _ in parts)
-    base = sum(w * v for w, v, _ in parts) / total_w
-    why = " + ".join(label for _, _, label in parts)
-    # Techo defensivo: nadie promedia el doble de la escala de forma sostenida
+def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
+    """
+    Puntos esperados por partido jugado, en la escala del provider.
+
+    Con muestra corta el histórico FF manda y la racha solo matiza. Media
+    Mister y racha de <5 jornadas son el mismo n: no se cuentan dos veces.
+    """
+    played = _played_points(player)
+    n = len(played)
+    recent_avg = (sum(played) / n) if n else None
+    season_avg = _num(player.get("mister_avg")) or _num(player.get("form"))
+    if season_avg is not None and season_avg <= 0:
+        season_avg = None
+    hist = _historic_avg(player)
+
+    current: float | None = None
+    current_label = ""
+    if n >= RECENT_MIN_SAMPLE and recent_avg is not None:
+        if season_avg is not None and n >= 8:
+            current = 0.55 * recent_avg + 0.45 * season_avg
+            current_label = f"racha {n}j + media Mister"
+        else:
+            current = recent_avg
+            current_label = f"racha {n}j"
+    elif n and recent_avg is not None:
+        current = recent_avg
+        current_label = f"racha {n}j"
+    elif season_avg is not None:
+        current = season_avg
+        current_label = "media Mister"
+
+    if n < RECENT_MIN_SAMPLE:
+        if hist is not None and current is not None:
+            base = 0.85 * hist + 0.15 * current
+            why = f"histórico FF {hist:.1f} · {current_label} (aún no manda)"
+        elif hist is not None:
+            base = hist
+            why = f"histórico FF {hist:.1f}"
+        elif current is not None:
+            base = current
+            why = f"{current_label} · sin histórico"
+        else:
+            return scale * 0.55, "sin histórico"
+    elif n < SEASON_TRUST_SAMPLE:
+        if hist is not None and current is not None:
+            base = 0.5 * hist + 0.5 * current
+            why = f"histórico FF {hist:.1f} + {current_label}"
+        elif current is not None:
+            base = current
+            why = current_label
+        elif hist is not None:
+            base = hist
+            why = f"histórico FF {hist:.1f}"
+        else:
+            return scale * 0.55, "sin histórico"
+    else:
+        if current is not None and hist is not None:
+            base = 0.70 * current + 0.30 * hist
+            why = f"{current_label} + histórico FF"
+        elif current is not None:
+            base = current
+            why = current_label
+        elif hist is not None:
+            base = hist
+            why = f"histórico FF {hist:.1f}"
+        else:
+            return scale * 0.55, "sin histórico"
+
     return max(0.0, min(base, scale * 2.0)), why
 
 

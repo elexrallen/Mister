@@ -20,7 +20,7 @@ from competitive_actions import (  # noqa: E402
 from daily_playbook import build_daily_playbook  # noqa: E402
 from league_rules import captain_multiplier_for_price, resolve_captain_rule  # noqa: E402
 from model_calibration import build_calibration  # noqa: E402
-from expected_points import expected_points, probability_of_playing  # noqa: E402
+from expected_points import expected_points, probability_of_playing, production_base  # noqa: E402
 from external_data import _derive_chollo  # noqa: E402
 from fixture_difficulty import (  # noqa: E402
     build_fantasy_conceded,
@@ -398,6 +398,22 @@ def test_blank_gameweek_marks_teams_without_fixture() -> None:
     gk = [r for r in (xi.get("xi") or []) if r.get("position") == "GK"]
     assert gk and gk[0].get("player_id") == "1", gk
     assert gk[0].get("signal") != "blank", gk[0]
+
+
+def test_xpts_short_sample_does_not_double_count_season() -> None:
+    player = {
+        "id": "5",
+        "position": "FW",
+        "gw_lineup_prob": 90,
+        "recent_gw_points": [2, 0],
+        "mister_avg": 1.0,
+        "external": {"ff_mister_avg": 7.0},
+    }
+    base, why = production_base(player, 8.0)
+    # 0.85×7 + 0.15×((2+0)/2) = 6.10 — el histórico manda, la racha no se doblecuenta
+    assert abs(base - 6.10) < 0.02, (base, why)
+    assert "histórico FF 7.0" in why
+    assert "aún no manda" in why
 
 
 def test_xpts_scales_with_provider() -> None:
@@ -804,6 +820,7 @@ def main() -> None:
         test_xpts_without_any_signal_is_conservative,
         test_xpts_injured_is_near_zero,
         test_blank_gameweek_marks_teams_without_fixture,
+        test_xpts_short_sample_does_not_double_count_season,
         test_xpts_scales_with_provider,
         test_captain_multiplier_for_price_tiers,
         test_captain_picks_highest_expected_gain,

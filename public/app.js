@@ -621,6 +621,7 @@
     if (window.matchMedia("(max-width: 767px)").matches) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+    if (typeof DATA !== "undefined" && DATA) renderMatchday(DATA);
   }
 
   function focusPlayer(playerId, tab, { openSource = true } = {}) {
@@ -664,6 +665,8 @@
       (DATA.me && DATA.me.squad) || [],
       DATA.rival_upgrades,
       DATA.action_plan,
+      (DATA.gw_target_xi && DATA.gw_target_xi.xi) || [],
+      (DATA.recommended_xi && DATA.recommended_xi.xi) || [],
     ];
     for (const list of pools) {
       if (!list || !list.length) continue;
@@ -862,11 +865,27 @@
     }
   }
 
+  function currentView() {
+    return document.body.getAttribute("data-view") || "today";
+  }
+
+  function ownershipBadge(own) {
+    if (own === "owned") return `<span class="badge badge-once">Tuyo</span>`;
+    if (own === "daily_market") return `<span class="badge badge-mint">Mercado</span>`;
+    if (own === "free") return `<span class="badge badge-mint">Libre</span>`;
+    if (own === "rival") return `<span class="badge badge-duda">Rival</span>`;
+    return "";
+  }
+
   function renderMatchday(data) {
     const panel = document.getElementById("matchday-panel");
     if (!panel) return;
     const md = data.matchday || {};
-    const rec = data.recommended_xi || {};
+    const view = currentView();
+    const target = data.gw_target_xi || {};
+    const yours = data.recommended_xi || {};
+    const useTarget = view === "today" && Array.isArray(target.xi) && target.xi.length;
+    const rec = useTarget ? target : yours;
     const xi = Array.isArray(rec.xi) ? rec.xi : [];
     const bench = Array.isArray(rec.bench) ? rec.bench : [];
     const squad = (data.me && data.me.squad) || [];
@@ -875,16 +894,29 @@
       return;
     }
     panel.hidden = false;
+    panel.classList.toggle("is-target", Boolean(useTarget));
     const jNum = rec.jornada != null ? rec.jornada : md.jornada;
     const j = jNum != null ? `Jornada ${jNum}` : "Próxima jornada";
     const form = rec.formation || (data.me && data.me.formation) || "1-4-3-3";
+    const kicker = document.getElementById("matchday-kicker");
+    if (kicker) {
+      kicker.textContent = useTarget
+        ? "Once objetivo de la jornada"
+        : "Tu once con la plantilla actual";
+    }
     const title = document.getElementById("matchday-title");
     if (title) title.textContent = `${j} · ${form}`;
+    const coverage = rec.coverage || {};
     const summary = document.getElementById("matchday-summary");
     if (summary) {
       const n = xi.length;
       const gw = (rec.summary && rec.summary.with_gw_signal) || 0;
-      const bits = [`Once recomendado desde tu plantilla (${n}/11)`];
+      const bits = useTarget
+        ? [`Da igual si los tienes (${n}/11)`]
+        : [`Once recomendado desde tu plantilla (${n}/11)`];
+      if (useTarget && coverage.owned_count != null) {
+        bits.unshift(`${coverage.owned_count}/${n} en plantilla`);
+      }
       if (gw) bits.push(`${gw} con previa FF`);
       else bits.push("sin previa FF completa — usa titularidad habitual");
       summary.textContent = bits.join(" · ");
@@ -894,10 +926,22 @@
     const elXpts = document.getElementById("matchday-xpts");
     const elRisk = document.getElementById("matchday-risk-count");
     const elStart = document.getElementById("matchday-start");
+    const elOwned = document.getElementById("matchday-owned");
+    const elGap = document.getElementById("matchday-gap");
     if (elForm) elForm.textContent = String(form);
     if (elXpts) {
       elXpts.textContent =
         sum.xpts_total != null ? Number(sum.xpts_total).toFixed(1) : "—";
+    }
+    if (elOwned) {
+      elOwned.textContent = useTarget
+        ? `${coverage.owned_count != null ? coverage.owned_count : 0}/${xi.length || 11}`
+        : "—";
+    }
+    if (elGap) {
+      const gap = coverage.xpts_gap;
+      elGap.textContent = useTarget && gap != null ? Number(gap).toFixed(1) : "—";
+      elGap.classList.toggle("is-alert", useTarget && Number(gap || 0) >= 4);
     }
     if (elRisk) {
       elRisk.textContent = String(sum.risk_slots || 0);
@@ -917,7 +961,10 @@
       root.querySelectorAll("[data-player-id]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-player-id");
-          const p = squad.find((x) => String(x.id) === String(id));
+          const p =
+            squad.find((x) => String(x.id) === String(id)) ||
+            findPlayerRecord(id) ||
+            xi.find((x) => String(x.player_id) === String(id));
           if (p && typeof openPlayerSource === "function") openPlayerSource(p);
         });
       });
@@ -1030,8 +1077,11 @@
                 r.xpts != null
                   ? `<span class="matchday-xpts-chip">${Number(r.xpts).toFixed(1)} xPts</span>`
                   : "";
-              return `<div class="matchday-xi-card${r.slot_risk ? " is-risk" : ""}">
-                ${signalBadge(r.signal)}
+              const own = useTarget ? ownershipBadge(r.ownership) : "";
+              return `<div class="matchday-xi-card${r.slot_risk ? " is-risk" : ""}${
+                r.ownership === "owned" ? " is-owned" : ""
+              }">
+                ${signalBadge(r.signal)}${own}
                 <button type="button" class="player-link" data-player-id="${escapeHtml(
                   String(r.player_id || "")
                 )}">${escapeHtml(r.name || "—")}</button>${capMark}
@@ -1082,6 +1132,35 @@
             })
             .join("");
         bindPlayerClicks(benchEl);
+      }
+    }
+
+    const yoursEl = document.getElementById("matchday-yours");
+    const yoursXi = document.getElementById("matchday-yours-xi");
+    const yoursSum = document.getElementById("matchday-yours-summary");
+    if (yoursEl && yoursXi) {
+      const yxi = Array.isArray(yours.xi) ? yours.xi : [];
+      if (!useTarget || !yxi.length) {
+        yoursEl.hidden = true;
+        yoursXi.innerHTML = "";
+      } else {
+        yoursEl.hidden = false;
+        const yForm = yours.formation || (data.me && data.me.formation) || form;
+        const yXpts = yours.summary && yours.summary.xpts_total;
+        if (yoursSum) {
+          yoursSum.textContent = `${yxi.length}/11 · ${yForm}${
+            yXpts != null ? ` · ${Number(yXpts).toFixed(1)} xPts` : ""
+          }`;
+        }
+        yoursXi.innerHTML = yxi
+          .map((r) => {
+            const cap = r.is_captain ? " C" : "";
+            return `<button type="button" class="matchday-yours-chip" data-player-id="${escapeHtml(
+              String(r.player_id || "")
+            )}">${escapeHtml(r.position || "")} ${escapeHtml(r.name || "—")}${cap}</button>`;
+          })
+          .join("");
+        bindPlayerClicks(yoursXi);
       }
     }
   }
@@ -1794,7 +1873,11 @@
       if (countRoot) countRoot.textContent = "—";
       return;
     }
-    const moves = Array.isArray(plan.moves) ? plan.moves : [];
+    const allMoves = Array.isArray(plan.moves) ? plan.moves : [];
+    const urgent = allMoves.filter((m) => m.kind === "accept_offer" || m.kind === "decline_offer");
+    const toward = allMoves.filter((m) => m.closes_gw_target && !urgent.includes(m));
+    const rest = allMoves.filter((m) => !urgent.includes(m) && !toward.includes(m));
+    const moves = [...urgent, ...toward, ...rest].slice(0, 4);
     const clock = cycleClockLabel(data);
     if (hint) {
       hint.textContent = clock
@@ -1864,7 +1947,10 @@
       : `<p class="queue-empty">Este ciclo no hay movimientos de mercado.</p>`;
     if (countRoot) {
       const n = moves.length;
-      countRoot.textContent = n ? `${n} ${n === 1 ? "movimiento" : "movimientos"}` : "Sin movimientos";
+      const total = allMoves.length;
+      if (!n) countRoot.textContent = "Sin movimientos";
+      else if (total > n) countRoot.textContent = `${n} de ${total}`;
+      else countRoot.textContent = `${n} ${n === 1 ? "movimiento" : "movimientos"}`;
     }
     bindAssetFallbacks(heroRoot);
     bindAssetFallbacks(listRoot);
