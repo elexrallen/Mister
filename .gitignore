@@ -30,6 +30,7 @@ htmlcov/
 # Scraper cache (regenerated locally / CI)
 src/cache/*
 !src/cache/.gitkeep
+cache/player_profiles/
 
 # Refresh config injected at deploy time
 public/refresh-config.json
