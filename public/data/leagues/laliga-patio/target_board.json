@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30T10:53:57.285924+00:00",
+  "generated_at": "2026-08-30T11:48:00.909341+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -849,7 +849,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 85 · 27,267,330 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T10:53:57.005462+00:00"
+      "added_at": "2026-08-30T11:48:00.629113+00:00"
     },
     {
       "slot": "GK2",
@@ -879,7 +879,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 16 · 1,000,000 € · buy · bench · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T10:53:57.005471+00:00"
+      "added_at": "2026-08-30T11:48:00.629122+00:00"
     },
     {
       "slot": "DF1",
@@ -969,7 +969,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 76 · 13,185,000 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-30T10:53:57.013392+00:00"
+      "added_at": "2026-08-30T11:48:00.637078+00:00"
     },
     {
       "slot": "DF4",
@@ -999,7 +999,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 65 · 4,779,000 € · buy · starter · Δ -4%",
-      "added_at": "2026-08-30T10:53:57.020958+00:00"
+      "added_at": "2026-08-30T11:48:00.645178+00:00"
     },
     {
       "slot": "DF5",
@@ -1149,7 +1149,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 39 · 1,124,000 € · buy · starter · Δ -10%",
-      "added_at": "2026-08-30T10:53:57.007698+00:00"
+      "added_at": "2026-08-30T11:48:00.631310+00:00"
     },
     {
       "slot": "MF4",
@@ -1179,7 +1179,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 36 · 1,881,000 € · buy · starter · Δ -10%",
-      "added_at": "2026-08-30T10:53:57.007981+00:00"
+      "added_at": "2026-08-30T11:48:00.631593+00:00"
     },
     {
       "slot": "MF5",
@@ -1209,7 +1209,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 24 · 1,321,000 € · buy · bench · Δ -6%",
-      "added_at": "2026-08-30T10:53:57.039875+00:00"
+      "added_at": "2026-08-30T11:48:00.664812+00:00"
     },
     {
       "slot": "FW1",
@@ -1301,7 +1301,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 85 · 27,267,330 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T10:53:57.249729+00:00"
+      "added_at": "2026-08-30T11:48:00.872954+00:00"
     },
     {
       "slot": "GK2",
@@ -1331,7 +1331,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 16 · 1,000,000 € · buy · bench · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T10:53:57.249739+00:00"
+      "added_at": "2026-08-30T11:48:00.872963+00:00"
     },
     {
       "slot": "DF1",
@@ -1421,7 +1421,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 76 · 13,185,000 € · buy · starter · Δ 3%",
-      "added_at": "2026-08-30T10:53:57.257697+00:00"
+      "added_at": "2026-08-30T11:48:00.880819+00:00"
     },
     {
       "slot": "DF4",
@@ -1451,7 +1451,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 65 · 4,779,000 € · buy · starter · Δ -4%",
-      "added_at": "2026-08-30T10:53:57.265297+00:00"
+      "added_at": "2026-08-30T11:48:00.888486+00:00"
     },
     {
       "slot": "DF5",
@@ -1601,7 +1601,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 39 · 1,124,000 € · buy · starter · Δ -10%",
-      "added_at": "2026-08-30T10:53:57.251948+00:00"
+      "added_at": "2026-08-30T11:48:00.875141+00:00"
     },
     {
       "slot": "MF4",
@@ -1631,7 +1631,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 36 · 1,881,000 € · buy · starter · Δ -10%",
-      "added_at": "2026-08-30T10:53:57.252240+00:00"
+      "added_at": "2026-08-30T11:48:00.875433+00:00"
     },
     {
       "slot": "MF5",
@@ -1661,7 +1661,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 24 · 1,321,000 € · buy · bench · Δ -6%",
-      "added_at": "2026-08-30T10:53:57.284067+00:00"
+      "added_at": "2026-08-30T11:48:00.907477+00:00"
     },
     {
       "slot": "FW1",
@@ -2424,11 +2424,11 @@
         "player_id": "65179",
         "name": "A. Castrín",
         "position": "DF",
-        "ep_score": 48.4,
+        "ep_score": 49.4,
         "price": 1754000.0,
         "delta_5d": 0.1772,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 48 · lista a ~1,754,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
+        "why": "Fuera del ideal · EP 49 · lista a ~1,754,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
         "list_at": 1754000.0,
         "expected_proceeds": 1754000.0,
         "buyer_channel": "system",
