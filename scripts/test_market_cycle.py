@@ -166,6 +166,35 @@ def test_cycle_refresh_window_madrid() -> None:
     _assert(forced["run"] and forced["reason"] == "forced", forced)
 
 
+def test_cycle_refresh_uses_cron_not_50min_window() -> None:
+    """GitHub retrasa crons horas: el de verano debe correr igual; el de invierno no."""
+    delayed = datetime(2026, 8, 30, 9, 24, tzinfo=timezone.utc)  # 11:24 Madrid
+    late_ok = should_run_cycle_refresh(delayed, schedule="30 3 * * *")
+    _assert(late_ok["run"] and late_ok["reason"] == "scheduled_cron", late_ok)
+    late_skip = should_run_cycle_refresh(delayed, schedule="30 4 * * *")
+    _assert(not late_skip["run"] and late_skip["reason"] == "wrong_dst_cron", late_skip)
+    summer_ok = should_run_cycle_refresh(
+        datetime(2026, 8, 24, 3, 32, tzinfo=timezone.utc),
+        schedule="30 3 * * *",
+    )
+    _assert(summer_ok["run"], summer_ok)
+    summer_winter_cron = should_run_cycle_refresh(
+        datetime(2026, 8, 24, 4, 32, tzinfo=timezone.utc),
+        schedule="30 4 * * *",
+    )
+    _assert(not summer_winter_cron["run"], summer_winter_cron)
+    winter_ok = should_run_cycle_refresh(
+        datetime(2026, 1, 15, 4, 32, tzinfo=timezone.utc),
+        schedule="30 4 * * *",
+    )
+    _assert(winter_ok["run"], winter_ok)
+    winter_summer_cron = should_run_cycle_refresh(
+        datetime(2026, 1, 15, 3, 32, tzinfo=timezone.utc),
+        schedule="30 3 * * *",
+    )
+    _assert(not winter_summer_cron["run"], winter_summer_cron)
+
+
 if __name__ == "__main__":
     test_derive_cycle_hours()
     test_bootstrap_active_short_squad()
@@ -175,4 +204,5 @@ if __name__ == "__main__":
     test_sell_copy_uses_league_cycle()
     test_fixed_cash_lag_is_zero()
     test_cycle_refresh_window_madrid()
+    test_cycle_refresh_uses_cron_not_50min_window()
     print("test_market_cycle: OK")

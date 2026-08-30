@@ -29,6 +29,8 @@ LFM_FAST_CYCLE_ANCHORS_UTC = (3, 11, 19)  # 5h/13h/21h CEST ≈ 3/11/19 UTC
 # Mister rota a las 5 / 13 / 21 hora España. El advisor corre ~30 min después.
 MADRID_MARKET_HOURS = (5, 13, 21)
 MADRID_REFRESH_MINUTE = 30
+# Solo para llamadas sin cron (tests / local). GitHub Actions se retrasa
+# a menudo >50 min: el workflow debe pasar `schedule` y no usar esta ventana.
 CYCLE_REFRESH_WINDOW_MINUTES = 50
 
 
@@ -129,17 +131,40 @@ def cycle_refresh_targets(now: datetime | None = None) -> list[datetime]:
     return out
 
 
+def _cron_utc_hour(schedule: str | None) -> int | None:
+    """Hora UTC del cron de GitHub (`'30 3 * * *'` → 3)."""
+    if not schedule:
+        return None
+    parts = str(schedule).split()
+    if len(parts) < 2:
+        return None
+    try:
+        return int(parts[1])
+    except (TypeError, ValueError):
+        return None
+
+
+def _wanted_utc_hours(local: datetime) -> tuple[int, ...]:
+    """UTC de 05:30 / 13:30 / 21:30 Madrid según DST actual."""
+    offset = local.utcoffset() or timedelta(0)
+    hours = 2 if offset.total_seconds() >= 1.5 * 3600 else 1
+    return tuple((h - hours) % 24 for h in MADRID_MARKET_HOURS)
+
+
 def should_run_cycle_refresh(
     now: datetime | None = None,
     *,
     force: bool = False,
     window_minutes: int = CYCLE_REFRESH_WINDOW_MINUTES,
+    schedule: str | None = None,
 ) -> dict[str, Any]:
     """
-    True si estamos en la ventana posterior a 05:30 / 13:30 / 21:30 Madrid.
+    True si este disparo corresponde a 05:30 / 13:30 / 21:30 Madrid.
 
-    GitHub Cron dispara a las 03:30/04:30, 11:30/12:30 y 19:30/20:30 UTC
-    (verano e invierno). Solo una de cada pareja cae en la ventana.
+    GitHub programa 6 crons (verano 03:30/11:30/19:30 UTC, invierno
+    04:30/12:30/20:30 UTC). Con `schedule` se acepta el cron de la
+    franja DST actual aunque GitHub lo retrase horas; se omite el de
+    la otra franja. Sin `schedule`, se usa una ventana corta (tests).
     No correr *antes* del :30: Mister acaba de rotar a las :00.
     """
     if force:
@@ -160,13 +185,23 @@ def should_run_cycle_refresh(
             continue
         if best is None or delta_min < best:
             best = delta_min
-    run = best is not None and best <= float(window_minutes)
+    cron_hour = _cron_utc_hour(schedule)
+    wanted = _wanted_utc_hours(local)
+    if cron_hour is not None:
+        run = cron_hour in wanted
+        reason = "scheduled_cron" if run else "wrong_dst_cron"
+    else:
+        run = best is not None and best <= float(window_minutes)
+        reason = "in_window" if run else "outside_window"
     return {
         "run": run,
-        "reason": "in_window" if run else "outside_window",
+        "reason": reason,
         "minutes_after": round(best, 1) if best is not None else None,
         "local_time": local.strftime("%Y-%m-%dT%H:%M"),
         "window_minutes": window_minutes,
+        "schedule": schedule,
+        "cron_utc_hour": cron_hour,
+        "wanted_utc_hours": list(wanted),
     }
 
 

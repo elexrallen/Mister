@@ -8,8 +8,9 @@
 #   - repository_dispatch type=refresh-data (botón PWA vía Cloudflare Worker)
 #
 # GitHub Cron es UTC y no entiende DST. Se programan las 6 horas candidatas
-# (verano 03:30/11:30/19:30 UTC, invierno 04:30/12:30/20:30 UTC) y un guard
-# Europe/Madrid descarta la pareja que no toca.
+# (verano 03:30/11:30/19:30 UTC, invierno 04:30/12:30/20:30 UTC). El guard
+# Europe/Madrid omite la pareja de la otra franja DST. No usa una ventana
+# de 50 min: GitHub suele retrasar el cron horas y esa ventana lo mataba.
 
 name: Daily data update
 
@@ -54,6 +55,8 @@ jobs:
       - name: Cycle window guard (Europe/Madrid)
         id: guard
         if: github.event_name == 'schedule'
+        env:
+          GITHUB_SCHEDULE: ${{ github.event.schedule }}
         run: |
           python3 - <<'PY'
           import os
@@ -61,13 +64,20 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, str(Path("src").resolve()))
           from market_cycle import should_run_cycle_refresh
-          result = should_run_cycle_refresh()
+          result = should_run_cycle_refresh(
+              schedule=os.environ.get("GITHUB_SCHEDULE") or None
+          )
           print(result)
           run = "true" if result.get("run") else "false"
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
               fh.write(f"run={run}\n")
           if run != "true":
-              print("Fuera de la ventana 05:30/13:30/21:30 Europe/Madrid; se omite este cron.")
+              print(
+                  "Cron de la otra franja DST (verano vs invierno); se omite. "
+                  "El de 05:30/13:30/21:30 Madrid sí corre, aunque GitHub lo retrase."
+              )
+          else:
+              print("Cron de 05:30/13:30/21:30 Europe/Madrid: se regenera el dataset.")
           PY
 
       - name: Resolve league
