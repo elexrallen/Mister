@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30T15:31:46.862459+00:00",
+  "generated_at": "2026-08-30T22:05:03.181432+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -729,7 +729,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 66 · 4,998,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-30T15:31:46.529573+00:00"
+      "added_at": "2026-08-30T22:05:02.967784+00:00"
     },
     {
       "slot": "DF2",
@@ -909,7 +909,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 38 · 11,010,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-30T15:31:46.516440+00:00"
+      "added_at": "2026-08-30T15:31:46.368487+00:00"
     }
   ],
   "perfect_squad_clauses": [
@@ -1001,7 +1001,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 66 · 4,998,000 € · buy · starter · Δ -1%",
-      "added_at": "2026-08-30T15:31:46.707520+00:00"
+      "added_at": "2026-08-30T22:05:03.081867+00:00"
     },
     {
       "slot": "DF2",
@@ -1181,7 +1181,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 38 · 11,010,000 € · buy · starter · Δ -2%",
-      "added_at": "2026-08-30T15:31:46.694105+00:00"
+      "added_at": "2026-08-30T15:31:46.368487+00:00"
     }
   ],
   "moves": {
@@ -1512,7 +1512,7 @@
         "player_id": "65096",
         "name": "B. Sesko",
         "position": "FW",
-        "ep_score": 35.9,
+        "ep_score": 36.0,
         "price": 8517000.0,
         "delta_5d": -0.0346,
         "value_note": "stable",
@@ -1740,101 +1740,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF3",
-      "position": "DF",
-      "role": "starter",
-      "player_id": "54945",
-      "name": "Malo Gusto",
-      "team": "Chelsea",
-      "team_id": "54",
-      "ep_score": 36.9,
-      "price": 4594500.0,
-      "status": "dropped",
-      "delta_5d": 0.022,
-      "value_note": "stable",
-      "value_ratio": 8.03,
-      "lineup_prob": 89.0,
-      "ff_mister_points": 174.1,
-      "ff_mister_avg": 5.12,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "owner_name": "Enzo Marejada",
-      "owner_id": "15538797",
-      "acquisition": "clause",
-      "clause": 4594500.0,
-      "clause_known": true,
-      "seller": "owned",
-      "why": "EP 37 · 4,594,500 € · buy · starter · Δ 2%",
-      "added_at": "2026-08-25T12:00:17.844778+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "DF6",
-      "position": "DF",
-      "role": "bench",
-      "player_id": "22481",
-      "name": "Tyrick Mitchell",
-      "team": "Crystal",
-      "team_id": "55",
-      "ep_score": 62.9,
-      "price": 4677000.0,
-      "status": "dropped",
-      "delta_5d": null,
-      "value_note": "stable",
-      "value_ratio": 13.45,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 262.0,
-      "ff_mister_avg": 7.08,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "owner_name": "migue",
-      "owner_id": "15538822",
-      "acquisition": "clause",
-      "clause": 4677000.0,
-      "clause_known": true,
-      "seller": "owned",
-      "why": "EP 63 · 4,677,000 € · buy · bench",
-      "added_at": "2026-08-25T12:00:17.845206+00:00",
-      "miss_days": 1
-    },
-    {
-      "slot": "MF3",
-      "position": "MF",
-      "role": "bench",
-      "player_id": "48471",
-      "name": "Brenden Aaronson",
-      "team": "Leeds",
-      "team_id": "502",
-      "ep_score": 40.0,
-      "price": 2454000.0,
-      "status": "dropped",
-      "delta_5d": 0.1565,
-      "value_note": "rising",
-      "value_ratio": 16.3,
-      "lineup_prob": 97.0,
-      "ff_mister_points": 200.9,
-      "ff_mister_avg": 5.43,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "owner_name": null,
-      "owner_id": null,
-      "acquisition": "free",
-      "clause": 2454000.0,
-      "clause_known": true,
-      "seller": "owned",
-      "why": "EP 40 · 2,454,000 € · buy · bench · Δ 16%",
-      "added_at": "2026-08-30T11:51:57.151019+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 151460.0
