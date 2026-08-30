@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30T01:07:39.165503+00:00",
+  "generated_at": "2026-08-30T01:58:30.634054+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -849,7 +849,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 85 · 27,267,330 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T01:07:38.733978+00:00"
+      "added_at": "2026-08-30T01:58:30.198656+00:00"
     },
     {
       "slot": "GK2",
@@ -879,7 +879,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 16 · 1,000,000 € · buy · bench · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T01:07:38.733991+00:00"
+      "added_at": "2026-08-30T01:58:30.198667+00:00"
     },
     {
       "slot": "DF1",
@@ -969,7 +969,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 75 · 12,957,000 € · buy · starter · Δ 8%",
-      "added_at": "2026-08-30T01:07:38.746219+00:00"
+      "added_at": "2026-08-30T01:58:30.210933+00:00"
     },
     {
       "slot": "DF4",
@@ -999,7 +999,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 65 · 4,865,000 € · buy · starter · Δ -4%",
-      "added_at": "2026-08-30T01:07:38.757622+00:00"
+      "added_at": "2026-08-30T01:58:30.222424+00:00"
     },
     {
       "slot": "DF5",
@@ -1149,7 +1149,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 39 · 1,151,000 € · buy · starter · Δ -11%",
-      "added_at": "2026-08-30T01:07:38.737346+00:00"
+      "added_at": "2026-08-30T01:07:38.049300+00:00"
     },
     {
       "slot": "MF4",
@@ -1179,7 +1179,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 36 · 1,969,500 € · buy · starter · Δ -14%",
-      "added_at": "2026-08-30T01:07:38.738153+00:00"
+      "added_at": "2026-08-30T01:58:30.202792+00:00"
     },
     {
       "slot": "MF5",
@@ -1301,7 +1301,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 85 · 27,267,330 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T01:07:39.111114+00:00"
+      "added_at": "2026-08-30T01:58:30.579183+00:00"
     },
     {
       "slot": "GK2",
@@ -1331,7 +1331,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 16 · 1,000,000 € · buy · bench · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T01:07:39.111126+00:00"
+      "added_at": "2026-08-30T01:58:30.579196+00:00"
     },
     {
       "slot": "DF1",
@@ -1421,7 +1421,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 75 · 12,957,000 € · buy · starter · Δ 8%",
-      "added_at": "2026-08-30T01:07:39.123299+00:00"
+      "added_at": "2026-08-30T01:58:30.591561+00:00"
     },
     {
       "slot": "DF4",
@@ -1451,7 +1451,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 65 · 4,865,000 € · buy · starter · Δ -4%",
-      "added_at": "2026-08-30T01:07:39.134793+00:00"
+      "added_at": "2026-08-30T01:58:30.603167+00:00"
     },
     {
       "slot": "DF5",
@@ -1601,7 +1601,7 @@
       "clause_known": true,
       "seller": "free",
       "why": "EP 39 · 1,151,000 € · buy · starter · Δ -11%",
-      "added_at": "2026-08-30T01:07:39.114425+00:00"
+      "added_at": "2026-08-30T01:07:38.049300+00:00"
     },
     {
       "slot": "MF4",
@@ -1631,7 +1631,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 36 · 1,969,500 € · buy · starter · Δ -14%",
-      "added_at": "2026-08-30T01:07:39.115231+00:00"
+      "added_at": "2026-08-30T01:58:30.583292+00:00"
     },
     {
       "slot": "MF5",
@@ -2188,13 +2188,13 @@
         "price": 513000.0,
         "delta_5d": 0.8387,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 25 · lista a ~513,000 € (VM); caja usable en ~48h · Δ 84%",
+        "why": "Fuera del ideal · EP 25 · lista a ~513,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 84%",
         "list_at": 513000.0,
         "expected_proceeds": 513000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "49296",
@@ -2204,13 +2204,13 @@
         "price": 533000.0,
         "delta_5d": 0.388,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 25 · lista a ~533,000 € (VM); caja usable en ~48h · Δ 39%",
+        "why": "Fuera del ideal · EP 25 · lista a ~533,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 39%",
         "list_at": 533000.0,
         "expected_proceeds": 533000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "64160",
@@ -2220,13 +2220,13 @@
         "price": 2078000.0,
         "delta_5d": 0.088,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 32 · lista a ~2,078,000 € (VM); caja usable en ~48h · Δ 9%",
+        "why": "Fuera del ideal · EP 32 · lista a ~2,078,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 9%",
         "list_at": 2078000.0,
         "expected_proceeds": 2078000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "69281",
@@ -2236,13 +2236,13 @@
         "price": 1071000.0,
         "delta_5d": 0.3093,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 34 · lista a ~1,071,000 € (VM); caja usable en ~48h · Δ 31%",
+        "why": "Fuera del ideal · EP 34 · lista a ~1,071,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 31%",
         "list_at": 1071000.0,
         "expected_proceeds": 1071000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "58986",
@@ -2252,13 +2252,13 @@
         "price": 2517000.0,
         "delta_5d": 0.1451,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 40 · lista a ~2,517,000 € (VM); caja usable en ~48h · Δ 15%",
+        "why": "Fuera del ideal · EP 40 · lista a ~2,517,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 15%",
         "list_at": 2517000.0,
         "expected_proceeds": 2517000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "65090",
@@ -2268,13 +2268,13 @@
         "price": 1516000.0,
         "delta_5d": 0.1608,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 40 · lista a ~1,516,000 € (VM); caja usable en ~48h · Δ 16%",
+        "why": "Fuera del ideal · EP 40 · lista a ~1,516,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 16%",
         "list_at": 1516000.0,
         "expected_proceeds": 1516000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "59506",
@@ -2284,13 +2284,13 @@
         "price": 3101000.0,
         "delta_5d": 0.1941,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~3,101,000 € (VM); caja usable en ~48h · Δ 19%",
+        "why": "Fuera del ideal · EP 42 · lista a ~3,101,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 19%",
         "list_at": 3101000.0,
         "expected_proceeds": 3101000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "60919",
@@ -2300,13 +2300,13 @@
         "price": 542000.0,
         "delta_5d": 1.1855,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~542,000 € (VM); caja usable en ~48h · Δ 119%",
+        "why": "Fuera del ideal · EP 42 · lista a ~542,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 119%",
         "list_at": 542000.0,
         "expected_proceeds": 542000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "364",
@@ -2316,13 +2316,13 @@
         "price": 5879000.0,
         "delta_5d": 0.0595,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~5,879,000 € (VM); caja usable en ~48h · Δ 6%",
+        "why": "Fuera del ideal · EP 42 · lista a ~5,879,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 6%",
         "list_at": 5879000.0,
         "expected_proceeds": 5879000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "63871",
@@ -2332,13 +2332,13 @@
         "price": 3100000.0,
         "delta_5d": 0.209,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 43 · lista a ~3,100,000 € (VM); caja usable en ~48h · Δ 21%",
+        "why": "Fuera del ideal · EP 43 · lista a ~3,100,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 21%",
         "list_at": 3100000.0,
         "expected_proceeds": 3100000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "56628",
@@ -2348,13 +2348,13 @@
         "price": 3504000.0,
         "delta_5d": 0.2329,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 44 · lista a ~3,504,000 € (VM); caja usable en ~48h · Δ 23%",
+        "why": "Fuera del ideal · EP 44 · lista a ~3,504,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 23%",
         "list_at": 3504000.0,
         "expected_proceeds": 3504000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "71640",
@@ -2364,13 +2364,13 @@
         "price": 1408000.0,
         "delta_5d": 0.2416,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 45 · lista a ~1,408,000 € (VM); caja usable en ~48h · Δ 24%",
+        "why": "Fuera del ideal · EP 45 · lista a ~1,408,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 24%",
         "list_at": 1408000.0,
         "expected_proceeds": 1408000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "71061",
@@ -2380,13 +2380,13 @@
         "price": 5174000.0,
         "delta_5d": 0.2177,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 46 · lista a ~5,174,000 € (VM); caja usable en ~48h · Δ 22%",
+        "why": "Fuera del ideal · EP 46 · lista a ~5,174,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 22%",
         "list_at": 5174000.0,
         "expected_proceeds": 5174000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "59484",
@@ -2396,13 +2396,13 @@
         "price": 8790000.0,
         "delta_5d": 0.0538,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 47 · lista a ~8,790,000 € (VM); caja usable en ~48h · Δ 5%",
+        "why": "Fuera del ideal · EP 47 · lista a ~8,790,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 5%",
         "list_at": 8790000.0,
         "expected_proceeds": 8790000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "65179",
@@ -2412,13 +2412,13 @@
         "price": 1704000.0,
         "delta_5d": 0.1817,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 48 · lista a ~1,704,000 € (VM); caja usable en ~48h · Δ 18%",
+        "why": "Fuera del ideal · EP 48 · lista a ~1,704,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
         "list_at": 1704000.0,
         "expected_proceeds": 1704000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "65111",
@@ -2428,13 +2428,13 @@
         "price": 7707000.0,
         "delta_5d": 0.0529,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 70 · lista a ~7,707,000 € (VM); caja usable en ~48h · Δ 5%",
+        "why": "Fuera del ideal · EP 70 · lista a ~7,707,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 5%",
         "list_at": 7707000.0,
         "expected_proceeds": 7707000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       },
       {
         "player_id": "18004",
@@ -2444,13 +2444,13 @@
         "price": 16090000.0,
         "delta_5d": -0.0123,
         "value_note": "stable",
-        "why": "Fuera del ideal · EP 74 · lista a ~16,090,000 € (VM); caja usable en ~48h · Δ -1%",
+        "why": "Fuera del ideal · EP 74 · lista a ~16,090,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ -1%",
         "list_at": 16090000.0,
         "expected_proceeds": 16090000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
-        "cash_lag_hours": 48.0
+        "cash_lag_hours": 24.0
       }
     ]
   },
@@ -2548,33 +2548,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "DF6",
-      "position": "DF",
-      "role": "bench",
-      "player_id": "17450",
-      "name": "Aitor Ruibal",
-      "team": "Betis",
-      "team_id": "4",
-      "ep_score": 54.5,
-      "price": 1000000.0,
-      "status": "dropped",
-      "delta_5d": -0.2929,
-      "value_note": "falling",
-      "value_ratio": 54.5,
-      "lineup_prob": 74.0,
-      "ff_mister_points": 118.0,
-      "ff_mister_avg": 4.37,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "why": "EP 54 · 1,000,000 € · buy · bench · Δ -29%",
-      "added_at": "2026-08-29T23:59:11.050030+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 2500000.0
