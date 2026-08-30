@@ -2206,7 +2206,7 @@ def funding_plan_from_board(
     balance: float | None = None,
 ) -> dict[str, Any]:
     """Funding del día = primary_targets del mercado de hoy, no el rebuild completo.
-    Shortfall se cubre con ventas al sistema (caja diferida ~2 ciclos), no saldo inmediato.
+    Shortfall se cubre con ventas al sistema (listas hoy, aceptas el siguiente ciclo y cobra al instante).
     """
     bal = max(0.0, float(balance if balance is not None else (board or {}).get("balance") or 0))
     daily = [
@@ -2300,7 +2300,7 @@ def funding_plan_from_board(
         "formation": (board or {}).get("formation"),
         "settlement": "instant" if fixed_board else "market_cycle",
         "cycle_hours": cycle_h,
-        "cash_lag_hours": 0.0 if fixed_board else cycle_h * 2,
+        "cash_lag_hours": 0.0 if fixed_board else cycle_h,
         "liquidity_note": (
             "Precio fijo: ficha al VM y vende al instante solo si hay recambio hoy. "
             "No vendas para dejar caja: si el VM sube, mañana vale más."

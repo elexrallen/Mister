@@ -1,4 +1,4 @@
-"""Tests del plan de ciclo: narrativa, cupos, liquidez a 2 ciclos y revalorización."""
+"""Tests del plan de ciclo: narrativa, cupos, liquidez al siguiente ciclo y revalorización."""
 
 from __future__ import annotations
 
@@ -133,7 +133,7 @@ def test_full_squad_lists_does_not_bid() -> None:
     _assert(listed[0]["name"] == "Nmecha", listed)
     _assert(plan["constraints"]["free_slots_after_accepts"] == 0, plan["constraints"])
     _assert(any(t["name"] == "Hot" for t in plan["next_cycle_targets"]), plan["next_cycle_targets"])
-    _assert("próximo ciclo" in plan["narrative"] or "proximo ciclo" in plan["narrative"], plan["narrative"])
+    _assert("siguiente ciclo" in plan["narrative"], plan["narrative"])
     _assert("esperar" not in plan["narrative"].lower(), plan["narrative"])
     _assert("vigilar" not in plan["narrative"].lower(), plan["narrative"])
 
@@ -925,8 +925,24 @@ def test_near_slot_is_not_bid_priority() -> None:
     _assert(not any(m.get("closes_gw_target") for m in bids), bids)
 
 
+def _fade_bench(pid: str = "bench", name: str = "Banquillo", price: float = 7_000_000) -> dict:
+    return {
+        "id": pid,
+        "name": name,
+        "position": "MF",
+        "price": price,
+        "lineup_prob": 0.2,
+        "decelerating": True,
+        "delta_5d": 0.01,
+        "accel": -0.03,
+    }
+
+
 def test_debt_bid_allowed_when_closes_target() -> None:
-    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+        _fade_bench(),
+    ]
     market = [
         {
             "id": "target",
@@ -958,10 +974,15 @@ def test_debt_bid_allowed_when_closes_target() -> None:
         },
         league_rules={"max_squad": 15, "sale_limit": 5},
         max_squad=15,
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
     )
     bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
     _assert(bids and bids[0]["name"] == "Objetivo", plan["moves"])
     _assert(plan["constraints"]["spendable"] == 20_000_000, plan["constraints"])
+    lists = [m for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert(any(m.get("list_reason") == "recover_debt" for m in lists), lists)
+    _assert("recupera" in (bids[0].get("why") or "").lower(), bids[0])
 
 
 def test_flip_does_not_use_debt() -> None:
@@ -997,7 +1018,10 @@ def test_flip_does_not_use_debt() -> None:
 
 
 def test_hoy_one_clause_after_market_bids() -> None:
-    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+        _fade_bench("bench2", "Reserva", 10_000_000),
+    ]
     market = [
         {
             "id": "mkt",
@@ -1077,6 +1101,8 @@ def test_hoy_one_clause_after_market_bids() -> None:
         league_rules={"max_squad": 15, "sale_limit": 5},
         max_squad=15,
         rival_upgrades=rivals,
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
     )
     clauses = [m for m in plan["moves"] if m["kind"] == KIND_CLAUSE]
     _assert(len(clauses) == 1, clauses)
@@ -1084,6 +1110,91 @@ def test_hoy_one_clause_after_market_bids() -> None:
     _assert(clauses[0].get("closes_gw_target") is True, clauses[0])
     bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
     _assert(any(m["name"] == "Mercado" for m in bids), bids)
+    lists = [m for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert(any(m.get("list_reason") == "recover_debt" for m in lists), lists)
+
+
+def test_debt_bid_skipped_without_recover_sale() -> None:
+    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    market = [
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 8_000_000,
+            "bid": 8_000_000,
+            "puja_recomendada": 8_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "debt_risk": True,
+            "budget_fit": "stretch",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(not any(m["name"] == "Objetivo" for m in bids), plan["moves"])
+
+
+def test_debt_bid_skipped_if_sale_misses_jornada() -> None:
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+        _fade_bench(),
+    ]
+    market = [
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 8_000_000,
+            "bid": 8_000_000,
+            "puja_recomendada": 8_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "debt_risk": True,
+            "budget_fit": "stretch",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        hours_to_jornada=8,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 20, "cycle_hours": 24},
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(not any(m["name"] == "Objetivo" for m in bids), plan["moves"])
 
 
 if __name__ == "__main__":
@@ -1117,4 +1228,6 @@ if __name__ == "__main__":
     test_debt_bid_allowed_when_closes_target()
     test_flip_does_not_use_debt()
     test_hoy_one_clause_after_market_bids()
+    test_debt_bid_skipped_without_recover_sale()
+    test_debt_bid_skipped_if_sale_misses_jornada()
     print("test_cycle_plan: OK")

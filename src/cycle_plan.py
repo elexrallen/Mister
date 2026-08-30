@@ -1,8 +1,8 @@
 """
 Plan de un ciclo de mercado: texto + movimientos ejecutables.
 
-Listar hoy → el sistema suele comprar el ciclo siguiente (oferta ≈ VM).
-No hay wait / scout / avoid. Rotación de valor a 2 ciclos si la plantilla está llena.
+Listar hoy → en el siguiente ciclo aceptas la oferta (≈ VM) y el dinero llega al instante.
+No hay wait / scout / avoid.
 """
 
 from __future__ import annotations
@@ -19,6 +19,7 @@ from competitive_actions import (
     clause_roi_gate,
     is_rival_market_listing,
     mister_bid_cap,
+    sells_settle_before_deadline,
     xi_owned_ids,
 )
 
@@ -298,6 +299,44 @@ def _market_much_hotter(owned_delta: float | None, market_row: dict[str, Any] | 
     return md >= floor and md >= owned_delta + margin
 
 
+def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
+    """Banquillo vendible para tapar deuda: no XI, no titular, no pieza que aún sube."""
+    pid = _pid(p)
+    if not pid or pid in xi_ids:
+        return False
+    if _keep_riding(p):
+        return False
+    lp = _lineup_pct(p)
+    if lp is not None and lp >= 70:
+        return False
+    return True
+
+
+def _recover_pool(
+    squad: list[dict[str, Any]],
+    *,
+    xi_ids: set[str],
+    skip_ids: set[str],
+) -> list[dict[str, Any]]:
+    rows = [
+        p
+        for p in squad
+        if _pid(p) and _pid(p) not in skip_ids and _is_recover_sale(p, xi_ids)
+    ]
+    rows.sort(key=lambda p: (-_list_score(p), -_price(p)))
+    return rows
+
+
+def _recovery_capacity(
+    pool: list[dict[str, Any]],
+    *,
+    sale_remaining: int,
+    listed_timely: float,
+) -> float:
+    extra = sum(_price(p) for p in pool[: max(0, sale_remaining)])
+    return listed_timely + extra
+
+
 def _list_score(p: dict[str, Any]) -> float:
     """Más alto = mejor candidato a listar (banquillo cuyo VM ya no tira)."""
     score = 0.0
@@ -536,6 +575,7 @@ def build_cycle_plan(
     market_mode: str = "auction",
     max_squad: int | None = None,
     rival_upgrades: list[dict[str, Any]] | None = None,
+    hours_to_jornada: float | None = None,
 ) -> dict[str, Any]:
     """
     Fuente de verdad de la pestaña Hoy.
@@ -545,7 +585,9 @@ def build_cycle_plan(
        no caja ≥ 0. Revalorización: solo libres del mercado, no listados de rivales.
     3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
        en el margen residual.
-    4) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
+    4) Si el gasto deja negativo: solo si hay ventas rentables (banquillo, no XI)
+       cuyo cobro llega antes de la jornada. Esas ventas salen en el plan.
+    5) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
        con plantilla llena y un recambio de mercado que suba claramente más.
     """
     me = me or {}
@@ -621,6 +663,46 @@ def build_cycle_plan(
 
     free_slots = max(0, cap - squad_n + slots_from_accepts)
     spendable = mister_bid_cap(balance + cash_from_accepts, max_debt)
+    cash_after_accepts = balance + cash_from_accepts
+
+    mc = dict(market_cycle or {})
+    hours_deadline = _f(hours_to_jornada)
+    if hours_deadline is None:
+        hours_deadline = _f(mc.get("hours_to_jornada")) or _f(me.get("hours_to_jornada"))
+    hours_to_end = _f(mc.get("hours_to_end"))
+    cycle_h = _f(mc.get("cycle_hours")) or float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    # Listas este ciclo; al empezar el siguiente aceptas y cobra al instante.
+    lag = hours_to_end if hours_to_end is not None else _f(mc.get("cash_lag_hours"))
+    if lag is None:
+        lag = 0.0 if fixed else max(cycle_h, 1.0)
+    settle_new = bool(fixed) or sells_settle_before_deadline(
+        hours_to_deadline=hours_deadline,
+        cash_lag_hours=lag,
+    )
+    listed_lag = lag
+    listed_timely = 0.0
+    if settle_new or sells_settle_before_deadline(
+        hours_to_deadline=hours_deadline,
+        cash_lag_hours=listed_lag,
+    ):
+        for p in squad:
+            pid = _pid(p)
+            if pid and pid in listed_ids and pid not in accept_ids:
+                listed_timely += _price(p)
+    recover_base = _recover_pool(
+        squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids
+    )
+    recover_cap = _recovery_capacity(
+        recover_base if settle_new else [],
+        sale_remaining=sale_remaining,
+        listed_timely=listed_timely,
+    )
+
+    def _covers_shortfall(new_spent: float) -> bool:
+        short = new_spent - cash_after_accepts
+        if short <= 1:
+            return True
+        return recover_cap + 1 >= short
 
     bid_cands: list[tuple[float, dict[str, Any]]] = []
     for o in market:
@@ -674,6 +756,8 @@ def build_cycle_plan(
             cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
             if spent + cost > spendable + 1:
                 continue
+            if not _covers_shortfall(spent + cost):
+                continue
             pos = str(o.get("position") or "")
             if pos and pos in used_pos and len(bids) >= 1:
                 continue
@@ -725,6 +809,10 @@ def build_cycle_plan(
         )
         if picked:
             cost = _money(picked.get("clause") or picked.get("bid"))
+            if not _covers_shortfall(spent + cost):
+                picked = None
+        if picked:
+            cost = _money(picked.get("clause") or picked.get("bid"))
             why = (
                 f"Cláusula de {picked.get('name')} ({_fmt_money(cost)}): "
                 f"cierra un hueco del once objetivo"
@@ -753,11 +841,59 @@ def build_cycle_plan(
         if _pid(o) not in {_pid(b) for b in bids}
     ][:3]
 
+    shortfall = max(0.0, spent - cash_after_accepts)
+    recover_lists: list[dict[str, Any]] = []
+    recover_ids: set[str] = set()
+    recover_need = max(0.0, shortfall - listed_timely)
+    if recover_need > 1 and settle_new and sale_remaining > 0:
+        covered = 0.0
+        for p in recover_base:
+            if len(recover_lists) >= sale_remaining:
+                break
+            if covered >= recover_need - 1:
+                break
+            pid = _pid(p)
+            proceeds = _price(p)
+            if proceeds <= 0:
+                continue
+            recover_ids.add(pid)
+            recover_lists.append(
+                _player_ref(
+                    p,
+                    kind=KIND_LIST,
+                    why=(
+                        f"Pon en venta a {p.get('name')} (≈ {_fmt_money(proceeds)}): "
+                        f"el siguiente ciclo aceptas y el dinero llega al instante, "
+                        f"antes de la jornada."
+                    ),
+                    extra={
+                        "expected_proceeds": proceeds,
+                        "amount": proceeds,
+                        "list_reason": "recover_debt",
+                    },
+                )
+            )
+            covered += proceeds
+    if recover_lists:
+        names = _join_names([m.get("name") or "" for m in recover_lists])
+        note = (
+            f"lista a {names}: el siguiente ciclo aceptas y recuperas el negativo "
+            f"antes de la jornada"
+        )
+        for row in bids:
+            why = (row.get("why") or "").rstrip(".")
+            row["why"] = f"{why}; {note}."
+            row["debt_recovery"] = True
+        for row in clauses:
+            why = (row.get("why") or "").rstrip(".")
+            row["why"] = f"{why}; {note}."
+            row["debt_recovery"] = True
+
     fade_cands: list[tuple[float, dict[str, Any]]] = []
     swap_cands: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
     for p in squad:
         pid = _pid(p)
-        if not pid or pid in listed_ids or pid in accept_ids:
+        if not pid or pid in listed_ids or pid in accept_ids or pid in recover_ids:
             continue
         if pid in xi_ids:
             continue
@@ -779,7 +915,7 @@ def build_cycle_plan(
     swap_cands.sort(key=lambda x: x[0])
     fade_cands.sort(key=lambda x: -x[0])
 
-    lists: list[dict[str, Any]] = []
+    lists: list[dict[str, Any]] = list(recover_lists)
     swap_cap = min(max_lists, min(max_bids, len(bid_cands)))
     for _rank, p, beater in swap_cands:
         if len(lists) >= swap_cap:
@@ -789,7 +925,7 @@ def build_cycle_plan(
         why = (
             f"Plantilla llena ({squad_n}/{cap}). "
             f"{beater.get('name')} revaloriza {_fmt_pct(md)} frente a su {_fmt_pct(d5)}. "
-            f"Listarlo libera plaza el próximo ciclo (cobro ≈ {_fmt_money(_price(p))})."
+            f"Listarlo: el siguiente ciclo aceptas (≈ {_fmt_money(_price(p))}) y cobra al instante."
         )
         lists.append(
             _player_ref(
@@ -820,7 +956,7 @@ def build_cycle_plan(
             bits.append("juega poco")
         why = (
             f"Pon en venta a {p.get('name')}: {', '.join(bits)}. "
-            f"El sistema lo comprará el próximo ciclo (cobro ≈ {_fmt_money(_price(p))})."
+            f"El siguiente ciclo aceptas (≈ {_fmt_money(_price(p))}) y el dinero llega al instante."
         )
         lists.append(
             _player_ref(
@@ -851,6 +987,10 @@ def build_cycle_plan(
         "bid_cap": round(spendable, 0),
         "max_debt": max_debt,
         "market_mode": "fixed" if fixed else "auction",
+        "projected_cash": round(cash_after_accepts - spent, 0),
+        "debt_shortfall": round(shortfall, 0),
+        "debt_recovery": bool(recover_lists or (shortfall > 1 and listed_timely >= shortfall - 1)),
+        "sells_settle_before_gw": bool(settle_new),
     }
 
     headline, narrative = _compose_narrative(
@@ -963,6 +1103,7 @@ def _compose_narrative(
             f"cierra hueco del once objetivo y cabe en el techo de deuda."
         )
     if lists:
+        recover = [m for m in lists if m.get("list_reason") == "recover_debt"]
         names = _join_names([m.get("name") or "" for m in lists])
         swaps = [m for m in lists if m.get("list_reason") == "swap"]
         follow = ""
@@ -976,17 +1117,25 @@ def _compose_narrative(
             )
             if nxt:
                 follow = (
-                    f" El sistema los comprará el próximo ciclo (cobro ≈ valor de mercado) "
-                    f"y entonces podremos ir a por {nxt}."
+                    f" El siguiente ciclo aceptas (≈ VM) y el dinero llega al instante; "
+                    f"entonces podremos ir a por {nxt}."
                 )
             else:
                 follow = (
-                    " El sistema los comprará el próximo ciclo (cobro ≈ valor de mercado) "
-                    "y entonces podremos ir a por los que más suban."
+                    " El siguiente ciclo aceptas (≈ VM) y el dinero llega al instante; "
+                    "entonces podremos ir a por los que más suban."
                 )
         elif not bids:
-            follow = " El sistema los comprará el próximo ciclo (cobro ≈ valor de mercado)."
-        if swaps and len(swaps) == len(lists):
+            follow = " El siguiente ciclo aceptas (≈ VM) y el dinero llega al instante."
+        if recover and len(recover) == len(lists):
+            fade = (
+                "su cobro tapa el negativo antes de la jornada"
+                if len(recover) == 1
+                else "su cobro tapa el negativo antes de la jornada"
+            )
+        elif recover:
+            fade = "parte recupera el negativo antes de la jornada"
+        elif swaps and len(swaps) == len(lists):
             fade = "plantilla al tope y el mercado revaloriza más"
         elif any((_f(m.get("delta_5d")) or 0) <= 0 for m in lists):
             fade = (

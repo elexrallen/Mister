@@ -291,10 +291,10 @@ def test_funding_plan_skips_unaffordable_crack() -> None:
 def test_estimate_gap_funding_uses_league_cycle() -> None:
     out = estimate_gap_funding([], [], 1_000_000, cycle_hours=8)
     note = str(out.get("liquidity_note") or "")
-    _assert("16h" in note, note)
+    _assert("8h" in note, note)
     _assert("1–2 días" not in note and "1-2 días" not in note, note)
-    _assert(float(out["cash_lag_hours"]) == 16.0, out)
-    _assert("24h" not in note, note)
+    _assert(float(out["cash_lag_hours"]) == 8.0, out)
+    _assert("16h" not in note, note)
 
 
 if __name__ == "__main__":

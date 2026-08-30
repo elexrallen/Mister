@@ -55,8 +55,9 @@ Los cortes están en las constantes `HOURS_MATCHDAY`, `HOURS_EVE`,
   probable (`xi_ceros`), dudas pendientes de confirmar, titulares con partido muy
   exigente y cambio de capitán con su motivo y su alternativa.
 - **Dinero**: aviso si estás en negativo. En esta liga puedes pujar o clausular
-  en negativo; el corte es la **deuda máxima**, no el cero. Listar recupera
-  margen, no desbloquea el click de hoy.
+  en negativo; el corte es la **deuda máxima**, no el cero. Listar hoy no
+  cobra hoy: en el **siguiente ciclo** aceptas (≈ VM) y el dinero llega al
+  instante. Hoy solo recomienda ir a deuda si esa venta llega antes de la jornada.
 - **Mercado según fase**: fichar y listar ventas en la ventana de compra; última
   llamada en confirmación; en víspera y día de partido el playbook **sigue a la
   cola** (si hay `buy_now` solvente, ficha esos con aviso de prima; si no, no

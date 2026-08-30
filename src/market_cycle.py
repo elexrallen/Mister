@@ -58,12 +58,12 @@ def derive_cycle_hours(
 
 
 def derive_cash_lag_hours(cycle_hours: float, rules: dict[str, Any] | None = None) -> float:
-    """Liquidez tras venta: en fixed/LFM suele ser inmediata; en subasta ~2 ciclos."""
+    """Liquidez tras venta: fixed/LFM al instante; subasta = 1 ciclo (listas hoy, aceptas en el siguiente y cobra al momento)."""
     rules = rules or {}
     mode = (rules.get("market_mode") or "auction").strip().lower()
     if mode == "fixed" or rules.get("direct_transfer"):
         return 0.0
-    return max(cycle_hours * 2.0, 1.0)
+    return max(float(cycle_hours or 0), 1.0)
 
 
 def parse_auction_cycle_ends(html: str | None) -> list[float]:

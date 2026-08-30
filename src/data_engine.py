@@ -864,7 +864,7 @@ def classify_market_opportunities(
     preseasonish = competition_phase in ("preseason", "ramp")
     fixed = (market_mode or "auction") == "fixed"
     bid_ceiling_cap = mister_bid_cap(my_balance, max_debt)
-    cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2)
+    cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24))
 
     opportunities: list[dict[str, Any]] = []
     for raw in market:
@@ -1813,7 +1813,7 @@ def build_action_plan(
     elif funding.get("cash_lag_hours") is not None:
         cash_lag = float(funding.get("cash_lag_hours"))
     else:
-        cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2)
+        cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24))
     hours_resolved = resolve_hours_to_jornada(
         hours_to_jornada=float(hours_to_jornada) if hours_to_jornada is not None else None,
         days_to_kickoff=days_to_kickoff,
@@ -3730,6 +3730,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         market_mode=market_mode,
         max_squad=config.league_max_squad(league_cfg),
         rival_upgrades=rival_upgrades,
+        hours_to_jornada=hours_j,
     )
     attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
     squad_vm = squad_value_summary(squad)
@@ -4028,7 +4029,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
             "cash_lag_hours": funding_info.get("cash_lag_hours")
             if funding_info.get("cash_lag_hours") is not None
-            else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2,
+            else int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24),
             "liquidity_note": funding_info.get("liquidity_note")
             or (
                 "Precio fijo: ficha al VM y vende al instante solo si hay recambio hoy."

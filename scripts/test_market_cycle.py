@@ -118,20 +118,20 @@ def test_bootstrap_buy_cap() -> None:
 
 def test_sell_copy_uses_league_cycle() -> None:
     phrase = sell_cash_phrase(1_000_000, cycle_hours=8)
-    _assert("16h" in phrase, phrase)
-    _assert("48h" not in phrase, phrase)
+    _assert("8h" in phrase, phrase)
+    _assert("16h" not in phrase, phrase)
     fields = sell_settlement_fields(1_000_000, cycle_hours=8)
-    _assert(float(fields["cash_lag_hours"]) == 16.0, fields)
+    _assert(float(fields["cash_lag_hours"]) == 8.0, fields)
     deferred = sell_cash_phrase(1_000_000, deferred=True, cycle_hours=8)
-    _assert("16h" in deferred, deferred)
+    _assert("8h" in deferred, deferred)
     note = estimate_gap_funding([], [], 1_000_000, cycle_hours=8).get("liquidity_note") or ""
-    _assert("16h" in str(note) and "24h" not in str(note), note)
+    _assert("8h" in str(note) and "16h" not in str(note), note)
 
 
 def test_fixed_cash_lag_is_zero() -> None:
     _assert(derive_cash_lag_hours(8.0, {"market_mode": "fixed"}) == 0.0, "fixed → 0")
     _assert(derive_cash_lag_hours(24.0, {"direct_transfer": 1}) == 0.0, "direct_transfer → 0")
-    _assert(derive_cash_lag_hours(8.0, {"market_mode": "auction"}) == 16.0, "auction → 2 ciclos")
+    _assert(derive_cash_lag_hours(8.0, {"market_mode": "auction"}) == 8.0, "auction → 1 ciclo")
     phrase = sell_cash_phrase(2_000_000, instant=True)
     _assert("instante" in phrase, phrase)
     fields = sell_settlement_fields(2_000_000, cycle_hours=8, instant=True)

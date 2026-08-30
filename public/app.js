@@ -1946,8 +1946,8 @@
     const clock = cycleClockLabel(data);
     if (hint) {
       hint.textContent = clock
-        ? `${clock}. Listar cobra el siguiente ciclo (oferta del sistema ≈ VM).`
-        : "Solo movimientos de este ciclo. Listar cobra el siguiente (oferta del sistema ≈ VM).";
+        ? `${clock}. Listas ahora; el siguiente ciclo aceptas (≈ VM) y el dinero llega al instante.`
+        : "Solo movimientos de este ciclo. Listas ahora; el siguiente aceptas y cobra al instante.";
     }
 
     const headline = plan.headline || "Plan de este ciclo";

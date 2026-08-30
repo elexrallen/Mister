@@ -456,7 +456,7 @@ def sell_settlement_fields(
 ) -> dict[str, Any]:
     """
     Liquidez de venta al sistema (Mister): ask ≈ VM.
-    Subasta: lista → oferta (~1 ciclo) → aceptar → cobro (~1 ciclo más) ≈ 2 ciclos.
+    Subasta: listas este ciclo → en el siguiente aceptas y el dinero llega al instante.
     Precio fijo: cobro al instante.
     """
     cycle = _cycle_hours_value(cycle_hours)
@@ -476,7 +476,7 @@ def sell_settlement_fields(
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": cycle,
-        "cash_lag_hours": cycle * 2,
+        "cash_lag_hours": cycle,
     }
 
 
@@ -491,11 +491,11 @@ def sell_cash_phrase(
     if instant:
         return f"cobra al instante ~{price:,.0f} € (VM)"
     cycle = _cycle_hours_value(cycle_hours)
-    lag = int(round(cycle * 2))
+    lag = int(round(cycle))
     base = f"lista a ~{price:,.0f} € (VM)"
     if deferred:
-        return f"{base}; caja en ~{lag}h (no liquida hoy)"
-    return f"{base}; caja usable en ~{lag}h"
+        return f"{base}; aceptas el siguiente ciclo y cobra al instante (~{lag}h)"
+    return f"{base}; el siguiente ciclo aceptas y cobra al instante (~{lag}h)"
 
 
 def rescind_instant_alt(price: float) -> dict[str, Any]:
@@ -1617,7 +1617,7 @@ def estimate_gap_funding(
     Estima coste mínimo para cubrir needs Alta (multi-carencia).
     Prefiere candidatos asequibles (realistic) del pool; si no hay, marca shortfall.
     funding_target = suma de hasta top_n gaps; shortfall vs saldo.
-    Ventas para cubrir shortfall liquidan en ~2 ciclos de mercado, no el mismo día.
+    Ventas: listas este ciclo; en el siguiente aceptas y el cobro es instantáneo.
     """
     needs = [n for n in (structural_needs or []) if n.get("priority") == "Alta"]
     market = list(market_opportunities or [])
@@ -1729,7 +1729,7 @@ def estimate_gap_funding(
         cash_tight = True
 
     cycle = _cycle_hours_value(cycle_hours)
-    lag = cycle * 2
+    lag = cycle
     return {
         "funding_target": funding_target,
         "funding_shortfall": funding_shortfall,
@@ -1742,8 +1742,7 @@ def estimate_gap_funding(
         "cycle_hours": cycle,
         "cash_lag_hours": lag,
         "liquidity_note": (
-            f"Las ventas al sistema no liquidan hoy: oferta ~{int(round(cycle))}h, "
-            f"cobro ~{int(round(cycle))}h tras aceptar "
+            f"Listas este ciclo; en el siguiente aceptas y el dinero llega al instante "
             f"(caja usable en ~{int(round(lag))}h). Urgente: rescindir ≈ 80% VM o cláusula rival."
         ),
     }
@@ -2467,7 +2466,7 @@ def is_key_market_candidate(
 def priority_score_sell(item: dict[str, Any]) -> int:
     """
     Prioriza ventas que mejoran el once: banquillo caro, baja producción,
-    plan de caja diferida (2 ciclos de la liga); protege titulares TOP / once fiable.
+    plan de caja al siguiente ciclo (aceptas y cobra al instante); protege titulares TOP / once fiable.
     """
     score = 0
     reason = item.get("sell_reason") or ""
@@ -4285,7 +4284,7 @@ def build_offer_actions(
     url = state.get("mister_offers_url") or (
         "https://mister.mundodeportivo.com/market#market/offers-received"
     )
-    lag = float(cash_lag_hours if cash_lag_hours is not None else 48)
+    lag = float(cash_lag_hours if cash_lag_hours is not None else 24)
     settle_ok = True
     if hours_to_solvency_deadline is not None:
         settle_ok = sells_settle_before_deadline(
@@ -5286,7 +5285,7 @@ def annotate_market_budget_risk(
     out: list[dict[str, Any]] = []
     bal = _money(balance)
     mode = market_mode or "auction"
-    cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24) * 2)
+    cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24))
     for o in opportunities:
         row = dict(o)
         fills = bool(row.get("fills_need"))
@@ -5708,7 +5707,7 @@ def finalize_action_plan(
         cash_lag_h = funding_info.get("cash_lag_hours")
     fixed = (market_mode or "auction") == "fixed"
     if cash_lag_h is None:
-        cash_lag_h = 0.0 if fixed else _cycle_hours_value(cycle_h) * 2
+        cash_lag_h = 0.0 if fixed else _cycle_hours_value(cycle_h)
     if max_squad is None:
         max_squad = int(
             getattr(config, "MAX_SQUAD_SIZE_PREMIER", 22)
