@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-30T09:55:20.186550+00:00",
+  "generated_at": "2026-08-30T10:26:23.346157+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "operable",
@@ -380,7 +380,7 @@
       "ep_score": 85.0,
       "price": 10066000.0,
       "status": "buy",
-      "delta_5d": 0.0336,
+      "delta_5d": 0.0223,
       "value_note": "stable",
       "value_ratio": 8.44,
       "lineup_prob": 95.0,
@@ -396,7 +396,7 @@
       "clause": 10066000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 85 · 10,066,000 € · buy · starter · tándem mismo club · Δ 3%",
+      "why": "EP 85 · 10,066,000 € · buy · starter · tándem mismo club · Δ 2%",
       "added_at": "2026-08-29T23:59:10.977826+00:00"
     },
     {
@@ -410,8 +410,8 @@
       "ep_score": 0.0,
       "price": 1500000.0,
       "status": "buy",
-      "delta_5d": -0.0171,
-      "value_note": "stable",
+      "delta_5d": 0.1543,
+      "value_note": "rising",
       "value_ratio": 0.0,
       "lineup_prob": null,
       "ff_mister_points": null,
@@ -426,7 +426,7 @@
       "clause": 1500000.0,
       "clause_known": true,
       "seller": "owned",
-      "why": "EP 0 · 1,500,000 € · buy · bench · tándem mismo club · Δ -2%",
+      "why": "EP 0 · 1,500,000 € · buy · bench · tándem mismo club · Δ 15%",
       "added_at": "2026-08-29T23:59:10.977837+00:00"
     },
     {
@@ -440,7 +440,7 @@
       "ep_score": 80.0,
       "price": 15426000.0,
       "status": "buy",
-      "delta_5d": -0.0111,
+      "delta_5d": -0.0084,
       "value_note": "stable",
       "value_ratio": 5.19,
       "lineup_prob": 70.0,
@@ -470,7 +470,7 @@
       "ep_score": 78.1,
       "price": 10259000.0,
       "status": "buy",
-      "delta_5d": 0.0449,
+      "delta_5d": 0.0301,
       "value_note": "stable",
       "value_ratio": 7.61,
       "lineup_prob": 80.0,
@@ -486,7 +486,7 @@
       "clause": 10259000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 78 · 10,259,000 € · buy · starter · Δ 4%",
+      "why": "EP 78 · 10,259,000 € · buy · starter · Δ 3%",
       "added_at": "2026-08-28T23:25:40.384643+00:00"
     },
     {
@@ -500,7 +500,7 @@
       "ep_score": 71.8,
       "price": 9627000.0,
       "status": "buy",
-      "delta_5d": -0.0694,
+      "delta_5d": -0.0592,
       "value_note": "falling",
       "value_ratio": 7.46,
       "lineup_prob": 95.0,
@@ -516,7 +516,7 @@
       "clause": 9627000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 72 · 9,627,000 € · buy · starter · Δ -7%",
+      "why": "EP 72 · 9,627,000 € · buy · starter · Δ -6%",
       "added_at": "2026-08-28T23:25:40.389917+00:00"
     },
     {
@@ -530,7 +530,7 @@
       "ep_score": 58.8,
       "price": 1948000.0,
       "status": "keep",
-      "delta_5d": 0.1527,
+      "delta_5d": 0.1267,
       "value_note": "rising",
       "value_ratio": 30.18,
       "lineup_prob": 80.0,
@@ -546,7 +546,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 59 · 1,948,000 € · keep · starter · Δ 15%",
+      "why": "EP 59 · 1,948,000 € · keep · starter · Δ 13%",
       "added_at": "2026-08-26T04:12:49.026724+00:00"
     },
     {
@@ -560,7 +560,7 @@
       "ep_score": 42.7,
       "price": 2043000.0,
       "status": "keep",
-      "delta_5d": 0.2666,
+      "delta_5d": 0.2139,
       "value_note": "rising",
       "value_ratio": 20.9,
       "lineup_prob": 70.0,
@@ -576,7 +576,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 43 · 2,043,000 € · keep · starter · Δ 27%",
+      "why": "EP 43 · 2,043,000 € · keep · starter · Δ 21%",
       "added_at": "2026-08-28T03:40:18.974694+00:00"
     },
     {
@@ -590,7 +590,7 @@
       "ep_score": 31.9,
       "price": 2076000.0,
       "status": "keep",
-      "delta_5d": 0.0869,
+      "delta_5d": 0.069,
       "value_note": "rising",
       "value_ratio": 15.37,
       "lineup_prob": 50.0,
@@ -606,7 +606,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 32 · 2,076,000 € · keep · bench · Δ 9%",
+      "why": "EP 32 · 2,076,000 € · keep · bench · Δ 7%",
       "added_at": "2026-08-30T09:55:19.358451+00:00"
     },
     {
@@ -620,7 +620,7 @@
       "ep_score": 44.5,
       "price": 3286000.0,
       "status": "buy",
-      "delta_5d": 0.2629,
+      "delta_5d": 0.2121,
       "value_note": "rising",
       "value_ratio": 13.54,
       "lineup_prob": 80.0,
@@ -636,7 +636,7 @@
       "clause": 3286000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 3,286,000 € · buy · starter · Δ 26%",
+      "why": "EP 44 · 3,286,000 € · buy · starter · Δ 21%",
       "added_at": "2026-08-24T07:14:13.760398+00:00"
     },
     {
@@ -650,7 +650,7 @@
       "ep_score": 44.1,
       "price": 674000.0,
       "status": "buy",
-      "delta_5d": 0.8827,
+      "delta_5d": 0.628,
       "value_note": "rising",
       "value_ratio": 65.43,
       "lineup_prob": 70.0,
@@ -666,7 +666,7 @@
       "clause": 674000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 674,000 € · buy · starter · Δ 88%",
+      "why": "EP 44 · 674,000 € · buy · starter · Δ 63%",
       "added_at": "2026-08-28T23:25:40.367139+00:00"
     },
     {
@@ -680,7 +680,7 @@
       "ep_score": 44.1,
       "price": 1973000.0,
       "status": "buy",
-      "delta_5d": 0.2639,
+      "delta_5d": 0.2134,
       "value_note": "rising",
       "value_ratio": 22.35,
       "lineup_prob": 70.0,
@@ -696,7 +696,7 @@
       "clause": 1973000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 1,973,000 € · buy · starter · Δ 26%",
+      "why": "EP 44 · 1,973,000 € · buy · starter · Δ 21%",
       "added_at": "2026-08-28T03:40:18.980211+00:00"
     },
     {
@@ -710,7 +710,7 @@
       "ep_score": 16.5,
       "price": 262000.0,
       "status": "buy",
-      "delta_5d": -0.1296,
+      "delta_5d": -0.1863,
       "value_note": "falling",
       "value_ratio": 41.25,
       "lineup_prob": 30.0,
@@ -726,7 +726,7 @@
       "clause": 262000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 16 · 262,000 € · buy · bench · Δ -13%",
+      "why": "EP 16 · 262,000 € · buy · bench · Δ -19%",
       "added_at": "2026-08-29T23:59:11.050146+00:00"
     },
     {
@@ -740,7 +740,7 @@
       "ep_score": 87.9,
       "price": 24358000.0,
       "status": "buy",
-      "delta_5d": 0.0011,
+      "delta_5d": 0.0018,
       "value_note": "stable",
       "value_ratio": 3.61,
       "lineup_prob": 90.0,
@@ -770,7 +770,7 @@
       "ep_score": 87.2,
       "price": 23407000.0,
       "status": "keep",
-      "delta_5d": -0.0043,
+      "delta_5d": -0.0029,
       "value_note": "stable",
       "value_ratio": 3.73,
       "lineup_prob": 90.0,
@@ -800,7 +800,7 @@
       "ep_score": 35.9,
       "price": 1344000.0,
       "status": "buy",
-      "delta_5d": -0.1784,
+      "delta_5d": -0.1375,
       "value_note": "falling",
       "value_ratio": 26.71,
       "lineup_prob": 97.0,
@@ -816,7 +816,7 @@
       "clause": 1344000.0,
       "clause_known": true,
       "seller": "owned",
-      "why": "EP 36 · 1,344,000 € · buy · bench · Δ -18%",
+      "why": "EP 36 · 1,344,000 € · buy · bench · Δ -14%",
       "added_at": "2026-08-28T23:25:40.404063+00:00"
     }
   ],
@@ -849,7 +849,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 85 · 27,267,330 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T09:55:19.750164+00:00"
+      "added_at": "2026-08-30T10:26:23.025540+00:00"
     },
     {
       "slot": "GK2",
@@ -879,7 +879,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 16 · 1,000,000 € · buy · bench · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T09:55:19.750179+00:00"
+      "added_at": "2026-08-30T10:26:23.025551+00:00"
     },
     {
       "slot": "DF1",
@@ -892,7 +892,7 @@
       "ep_score": 80.0,
       "price": 15426000.0,
       "status": "buy",
-      "delta_5d": -0.0111,
+      "delta_5d": -0.0084,
       "value_note": "stable",
       "value_ratio": 5.19,
       "lineup_prob": 70.0,
@@ -922,7 +922,7 @@
       "ep_score": 78.1,
       "price": 10259000.0,
       "status": "buy",
-      "delta_5d": 0.0449,
+      "delta_5d": 0.0301,
       "value_note": "stable",
       "value_ratio": 7.61,
       "lineup_prob": 80.0,
@@ -938,7 +938,7 @@
       "clause": 10259000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 78 · 10,259,000 € · buy · starter · Δ 4%",
+      "why": "EP 78 · 10,259,000 € · buy · starter · Δ 3%",
       "added_at": "2026-08-28T23:25:40.384643+00:00"
     },
     {
@@ -952,7 +952,7 @@
       "ep_score": 75.3,
       "price": 13185000.0,
       "status": "buy",
-      "delta_5d": 0.075,
+      "delta_5d": 0.0788,
       "value_note": "rising",
       "value_ratio": 5.71,
       "lineup_prob": 95.0,
@@ -969,7 +969,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 75 · 13,185,000 € · buy · starter · Δ 8%",
-      "added_at": "2026-08-30T09:55:19.762952+00:00"
+      "added_at": "2026-08-30T10:26:23.034678+00:00"
     },
     {
       "slot": "DF4",
@@ -982,8 +982,8 @@
       "ep_score": 64.6,
       "price": 4779000.0,
       "status": "buy",
-      "delta_5d": -0.0535,
-      "value_note": "falling",
+      "delta_5d": -0.0413,
+      "value_note": "stable",
       "value_ratio": 13.52,
       "lineup_prob": 90.0,
       "ff_mister_points": 68.0,
@@ -998,8 +998,8 @@
       "clause": 4779000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 65 · 4,779,000 € · buy · starter · Δ -5%",
-      "added_at": "2026-08-30T09:55:19.775081+00:00"
+      "why": "EP 65 · 4,779,000 € · buy · starter · Δ -4%",
+      "added_at": "2026-08-30T10:26:23.043149+00:00"
     },
     {
       "slot": "DF5",
@@ -1012,7 +1012,7 @@
       "ep_score": 58.8,
       "price": 1948000.0,
       "status": "keep",
-      "delta_5d": 0.1527,
+      "delta_5d": 0.1267,
       "value_note": "rising",
       "value_ratio": 30.18,
       "lineup_prob": 80.0,
@@ -1028,7 +1028,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 59 · 1,948,000 € · keep · starter · Δ 15%",
+      "why": "EP 59 · 1,948,000 € · keep · starter · Δ 13%",
       "added_at": "2026-08-26T04:12:49.026724+00:00"
     },
     {
@@ -1042,7 +1042,7 @@
       "ep_score": 42.7,
       "price": 2043000.0,
       "status": "keep",
-      "delta_5d": 0.2666,
+      "delta_5d": 0.2139,
       "value_note": "rising",
       "value_ratio": 20.9,
       "lineup_prob": 70.0,
@@ -1058,7 +1058,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 43 · 2,043,000 € · keep · bench · Δ 27%",
+      "why": "EP 43 · 2,043,000 € · keep · bench · Δ 21%",
       "added_at": "2026-08-28T03:40:18.974694+00:00"
     },
     {
@@ -1072,7 +1072,7 @@
       "ep_score": 44.1,
       "price": 674000.0,
       "status": "buy",
-      "delta_5d": 0.8827,
+      "delta_5d": 0.628,
       "value_note": "rising",
       "value_ratio": 65.43,
       "lineup_prob": 70.0,
@@ -1088,7 +1088,7 @@
       "clause": 674000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 674,000 € · buy · starter · Δ 88%",
+      "why": "EP 44 · 674,000 € · buy · starter · Δ 63%",
       "added_at": "2026-08-28T23:25:40.367139+00:00"
     },
     {
@@ -1102,7 +1102,7 @@
       "ep_score": 44.1,
       "price": 1973000.0,
       "status": "buy",
-      "delta_5d": 0.2639,
+      "delta_5d": 0.2134,
       "value_note": "rising",
       "value_ratio": 22.35,
       "lineup_prob": 70.0,
@@ -1118,7 +1118,7 @@
       "clause": 1973000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 1,973,000 € · buy · starter · Δ 26%",
+      "why": "EP 44 · 1,973,000 € · buy · starter · Δ 21%",
       "added_at": "2026-08-28T03:40:18.980211+00:00"
     },
     {
@@ -1132,7 +1132,7 @@
       "ep_score": 39.4,
       "price": 1124000.0,
       "status": "buy",
-      "delta_5d": -0.1327,
+      "delta_5d": -0.1037,
       "value_note": "falling",
       "value_ratio": 35.05,
       "lineup_prob": 70.0,
@@ -1148,8 +1148,8 @@
       "clause": 1124000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 39 · 1,124,000 € · buy · starter · Δ -13%",
-      "added_at": "2026-08-30T01:07:38.049300+00:00"
+      "why": "EP 39 · 1,124,000 € · buy · starter · Δ -10%",
+      "added_at": "2026-08-30T10:26:23.028064+00:00"
     },
     {
       "slot": "MF4",
@@ -1162,7 +1162,7 @@
       "ep_score": 36.3,
       "price": 1881000.0,
       "status": "buy",
-      "delta_5d": -0.1385,
+      "delta_5d": -0.1008,
       "value_note": "falling",
       "value_ratio": 19.3,
       "lineup_prob": 84.0,
@@ -1178,8 +1178,8 @@
       "clause": 1881000.0,
       "clause_known": true,
       "seller": "owned",
-      "why": "EP 36 · 1,881,000 € · buy · starter · Δ -14%",
-      "added_at": "2026-08-30T09:55:19.754111+00:00"
+      "why": "EP 36 · 1,881,000 € · buy · starter · Δ -10%",
+      "added_at": "2026-08-30T10:26:23.028387+00:00"
     },
     {
       "slot": "MF5",
@@ -1192,7 +1192,7 @@
       "ep_score": 24.5,
       "price": 1321000.0,
       "status": "buy",
-      "delta_5d": -0.0896,
+      "delta_5d": -0.0584,
       "value_note": "falling",
       "value_ratio": 18.55,
       "lineup_prob": 40.0,
@@ -1208,8 +1208,8 @@
       "clause": 1321000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 24 · 1,321,000 € · buy · bench · Δ -9%",
-      "added_at": "2026-08-30T09:55:19.804464+00:00"
+      "why": "EP 24 · 1,321,000 € · buy · bench · Δ -6%",
+      "added_at": "2026-08-30T10:26:23.064203+00:00"
     },
     {
       "slot": "FW1",
@@ -1222,7 +1222,7 @@
       "ep_score": 87.9,
       "price": 24358000.0,
       "status": "buy",
-      "delta_5d": 0.0011,
+      "delta_5d": 0.0018,
       "value_note": "stable",
       "value_ratio": 3.61,
       "lineup_prob": 90.0,
@@ -1252,7 +1252,7 @@
       "ep_score": 35.9,
       "price": 1344000.0,
       "status": "buy",
-      "delta_5d": -0.1784,
+      "delta_5d": -0.1375,
       "value_note": "falling",
       "value_ratio": 26.71,
       "lineup_prob": 97.0,
@@ -1268,7 +1268,7 @@
       "clause": 1344000.0,
       "clause_known": true,
       "seller": "owned",
-      "why": "EP 36 · 1,344,000 € · buy · bench · Δ -18%",
+      "why": "EP 36 · 1,344,000 € · buy · bench · Δ -14%",
       "added_at": "2026-08-28T23:25:40.404063+00:00"
     }
   ],
@@ -1301,7 +1301,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 85 · 27,267,330 € · buy · starter · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T09:55:20.129382+00:00"
+      "added_at": "2026-08-30T10:26:23.303887+00:00"
     },
     {
       "slot": "GK2",
@@ -1331,7 +1331,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 16 · 1,000,000 € · buy · bench · tándem mismo club · Δ 0%",
-      "added_at": "2026-08-30T09:55:20.129396+00:00"
+      "added_at": "2026-08-30T10:26:23.303899+00:00"
     },
     {
       "slot": "DF1",
@@ -1344,7 +1344,7 @@
       "ep_score": 80.0,
       "price": 15426000.0,
       "status": "buy",
-      "delta_5d": -0.0111,
+      "delta_5d": -0.0084,
       "value_note": "stable",
       "value_ratio": 5.19,
       "lineup_prob": 70.0,
@@ -1374,7 +1374,7 @@
       "ep_score": 78.1,
       "price": 10259000.0,
       "status": "buy",
-      "delta_5d": 0.0449,
+      "delta_5d": 0.0301,
       "value_note": "stable",
       "value_ratio": 7.61,
       "lineup_prob": 80.0,
@@ -1390,7 +1390,7 @@
       "clause": 10259000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 78 · 10,259,000 € · buy · starter · Δ 4%",
+      "why": "EP 78 · 10,259,000 € · buy · starter · Δ 3%",
       "added_at": "2026-08-28T23:25:40.384643+00:00"
     },
     {
@@ -1404,7 +1404,7 @@
       "ep_score": 75.3,
       "price": 13185000.0,
       "status": "buy",
-      "delta_5d": 0.075,
+      "delta_5d": 0.0788,
       "value_note": "rising",
       "value_ratio": 5.71,
       "lineup_prob": 95.0,
@@ -1421,7 +1421,7 @@
       "clause_known": true,
       "seller": "owned",
       "why": "EP 75 · 13,185,000 € · buy · starter · Δ 8%",
-      "added_at": "2026-08-30T09:55:20.142106+00:00"
+      "added_at": "2026-08-30T10:26:23.313259+00:00"
     },
     {
       "slot": "DF4",
@@ -1434,8 +1434,8 @@
       "ep_score": 64.6,
       "price": 4779000.0,
       "status": "buy",
-      "delta_5d": -0.0535,
-      "value_note": "falling",
+      "delta_5d": -0.0413,
+      "value_note": "stable",
       "value_ratio": 13.52,
       "lineup_prob": 90.0,
       "ff_mister_points": 68.0,
@@ -1450,8 +1450,8 @@
       "clause": 4779000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 65 · 4,779,000 € · buy · starter · Δ -5%",
-      "added_at": "2026-08-30T09:55:20.154099+00:00"
+      "why": "EP 65 · 4,779,000 € · buy · starter · Δ -4%",
+      "added_at": "2026-08-30T10:26:23.322207+00:00"
     },
     {
       "slot": "DF5",
@@ -1464,7 +1464,7 @@
       "ep_score": 58.8,
       "price": 1948000.0,
       "status": "keep",
-      "delta_5d": 0.1527,
+      "delta_5d": 0.1267,
       "value_note": "rising",
       "value_ratio": 30.18,
       "lineup_prob": 80.0,
@@ -1480,7 +1480,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 59 · 1,948,000 € · keep · starter · Δ 15%",
+      "why": "EP 59 · 1,948,000 € · keep · starter · Δ 13%",
       "added_at": "2026-08-26T04:12:49.026724+00:00"
     },
     {
@@ -1494,7 +1494,7 @@
       "ep_score": 42.7,
       "price": 2043000.0,
       "status": "keep",
-      "delta_5d": 0.2666,
+      "delta_5d": 0.2139,
       "value_note": "rising",
       "value_ratio": 20.9,
       "lineup_prob": 70.0,
@@ -1510,7 +1510,7 @@
       "clause": null,
       "clause_known": false,
       "seller": null,
-      "why": "EP 43 · 2,043,000 € · keep · bench · Δ 27%",
+      "why": "EP 43 · 2,043,000 € · keep · bench · Δ 21%",
       "added_at": "2026-08-28T03:40:18.974694+00:00"
     },
     {
@@ -1524,7 +1524,7 @@
       "ep_score": 44.1,
       "price": 674000.0,
       "status": "buy",
-      "delta_5d": 0.8827,
+      "delta_5d": 0.628,
       "value_note": "rising",
       "value_ratio": 65.43,
       "lineup_prob": 70.0,
@@ -1540,7 +1540,7 @@
       "clause": 674000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 674,000 € · buy · starter · Δ 88%",
+      "why": "EP 44 · 674,000 € · buy · starter · Δ 63%",
       "added_at": "2026-08-28T23:25:40.367139+00:00"
     },
     {
@@ -1554,7 +1554,7 @@
       "ep_score": 44.1,
       "price": 1973000.0,
       "status": "buy",
-      "delta_5d": 0.2639,
+      "delta_5d": 0.2134,
       "value_note": "rising",
       "value_ratio": 22.35,
       "lineup_prob": 70.0,
@@ -1570,7 +1570,7 @@
       "clause": 1973000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 44 · 1,973,000 € · buy · starter · Δ 26%",
+      "why": "EP 44 · 1,973,000 € · buy · starter · Δ 21%",
       "added_at": "2026-08-28T03:40:18.980211+00:00"
     },
     {
@@ -1584,7 +1584,7 @@
       "ep_score": 39.4,
       "price": 1124000.0,
       "status": "buy",
-      "delta_5d": -0.1327,
+      "delta_5d": -0.1037,
       "value_note": "falling",
       "value_ratio": 35.05,
       "lineup_prob": 70.0,
@@ -1600,8 +1600,8 @@
       "clause": 1124000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 39 · 1,124,000 € · buy · starter · Δ -13%",
-      "added_at": "2026-08-30T01:07:38.049300+00:00"
+      "why": "EP 39 · 1,124,000 € · buy · starter · Δ -10%",
+      "added_at": "2026-08-30T10:26:23.306431+00:00"
     },
     {
       "slot": "MF4",
@@ -1614,7 +1614,7 @@
       "ep_score": 36.3,
       "price": 1881000.0,
       "status": "buy",
-      "delta_5d": -0.1385,
+      "delta_5d": -0.1008,
       "value_note": "falling",
       "value_ratio": 19.3,
       "lineup_prob": 84.0,
@@ -1630,8 +1630,8 @@
       "clause": 1881000.0,
       "clause_known": true,
       "seller": "owned",
-      "why": "EP 36 · 1,881,000 € · buy · starter · Δ -14%",
-      "added_at": "2026-08-30T09:55:20.133252+00:00"
+      "why": "EP 36 · 1,881,000 € · buy · starter · Δ -10%",
+      "added_at": "2026-08-30T10:26:23.306769+00:00"
     },
     {
       "slot": "MF5",
@@ -1644,7 +1644,7 @@
       "ep_score": 24.5,
       "price": 1321000.0,
       "status": "buy",
-      "delta_5d": -0.0896,
+      "delta_5d": -0.0584,
       "value_note": "falling",
       "value_ratio": 18.55,
       "lineup_prob": 40.0,
@@ -1660,8 +1660,8 @@
       "clause": 1321000.0,
       "clause_known": true,
       "seller": "free",
-      "why": "EP 24 · 1,321,000 € · buy · bench · Δ -9%",
-      "added_at": "2026-08-30T09:55:20.183644+00:00"
+      "why": "EP 24 · 1,321,000 € · buy · bench · Δ -6%",
+      "added_at": "2026-08-30T10:26:23.343953+00:00"
     },
     {
       "slot": "FW1",
@@ -1674,7 +1674,7 @@
       "ep_score": 87.9,
       "price": 24358000.0,
       "status": "buy",
-      "delta_5d": 0.0011,
+      "delta_5d": 0.0018,
       "value_note": "stable",
       "value_ratio": 3.61,
       "lineup_prob": 90.0,
@@ -1704,7 +1704,7 @@
       "ep_score": 35.9,
       "price": 1344000.0,
       "status": "buy",
-      "delta_5d": -0.1784,
+      "delta_5d": -0.1375,
       "value_note": "falling",
       "value_ratio": 26.71,
       "lineup_prob": 97.0,
@@ -1720,7 +1720,7 @@
       "clause": 1344000.0,
       "clause_known": true,
       "seller": "owned",
-      "why": "EP 36 · 1,344,000 € · buy · bench · Δ -18%",
+      "why": "EP 36 · 1,344,000 € · buy · bench · Δ -14%",
       "added_at": "2026-08-28T23:25:40.404063+00:00"
     }
   ],
@@ -1737,7 +1737,7 @@
         "ep_score": 58.8,
         "price": 1948000.0,
         "status": "keep",
-        "delta_5d": 0.1527,
+        "delta_5d": 0.1267,
         "value_note": "rising",
         "value_ratio": 30.18,
         "lineup_prob": 80.0,
@@ -1753,7 +1753,7 @@
         "clause": null,
         "clause_known": false,
         "seller": null,
-        "why": "EP 59 · 1,948,000 € · keep · starter · Δ 15%",
+        "why": "EP 59 · 1,948,000 € · keep · starter · Δ 13%",
         "added_at": "2026-08-26T04:12:49.026724+00:00"
       },
       {
@@ -1767,7 +1767,7 @@
         "ep_score": 42.7,
         "price": 2043000.0,
         "status": "keep",
-        "delta_5d": 0.2666,
+        "delta_5d": 0.2139,
         "value_note": "rising",
         "value_ratio": 20.9,
         "lineup_prob": 70.0,
@@ -1783,7 +1783,7 @@
         "clause": null,
         "clause_known": false,
         "seller": null,
-        "why": "EP 43 · 2,043,000 € · keep · starter · Δ 27%",
+        "why": "EP 43 · 2,043,000 € · keep · starter · Δ 21%",
         "added_at": "2026-08-28T03:40:18.974694+00:00"
       },
       {
@@ -1797,7 +1797,7 @@
         "ep_score": 31.9,
         "price": 2076000.0,
         "status": "keep",
-        "delta_5d": 0.0869,
+        "delta_5d": 0.069,
         "value_note": "rising",
         "value_ratio": 15.37,
         "lineup_prob": 50.0,
@@ -1813,7 +1813,7 @@
         "clause": null,
         "clause_known": false,
         "seller": null,
-        "why": "EP 32 · 2,076,000 € · keep · bench · Δ 9%",
+        "why": "EP 32 · 2,076,000 € · keep · bench · Δ 7%",
         "added_at": "2026-08-30T09:55:19.358451+00:00"
       },
       {
@@ -1827,7 +1827,7 @@
         "ep_score": 87.2,
         "price": 23407000.0,
         "status": "keep",
-        "delta_5d": -0.0043,
+        "delta_5d": -0.0029,
         "value_note": "stable",
         "value_ratio": 3.73,
         "lineup_prob": 90.0,
@@ -1859,7 +1859,7 @@
         "ep_score": 85.0,
         "price": 10066000.0,
         "status": "buy",
-        "delta_5d": 0.0336,
+        "delta_5d": 0.0223,
         "value_note": "stable",
         "value_ratio": 8.44,
         "lineup_prob": 95.0,
@@ -1875,7 +1875,7 @@
         "clause": 10066000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 85 · 10,066,000 € · buy · starter · tándem mismo club · Δ 3%",
+        "why": "EP 85 · 10,066,000 € · buy · starter · tándem mismo club · Δ 2%",
         "added_at": "2026-08-29T23:59:10.977826+00:00"
       },
       {
@@ -1889,8 +1889,8 @@
         "ep_score": 0.0,
         "price": 1500000.0,
         "status": "buy",
-        "delta_5d": -0.0171,
-        "value_note": "stable",
+        "delta_5d": 0.1543,
+        "value_note": "rising",
         "value_ratio": 0.0,
         "lineup_prob": null,
         "ff_mister_points": null,
@@ -1905,7 +1905,7 @@
         "clause": 1500000.0,
         "clause_known": true,
         "seller": "owned",
-        "why": "EP 0 · 1,500,000 € · buy · bench · tándem mismo club · Δ -2%",
+        "why": "EP 0 · 1,500,000 € · buy · bench · tándem mismo club · Δ 15%",
         "added_at": "2026-08-29T23:59:10.977837+00:00"
       },
       {
@@ -1919,7 +1919,7 @@
         "ep_score": 80.0,
         "price": 15426000.0,
         "status": "buy",
-        "delta_5d": -0.0111,
+        "delta_5d": -0.0084,
         "value_note": "stable",
         "value_ratio": 5.19,
         "lineup_prob": 70.0,
@@ -1949,7 +1949,7 @@
         "ep_score": 78.1,
         "price": 10259000.0,
         "status": "buy",
-        "delta_5d": 0.0449,
+        "delta_5d": 0.0301,
         "value_note": "stable",
         "value_ratio": 7.61,
         "lineup_prob": 80.0,
@@ -1965,7 +1965,7 @@
         "clause": 10259000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 78 · 10,259,000 € · buy · starter · Δ 4%",
+        "why": "EP 78 · 10,259,000 € · buy · starter · Δ 3%",
         "added_at": "2026-08-28T23:25:40.384643+00:00"
       },
       {
@@ -1979,7 +1979,7 @@
         "ep_score": 71.8,
         "price": 9627000.0,
         "status": "buy",
-        "delta_5d": -0.0694,
+        "delta_5d": -0.0592,
         "value_note": "falling",
         "value_ratio": 7.46,
         "lineup_prob": 95.0,
@@ -1995,7 +1995,7 @@
         "clause": 9627000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 72 · 9,627,000 € · buy · starter · Δ -7%",
+        "why": "EP 72 · 9,627,000 € · buy · starter · Δ -6%",
         "added_at": "2026-08-28T23:25:40.389917+00:00"
       },
       {
@@ -2009,7 +2009,7 @@
         "ep_score": 44.5,
         "price": 3286000.0,
         "status": "buy",
-        "delta_5d": 0.2629,
+        "delta_5d": 0.2121,
         "value_note": "rising",
         "value_ratio": 13.54,
         "lineup_prob": 80.0,
@@ -2025,7 +2025,7 @@
         "clause": 3286000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 44 · 3,286,000 € · buy · starter · Δ 26%",
+        "why": "EP 44 · 3,286,000 € · buy · starter · Δ 21%",
         "added_at": "2026-08-24T07:14:13.760398+00:00"
       },
       {
@@ -2039,7 +2039,7 @@
         "ep_score": 44.1,
         "price": 674000.0,
         "status": "buy",
-        "delta_5d": 0.8827,
+        "delta_5d": 0.628,
         "value_note": "rising",
         "value_ratio": 65.43,
         "lineup_prob": 70.0,
@@ -2055,7 +2055,7 @@
         "clause": 674000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 44 · 674,000 € · buy · starter · Δ 88%",
+        "why": "EP 44 · 674,000 € · buy · starter · Δ 63%",
         "added_at": "2026-08-28T23:25:40.367139+00:00"
       },
       {
@@ -2069,7 +2069,7 @@
         "ep_score": 44.1,
         "price": 1973000.0,
         "status": "buy",
-        "delta_5d": 0.2639,
+        "delta_5d": 0.2134,
         "value_note": "rising",
         "value_ratio": 22.35,
         "lineup_prob": 70.0,
@@ -2085,7 +2085,7 @@
         "clause": 1973000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 44 · 1,973,000 € · buy · starter · Δ 26%",
+        "why": "EP 44 · 1,973,000 € · buy · starter · Δ 21%",
         "added_at": "2026-08-28T03:40:18.980211+00:00"
       },
       {
@@ -2099,7 +2099,7 @@
         "ep_score": 16.5,
         "price": 262000.0,
         "status": "buy",
-        "delta_5d": -0.1296,
+        "delta_5d": -0.1863,
         "value_note": "falling",
         "value_ratio": 41.25,
         "lineup_prob": 30.0,
@@ -2115,7 +2115,7 @@
         "clause": 262000.0,
         "clause_known": true,
         "seller": "free",
-        "why": "EP 16 · 262,000 € · buy · bench · Δ -13%",
+        "why": "EP 16 · 262,000 € · buy · bench · Δ -19%",
         "added_at": "2026-08-29T23:59:11.050146+00:00"
       },
       {
@@ -2129,7 +2129,7 @@
         "ep_score": 87.9,
         "price": 24358000.0,
         "status": "buy",
-        "delta_5d": 0.0011,
+        "delta_5d": 0.0018,
         "value_note": "stable",
         "value_ratio": 3.61,
         "lineup_prob": 90.0,
@@ -2159,7 +2159,7 @@
         "ep_score": 35.9,
         "price": 1344000.0,
         "status": "buy",
-        "delta_5d": -0.1784,
+        "delta_5d": -0.1375,
         "value_note": "falling",
         "value_ratio": 26.71,
         "lineup_prob": 97.0,
@@ -2175,7 +2175,7 @@
         "clause": 1344000.0,
         "clause_known": true,
         "seller": "owned",
-        "why": "EP 36 · 1,344,000 € · buy · bench · Δ -18%",
+        "why": "EP 36 · 1,344,000 € · buy · bench · Δ -14%",
         "added_at": "2026-08-28T23:25:40.404063+00:00"
       }
     ],
@@ -2186,9 +2186,9 @@
         "position": "FW",
         "ep_score": 24.7,
         "price": 538000.0,
-        "delta_5d": 0.9283,
+        "delta_5d": 0.7188,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 25 · lista a ~538,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 93%",
+        "why": "Fuera del ideal · EP 25 · lista a ~538,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 72%",
         "list_at": 538000.0,
         "expected_proceeds": 538000.0,
         "buyer_channel": "system",
@@ -2202,9 +2202,9 @@
         "position": "MF",
         "ep_score": 25.0,
         "price": 539000.0,
-        "delta_5d": 0.4036,
+        "delta_5d": 0.3019,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 25 · lista a ~539,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 40%",
+        "why": "Fuera del ideal · EP 25 · lista a ~539,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 30%",
         "list_at": 539000.0,
         "expected_proceeds": 539000.0,
         "buyer_channel": "system",
@@ -2218,9 +2218,9 @@
         "position": "MF",
         "ep_score": 28.2,
         "price": 2455000.0,
-        "delta_5d": 0.2596,
+        "delta_5d": 0.2123,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 28 · lista a ~2,455,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 26%",
+        "why": "Fuera del ideal · EP 28 · lista a ~2,455,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 21%",
         "list_at": 2455000.0,
         "expected_proceeds": 2455000.0,
         "buyer_channel": "system",
@@ -2234,9 +2234,9 @@
         "position": "DF",
         "ep_score": 34.0,
         "price": 1087000.0,
-        "delta_5d": 0.3289,
+        "delta_5d": 0.2451,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 34 · lista a ~1,087,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 33%",
+        "why": "Fuera del ideal · EP 34 · lista a ~1,087,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 25%",
         "list_at": 1087000.0,
         "expected_proceeds": 1087000.0,
         "buyer_channel": "system",
@@ -2250,9 +2250,9 @@
         "position": "MF",
         "ep_score": 34.4,
         "price": 2268000.0,
-        "delta_5d": 0.1794,
+        "delta_5d": 0.1414,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 34 · lista a ~2,268,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
+        "why": "Fuera del ideal · EP 34 · lista a ~2,268,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 14%",
         "list_at": 2268000.0,
         "expected_proceeds": 2268000.0,
         "buyer_channel": "system",
@@ -2266,9 +2266,9 @@
         "position": "DF",
         "ep_score": 39.7,
         "price": 2561000.0,
-        "delta_5d": 0.1652,
+        "delta_5d": 0.1402,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 40 · lista a ~2,561,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 17%",
+        "why": "Fuera del ideal · EP 40 · lista a ~2,561,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 14%",
         "list_at": 2561000.0,
         "expected_proceeds": 2561000.0,
         "buyer_channel": "system",
@@ -2282,9 +2282,9 @@
         "position": "MF",
         "ep_score": 39.9,
         "price": 1547000.0,
-        "delta_5d": 0.1845,
+        "delta_5d": 0.1425,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 40 · lista a ~1,547,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
+        "why": "Fuera del ideal · EP 40 · lista a ~1,547,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 14%",
         "list_at": 1547000.0,
         "expected_proceeds": 1547000.0,
         "buyer_channel": "system",
@@ -2298,9 +2298,9 @@
         "position": "DF",
         "ep_score": 41.9,
         "price": 3181000.0,
-        "delta_5d": 0.2249,
+        "delta_5d": 0.1781,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~3,181,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 22%",
+        "why": "Fuera del ideal · EP 42 · lista a ~3,181,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
         "list_at": 3181000.0,
         "expected_proceeds": 3181000.0,
         "buyer_channel": "system",
@@ -2314,9 +2314,9 @@
         "position": "DF",
         "ep_score": 41.9,
         "price": 578000.0,
-        "delta_5d": 1.3306,
+        "delta_5d": 0.7622,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~578,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 133%",
+        "why": "Fuera del ideal · EP 42 · lista a ~578,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 76%",
         "list_at": 578000.0,
         "expected_proceeds": 578000.0,
         "buyer_channel": "system",
@@ -2330,9 +2330,9 @@
         "position": "MF",
         "ep_score": 42.5,
         "price": 5919000.0,
-        "delta_5d": 0.0667,
+        "delta_5d": 0.0532,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 42 · lista a ~5,919,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 7%",
+        "why": "Fuera del ideal · EP 42 · lista a ~5,919,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 5%",
         "list_at": 5919000.0,
         "expected_proceeds": 5919000.0,
         "buyer_channel": "system",
@@ -2346,9 +2346,9 @@
         "position": "MF",
         "ep_score": 42.6,
         "price": 3172000.0,
-        "delta_5d": 0.2371,
+        "delta_5d": 0.1898,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 43 · lista a ~3,172,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 24%",
+        "why": "Fuera del ideal · EP 43 · lista a ~3,172,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 19%",
         "list_at": 3172000.0,
         "expected_proceeds": 3172000.0,
         "buyer_channel": "system",
@@ -2362,9 +2362,9 @@
         "position": "MF",
         "ep_score": 43.8,
         "price": 3643000.0,
-        "delta_5d": 0.2818,
+        "delta_5d": 0.2278,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 44 · lista a ~3,643,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 28%",
+        "why": "Fuera del ideal · EP 44 · lista a ~3,643,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 23%",
         "list_at": 3643000.0,
         "expected_proceeds": 3643000.0,
         "buyer_channel": "system",
@@ -2378,9 +2378,9 @@
         "position": "MF",
         "ep_score": 44.6,
         "price": 1476000.0,
-        "delta_5d": 0.3016,
+        "delta_5d": 0.2456,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 45 · lista a ~1,476,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 30%",
+        "why": "Fuera del ideal · EP 45 · lista a ~1,476,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 25%",
         "list_at": 1476000.0,
         "expected_proceeds": 1476000.0,
         "buyer_channel": "system",
@@ -2394,9 +2394,9 @@
         "position": "MF",
         "ep_score": 45.9,
         "price": 5269000.0,
-        "delta_5d": 0.2401,
+        "delta_5d": 0.1859,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 46 · lista a ~5,269,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 24%",
+        "why": "Fuera del ideal · EP 46 · lista a ~5,269,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 19%",
         "list_at": 5269000.0,
         "expected_proceeds": 5269000.0,
         "buyer_channel": "system",
@@ -2410,9 +2410,9 @@
         "position": "MF",
         "ep_score": 46.6,
         "price": 8917000.0,
-        "delta_5d": 0.0691,
+        "delta_5d": 0.0634,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 47 · lista a ~8,917,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 7%",
+        "why": "Fuera del ideal · EP 47 · lista a ~8,917,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 6%",
         "list_at": 8917000.0,
         "expected_proceeds": 8917000.0,
         "buyer_channel": "system",
@@ -2426,9 +2426,9 @@
         "position": "DF",
         "ep_score": 48.1,
         "price": 1754000.0,
-        "delta_5d": 0.2164,
+        "delta_5d": 0.1772,
         "value_note": "rising",
-        "why": "Fuera del ideal · EP 48 · lista a ~1,754,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 22%",
+        "why": "Fuera del ideal · EP 48 · lista a ~1,754,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 18%",
         "list_at": 1754000.0,
         "expected_proceeds": 1754000.0,
         "buyer_channel": "system",
@@ -2442,9 +2442,9 @@
         "position": "GK",
         "ep_score": 70.4,
         "price": 7756000.0,
-        "delta_5d": 0.0596,
-        "value_note": "rising",
-        "why": "Fuera del ideal · EP 70 · lista a ~7,756,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 6%",
+        "delta_5d": 0.0466,
+        "value_note": "stable",
+        "why": "Fuera del ideal · EP 70 · lista a ~7,756,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ 5%",
         "list_at": 7756000.0,
         "expected_proceeds": 7756000.0,
         "buyer_channel": "system",
@@ -2458,7 +2458,7 @@
         "position": "FW",
         "ep_score": 73.7,
         "price": 16071000.0,
-        "delta_5d": -0.0134,
+        "delta_5d": -0.0094,
         "value_note": "stable",
         "why": "Fuera del ideal · EP 74 · lista a ~16,071,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h) · Δ -1%",
         "list_at": 16071000.0,
@@ -2584,39 +2584,7 @@
     }
   ],
   "slots": [],
-  "dropped": [
-    {
-      "slot": "MF4",
-      "position": "MF",
-      "role": "starter",
-      "player_id": "33726",
-      "name": "Hugo Álvarez",
-      "team": "Celta",
-      "team_id": "5",
-      "ep_score": 39.4,
-      "price": 1151000.0,
-      "status": "dropped",
-      "delta_5d": -0.1119,
-      "value_note": "falling",
-      "value_ratio": 34.23,
-      "lineup_prob": 70.0,
-      "ff_mister_points": 110.0,
-      "ff_mister_avg": 3.93,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "owner_name": null,
-      "owner_id": null,
-      "acquisition": "free",
-      "clause": 1151000.0,
-      "clause_known": true,
-      "seller": "free",
-      "why": "EP 39 · 1,151,000 € · buy · starter · Δ -11%",
-      "added_at": "2026-08-30T01:07:38.049300+00:00",
-      "miss_days": 1
-    }
-  ],
+  "dropped": [],
   "patch_policy": {
     "allow": false,
     "max_spend": 2500000.0
