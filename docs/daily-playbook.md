@@ -4,14 +4,19 @@ La pestaña **Hoy** cuenta una sola historia: el **once objetivo de la jornada**
 (`gw_target_xi`, 11 del pool ordenados por xPts, da igual si los tienes), el
 hueco frente a tu once (`N/11` exactos y Δ xPts) y solo los movimientos de
 este ciclo que pueden cerrar un hueco alcanzable (mercado de hoy, libre o
-cláusula pagable). El cruce (rival, casa/fuera, H2H de esta temporada) explica
-la ficha; no inventa un segundo ranking. SofaScore no se scrapea: si la liga
+cláusula pagable). Un hueco **casi cubierto** (tu titular ya rinde ≥85% del
+objetivo) se marca en Hoy y **no** empuja puja. El cruce (rival, casa/fuera,
+H2H de esta temporada) explica la ficha; no inventa un segundo ranking. SofaScore no se scrapea: si la liga
 puntúa en ese provider, Mister ya entrega esos puntos.
 
 El xPts encoge la producción hacia el histórico FF mientras hay menos de 5
 partidos útiles (la media Mister y la racha corta no se cuentan dos veces).
 Un mal arranque no tumba a un fijo histórico; sí lo hace perder el puesto,
 una lesión o un blank.
+
+La **plantilla perfecta** de la pestaña Plantilla (operable / aspiracional /
+cláusulas pagables) es brújula de 15, no la cola de Hoy. El modo cláusulas
+no cambia el ciclo ni el once objetivo de jornada.
 
 El ciclo de una jornada en Mister siempre es el mismo:
 
@@ -49,8 +54,9 @@ Los cortes están en las constantes `HOURS_MATCHDAY`, `HOURS_EVE`,
 - **Once y capitán** (siempre lo primero, es lo único que puntúa): huecos con cero
   probable (`xi_ceros`), dudas pendientes de confirmar, titulares con partido muy
   exigente y cambio de capitán con su motivo y su alternativa.
-- **Dinero**: saldo negativo con la jornada encima, que en muchas ligas anula los
-  puntos.
+- **Dinero**: aviso si estás en negativo. En esta liga puedes pujar o clausular
+  en negativo; el corte es la **deuda máxima**, no el cero. Listar recupera
+  margen, no desbloquea el click de hoy.
 - **Mercado según fase**: fichar y listar ventas en la ventana de compra; última
   llamada en confirmación; en víspera y día de partido el playbook **sigue a la
   cola** (si hay `buy_now` solvente, ficha esos con aviso de prima; si no, no

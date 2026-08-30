@@ -323,9 +323,9 @@ def evaluate_bid_finance(
     liquidity_coverage: float = 0.0,
 ) -> dict[str, Any]:
     """
-    Dos techos: bid_cap (Mister maxDebt) y solvencia al inicio de jornada objetivo.
-    Deuda OK hasta maxDebt si hay cobertura (ventas/ofertas/rescindir) a tiempo.
-    budget_fit: comfortable|tight|stretch|blocked
+    Corte duro: bid_cap (Mister maxDebt). Quedar en negativo es legal.
+    debt_risk = chip (la acción te deja en negativo), no veto.
+    budget_fit: comfortable|tight|stretch|blocked sobre el margen, no sobre caja ≥ 0.
     """
     bal = float(balance or 0)
     bid_cap = mister_bid_cap(bal, max_debt)
@@ -359,7 +359,7 @@ def evaluate_bid_finance(
         "current_jornada_started": bool(deadline.get("current_jornada_started")),
         "solvency_strict": strict,
         "debt_risk": False,
-        "solvency_ok": True,
+        "solvency_ok": bid_cap > 0,
         "solvency_blocked": False,
         "projected_after": liquidity,
         "budget_fit": "blocked",
@@ -368,53 +368,41 @@ def evaluate_bid_finance(
     }
 
     if cost is None:
-        out["solvency_ok"] = liquidity >= 0
         return out
 
     c = float(cost)
     projected_no_sells = liquidity - c
     projected = projected_no_sells + coverage
     out["projected_after"] = projected
-    out["debt_risk"] = projected_no_sells < 0 and c <= bid_cap
 
     if c <= 0:
         out["budget_fit"] = "comfortable"
-        out["solvency_ok"] = liquidity >= 0
+        out["solvency_ok"] = True
         out["debt_risk"] = False
         return out
 
-    # Techo Mister
+    uses_debt = projected_no_sells < 0
+    out["debt_risk"] = uses_debt and c <= bid_cap
+
+    # Techo Mister: único bloqueo
     if c > bid_cap:
         if min_cost is not None and float(min_cost) <= bid_cap:
             out["budget_fit"] = "stretch"
+            out["solvency_ok"] = True
+            out["solvency_blocked"] = False
+            out["debt_risk"] = uses_debt
         else:
             out["budget_fit"] = "blocked"
-        if projected < 0:
             out["solvency_ok"] = False
-            if strict and coverage <= 0:
-                out["solvency_blocked"] = True
-        return out
-
-    # Solvencia: positivo al inicio de la jornada objetivo
-    if projected < 0:
-        out["solvency_ok"] = False
-        out["debt_risk"] = True
-        if strict and coverage <= 0:
             out["solvency_blocked"] = True
-            out["budget_fit"] = "blocked"
-            return out
-        # Con plan de cobro o fuera de ventana → stretch (deuda temporal OK)
-        out["budget_fit"] = "stretch"
-        out["solvency_ok"] = coverage > 0 and (projected_no_sells + coverage) >= 0
-        if out["solvency_ok"]:
-            out["solvency_blocked"] = False
+            out["debt_risk"] = False
         return out
 
-    if out["debt_risk"]:
-        out["budget_fit"] = "tight"
-        out["solvency_ok"] = True
-        return out
-    if c <= max(liquidity, 0.0) * 0.40:
+    out["solvency_ok"] = True
+    out["solvency_blocked"] = False
+    if uses_debt:
+        out["budget_fit"] = "stretch"
+    elif bid_cap > 0 and c <= bid_cap * 0.40:
         out["budget_fit"] = "comfortable"
     else:
         out["budget_fit"] = "tight"
@@ -435,7 +423,7 @@ def budget_fit(
     cash_lag_hours: float | None = None,
     liquidity_coverage: float = 0.0,
 ) -> str:
-    """comfortable|tight|stretch|blocked (techo Mister + solvencia jornada objetivo)."""
+    """comfortable|tight|stretch|blocked (techo Mister maxDebt; negativo legal)."""
     return str(
         evaluate_bid_finance(
             cost,
@@ -4825,15 +4813,17 @@ def allocate_clause_bids(
     *,
     market_reserved: float = 0.0,
     cash_reserve: float | None = None,
+    max_debt: float | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Mutual exclusivity: ordena por ROI y asigna con saldo simulado.
-    Máx. 1 cara (≥40% liquidez) + 1 barata si el residual lo permite.
+    Mutual exclusivity: ordena por ROI y asigna contra el margen de deuda.
+    Máx. 1 cara (≥40% del techo) + 1 barata si el residual lo permite.
     """
-    bal = max(0.0, float(balance or 0))
+    bal = float(balance or 0)
+    cap = mister_bid_cap(bal, max_debt)
     reserved = max(0.0, float(market_reserved or 0))
-    sim = max(0.0, bal - reserved)
-    expensive_floor = bal * 0.40
+    sim = max(0.0, cap - reserved)
+    expensive_floor = cap * 0.40
     n_exp = 0
     n_cheap = 0
     best_name: str | None = None
@@ -4861,9 +4851,9 @@ def allocate_clause_bids(
             row["affordable"] = False
             row["urgency"] = "low"
             note = (
-                f"caja ya comprometida en mejor cláusula ({best_name})"
+                f"margen ya comprometido en mejor cláusula ({best_name})"
                 if best_name
-                else f"caja comprometida / residual {sim:,.0f} € < cláusula {cost:,.0f} €"
+                else f"margen comprometido / residual {sim:,.0f} € < cláusula {cost:,.0f} €"
             )
             if note not in why:
                 row["why"] = f"{why}; {note}" if why else note
@@ -4911,7 +4901,7 @@ def allocate_clause_bids(
                 row["bid"] = None
                 row["affordable"] = False
                 row["urgency"] = "low"
-                note = "upgrade bueno, pero reserva caja para carencias de mercado"
+                note = "upgrade bueno, pero reserva margen para carencias de mercado"
                 if note not in why:
                     row["why"] = f"{why}; {note}" if why else note
                 row["priority_score"] = max(
@@ -4969,8 +4959,8 @@ def build_rival_upgrade_targets(
 ) -> list[dict[str, Any]]:
     """
     Objetivos en plantillas rivales.
-    clause_bid solo si clause_known + finance OK + improves_owned + ROI/prima OK,
-    con mutual exclusivity sobre el saldo (máx. 1 cara + 1 barata).
+    clause_bid si clause_known + cabe en maxDebt + improves_owned + ROI/prima OK,
+    con mutual exclusivity sobre el margen de deuda (máx. 1 cara + 1 barata).
     """
     squad = list(me.get("squad") or [])
     bal = _money(balance if balance is not None else me.get("balance"))
@@ -5125,33 +5115,30 @@ def build_rival_upgrade_targets(
             urgency = "low"
             why_bits.append("prioridad: cubre antes tu carencia crítica")
             risk = "low"
-        elif clause_known and bf in ("comfortable", "tight") and roi_ok:
+        elif clause_known and bf in ("comfortable", "tight", "stretch") and roi_ok:
             action = "clause_bid"
             urgency = "high" if fills or bf == "comfortable" else "medium"
             why_bits.append(f"cláusula {clause:,.0f} €")
-            risk = "medium" if bf == "tight" else "low"
-        elif clause_known and bf in ("comfortable", "tight") and not roi_ok:
+            if bf == "stretch":
+                cap_txt = float((fin or {}).get("bid_cap") or 0)
+                why_bits.append(f"cabe en el techo de deuda ({cap_txt:,.0f} €)")
+            risk = "medium" if bf in ("tight", "stretch") else "low"
+        elif clause_known and bf in ("comfortable", "tight", "stretch") and not roi_ok:
             action = "scout"
             urgency = "low"
             why_bits.append(roi_why or "mejora cara vs valor")
             if clause:
                 why_bits.append(f"cláusula {clause:,.0f} €")
             risk = "low"
-        elif clause_known and bf in ("stretch", "blocked"):
+        elif clause_known and bf == "blocked":
             action = "scout"
             urgency = "low"
-            if fin and fin.get("solvency_blocked"):
-                why_bits.append(
-                    f"bloqueado: solvencia (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
-                    if clause
-                    else "bloqueado: solvencia pre-jornada"
-                )
-            else:
-                why_bits.append(
-                    f"mejora clara pero caja corta (cláusula {clause:,.0f} € / saldo {bal:,.0f} €)"
-                    if clause
-                    else "mejora clara pero caja corta"
-                )
+            cap_txt = float((fin or {}).get("bid_cap") or 0)
+            why_bits.append(
+                f"supera techo Mister (cláusula {clause:,.0f} € / techo {cap_txt:,.0f} €)"
+                if clause
+                else "supera techo Mister"
+            )
             risk = "low"
         else:
             action = "scout"
@@ -5208,7 +5195,9 @@ def build_rival_upgrade_targets(
     # Reserva caja de mercado si hay carencias (no gastar todo en cláusulas)
     reserved = float(market_reserved) if market_reserved is not None else 0.0
 
-    results = allocate_clause_bids(results, bal, market_reserved=reserved)
+    results = allocate_clause_bids(
+        results, bal, market_reserved=reserved, max_debt=max_debt
+    )
 
     capped: list[dict[str, Any]] = []
     n_clause = 0
@@ -5360,7 +5349,7 @@ def annotate_market_budget_risk(
             "budget_fit": bf,
             "target_tier": tier,
         })
-        row["affordable"] = bf in ("comfortable", "tight")
+        row["affordable"] = bf in ("comfortable", "tight", "stretch")
         # Nunca Alta si aspiracional (refuerzo tras annotate)
         if tier == "aspirational" and row.get("priority") == "Alta":
             row["priority"] = "Media"

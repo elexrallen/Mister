@@ -9,9 +9,45 @@ from __future__ import annotations
 from typing import Any
 
 import config
-from competitive_actions import build_recommended_gw_xi, _money
+from competitive_actions import build_recommended_gw_xi, mister_bid_cap, _money
 
 NEAR_XPTS_RATIO = 0.85
+
+# Señales que el mercado / plantilla pisan sobre el catálogo crudo
+_OVERLAY_KEYS = (
+    "gw_lineup_prob",
+    "gw_starter",
+    "gw_doubt",
+    "gw_out",
+    "gw_blank",
+    "gw_probable_xi",
+    "gw_confirmed",
+    "gw_opponent",
+    "on_daily_market",
+    "seller",
+    "owner_id",
+    "owner_name",
+    "clause",
+    "clause_known",
+    "external",
+    "ff_mister_avg",
+    "ff_prior_avg",
+    "xpts",
+    "xpts_why",
+    "xpts_p_play",
+    "xpts_floor",
+    "xpts_base",
+    "fdr",
+    "fdr_why",
+    "fdr_multiplier",
+    "fdr_label",
+    "matchup",
+    "is_home",
+    "opponent_name",
+    "fotmob_stats",
+    "price",
+    "market_value",
+)
 
 
 def _pid(row: dict[str, Any] | None) -> str:
@@ -40,29 +76,39 @@ def resolve_ownership(
     squad_ids: set[str],
     balance: float,
     clauses_enabled: bool,
+    market_ids: set[str] | None = None,
+    max_debt: float | None = None,
 ) -> tuple[str, str]:
     """
     (`ownership`, `reachable`).
 
     reachable: daily_market | free | clause | no
     Para `owned` reachable es vacío (ya lo tienes).
+    Mercado del día gana a un owner rival.
+    Cláusula reachable si cabe en el techo de deuda, no en caja ≥ 0.
     """
     pid = _pid(player)
     oid = str(player.get("owner_id") or "").strip()
     mine = bool(pid and pid in squad_ids) or (bool(my_id) and oid == str(my_id))
     if mine:
         return "owned", ""
-    if player.get("on_daily_market") or player.get("seller") == "market":
+    on_market = bool(
+        player.get("on_daily_market")
+        or player.get("seller") == "market"
+        or (pid and pid in (market_ids or set()))
+    )
+    if on_market:
         return "daily_market", "daily_market"
     if not oid or oid in ("0", "None"):
         return "free", "free"
     clause = _f(player.get("clause"))
+    cap = mister_bid_cap(balance, max_debt)
     if (
         clauses_enabled
         and player.get("clause_known")
         and clause is not None
         and clause > 0
-        and clause <= balance + 1
+        and clause <= cap + 1
     ):
         return "rival", "clause"
     return "rival", "no"
@@ -118,6 +164,79 @@ def _pick_best_formation(
     )
 
 
+def merge_target_universe(
+    pool: list[dict[str, Any]] | None,
+    *overlays: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    """
+    Universo del once objetivo: catálogo + previa FF y flags de mercado.
+
+    El pool crudo no trae `gw_lineup_prob` ni `on_daily_market`. Las copias
+    de plantilla/mercado sí: se fusionan por id y el overlay gana.
+    """
+    by_id: dict[str, dict[str, Any]] = {}
+    for src in (pool, *overlays):
+        for raw in src or []:
+            if not isinstance(raw, dict):
+                continue
+            pid = _pid(raw)
+            if not pid:
+                continue
+            if pid not in by_id:
+                by_id[pid] = dict(raw)
+                continue
+            base = by_id[pid]
+            for key in _OVERLAY_KEYS:
+                if raw.get(key) is not None:
+                    base[key] = raw[key]
+            if raw.get("on_daily_market"):
+                base["on_daily_market"] = True
+                if raw.get("seller"):
+                    base["seller"] = raw["seller"]
+            ext = raw.get("external")
+            if isinstance(ext, dict):
+                merged_ext = dict(base.get("external") or {})
+                merged_ext.update({k: v for k, v in ext.items() if v is not None})
+                base["external"] = merged_ext
+    return list(by_id.values())
+
+
+def _slot_why(row: dict[str, Any], src: dict[str, Any]) -> str:
+    """Una frase: titularidad · rival/casa · FDR. H2H de temporada al final."""
+    bits: list[str] = []
+    p_play = _f(row.get("p_play"))
+    if p_play is None:
+        p_play = _f(src.get("xpts_p_play"))
+    if p_play is not None:
+        bits.append(f"Titular {p_play * 100:.0f}%")
+    elif row.get("prob") is not None:
+        bits.append(f"Titular {float(row['prob']):.0f}%")
+    opp = row.get("opponent_name") or src.get("opponent_name") or row.get("opponent")
+    is_home = row.get("is_home")
+    if is_home is None:
+        is_home = src.get("is_home")
+    where = "en casa" if is_home is True else ("fuera" if is_home is False else "")
+    if opp:
+        bits.append(f"vs {opp}" + (f" {where}" if where else ""))
+    label = row.get("fdr_label") or src.get("fdr_label")
+    if label:
+        bits.append(str(label))
+    mu = src.get("matchup") if isinstance(src.get("matchup"), dict) else None
+    vs = (mu or {}).get("vs_opponent") if isinstance(mu, dict) else None
+    last = (vs or {}).get("last") if isinstance(vs, dict) else None
+    if last and last.get("points") is not None:
+        last_where = (
+            "en casa"
+            if last.get("is_home") is True
+            else ("fuera" if last.get("is_home") is False else "")
+        )
+        bits.append(
+            f"vs este rival: {last.get('points')} pts"
+            + (f" ({last_where})" if last_where else "")
+        )
+    return " · ".join(bits)
+
+
 def _best_owned_at_pos(
     recommended_xi: dict[str, Any] | None,
     position: str,
@@ -150,13 +269,21 @@ def build_gw_target_xi(
     my_id = str(me.get("team_id") or me.get("id_uc") or "")
     squad_ids = _squad_ids(squad)
     balance = _money(me.get("balance"))
+    try:
+        max_debt = float(me["max_debt"]) if me.get("max_debt") is not None else None
+    except (TypeError, ValueError):
+        max_debt = None
     clauses_enabled = bool(rules.get("clauses"))
 
     by_id: dict[str, dict[str, Any]] = {}
+    market_ids: set[str] = set()
     for src in list(pool or []) + list(squad or []):
         pid = _pid(src)
-        if pid:
-            by_id[pid] = src
+        if not pid:
+            continue
+        by_id[pid] = src
+        if src.get("on_daily_market") or src.get("seller") == "market":
+            market_ids.add(pid)
 
     assembled = _pick_best_formation(
         list(pool or []),
@@ -178,6 +305,8 @@ def build_gw_target_xi(
             squad_ids=squad_ids,
             balance=balance,
             clauses_enabled=clauses_enabled,
+            market_ids=market_ids,
+            max_debt=max_debt,
         )
         out["ownership"] = ownership
         out["reachable"] = reachable or None
@@ -190,9 +319,8 @@ def build_gw_target_xi(
         matchup = src.get("matchup") if isinstance(src.get("matchup"), dict) else None
         if matchup:
             out["matchup"] = matchup
-            extra = matchup.get("why")
-            if extra and extra not in str(out.get("why") or ""):
-                out["why"] = f"{out.get('why') or ''} · {extra}".strip(" ·")
+        out["why"] = _slot_why(out, src)
+        out["near"] = False
         if ownership == "owned":
             owned_ids.append(pid)
         else:
@@ -222,6 +350,7 @@ def build_gw_target_xi(
                 "near": almost,
             }
             missing.append(slot)
+            out["near"] = almost
             if almost:
                 near.append(slot)
         xi.append(out)

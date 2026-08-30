@@ -408,8 +408,8 @@ BOOTSTRAP_CYCLE_END_URGENT_HOURS = float(
     os.environ.get("BOOTSTRAP_CYCLE_END_URGENT_HOURS", "3")
 )
 
-# Solvencia: positivo al INICIO de la jornada que puntúa (esta o la siguiente).
-# Ventana strict = deadline cercano sin plan de cobro a tiempo.
+# Solvencia: el corte duro es maxDebt. Quedar en negativo es legal.
+# Ventana strict se conserva como contexto de timing, no como veto.
 SOLVENCY_STRICT_HOURS = 48
 # Margen de seguridad para cobro de ventas antes del kickoff de jornada (h).
 SOLVENCY_SETTLE_BUFFER_HOURS = 2

@@ -37,12 +37,12 @@ PHASE_LABELS = {
 
 PHASE_FOCUS = {
     "dia_partido": "El once ya casi no se toca: cierra capitán y suplencias antes de cada kickoff.",
-    "visperas": "Cierra el once y asegúrate de positivo al pitido: en negativo al arrancar no se puntúa.",
+    "visperas": "Cierra el once. Puedes pujar en negativo: el corte es la deuda máxima, no el cero.",
     "confirmacion": "Salen las previas. Confirma titularidades y corrige el once antes de que suban los precios.",
     "ventana_compra": "Gasta en el mejor 15 ahora. Liquidez = jugadores listados, no caja congelada.",
     "post_jornada": "Tras el cobro de la jornada, recompón el 15 y deja listados a los débiles.",
     "pretemporada": "Monta el mejor 15 posible con el mercado de hoy; lista débiles para el siguiente ciclo.",
-    "jornada_en_curso": "Jornada en juego: puedes quedar en negativo; vuelve a + antes del inicio de la siguiente.",
+    "jornada_en_curso": "Jornada en juego: puedes quedar en negativo. El techo es la deuda máxima.",
 }
 
 PHASE_FOCUS_FIXED = {
@@ -138,6 +138,10 @@ def build_daily_playbook(
     rules = league_rules or {}
     diag = diagnostico or {}
     balance = _f((me or {}).get("balance")) or 0.0
+    try:
+        max_debt = float((me or {}).get("max_debt")) if (me or {}).get("max_debt") is not None else None
+    except (TypeError, ValueError):
+        max_debt = None
     bootstrap = diag.get("bootstrap_xi") or {}
     market_cycle = diag.get("market_cycle") or {}
     fixed = str(rules.get("market_mode") or "").strip().lower() == "fixed"
@@ -397,27 +401,17 @@ def build_daily_playbook(
             priority="Baja",
         )
 
-    # --- Dinero: positivo al inicio de la jornada que puntúa ---
-    if balance < 0 and phase in ("confirmacion", "visperas", "dia_partido"):
+    # --- Dinero: aviso de margen, no veto por signo ---
+    if balance < 0:
+        cap_txt = f"{max_debt:,.0f} €" if max_debt is not None else "la deuda máxima"
         add(
             "saldo_negativo",
-            "Saldo negativo antes de la jornada",
-            f"Tienes {balance:,.0f} €. Debes estar en positivo al arrancar esta jornada "
-            "para puntuar: "
-            + ("vende o cancela fichajes pendientes." if fixed else "vende o cancela pujas."),
-            priority="Alta",
-        )
-        warnings.append("Saldo negativo con la jornada encima.")
-    elif balance < 0 and phase == "jornada_en_curso":
-        add(
-            "saldo_negativo_siguiente",
-            "Negativo OK ahora — planifica la siguiente jornada",
-            f"Tienes {balance:,.0f} €. Esta jornada ya arrancó: el negativo no anula "
-            "sus puntos. Antes del inicio de la siguiente, acepta ofertas / lista / "
-            "rescinde para volver a positivo.",
+            "En deuda — el techo es maxDebt",
+            f"Tienes {balance:,.0f} €. Puedes seguir pujando o clausulando mientras "
+            f"no pases {cap_txt}. Listar recupera margen, no desbloquea el click de hoy.",
             priority="Media",
-            related=[a.get("player_id") for a in offer_actions[:3]],
         )
+        warnings.append("Saldo negativo: vigila el techo de deuda.")
     if offer_actions:
         needed_offers = [a for a in offer_actions if a.get("offer_needed")]
         surplus_offers = [a for a in offer_actions if not a.get("offer_needed")]

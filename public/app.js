@@ -667,6 +667,9 @@
       DATA.action_plan,
       (DATA.gw_target_xi && DATA.gw_target_xi.xi) || [],
       (DATA.recommended_xi && DATA.recommended_xi.xi) || [],
+      (DATA.target_board && DATA.target_board.perfect_squad) || [],
+      (DATA.target_board && DATA.target_board.perfect_squad_aspirational) || [],
+      (DATA.target_board && DATA.target_board.perfect_squad_clauses) || [],
     ];
     for (const list of pools) {
       if (!list || !list.length) continue;
@@ -907,6 +910,9 @@
     const title = document.getElementById("matchday-title");
     if (title) title.textContent = `${j} · ${form}`;
     const coverage = rec.coverage || {};
+    const nearIds = new Set(
+      (coverage.near_slots || []).map((s) => String(s.player_id || "")).filter(Boolean)
+    );
     const summary = document.getElementById("matchday-summary");
     if (summary) {
       const n = xi.length;
@@ -1078,10 +1084,14 @@
                   ? `<span class="matchday-xpts-chip">${Number(r.xpts).toFixed(1)} xPts</span>`
                   : "";
               const own = useTarget ? ownershipBadge(r.ownership) : "";
+              const nearChip =
+                useTarget && (r.near || nearIds.has(String(r.player_id || "")))
+                  ? `<span class="badge badge-duda">Casi cubierto</span>`
+                  : "";
               return `<div class="matchday-xi-card${r.slot_risk ? " is-risk" : ""}${
                 r.ownership === "owned" ? " is-owned" : ""
               }">
-                ${signalBadge(r.signal)}${own}
+                ${signalBadge(r.signal)}${own}${nearChip}
                 <button type="button" class="player-link" data-player-id="${escapeHtml(
                   String(r.player_id || "")
                 )}">${escapeHtml(r.name || "—")}</button>${capMark}
@@ -1188,13 +1198,21 @@
     const board = src && src.target_board;
     const operableSquad = (board && board.perfect_squad) || [];
     const aspSquad = (board && board.perfect_squad_aspirational) || [];
+    const clSquad = (board && board.perfect_squad_clauses) || [];
     if (!board || !operableSquad.length) {
       panel.hidden = true;
       return;
     }
     panel.hidden = false;
 
+    const clausesOn =
+      ((src.league || {}).rules || {}).clauses !== false && !isFixedMarket(src);
     const toggle = document.getElementById("objectives-mode-toggle");
+    const clBtn = toggle && toggle.querySelector('[data-ideal-mode="clauses"]');
+    if (clBtn) clBtn.hidden = !(clausesOn && clSquad.length);
+    if (idealMode === "clauses" && (!clausesOn || !clSquad.length)) {
+      idealMode = "operable";
+    }
     if (toggle && !toggle.dataset.bound) {
       toggle.dataset.bound = "1";
       toggle.querySelectorAll("[data-ideal-mode]").forEach((btn) => {
@@ -1214,29 +1232,46 @@
     }
 
     const isAsp = idealMode === "aspirational" && aspSquad.length;
-    const squad = isAsp ? aspSquad : operableSquad;
+    const isCl = idealMode === "clauses" && clSquad.length;
+    const squad = isCl ? clSquad : isAsp ? aspSquad : operableSquad;
     const wealth = board.wealth || {};
-    const totals = isAsp ? board.totals_aspirational || {} : board.totals || {};
-    const summary = isAsp ? board.summary_aspirational || {} : board.summary || {};
+    const totals = isCl
+      ? board.totals_clauses || {}
+      : isAsp
+        ? board.totals_aspirational || {}
+        : board.totals || {};
+    const summary = isCl
+      ? board.summary_clauses || {}
+      : isAsp
+        ? board.summary_aspirational || {}
+        : board.summary || {};
     const operableIds = new Set(operableSquad.map((r) => String(r.player_id || "")));
     const formation =
       (summary && summary.formation) ||
-      (isAsp ? board.formation_aspirational : board.formation) ||
+      (isCl
+        ? board.formation_clauses
+        : isAsp
+          ? board.formation_aspirational
+          : board.formation) ||
       (totals && totals.formation) ||
       "";
 
     const title = document.getElementById("objectives-title");
     if (title) {
       const formBit = formation ? ` · ${formation}` : "";
-      title.textContent = isAsp
-        ? `Plantilla perfecta · Aspiracional${formBit}`
-        : `Plantilla perfecta · Operable${formBit}`;
+      title.textContent = isCl
+        ? `Plantilla perfecta · Cláusulas${formBit}`
+        : isAsp
+          ? `Plantilla perfecta · Aspiracional${formBit}`
+          : `Plantilla perfecta · Operable${formBit}`;
     }
     const kicker = panel.querySelector(".objectives-kicker");
     if (kicker) {
-      kicker.textContent = isAsp
-        ? `Ideal máx EP · formación óptima${formation ? ` (${formation})` : ""} · no mueve funding`
-        : `Rotar plantilla · formación óptima por EP${formation ? ` (${formation})` : ""} · oportunidad EP/€`;
+      kicker.textContent = isCl
+        ? `Ideal con cláusulas pagables${formation ? ` (${formation})` : ""} · no mueve funding`
+        : isAsp
+          ? `Ideal máx EP · formación óptima${formation ? ` (${formation})` : ""} · no mueve funding`
+          : `Rotar plantilla · formación óptima por EP${formation ? ` (${formation})` : ""} · oportunidad EP/€`;
     }
     const sumEl = document.getElementById("objectives-summary");
     if (sumEl) {
@@ -1256,7 +1291,7 @@
         summary.bench != null
           ? summary.bench
           : squad.filter((r) => r.role === "bench").length;
-      const fundedBit = isAsp
+      const fundedBit = isCl || isAsp
         ? "vista informativa"
         : totals.funded
           ? "financiable"
@@ -1265,10 +1300,16 @@
         ? " · incompleta (faltan titulares o banquillo de campo ≥100 pts)"
         : "";
       const formTxt = formation ? `formación ${formation} · ` : "";
-      const rule = isAsp
-        ? `${formTxt}titulares ≥70% + hist · máx EP`
-        : `${formTxt}titulares ≥70% + hist · oportunidad EP/€`;
-      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (${rule}) · ${bench} banquillo (campo ≥100 pts; GK2 = tándem) · ${keep} keep · ${buy} fichar · ${fundedBit}${incomplete}`;
+      const rule = isCl
+        ? `${formTxt}titulares ≥70% + hist · cláusulas pagables`
+        : isAsp
+          ? `${formTxt}titulares ≥70% + hist · máx EP`
+          : `${formTxt}titulares ≥70% + hist · oportunidad EP/€`;
+      const clauseBit =
+        isCl && summary.clause_count
+          ? ` · ${summary.clause_count} cláusula${summary.clause_count === 1 ? "" : "s"}`
+          : "";
+      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (${rule}) · ${bench} banquillo (campo ≥100 pts; GK2 = tándem) · ${keep} keep · ${buy} fichar${clauseBit} · ${fundedBit}${incomplete}`;
     }
     const elW = document.getElementById("objectives-wealth");
     const elC = document.getElementById("objectives-cost");
@@ -1286,9 +1327,17 @@
         xi != null ? `${xi}${all != null ? ` (${all})` : ""}` : all != null ? String(all) : "—";
     }
     if (elR) {
-      const residual =
-        board.residual_after_reserve != null ? board.residual_after_reserve : board.balance;
-      elR.textContent = isAsp ? "—" : formatMoney(residual);
+      if (isCl) {
+        elR.textContent = formatMoney(
+          totals.residual != null ? totals.residual : board.residual_after_reserve
+        );
+      } else if (isAsp) {
+        elR.textContent = "—";
+      } else {
+        const residual =
+          board.residual_after_reserve != null ? board.residual_after_reserve : board.balance;
+        elR.textContent = formatMoney(residual);
+      }
     }
 
     const statusBadge = (st, role, extra) => {
@@ -1299,6 +1348,13 @@
       if (role === "starter") bits.push(`<span class="badge badge-titular">Titular</span>`);
       else if (role === "bench") bits.push(`<span class="badge badge-banca">Banquillo</span>`);
       if (extra && extra.gk_tandem) bits.push(`<span class="badge badge-once">Tándem</span>`);
+      if (extra && extra.acquisition === "clause") {
+        bits.push(`<span class="badge badge-duda">Cláusula</span>`);
+      } else if (extra && extra.acquisition === "market") {
+        bits.push(`<span class="badge badge-mint">Mercado</span>`);
+      } else if (extra && extra.acquisition === "free") {
+        bits.push(`<span class="badge badge-mint">Libre</span>`);
+      }
       if (
         isAsp &&
         st === "buy" &&
@@ -1307,6 +1363,15 @@
         !operableIds.has(String(extra.player_id))
       ) {
         bits.push(`<span class="badge badge-duda">Solo aspiracional</span>`);
+      }
+      if (
+        isCl &&
+        extra &&
+        extra.acquisition === "clause" &&
+        extra.player_id &&
+        !operableIds.has(String(extra.player_id))
+      ) {
+        bits.push(`<span class="badge badge-duda">Solo cláusulas</span>`);
       }
       return bits.join(" ");
     };
@@ -1324,12 +1389,22 @@
           .map((r) => {
             const delta =
               r.delta_5d != null ? `${(Number(r.delta_5d) * 100).toFixed(0)}%` : "—";
+            const cost =
+              r.acquisition === "clause" && r.clause != null ? r.clause : r.price;
+            const who =
+              r.acquisition === "clause" && r.owner_name
+                ? ` · ${r.owner_name}`
+                : r.acquisition === "market"
+                  ? " · Mercado"
+                  : r.acquisition === "free"
+                    ? " · Libre"
+                    : "";
             return `<li class="objectives-player">
               <div class="objectives-player-head">${statusBadge(r.status, r.role, r)}</div>
               <button type="button" class="player-link" data-player-id="${escapeHtml(
                 String(r.player_id || "")
               )}">${escapeHtml(r.name || "—")}</button>
-              <span class="objectives-meta">${formatMoney(r.price)} · EP ${
+              <span class="objectives-meta">${formatMoney(cost)}${escapeHtml(who)} · EP ${
                 r.ep_score != null ? Math.round(Number(r.ep_score)) : "—"
               } · Δ ${delta}</span>
             </li>`;
@@ -1344,17 +1419,12 @@
       grid.querySelectorAll("[data-player-id]").forEach((btn) => {
         btn.addEventListener("click", () => {
           const id = btn.getAttribute("data-player-id");
-          const all = [
-            ...((src.me && src.me.squad) || []),
-            ...(src.market_opportunities || []),
-          ];
-          const p = all.find((x) => String(x.id || x.player_id) === String(id));
-          if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+          if (typeof openPlayerSource === "function") openPlayerSource(id);
         });
       });
     }
 
-    const patches = isAsp ? [] : board.daily_patches || [];
+    const patches = isAsp || isCl ? [] : board.daily_patches || [];
     const wrap = document.getElementById("objectives-patches-wrap");
     const list = document.getElementById("objectives-patches");
     if (wrap && list) {
@@ -1380,18 +1450,13 @@
         list.querySelectorAll("[data-player-id]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const id = btn.getAttribute("data-player-id");
-            const all = [
-              ...((src.me && src.me.squad) || []),
-              ...(src.market_opportunities || []),
-            ];
-            const p = all.find((x) => String(x.id || x.player_id) === String(id));
-            if (p && typeof openPlayerSource === "function") openPlayerSource(p);
+            if (typeof openPlayerSource === "function") openPlayerSource(id);
           });
         });
       }
     }
 
-    const sells = isAsp ? [] : ((board.moves || {}).sell || []).slice(0, 8);
+    const sells = isAsp || isCl ? [] : ((board.moves || {}).sell || []).slice(0, 8);
     const sellEl = document.getElementById("objectives-sells");
     if (sellEl) {
       if (!sells.length) {
@@ -1909,6 +1974,7 @@
       { kinds: ["accept_offer"], label: "Vender", cls: "is-sell" },
       { kinds: ["list_for_sale"], label: "Poner en venta", cls: "is-sell" },
       { kinds: ["bid"], label: isFixedMarket(data) ? "Fichar" : "Pujar", cls: "is-buy" },
+      { kinds: ["clause_bid"], label: "Cláusula", cls: "is-buy" },
       { kinds: ["decline_offer"], label: "No cerrar", cls: "is-avoid" },
     ];
     const sections = groups
@@ -2694,31 +2760,6 @@
           )
           .join("")
       : `<p class="text-slate-500 text-sm">Sin alertas de carencia.</p>`;
-
-    const posBox = document.getElementById("squad-positions");
-    const byPos = diagnosis.by_position || {};
-    const order = ["GK", "DF", "MF", "FW"];
-    const idealMap = (DATA.kpis || {}).ideal_squad || { GK: 2, DF: 5, MF: 5, FW: 3 };
-    posBox.innerHTML = order
-      .map((pos) => {
-        const info = byPos[pos] || { count: 0, healthy: 0, starters: 0, status: "ok" };
-        const cov = info.coverage || (info.status === "critical" ? "critical" : info.status === "warning" ? "thin" : "ok");
-        const starters = info.starters_real ?? info.starters ?? 0;
-        const altsN = info.alternates_count;
-        const ideal = info.ideal_count ?? idealMap[pos];
-        return `<div class="pos-block ${info.status}">
-          <div class="flex justify-between items-center mb-2">
-            <span class="font-semibold text-white">${pos}</span>
-            <span class="badge ${
-              cov === "critical" ? "badge-alta" : cov === "thin" ? "badge-media" : "badge-mint"
-            }">${cov}</span>
-          </div>
-          <p class="text-sm text-slate-400">${info.count} jugadores · ${starters} titulares reales${
-            altsN != null ? ` · ${altsN} alternativas` : ""
-          } · objetivo ${ideal}</p>
-        </div>`;
-      })
-      .join("");
 
     const f = getFilters();
     const tbody = document.querySelector("#table-squad tbody");

@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from cycle_plan import (  # noqa: E402
     KIND_ACCEPT,
     KIND_BID,
+    KIND_CLAUSE,
     KIND_DECLINE,
     KIND_LIST,
     attach_value_trends,
@@ -863,6 +864,228 @@ def test_reachable_target_gets_bid_priority() -> None:
     _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
 
 
+def test_near_slot_is_not_bid_priority() -> None:
+    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    market = [
+        {
+            "id": "quiet",
+            "name": "Quiet",
+            "position": "MF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.11,
+            "rising": True,
+            "lineup_prob": 0.8,
+        },
+        {
+            "id": "near-star",
+            "name": "CasiCubierto",
+            "position": "FW",
+            "price": 3_000_000,
+            "bid": 3_000_000,
+            "puja_recomendada": 3_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.02,
+            "rising": True,
+            "lineup_prob": 0.85,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "near-star",
+                    "ownership": "daily_market",
+                    "reachable": "daily_market",
+                    "near": True,
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {"player_id": "near-star", "reachable": "daily_market", "near": True}
+                ],
+                "near_slots": [{"player_id": "near-star"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids, plan["moves"])
+    _assert(bids[0]["name"] != "CasiCubierto", bids[0])
+    _assert(not any(m.get("closes_gw_target") for m in bids), bids)
+
+
+def test_debt_bid_allowed_when_closes_target() -> None:
+    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    market = [
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 8_000_000,
+            "bid": 8_000_000,
+            "puja_recomendada": 8_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "debt_risk": True,
+            "budget_fit": "stretch",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids and bids[0]["name"] == "Objetivo", plan["moves"])
+    _assert(plan["constraints"]["spendable"] == 20_000_000, plan["constraints"])
+
+
+def test_flip_does_not_use_debt() -> None:
+    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    market = [
+        {
+            "id": "flip",
+            "name": "Flip",
+            "position": "MF",
+            "price": 6_000_000,
+            "bid": 6_000_000,
+            "puja_recomendada": 6_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.12,
+            "rising": True,
+            "lineup_prob": 0.75,
+            "debt_risk": True,
+            "budget_fit": "stretch",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 1_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(not any(m["name"] == "Flip" for m in bids), bids)
+
+
+def test_hoy_one_clause_after_market_bids() -> None:
+    squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
+    market = [
+        {
+            "id": "mkt",
+            "name": "Mercado",
+            "position": "MF",
+            "price": 3_000_000,
+            "bid": 3_000_000,
+            "puja_recomendada": 3_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.05,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "budget_fit": "comfortable",
+        }
+    ]
+    rivals = [
+        {
+            "player_id": "clause-star",
+            "name": "Clausulable",
+            "position": "FW",
+            "clause": 8_000_000,
+            "bid": 8_000_000,
+            "market_value": 7_000_000,
+            "upgrade_score": 60,
+            "clause_roi": 7.5,
+            "action": "clause_bid",
+            "budget_fit": "stretch",
+        },
+        {
+            "player_id": "clause-two",
+            "name": "Otra",
+            "position": "MF",
+            "clause": 5_000_000,
+            "bid": 5_000_000,
+            "market_value": 4_500_000,
+            "upgrade_score": 40,
+            "clause_roi": 8.0,
+            "action": "clause_bid",
+            "budget_fit": "stretch",
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {"player_id": "mkt", "ownership": "daily_market", "reachable": "daily_market"},
+                {"player_id": "clause-star", "ownership": "rival", "reachable": "clause", "xpts": 9.0},
+                {"player_id": "clause-two", "ownership": "rival", "reachable": "clause", "xpts": 7.0},
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {"player_id": "mkt", "reachable": "daily_market", "name": "Mercado"},
+                    {
+                        "player_id": "clause-star",
+                        "reachable": "clause",
+                        "name": "Clausulable",
+                        "clause": 8_000_000,
+                        "xpts": 9.0,
+                        "your_xpts": 4.0,
+                    },
+                    {
+                        "player_id": "clause-two",
+                        "reachable": "clause",
+                        "name": "Otra",
+                        "clause": 5_000_000,
+                        "xpts": 7.0,
+                        "your_xpts": 5.0,
+                    },
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        rival_upgrades=rivals,
+    )
+    clauses = [m for m in plan["moves"] if m["kind"] == KIND_CLAUSE]
+    _assert(len(clauses) == 1, clauses)
+    _assert(clauses[0]["name"] == "Clausulable", clauses[0])
+    _assert(clauses[0].get("closes_gw_target") is True, clauses[0])
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(any(m["name"] == "Mercado" for m in bids), bids)
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_consecutive_up_counts_live_legs()
@@ -890,4 +1113,8 @@ if __name__ == "__main__":
     test_rival_listed_on_market_is_not_appreciation()
     test_cycle_plan_bids_only_free_agents_for_appreciation()
     test_reachable_target_gets_bid_priority()
+    test_near_slot_is_not_bid_priority()
+    test_debt_bid_allowed_when_closes_target()
+    test_flip_does_not_use_debt()
+    test_hoy_one_clause_after_market_bids()
     print("test_cycle_plan: OK")

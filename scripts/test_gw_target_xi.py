@@ -9,7 +9,11 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from expected_points import expected_points, production_base  # noqa: E402
-from gw_target_xi import build_gw_target_xi, resolve_ownership  # noqa: E402
+from gw_target_xi import (  # noqa: E402
+    build_gw_target_xi,
+    merge_target_universe,
+    resolve_ownership,
+)
 from matchup_context import annotate_players_with_matchup, build_matchup  # noqa: E402
 from mister_gameweek import build_played_fixtures  # noqa: E402
 
@@ -246,6 +250,32 @@ def test_ownership_reachable() -> None:
         clauses_enabled=True,
     )
     _assert(own == "rival" and reach == "no", (own, reach))
+    own, reach = resolve_ownership(
+        {"id": "4b", "owner_id": "99", "clause": 8_000_000, "clause_known": True},
+        my_id="me",
+        squad_ids=set(),
+        balance=2_000_000,
+        clauses_enabled=True,
+        max_debt=20_000_000,
+    )
+    _assert(own == "rival" and reach == "clause", (own, reach))
+    own, reach = resolve_ownership(
+        {"id": "5", "owner_id": "99", "on_daily_market": True, "seller": "market"},
+        my_id="me",
+        squad_ids=set(),
+        balance=0,
+        clauses_enabled=True,
+    )
+    _assert(own == "daily_market" and reach == "daily_market", (own, reach))
+    own, reach = resolve_ownership(
+        {"id": "6", "owner_id": "99"},
+        my_id="me",
+        squad_ids=set(),
+        balance=0,
+        clauses_enabled=False,
+        market_ids={"6"},
+    )
+    _assert(own == "daily_market" and reach == "daily_market", (own, reach))
 
 
 def test_near_slot_does_not_count_as_owned() -> None:
@@ -268,6 +298,79 @@ def test_near_slot_does_not_count_as_owned() -> None:
     _assert(cov.get("owned_count") == 0 or "star" not in (cov.get("owned_ids") or []), cov)
 
 
+def test_merge_daily_market_wins_over_rival_owner() -> None:
+    pool = _pool_of_eleven()
+    raw = next(p for p in pool if p["id"] == "f1")
+    raw["owner_id"] = "99"
+    raw["owner_name"] = "Rival"
+    raw["on_daily_market"] = False
+    overlay = {
+        "id": "f1",
+        "on_daily_market": True,
+        "seller": "market",
+        "owner_id": "99",
+        "owner_name": "Rival",
+        "gw_lineup_prob": 85,
+        "xpts": 8.5,
+        "xpts_p_play": 0.85,
+    }
+    merged = merge_target_universe(pool, [overlay])
+    star = next(p for p in merged if p["id"] == "f1")
+    _assert(star.get("on_daily_market") is True, star)
+    _assert(star.get("gw_lineup_prob") == 85, star)
+    out = build_gw_target_xi(merged, squad=[], me={"team_id": "me", "balance": 0})
+    row = next(r for r in (out.get("xi") or []) if r.get("player_id") == "f1")
+    _assert(row.get("ownership") == "daily_market", row)
+    _assert(row.get("reachable") == "daily_market", row)
+    why = row.get("why") or ""
+    _assert("Titular" in why, why)
+    _assert("Girona" in why, why)
+    _assert(why.count("Girona") == 1, why)
+    _assert("Favorable vs el rival por puntos" not in why, why)
+    _assert("pts esperados" not in why, why)
+
+
+def test_merged_ff_previa_beats_unknown_p_play() -> None:
+    template = {
+        "position": "FW",
+        "external": {"ff_mister_avg": 7.0},
+        "fdr_multiplier": 1.0,
+        "mister_avg": 7.0,
+    }
+    pool_star = {**template, "id": "star"}
+    overlay = {**template, "id": "star", "gw_lineup_prob": 85}
+    unknown = {**template, "id": "unk"}
+    merged = merge_target_universe([pool_star, unknown], [overlay])
+    star = next(p for p in merged if p["id"] == "star")
+    unk = next(p for p in merged if p["id"] == "unk")
+    _assert(star.get("gw_lineup_prob") == 85, star)
+    xs = expected_points(star)
+    xu = expected_points(unk)
+    _assert(xs["xpts"] > xu["xpts"], (xs, xu))
+    _assert(abs((xs.get("xpts_p_play") or 0) - 0.85) < 0.02, xs)
+    _assert(abs((xu.get("xpts_p_play") or 0) - 0.45) < 0.02, xu)
+
+    pool = _pool_of_eleven()
+    raw = next(p for p in pool if p["id"] == "f1")
+    raw.pop("gw_lineup_prob", None)
+    raw["xpts"] = 3.6
+    raw["xpts_p_play"] = 0.45
+    unknown_fw = _player("unk", "FW", xpts=5.0, team="21")
+    unknown_fw.pop("gw_lineup_prob", None)
+    unknown_fw["xpts_p_play"] = 0.45
+    ff_overlay = {
+        "id": "f1",
+        "gw_lineup_prob": 85,
+        "xpts": 8.5,
+        "xpts_p_play": 0.85,
+    }
+    merged_xi = merge_target_universe(pool + [unknown_fw], [ff_overlay])
+    out = build_gw_target_xi(merged_xi, squad=[], me={"team_id": "me"})
+    ids = {str(r.get("player_id")) for r in (out.get("xi") or [])}
+    _assert("f1" in ids, ids)
+    _assert("unk" not in ids, ids)
+
+
 if __name__ == "__main__":
     test_assembles_eleven_from_pool_without_ownership()
     test_coverage_eleven_of_eleven()
@@ -278,4 +381,6 @@ if __name__ == "__main__":
     test_prior_shrinks_short_sample()
     test_ownership_reachable()
     test_near_slot_does_not_count_as_owned()
+    test_merge_daily_market_wins_over_rival_owner()
+    test_merged_ff_previa_beats_unknown_p_play()
     print("test_gw_target_xi: OK")

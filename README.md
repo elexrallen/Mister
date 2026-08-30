@@ -49,7 +49,8 @@ Sobre esa base el pipeline calcula:
 - `fdr` / `fdr_label` / `fdr_why` / `opponent_name` / `is_home` (`src/fixture_difficulty.py`): dificultad del rival en escala 1..5. La fuerza de cada equipo encadena clasificación real → prior de calidad de plantilla (valor del pool + media FF previa, disponible desde J1) → puntos fantasy que concede cada equipo por posición. El rival mueve hasta ±22% los puntos esperados y la localía ~5% por lado; nunca se devuelve un neutro plano si hay prior.
 - `xpts` / `xpts_floor` / `xpts_why` (`src/expected_points.py`): puntos esperados de la jornada como `p_juega × producción_base × ajuste_fdr`, escalados por el `provider` de la liga.
 - `recommended_xi` con **capitán** elegido por `xpts × (multiplicador − 1)` y desempate por probabilidad de jugar y rival, si la liga tiene capitán activo.
-- `gw_target_xi`: once de máximo xPts **de todo el pool** (sin filtro de dueño ni caja), cobertura dual vs tu once y contexto de cruce. Es el hero de Hoy.
+- `gw_target_xi`: once de máximo xPts **de todo el pool** (sin filtro de dueño ni caja), cobertura dual vs tu once y contexto de cruce. Antes de armarlo se fusionan previa FF y flags de mercado del día (un listado de hoy no se pinta como rival inalcanzable). Es el hero de Hoy; hasta pulsar **Actualizar** el JSON puede no traerlo y Hoy cae a tu once.
+- `target_board` (pestaña **Plantilla**): 15 ideal en tres modos — operable (EP/€), aspiracional (máx EP) y **cláusulas** (rivales solo si la cláusula es conocida y cabe en saldo + ventas). El modo cláusulas no mueve Hoy ni el ciclo; hasta **Actualizar** el botón no aparece.
 - `risky_slots[]` y `formation_switch`: huecos del once que un jugador con poca probabilidad de jugar convertiría en cero, y la formación alternativa que los evita.
 - `meta.model_calibration` (`src/model_calibration.py`): sesgo y error medio del xPts contra los puntos reales de las jornadas ya cerradas, desglosado por tramo de probabilidad de jugar, más los mayores aciertos y desvíos del último ciclo. El snapshot diario guarda la predicción para poder juzgarla después.
 - **Auditoría de rendimiento** (`src/performance_audit.py`): Spearman/lift del ranking, once recomendado vs alineado vs naive de precio, `buy_now` vs `avoid`, y salud del pipeline. Corre en el job diario (job summary) y en el workflow `Performance audit` con umbrales. Ver [docs/performance-audit.md](docs/performance-audit.md).
@@ -60,6 +61,8 @@ Sobre esa base el pipeline calcula:
 
 El JSON incluye `recommendations[]` según:
 
+- El corte de caja es **maxDebt**: pujar o clausular en negativo es legal; el
+  cero no es una regla. El plan del ciclo gasta margen de deuda, no efectivo.
 - Tu puesto en la tabla (proteger valor vs remontar)
 - Carencias propias vs liquidez/gaps de rivales
 - Libres TOP con alto PPG histórico aún sin fichar

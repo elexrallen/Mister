@@ -35,7 +35,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=65" />
+  <link rel="stylesheet" href="./styles.css?v=68" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -170,6 +170,7 @@
         <div id="objectives-mode-toggle" class="objectives-mode-toggle" role="group" aria-label="Modo plantilla">
           <button type="button" class="objectives-mode-btn is-active" data-ideal-mode="operable">Operable</button>
           <button type="button" class="objectives-mode-btn" data-ideal-mode="aspirational">Aspiracional</button>
+          <button type="button" class="objectives-mode-btn" data-ideal-mode="clauses" hidden>Cláusulas</button>
         </div>
         <p id="objectives-summary" class="objectives-summary">—</p>
       </div>
@@ -364,7 +365,6 @@
           <div id="health-tips" class="health-tips mt-4" aria-live="polite"></div>
         </section>
         <div id="squad-alerts" class="space-y-2 mb-4"></div>
-        <div id="squad-positions" class="grid md:grid-cols-2 gap-3 mb-4"></div>
         <div class="list-sort" data-list="squad" aria-label="Ordenar plantilla"></div>
         <div id="squad-cards" class="card-list"></div>
         <div class="table-wrap desktop-only">
@@ -541,6 +541,6 @@
     </div>
   </div>
 
-  <script src="./app.js?v=65" defer></script>
+  <script src="./app.js?v=68" defer></script>
 </body>
 </html>

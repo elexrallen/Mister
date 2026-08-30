@@ -1,7 +1,8 @@
 """
 Plantilla perfecta diaria bajo presupuesto total (saldo + valor de plantilla).
 
-Dos vistas: operable (oportunidad / EP€) y aspiracional (máx EP).
+Tres vistas: operable (oportunidad / EP€), aspiracional (máx EP) y
+cláusulas (máx EP con rivales solo si la cláusula es conocida y cabe).
 El action plan / funding usan solo el ideal operable.
 Persiste entre runs en public/data/leagues/<slug>/target_board.json.
 """
@@ -430,6 +431,36 @@ def _buy_price(p: dict[str, Any]) -> float:
     )
 
 
+def _clause_amount(p: dict[str, Any]) -> float | None:
+    if not p.get("clause_known"):
+        return None
+    raw = p.get("clause")
+    if raw is None or raw == "":
+        return None
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return val if val > 0 else None
+
+
+def _acquisition_kind(
+    p: dict[str, Any],
+    *,
+    owned: bool,
+) -> str:
+    if owned:
+        return "keep"
+    seller = str(p.get("seller") or "").lower()
+    if seller == "market" or p.get("on_daily_market"):
+        return "market"
+    if seller == "free" or not str(p.get("owner_id") or "").strip() or str(p.get("owner_id")) in ("0",):
+        return "free"
+    if _clause_amount(p) is not None:
+        return "clause"
+    return "rival"
+
+
 def _delta_5d(p: dict[str, Any], price_series: dict[str, list[float]] | None) -> float | None:
     if p.get("delta_5d") is not None:
         try:
@@ -491,6 +522,8 @@ def _normalize_player(
     buy = _buy_price(p)
     seller = p.get("seller")
     clause_known = bool(p.get("clause_known"))
+    clause_val = _clause_amount(p)
+    acquisition = _acquisition_kind(p, owned=owned)
     if owned:
         # Keep: el slot consume wealth a valor de mercado
         slot_cost = market if market > 0 else 100_000.0
@@ -503,6 +536,9 @@ def _normalize_player(
         if is_opp:
             slot_cost = ask if ask > 0 else (market if market > 0 else buy)
             buy = slot_cost
+        elif clause_val is not None:
+            slot_cost = clause_val
+            buy = clause_val
         else:
             slot_cost = buy if buy > 0 else market
         if slot_cost <= 0:
@@ -515,7 +551,6 @@ def _normalize_player(
     # No confiar en sample_thin del scrape si ya hay PJ de temporada anterior
     sample_thin = 0 < apps < THIN_APPS
     ext = p.get("external") or {}
-    clause_val = p.get("clause") if clause_known else None
     return {
         "raw": p,
         "player_id": pid,
@@ -523,6 +558,9 @@ def _normalize_player(
         "position": p.get("position") or "MF",
         "team": p.get("team"),
         "team_id": str(p.get("team_id") or "") or None,
+        "owner_name": p.get("owner_name"),
+        "owner_id": p.get("owner_id"),
+        "acquisition": acquisition,
         "owned": owned,
         "ep_score": ep,
         "hist_quality": hist,
@@ -643,6 +681,9 @@ def _is_opportunity_buy(u: dict[str, Any]) -> bool:
     """Libre, mercado diario o keep: oportunidad vs cláusula rival."""
     if u.get("owned"):
         return True
+    acq = str(u.get("acquisition") or "")
+    if acq in ("keep", "market", "free"):
+        return True
     seller = str(u.get("seller") or "").lower()
     if seller in ("free", "market") or u.get("on_daily_market"):
         return True
@@ -652,6 +693,20 @@ def _is_opportunity_buy(u: dict[str, Any]) -> bool:
     if u.get("clause") is None and seller in ("free", "market", ""):
         return True
     return seller in ("free", "market")
+
+
+def _is_clauses_eligible(u: dict[str, Any]) -> bool:
+    """Modo cláusulas: keep / mercado / libre, o rival con cláusula conocida."""
+    if u.get("owned") or _is_opportunity_buy(u):
+        return True
+    if str(u.get("acquisition") or "") == "clause":
+        return True
+    clause = u.get("clause")
+    try:
+        c = float(clause) if clause is not None else 0.0
+    except (TypeError, ValueError):
+        c = 0.0
+    return bool(u.get("clause_known") and c > 0)
 
 
 def _has_lineup_signal(u: dict[str, Any]) -> bool:
@@ -840,8 +895,24 @@ def _row_from_norm(
         "on_daily_market": n.get("on_daily_market"),
         "owned": bool(n.get("owned")),
         "gk_tandem": bool(n.get("gk_tandem")),
+        "owner_name": n.get("owner_name"),
+        "owner_id": n.get("owner_id"),
+        "acquisition": n.get("acquisition") or ("keep" if status == "keep" else None),
+        "clause": n.get("clause"),
+        "clause_known": bool(n.get("clause_known")),
+        "seller": n.get("seller"),
         "why": (
             f"EP {n['ep_score']:.0f} · {n['price']:,.0f} € · {status}"
+            + (
+                f" · cláusula {n['clause']:,.0f} €"
+                if n.get("acquisition") == "clause" and n.get("clause")
+                else ""
+            )
+            + (
+                f" · {n.get('owner_name')}"
+                if n.get("acquisition") == "clause" and n.get("owner_name")
+                else ""
+            )
             + (" · tándem mismo club" if n.get("gk_tandem") else "")
             + (f" · Δ {n['delta_5d']*100:.0f}%" if n.get("delta_5d") is not None else "")
         ),
@@ -1016,9 +1087,12 @@ def _assemble_perfect_squad(
 ) -> list[dict[str, Any]]:
     """
     Ensambla IDEAL_SQUAD bajo budget_cap.
-    mode=operable → oportunidad / EP€; aspirational → máx EP.
+    mode=operable → oportunidad / EP€; aspirational → máx EP;
+    clauses → máx EP solo con cláusulas conocidas.
     """
     operable = mode == "operable"
+    if mode == "clauses":
+        universe = [u for u in universe if _is_clauses_eligible(u)]
     ideal = {str(k): int(v) for k, v in (ideal or _ideal_counts()).items()}
     starters_n = {str(k): int(v) for k, v in (starters_n or _starter_counts()).items()}
     bench_n = _bench_slot_needs(ideal, starters_n)
@@ -1770,6 +1844,13 @@ def build_target_board(
         owned_ids=owned_ids,
         prev_idx=prev_idx,
     )
+    perfect_cl, form_cl, starters_cl, ideal_cl, trials_cl = _pick_best_formation_squad(
+        universe,
+        budget_cap=budget_cap,
+        mode="clauses",
+        owned_ids=owned_ids,
+        prev_idx=prev_idx,
+    )
     bench_n = _bench_slot_needs(ideal, starters_n)
 
     keep_rows = [r for r in perfect if r.get("status") == "keep"]
@@ -1916,8 +1997,14 @@ def build_target_board(
     patch_allow = residual_after >= 200_000 and bool(daily_patches)
     op_totals = _squad_totals(perfect, ideal=ideal, bal=bal, starters_n=starters_n)
     asp_totals = _squad_totals(perfect_asp, ideal=ideal_asp, bal=bal, starters_n=starters_asp)
+    cl_totals = _squad_totals(perfect_cl, ideal=ideal_cl, bal=bal, starters_n=starters_cl)
     asp_buy = [r for r in perfect_asp if r.get("status") == "buy"]
     asp_keep = [r for r in perfect_asp if r.get("status") == "keep"]
+    cl_buy = [r for r in perfect_cl if r.get("status") == "buy"]
+    cl_keep = [r for r in perfect_cl if r.get("status") == "keep"]
+    cl_clause_rows = [r for r in cl_buy if r.get("acquisition") == "clause"]
+    clause_spend = round(sum(float(r.get("clause") or r.get("price") or 0) for r in cl_clause_rows), 0)
+    residual_clauses = round(max(0.0, budget_cap - float(cl_totals["cost_sum"] or 0)), 0)
 
     board = {
         "generated_at": _now_iso(),
@@ -1926,9 +2013,11 @@ def build_target_board(
         "mode_default": "operable",
         "formation": form_op,
         "formation_aspirational": form_asp,
+        "formation_clauses": form_cl,
         "formation_shape": dict(starters_n),
         "formation_trials": trials_op[:8],
         "formation_trials_aspirational": trials_asp[:8],
+        "formation_trials_clauses": trials_cl[:8],
         "balance": bal,
         "squad_value": sval,
         "wealth": {
@@ -1945,6 +2034,7 @@ def build_target_board(
         "ideal_buy_cost": ideal_buy_cost,
         "perfect_squad": perfect,
         "perfect_squad_aspirational": perfect_asp,
+        "perfect_squad_clauses": perfect_cl,
         "moves": {
             "keep": keep_rows,
             "buy": buy_rows,
@@ -1971,6 +2061,19 @@ def build_target_board(
             "slots_target": asp_totals["slots_target"],
             "funded": None,
             "formation": form_asp,
+        },
+        "totals_clauses": {
+            "ep_sum": cl_totals["ep_sum"],
+            "ep_sum_starters": cl_totals["ep_sum_starters"],
+            "cost_sum": cl_totals["cost_sum"],
+            "net_buys": cl_totals["net_buys"],
+            "slots_filled": cl_totals["slots_filled"],
+            "slots_target": cl_totals["slots_target"],
+            "clause_count": len(cl_clause_rows),
+            "clause_spend": clause_spend,
+            "residual": residual_clauses,
+            "funded": None,
+            "formation": form_cl,
         },
         "daily_patches": daily_patches,
         "cash_reserved": cash_reserved,
@@ -2020,6 +2123,27 @@ def build_target_board(
             "mode": "aspirational",
             "formation": form_asp,
             "xi_rule": f"formación {form_asp} · titulares ≥70% + hist · máx Σ EP",
+            "bench_min_points": int(
+                _bench_min_points(universe[0] if universe else None)
+            ),
+        },
+        "summary_clauses": {
+            "slots": len(perfect_cl),
+            "starters": cl_totals["starters"],
+            "bench": cl_totals["bench"],
+            "incomplete": cl_totals["incomplete"],
+            "keep": len(cl_keep),
+            "buy": len(cl_buy),
+            "clause_count": len(cl_clause_rows),
+            "clause_spend": clause_spend,
+            "ep_sum": cl_totals["ep_sum"],
+            "ep_sum_starters": cl_totals["ep_sum_starters"],
+            "mode": "clauses",
+            "formation": form_cl,
+            "xi_rule": (
+                f"formación {form_cl} · titulares ≥70% + hist · "
+                "máx EP con cláusulas pagables"
+            ),
             "bench_min_points": int(
                 _bench_min_points(universe[0] if universe else None)
             ),

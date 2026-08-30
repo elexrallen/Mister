@@ -118,7 +118,7 @@ def test_solvency_deadline_next_gw_when_ongoing():
 
 
 def test_debt_allowed_with_coverage_in_strict_window():
-    # Sin cobertura → bloqueado cerca del deadline
+    # 5 M de coste / 1 M de caja / 10 M de maxDebt: legal aunque quede negativo
     fin_block = evaluate_bid_finance(
         5_000_000,
         1_000_000,
@@ -128,9 +128,10 @@ def test_debt_allowed_with_coverage_in_strict_window():
         liquidity_coverage=0,
     )
     assert fin_block["debt_risk"] is True
-    assert fin_block["solvency_blocked"] is True
+    assert fin_block["solvency_blocked"] is False
+    assert fin_block["solvency_ok"] is True
+    assert fin_block["budget_fit"] == "stretch"
 
-    # Con cobertura de ofertas/listados → stretch, no blocked
     fin_ok = evaluate_bid_finance(
         5_000_000,
         1_000_000,
@@ -141,7 +142,19 @@ def test_debt_allowed_with_coverage_in_strict_window():
     )
     assert fin_ok["debt_risk"] is True
     assert fin_ok["solvency_blocked"] is False
-    assert fin_ok["budget_fit"] in ("stretch", "tight", "comfortable")
+    assert fin_ok["budget_fit"] == "stretch"
+
+
+def test_cost_over_max_debt_is_blocked():
+    fin = evaluate_bid_finance(
+        12_000_000,
+        1_000_000,
+        max_debt=10_000_000,
+        hours_to_jornada=24,
+    )
+    assert fin["budget_fit"] == "blocked"
+    assert fin["solvency_blocked"] is True
+    assert fin["solvency_ok"] is False
 
 
 def test_settle_before_deadline():
@@ -582,6 +595,7 @@ def main():
         test_sales_state_merges_offers_as_listed,
         test_solvency_deadline_next_gw_when_ongoing,
         test_debt_allowed_with_coverage_in_strict_window,
+        test_cost_over_max_debt_is_blocked,
         test_settle_before_deadline,
         test_offer_actions_accept_when_need_liquidity,
         test_offer_actions_only_needed_cover_debt,

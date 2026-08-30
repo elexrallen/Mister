@@ -343,6 +343,29 @@ def test_mutual_one_expensive_one_cheap() -> None:
     assert len(cheap) == 1, cheap
 
 
+def test_allocate_uses_debt_cap_not_cash() -> None:
+    """Cláusula 8 M con 2 M en caja y maxDebt 20 M sigue clause_bid."""
+    items = [
+        {
+            "player_id": "debt",
+            "name": "DeudaOK",
+            "action": "clause_bid",
+            "clause": 8_000_000,
+            "bid": 8_000_000,
+            "market_value": 7_000_000,
+            "upgrade_score": 60,
+            "clause_roi": 7.5,
+            "why": "cierra hueco",
+            "budget_fit": "stretch",
+            "fills_need": True,
+        },
+    ]
+    out = allocate_clause_bids(items, 2_000_000, market_reserved=0, max_debt=20_000_000)
+    clause = [x for x in out if x["action"] == "clause_bid"]
+    assert len(clause) == 1, out
+    assert clause[0]["name"] == "DeudaOK"
+
+
 def test_no_hidden_market_reserve_keeps_fitting_clause() -> None:
     """Sin reserva 40%, una cláusula que cabe en el saldo sigue clause_bid."""
     items = [
@@ -374,6 +397,7 @@ def main() -> None:
         test_clause_with_need_and_residual_ok,
         test_clause_crowds_out_market_gaps,
         test_mutual_one_expensive_one_cheap,
+        test_allocate_uses_debt_cap_not_cash,
         test_no_hidden_market_reserve_keeps_fitting_clause,
     ]
     failed = 0

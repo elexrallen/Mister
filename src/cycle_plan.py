@@ -16,13 +16,16 @@ from competitive_actions import (
     _lineup_pct,
     _money,
     appreciation_play_score,
+    clause_roi_gate,
     is_rival_market_listing,
+    mister_bid_cap,
     xi_owned_ids,
 )
 
 KIND_ACCEPT = "accept_offer"
 KIND_LIST = "list_for_sale"
 KIND_BID = "bid"
+KIND_CLAUSE = "clause_bid"
 KIND_DECLINE = "decline_offer"
 
 FORBIDDEN_ACTIONS = {"wait", "scout", "avoid"}
@@ -399,17 +402,113 @@ def _offer_pct(offer: dict[str, Any], player: dict[str, Any] | None = None) -> f
     return amount / vm
 
 
+def _clause_target_rows(gw_target_xi: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Huecos del once objetivo alcanzables solo por cláusula. Casi cubiertos, no."""
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    near_ids = {
+        _pid(s)
+        for s in (coverage.get("near_slots") or [])
+        if isinstance(s, dict) and _pid(s)
+    }
+    sources: list[Any] = []
+    sources.extend(coverage.get("missing_slots") or [])
+    sources.extend((gw_target_xi or {}).get("xi") or [])
+    for slot in sources:
+        if not isinstance(slot, dict):
+            continue
+        if slot.get("near"):
+            continue
+        if str(slot.get("reachable") or "") != "clause":
+            continue
+        pid = _pid(slot)
+        if not pid or pid in near_ids or pid in seen:
+            continue
+        seen.add(pid)
+        rows.append(slot)
+    return rows
+
+
+def _pick_hoy_clause(
+    *,
+    gw_target_xi: dict[str, Any] | None,
+    rival_upgrades: list[dict[str, Any]] | None,
+    remaining: float,
+    accept_ids: set[str],
+) -> dict[str, Any] | None:
+    """Como mucho 1 cláusula de Hoy: cierra hueco no-near, ROI OK, cabe en margen."""
+    by_upgrade = {
+        _pid(r): r
+        for r in (rival_upgrades or [])
+        if isinstance(r, dict) and _pid(r)
+    }
+    best: tuple[float, dict[str, Any]] | None = None
+    for slot in _clause_target_rows(gw_target_xi):
+        pid = _pid(slot)
+        if not pid or pid in accept_ids:
+            continue
+        rival = by_upgrade.get(pid) or {}
+        cost = _money(
+            rival.get("clause")
+            or rival.get("bid")
+            or slot.get("clause")
+            or slot.get("acquisition_cost")
+        )
+        if cost <= 0 or cost > remaining + 1:
+            continue
+        if rival.get("solvency_blocked") or rival.get("budget_fit") == "blocked":
+            continue
+        vm = _money(
+            rival.get("market_value")
+            or rival.get("price")
+            or slot.get("price")
+            or slot.get("market_value")
+        )
+        upgrade = _f(rival.get("upgrade_score"))
+        if upgrade is None:
+            gap = (_f(slot.get("xpts")) or 0.0) - (_f(slot.get("your_xpts")) or 0.0)
+            upgrade = max(30.0, gap * 10.0)
+        roi_ok, roi_why = clause_roi_gate(
+            upgrade_score=upgrade,
+            clause=cost,
+            market_value=vm or None,
+            fills=True,
+        )
+        if not roi_ok:
+            continue
+        score = float(rival.get("clause_roi") or 0) * 10.0 + upgrade
+        row = {**slot, **rival}
+        row["clause"] = cost
+        row["market_value"] = vm or row.get("market_value")
+        row["upgrade_score"] = upgrade
+        row["roi_why"] = roi_why
+        row["closes_gw_target"] = True
+        if best is None or score > best[0]:
+            best = (score, row)
+    if best is None:
+        return None
+    return best[1]
+
+
 def _reachable_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
-    """Huecos del once objetivo que este ciclo puede cerrar."""
+    """Huecos del once objetivo que este ciclo puede cerrar. Casi cubiertos, no."""
     ids: set[str] = set()
     coverage = (gw_target_xi or {}).get("coverage") or {}
+    near_ids = {
+        _pid(s)
+        for s in (coverage.get("near_slots") or [])
+        if isinstance(s, dict) and _pid(s)
+    }
     for slot in coverage.get("missing_slots") or []:
         if not isinstance(slot, dict):
+            continue
+        if slot.get("near"):
             continue
         reach = str(slot.get("reachable") or "")
         if reach in ("daily_market", "free", "clause"):
             pid = _pid(slot)
-            if pid:
+            if pid and pid not in near_ids:
                 ids.add(pid)
     for row in (gw_target_xi or {}).get("xi") or []:
         if not isinstance(row, dict):
@@ -419,7 +518,7 @@ def _reachable_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
         if str(row.get("reachable") or "") == "no":
             continue
         pid = _pid(row)
-        if pid:
+        if pid and pid not in near_ids and not row.get("near"):
             ids.add(pid)
     return ids
 
@@ -436,15 +535,17 @@ def build_cycle_plan(
     market_cycle: dict[str, Any] | None = None,
     market_mode: str = "auction",
     max_squad: int | None = None,
+    rival_upgrades: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Fuente de verdad de la pestaña Hoy.
 
     1) Aceptar ofertas del sistema (salvo outlier a la baja).
-    2) Pujar/fichar si hay plazas libres (tras aceptar) y caja real.
-       Revalorización: solo libres del mercado, no listados de rivales
-       (el sistema oferta ≈ VM y el vendedor acepta esa antes que la nuestra).
-    3) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
+    2) Pujar/fichar si hay plazas libres (tras aceptar). El techo es maxDebt,
+       no caja ≥ 0. Revalorización: solo libres del mercado, no listados de rivales.
+    3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
+       en el margen residual.
+    4) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
        con plantilla llena y un recambio de mercado que suba claramente más.
     """
     me = me or {}
@@ -470,6 +571,10 @@ def build_cycle_plan(
     cap = int(max_squad or _max_squad(rules))
     squad_n = len(squad)
     balance = _money(me.get("balance"))
+    try:
+        max_debt = float(me["max_debt"]) if me.get("max_debt") is not None else None
+    except (TypeError, ValueError):
+        max_debt = None
     pending = [o for o in (state.get("pending_offers") or []) if isinstance(o, dict)]
     by_id = {_pid(p): p for p in squad if _pid(p)}
     outlier_pct = float(getattr(config, "CYCLE_OFFER_OUTLIER_PCT", 0.82) or 0.82)
@@ -515,14 +620,14 @@ def build_cycle_plan(
         slots_from_accepts += 1
 
     free_slots = max(0, cap - squad_n + slots_from_accepts)
-    spendable = max(0.0, balance + cash_from_accepts)
+    spendable = mister_bid_cap(balance + cash_from_accepts, max_debt)
 
     bid_cands: list[tuple[float, dict[str, Any]]] = []
     for o in market:
         pid = _pid(o)
         if not pid or pid in accept_ids:
             continue
-        if o.get("solvency_blocked") or o.get("debt_risk"):
+        if o.get("solvency_blocked") or o.get("budget_fit") == "blocked":
             continue
         if o.get("gw_out") or (o.get("external") or {}).get("availability") in ("injured", "suspended"):
             continue
@@ -538,6 +643,18 @@ def build_cycle_plan(
             continue
         score = _bid_score(o)
         closes_target = pid in target_ids
+        fills_hole = bool(
+            closes_target
+            or _starter_coverage_hole(o)
+            or o.get("fills_coverage_gap")
+            or o.get("fills_structural")
+            or o.get("fills_need")
+        )
+        if not fills_hole:
+            if o.get("debt_risk"):
+                continue
+            if o.get("budget_fit") not in ("comfortable", "tight", None):
+                continue
         if closes_target:
             score += 36.0
             o = dict(o)
@@ -595,6 +712,40 @@ def build_cycle_plan(
             if pos:
                 used_pos.add(pos)
         moves.extend(bids)
+
+    clauses: list[dict[str, Any]] = []
+    remaining = max(0.0, spendable - spent)
+    slots_left = max(0, free_slots - len(bids))
+    if slots_left > 0 and remaining > 0:
+        picked = _pick_hoy_clause(
+            gw_target_xi=gw_target_xi,
+            rival_upgrades=rival_upgrades,
+            remaining=remaining,
+            accept_ids=accept_ids,
+        )
+        if picked:
+            cost = _money(picked.get("clause") or picked.get("bid"))
+            why = (
+                f"Cláusula de {picked.get('name')} ({_fmt_money(cost)}): "
+                f"cierra un hueco del once objetivo"
+                + (
+                    f" frente a {picked.get('your_name')}"
+                    if picked.get("your_name")
+                    else ""
+                )
+                + "."
+            )
+            extra = {
+                "bid": cost,
+                "amount": cost,
+                "clause": cost,
+                "closes_gw_target": True,
+                "owner_name": picked.get("owner_name") or picked.get("owner_team"),
+            }
+            clause_move = _player_ref(picked, kind=KIND_CLAUSE, why=why, extra=extra)
+            clauses.append(clause_move)
+            moves.append(clause_move)
+            spent += cost
 
     next_targets = [
         o
@@ -697,6 +848,8 @@ def build_cycle_plan(
         "balance": balance,
         "cash_from_accepts": round(cash_from_accepts, 0),
         "spendable": round(spendable, 0),
+        "bid_cap": round(spendable, 0),
+        "max_debt": max_debt,
         "market_mode": "fixed" if fixed else "auction",
     }
 
@@ -704,6 +857,7 @@ def build_cycle_plan(
         accepts=[m for m in moves if m["kind"] == KIND_ACCEPT],
         declines=[m for m in moves if m["kind"] == KIND_DECLINE],
         bids=bids,
+        clauses=clauses,
         lists=lists,
         next_targets=next_targets,
         constraints=constraints,
@@ -749,6 +903,7 @@ def build_cycle_plan(
             "accept": sum(1 for m in moves if m["kind"] == KIND_ACCEPT),
             "list": sum(1 for m in moves if m["kind"] == KIND_LIST),
             "bid": sum(1 for m in moves if m["kind"] == KIND_BID),
+            "clause": sum(1 for m in moves if m["kind"] == KIND_CLAUSE),
             "decline": sum(1 for m in moves if m["kind"] == KIND_DECLINE),
         },
     }
@@ -760,6 +915,7 @@ def _compose_narrative(
     declines: list[dict[str, Any]],
     bids: list[dict[str, Any]],
     lists: list[dict[str, Any]],
+    clauses: list[dict[str, Any]] | None = None,
     next_targets: list[dict[str, Any]],
     constraints: dict[str, Any],
     fixed: bool,
@@ -794,10 +950,17 @@ def _compose_narrative(
         parts.append(
             f"{'Ficha' if fixed else 'Puja por'} {_join_names(bits)}"
             + (
-                f" con las plazas y el saldo disponibles."
+                f" con las plazas y el margen de deuda disponibles."
                 if constraints.get("free_slots_after_accepts")
                 else "."
             )
+        )
+    if clauses:
+        names = _join_names([m.get("name") or "" for m in clauses])
+        parts.append(
+            f"Cláusula de {names} "
+            f"({_fmt_money(clauses[0].get('clause') or clauses[0].get('amount'))}): "
+            f"cierra hueco del once objetivo y cabe en el techo de deuda."
         )
     if lists:
         names = _join_names([m.get("name") or "" for m in lists])
@@ -847,10 +1010,14 @@ def _compose_narrative(
         )
         return headline, narrative
 
-    if accepts and bids:
+    if accepts and (bids or clauses):
         headline = "Vende y " + ("ficha" if fixed else "puja")
     elif accepts:
         headline = "Cierra ventas"
+    elif clauses and not bids:
+        headline = "Cláusula este ciclo"
+    elif bids and clauses:
+        headline = f"{verb_bid_inf} y cláusula"
     elif bids and lists:
         headline = f"{verb_bid_inf} y pon en venta"
     elif bids:

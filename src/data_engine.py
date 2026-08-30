@@ -49,7 +49,7 @@ from fixture_difficulty import (
 from mister_gameweek import apply_blank_gameweek
 from expected_points import annotate_players_with_xpts
 from matchup_context import annotate_players_with_matchup
-from gw_target_xi import build_gw_target_xi
+from gw_target_xi import build_gw_target_xi, merge_target_universe
 from model_calibration import build_calibration
 from performance_audit import attach_audit_to_payload, slim_decisions, slim_pipeline
 from fotmob_service import enrich_players_with_fotmob
@@ -1199,7 +1199,7 @@ def classify_market_opportunities(
             "puja_techo": bid_ceiling,
             "priority": priority,
             "score": round(score, 1),
-            "affordable": not blocked and fin.get("budget_fit") in ("comfortable", "tight"),
+            "affordable": not blocked and fin.get("budget_fit") in ("comfortable", "tight", "stretch"),
             "budget_fit": fin.get("budget_fit"),
             "bid_cap": fin.get("bid_cap"),
             "debt_risk": bool(fin.get("debt_risk")),
@@ -1358,7 +1358,7 @@ def find_free_agents_top(
             )
             bf = str(fin.get("budget_fit") or "blocked")
             row["budget_fit"] = bf
-            row["affordable"] = bf in ("comfortable", "tight")
+            row["affordable"] = bf in ("comfortable", "tight", "stretch")
             row["debt_risk"] = bool(fin.get("debt_risk"))
             row["solvency_blocked"] = bool(fin.get("solvency_blocked"))
             row["bid_cap"] = fin.get("bid_cap")
@@ -2091,7 +2091,7 @@ def build_action_plan(
                 buy_now = True
                 why_parts.append(f"demanda rival alta ({len(demand)} con gap {pos})")
             # Precio fijo: cobertura + caja basta (sin exigir rival risk / % titular)
-            if fixed and on_daily and bf in ("comfortable", "tight") and (
+            if fixed and on_daily and bf in ("comfortable", "tight", "stretch") and (
                 fills_cov or fills or structural_gap
             ):
                 buy_now = True
@@ -2102,7 +2102,7 @@ def build_action_plan(
             if (
                 not fixed
                 and o.get("priority") == "Alta"
-                and bf in ("comfortable", "tight")
+                and bf in ("comfortable", "tight", "stretch")
                 and real_starter_cand
                 and (fills or structural_gap or fills_cov)
                 and risk in ("medium", "high")
@@ -2129,7 +2129,7 @@ def build_action_plan(
             if (
                 gw_starter
                 and on_daily
-                and bf in ("comfortable", "tight")
+                and bf in ("comfortable", "tight", "stretch")
                 and (fills or fills_cov or structural_gap)
             ):
                 buy_now = True
@@ -2163,7 +2163,7 @@ def build_action_plan(
         if (
             is_objective
             and on_daily
-            and bf in ("comfortable", "tight")
+            and bf in ("comfortable", "tight", "stretch")
             and not gw_out
             and not overstock_blocks
         ):
@@ -2173,7 +2173,7 @@ def build_action_plan(
             elif not any("objetivo" in w for w in why_parts):
                 why_parts.append("objetivo del tablero (hueco estructural)")
         # Jugador clave en mercado (crack / top / ideal) → máxima prioridad
-        if is_key and on_daily and bf in ("comfortable", "tight") and not gw_out:
+        if is_key and on_daily and bf in ("comfortable", "tight", "stretch") and not gw_out:
             # Línea cubierta / sobrada: no forzar buy_now solo por producción/clave
             if not overstock_blocks and not (line_covered and not is_upgrade and not fills_cov):
                 buy_now = True
@@ -2254,34 +2254,46 @@ def build_action_plan(
             if not any("no titular" in w for w in why_parts):
                 why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
-        # Sin caja / solvencia → no buy_now (stretch por crowding de hueco real también)
+        # Techo = maxDebt. stretch legal si cierra hueco / objetivo; flips no.
+        worth_debt = bool(
+            fills
+            or fills_cov
+            or structural_gap
+            or is_objective
+            or is_key
+            or gw_starter
+        )
         if buy_now and bf not in ("comfortable", "tight"):
-            buy_now = False
-            if solvency_blocked:
+            if bf == "stretch" and worth_debt:
+                cap_txt = float(fin.get("bid_cap") or 0)
                 why_parts.append(
-                    "bloqueado: sin plan de cobro antes del inicio de la "
-                    f"{solvency_target} jornada"
-                )
-            elif debt_risk:
-                why_parts.append(
-                    f"deuda temporal OK hasta maxDebt — vuelve a positivo antes del "
-                    f"inicio de la {solvency_target} jornada"
-                )
-            elif crowds_out:
-                why_parts.append(
-                    f"tras fichar quedaría poca caja para {gap_pos_labels} "
-                    f"(residual {max(0, residual):,.0f} € vs ~{other_min:,.0f} €)"
+                    f"cabe en el techo de deuda ({cap_txt:,.0f} €)"
+                    + (" — usas margen" if debt_risk else "")
                 )
             else:
-                why_parts.append(
-                    f"supera techo Mister ({float(fin.get('bid_cap') or balance):,.0f} €)"
-                    if cost > float(fin.get("bid_cap") or balance)
-                    else f"caja insuficiente ({balance:,.0f} €)"
-                )
+                buy_now = False
+                if solvency_blocked or bf == "blocked":
+                    why_parts.append(
+                        f"supera techo Mister ({float(fin.get('bid_cap') or 0):,.0f} €)"
+                    )
+                elif crowds_out:
+                    why_parts.append(
+                        f"tras fichar quedaría poco margen para {gap_pos_labels} "
+                        f"(residual {max(0, residual):,.0f} € vs ~{other_min:,.0f} €)"
+                    )
+                elif debt_risk:
+                    why_parts.append(
+                        "usa deuda; mejor reservar margen para un hueco real"
+                    )
+                else:
+                    why_parts.append(
+                        f"supera techo Mister ({float(fin.get('bid_cap') or balance):,.0f} €)"
+                        if cost > float(fin.get("bid_cap") or balance)
+                        else f"fuera de margen ({balance:,.0f} €)"
+                    )
         elif buy_now and debt_risk:
             why_parts.append(
-                f"deuda temporal OK hasta maxDebt — vuelve a positivo antes del "
-                f"inicio de la {solvency_target} jornada"
+                f"usas deuda (techo {float(fin.get('bid_cap') or 0):,.0f} €)"
             )
 
         if leaves_budget and (buy_now or fills):
@@ -2439,33 +2451,25 @@ def build_action_plan(
                 if ff is not None:
                     wait_bits.append(f"FF media {float(ff):.1f}")
             if bf == "blocked":
-                if solvency_blocked:
-                    wait_bits.append(
-                        "bloqueado: sin plan de cobro antes del inicio de la "
-                        f"{solvency_target} jornada"
-                    )
-                else:
-                    wait_bits.append(
-                        f"supera techo Mister (~{float(fin.get('bid_cap') or balance):,.0f} €)"
-                        if cost > float(fin.get("bid_cap") or 0)
-                        else f"sin saldo (hace falta ~{cost:,.0f} €)"
-                    )
+                wait_bits.append(
+                    f"supera techo Mister (~{float(fin.get('bid_cap') or 0):,.0f} €)"
+                    if cost > float(fin.get("bid_cap") or 0)
+                    else f"fuera de margen (hace falta ~{cost:,.0f} €)"
+                )
             elif bf == "stretch":
                 if debt_risk:
                     wait_bits.append(
-                        f"deuda temporal — exige cobro antes del inicio de la "
-                        f"{solvency_target} jornada"
+                        f"usas deuda (techo {float(fin.get('bid_cap') or 0):,.0f} €)"
                     )
                 else:
                     wait_bits.append(
-                        "al límite de caja / otras carencias"
+                        "al límite del margen / otras carencias"
                         if fixed
-                        else "puja al límite de caja / otras carencias"
+                        else "puja al límite del margen / otras carencias"
                     )
             elif debt_risk:
                 wait_bits.append(
-                    f"deuda temporal OK hasta maxDebt — vuelve a positivo antes del "
-                    f"inicio de la {solvency_target} jornada"
+                    f"usas deuda (techo {float(fin.get('bid_cap') or 0):,.0f} €)"
                 )
             why_wait = "; ".join(dict.fromkeys(wait_bits)) or "Sin urgencia"
             if not fixed:
@@ -2489,7 +2493,7 @@ def build_action_plan(
                 ),
                 "why": why_wait,
                 "rival_demand": len(demand),
-                "affordable": bf in ("comfortable", "tight"),
+                "affordable": bf in ("comfortable", "tight", "stretch"),
                 "fills_need": fills,
                 "fills_structural": bool(o.get("fills_structural")),
                 "structural_label": o.get("structural_label"),
@@ -2592,7 +2596,7 @@ def build_action_plan(
             if (
                 pos not in gap_pos
                 or not item.get("on_daily_market")
-                or item.get("budget_fit") not in ("comfortable", "tight")
+                or item.get("budget_fit") not in ("comfortable", "tight", "stretch")
                 or item.get("solvency_blocked")
             ):
                 promoted_b.append(item)
@@ -2632,7 +2636,7 @@ def build_action_plan(
             if (
                 risk == "high"
                 and on_daily
-                and bf in ("comfortable", "tight")
+                and bf in ("comfortable", "tight", "stretch")
                 and not item.get("solvency_blocked")
             ):
                 row = dict(item)
@@ -3160,6 +3164,22 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     if clauses_enabled:
         clause_targets: list[dict[str, Any]] = []
         seen_clause: set[str] = set()
+        clause_lookup_cap = 36
+
+        def _clause_priority(row: dict[str, Any]) -> float:
+            for key in ("xpts", "production_score", "ep_score"):
+                raw = row.get(key)
+                if raw is None:
+                    continue
+                try:
+                    return float(raw)
+                except (TypeError, ValueError):
+                    continue
+            try:
+                return float(row.get("mister_avg") or row.get("form") or 0)
+            except (TypeError, ValueError):
+                return 0.0
+
         for r in rivals:
             for p in sorted(r.get("squad") or [], key=lambda x: -float(x.get("price") or 0))[:5]:
                 pid = str(p.get("id") or "")
@@ -3167,8 +3187,34 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                     continue
                 seen_clause.add(pid)
                 clause_targets.append(dict(p))
-        clause_targets, clause_meta = enrich_players_with_clauses(clause_targets, max_lookups=24)
+        extras: list[dict[str, Any]] = []
+        for r in rivals:
+            for p in r.get("squad") or []:
+                pid = str(p.get("id") or "")
+                if not pid or pid in seen_clause:
+                    continue
+                extras.append(dict(p))
+        extras.sort(key=_clause_priority, reverse=True)
+        for p in extras:
+            if len(clause_targets) >= clause_lookup_cap:
+                break
+            pid = str(p.get("id") or "")
+            if not pid or pid in seen_clause:
+                continue
+            seen_clause.add(pid)
+            clause_targets.append(p)
+        clause_targets, clause_meta = enrich_players_with_clauses(
+            clause_targets, max_lookups=clause_lookup_cap
+        )
         clause_by_id = {str(p["id"]): p for p in clause_targets if p.get("id")}
+        for p in full_pool:
+            enriched = clause_by_id.get(str(p.get("id") or ""))
+            if not enriched or not enriched.get("clause_known"):
+                continue
+            p["clause"] = enriched.get("clause")
+            p["clause_known"] = True
+            if p.get("puja_recomendada") is None and enriched.get("clause") is not None:
+                p["puja_recomendada"] = enriched.get("clause")
         for r in rivals:
             new_squad = []
             for p in r.get("squad") or []:
@@ -3265,8 +3311,14 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         else None,
     )
     my_uc = str(live_meta.get("id_uc") or me.get("team_id") or "")
-    gw_target_xi = build_gw_target_xi(
+    target_universe = merge_target_universe(
         full_pool or (list(squad) + list(market_ext)),
+        squad,
+        market_ext,
+    )
+    annotate_players_with_xpts(target_universe, league_rules=scoring_rules)
+    gw_target_xi = build_gw_target_xi(
+        target_universe,
         squad=squad,
         recommended_xi=recommended_xi,
         matchday=matchday_early or {},
@@ -3677,6 +3729,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         market_cycle=market_cycle,
         market_mode=market_mode,
         max_squad=config.league_max_squad(league_cfg),
+        rival_upgrades=rival_upgrades,
     )
     attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
     squad_vm = squad_value_summary(squad)
@@ -3759,13 +3812,11 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     if hours_solvency_out is None:
         hours_solvency_out = hours_out
     liquidity_now = liquidity_balance(bal, bal_future_out)
-    solvency_ok = liquidity_now >= 0
+    bid_cap_now = mister_bid_cap(bal, max_debt_out)
+    solvency_ok = bid_cap_now > 0
     solvency_strict = solvency_strict_window(
         float(hours_solvency_out) if hours_solvency_out is not None else None
     )
-    # En jornada en curso el negativo no anula puntos de ESTA; solo importa la siguiente
-    if solvency_dl.get("current_jornada_started") and not solvency_ok:
-        solvency_ok = True  # scoring de esta GW ya fijado al arranque
     budget_pressure = "low"
     shortfall = float(funding_info.get("funding_shortfall") or 0)
     target = float(funding_info.get("funding_target") or 0)
