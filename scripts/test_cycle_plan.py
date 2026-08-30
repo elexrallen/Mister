@@ -1320,6 +1320,200 @@ def test_debt_bid_skipped_if_sale_misses_jornada() -> None:
     _assert(not any(m["name"] == "Objetivo" for m in bids), plan["moves"])
 
 
+def _clause_rival(
+    pid: str,
+    name: str,
+    *,
+    position: str = "DF",
+    clause: float = 8_000_000,
+    vm: float = 5_800_000,
+    xpts: float = 10.8,
+) -> dict:
+    return {
+        "player_id": pid,
+        "name": name,
+        "position": position,
+        "clause": clause,
+        "bid": clause,
+        "market_value": vm,
+        "upgrade_score": 60,
+        "clause_roi": 7.5,
+        "action": "clause_bid",
+        "budget_fit": "stretch",
+        "xpts": xpts,
+    }
+
+
+def _clause_slot(
+    pid: str,
+    name: str,
+    *,
+    position: str = "DF",
+    clause: float = 8_000_000,
+    xpts: float = 10.8,
+    your_xpts: float = 9.0,
+    your_name: str = "Gvardiol",
+) -> dict:
+    return {
+        "player_id": pid,
+        "reachable": "clause",
+        "name": name,
+        "position": position,
+        "clause": clause,
+        "xpts": xpts,
+        "your_xpts": your_xpts,
+        "your_name": your_name,
+    }
+
+
+def test_hoy_clause_skipped_for_tiny_upgrade_of_performing_starter() -> None:
+    """+1.8 vs el titular que saldría (9 xPts) no es upgrade. Da igual el puesto."""
+    squad = [
+        {"id": "df1", "name": "Gvardiol", "position": "DF", "price": 12_000_000, "lineup_prob": 0.95, "xpts": 9.0},
+        {"id": "df2", "name": "OtroDF", "position": "DF", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 9.0},
+        {"id": "fw1", "name": "Delantero", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8.0},
+        _fade_bench("bench", "Reserva", 12_000_000),
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": ["bench"], "pending_offers": [], "listed_count": 1},
+        recommended_xi={
+            "xi": [
+                {"player_id": "df1", "position": "DF", "xpts": 9.0, "name": "Gvardiol"},
+                {"player_id": "df2", "position": "DF", "xpts": 9.0, "name": "OtroDF"},
+                {"player_id": "fw1", "position": "FW", "xpts": 8.0, "name": "Delantero"},
+            ]
+        },
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "kayode",
+                    "ownership": "rival",
+                    "reachable": "clause",
+                    "xpts": 10.8,
+                    "position": "DF",
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    _clause_slot("kayode", "Kayode", your_xpts=9.0, your_name="Gvardiol"),
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        rival_upgrades=[_clause_rival("kayode", "Kayode")],
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+    )
+    clauses = [m for m in plan["moves"] if m["kind"] == KIND_CLAUSE]
+    _assert(not clauses, clauses)
+
+
+def test_hoy_clause_when_upgrade_beats_weakest_starter() -> None:
+    """Contra el DF que saldría (6 xPts) el salto es claro; cobra el banquillo listado."""
+    squad = [
+        {"id": "df1", "name": "Gvardiol", "position": "DF", "price": 12_000_000, "lineup_prob": 0.95, "xpts": 9.0},
+        {"id": "df2", "name": "Castagne", "position": "DF", "price": 2_200_000, "lineup_prob": 0.8, "xpts": 6.0},
+        {"id": "fw1", "name": "Delantero", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8.0},
+        _fade_bench("bench", "Reserva", 12_000_000),
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": ["bench"], "pending_offers": [], "listed_count": 1},
+        recommended_xi={
+            "xi": [
+                {"player_id": "df1", "position": "DF", "xpts": 9.0, "name": "Gvardiol"},
+                {"player_id": "df2", "position": "DF", "xpts": 6.0, "name": "Castagne"},
+                {"player_id": "fw1", "position": "FW", "xpts": 8.0, "name": "Delantero"},
+            ]
+        },
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "kayode",
+                    "ownership": "rival",
+                    "reachable": "clause",
+                    "xpts": 10.8,
+                    "position": "DF",
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    _clause_slot("kayode", "Kayode", your_xpts=9.0, your_name="Gvardiol"),
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        rival_upgrades=[_clause_rival("kayode", "Kayode")],
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+    )
+    clauses = [m for m in plan["moves"] if m["kind"] == KIND_CLAUSE]
+    _assert(len(clauses) == 1, clauses)
+    _assert(clauses[0]["name"] == "Kayode", clauses[0])
+    why = (clauses[0].get("why") or "").lower()
+    _assert("castagne" in why, clauses[0])
+    _assert("gvardiol" not in why, clauses[0])
+
+
+def test_listed_starter_does_not_fund_clause_debt() -> None:
+    """Titular listado (cualquier puesto) no financia el corto de una cláusula."""
+    squad = [
+        {"id": "df1", "name": "Gvardiol", "position": "DF", "price": 12_000_000, "lineup_prob": 0.95, "xpts": 9.0},
+        {"id": "df2", "name": "Castagne", "position": "DF", "price": 2_200_000, "lineup_prob": 0.8, "xpts": 6.0},
+        {
+            "id": "gk1",
+            "name": "Pickford",
+            "position": "GK",
+            "price": 11_000_000,
+            "lineup_prob": 1.0,
+            "xpts": 12.2,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": ["gk1"], "pending_offers": [], "listed_count": 1},
+        recommended_xi={
+            "xi": [
+                {"player_id": "df1", "position": "DF", "xpts": 9.0, "name": "Gvardiol"},
+                {"player_id": "df2", "position": "DF", "xpts": 6.0, "name": "Castagne"},
+                {"player_id": "gk1", "position": "GK", "xpts": 12.2, "name": "Pickford"},
+            ]
+        },
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "kayode",
+                    "ownership": "rival",
+                    "reachable": "clause",
+                    "xpts": 10.8,
+                    "position": "DF",
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    _clause_slot("kayode", "Kayode", your_xpts=9.0, your_name="Gvardiol"),
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        rival_upgrades=[_clause_rival("kayode", "Kayode")],
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+    )
+    clauses = [m for m in plan["moves"] if m["kind"] == KIND_CLAUSE]
+    _assert(not clauses, plan["moves"])
+
+
 def test_ongoing_gw_deadline_is_next_jornada() -> None:
     """Domingo en curso: el pitido de hoy no tumba un gasto que cobra antes de la siguiente."""
     squad = [
@@ -1404,5 +1598,8 @@ if __name__ == "__main__":
     test_hoy_one_clause_after_market_bids()
     test_debt_bid_skipped_without_recover_sale()
     test_debt_bid_skipped_if_sale_misses_jornada()
+    test_hoy_clause_skipped_for_tiny_upgrade_of_performing_starter()
+    test_hoy_clause_when_upgrade_beats_weakest_starter()
+    test_listed_starter_does_not_fund_clause_debt()
     test_ongoing_gw_deadline_is_next_jornada()
     print("test_cycle_plan: OK")

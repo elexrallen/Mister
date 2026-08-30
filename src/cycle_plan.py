@@ -32,6 +32,10 @@ KIND_HOLD = "hold_offer"
 
 FORBIDDEN_ACTIONS = {"wait", "scout", "avoid"}
 
+# Cláusula Hoy: el salto vs el titular que saldría tiene que ser claro.
+CLAUSE_MIN_XPTS_GAP = 2.5
+CLAUSE_MIN_XPTS_RATIO = 0.25
+
 
 def _f(v: Any) -> float | None:
     try:
@@ -332,6 +336,73 @@ def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
     return True
 
 
+def _pos(p: dict[str, Any] | None) -> str:
+    return str((p or {}).get("position") or "").upper()
+
+
+def _row_xpts(p: dict[str, Any] | None) -> float:
+    return _f((p or {}).get("xpts")) or 0.0
+
+
+def _worst_usable_starter_at_pos(
+    *,
+    position: str,
+    recommended_xi: dict[str, Any] | None,
+    squad: list[dict[str, Any]] | None,
+    xi_ids: set[str],
+) -> dict[str, Any] | None:
+    """El titular usable más flojo de esa línea: el que saldría del once."""
+    pos = (position or "").upper()
+    if not pos:
+        return None
+    by_id = {_pid(p): p for p in (squad or []) if _pid(p)}
+    cands: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for row in (recommended_xi or {}).get("xi") or []:
+        if not isinstance(row, dict):
+            continue
+        pid = _pid(row)
+        if not pid:
+            continue
+        owned = by_id.get(pid) or {}
+        row_pos = _pos(row) or _pos(owned)
+        if row_pos != pos:
+            continue
+        merged = {**owned, **{k: v for k, v in row.items() if v is not None}}
+        if pid not in seen:
+            seen.add(pid)
+            cands.append(merged)
+    for p in squad or []:
+        pid = _pid(p)
+        if not pid or pid in seen:
+            continue
+        if _pos(p) != pos:
+            continue
+        if not _is_usable_starter(p, xi_ids):
+            continue
+        seen.add(pid)
+        cands.append(p)
+    if not cands:
+        return None
+    return min(cands, key=_row_xpts)
+
+
+def _clause_upgrade_is_material(
+    target_xpts: float,
+    incumbent_xpts: float | None,
+) -> bool:
+    """Salto claro vs el titular que saldría. Hueco vacío o xPts desconocidos = sí."""
+    if incumbent_xpts is None:
+        return True
+    gap = target_xpts - incumbent_xpts
+    if incumbent_xpts <= 0:
+        return gap > 0
+    return (
+        gap + 1e-9 >= CLAUSE_MIN_XPTS_GAP
+        and gap + 1e-9 >= incumbent_xpts * CLAUSE_MIN_XPTS_RATIO
+    )
+
+
 def _recover_pool(
     squad: list[dict[str, Any]],
     *,
@@ -495,13 +566,17 @@ def _pick_hoy_clause(
     rival_upgrades: list[dict[str, Any]] | None,
     remaining: float,
     accept_ids: set[str],
+    recommended_xi: dict[str, Any] | None = None,
+    squad: list[dict[str, Any]] | None = None,
+    xi_ids: set[str] | None = None,
 ) -> dict[str, Any] | None:
-    """Como mucho 1 cláusula de Hoy: cierra hueco no-near, ROI OK, cabe en margen."""
+    """Como mucho 1 cláusula de Hoy: upgrade material vs quien sale, ROI OK, cabe."""
     by_upgrade = {
         _pid(r): r
         for r in (rival_upgrades or [])
         if isinstance(r, dict) and _pid(r)
     }
+    xi_ids = xi_ids or set()
     best: tuple[float, dict[str, Any]] | None = None
     for slot in _clause_target_rows(gw_target_xi):
         pid = _pid(slot)
@@ -524,9 +599,27 @@ def _pick_hoy_clause(
             or slot.get("price")
             or slot.get("market_value")
         )
+        target_x = _f(slot.get("xpts")) or _f(rival.get("xpts")) or 0.0
+        incumbent = _worst_usable_starter_at_pos(
+            position=_pos(slot) or _pos(rival),
+            recommended_xi=recommended_xi,
+            squad=squad,
+            xi_ids=xi_ids,
+        )
+        if incumbent is not None:
+            your_xpts = _row_xpts(incumbent)
+            your_name = incumbent.get("name")
+        elif slot.get("your_xpts") is not None:
+            your_xpts = _f(slot.get("your_xpts"))
+            your_name = slot.get("your_name")
+        else:
+            your_xpts = None
+            your_name = slot.get("your_name")
+        if not _clause_upgrade_is_material(target_x, your_xpts):
+            continue
         upgrade = _f(rival.get("upgrade_score"))
         if upgrade is None:
-            gap = (_f(slot.get("xpts")) or 0.0) - (_f(slot.get("your_xpts")) or 0.0)
+            gap = target_x - (your_xpts or 0.0)
             upgrade = max(30.0, gap * 10.0)
         roi_ok, roi_why = clause_roi_gate(
             upgrade_score=upgrade,
@@ -543,6 +636,9 @@ def _pick_hoy_clause(
         row["upgrade_score"] = upgrade
         row["roi_why"] = roi_why
         row["closes_gw_target"] = True
+        row["your_xpts"] = your_xpts
+        if your_name:
+            row["your_name"] = your_name
         if best is None or score > best[0]:
             best = (score, row)
     if best is None:
@@ -735,7 +831,7 @@ def build_cycle_plan(
     ):
         for p in squad:
             pid = _pid(p)
-            if pid and pid in listed_ids and pid not in accept_ids:
+            if pid and pid in listed_ids and pid not in accept_ids and _is_recover_sale(p, xi_ids):
                 listed_timely += _price(p)
     recover_base = _recover_pool(
         squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids
@@ -888,6 +984,9 @@ def build_cycle_plan(
                 rival_upgrades=rival_upgrades,
                 remaining=remaining,
                 accept_ids=skip_clause,
+                recommended_xi=recommended_xi,
+                squad=squad,
+                xi_ids=xi_ids,
             )
             if not cand:
                 break
