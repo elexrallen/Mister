@@ -3718,6 +3718,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     attach_mister_assets(free_agents, player_index=asset_index)
     attach_mister_assets(clauses_ranking, player_index=asset_index)
 
+    solvency_for_cycle = resolve_solvency_deadline(
+        hours_to_jornada=hours_j,
+        matchday=matchday_early if isinstance(matchday_early, dict) else None,
+    )
     cycle_plan = build_cycle_plan(
         me=me,
         squad=squad,
@@ -3731,6 +3735,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         max_squad=config.league_max_squad(league_cfg),
         rival_upgrades=rival_upgrades,
         hours_to_jornada=hours_j,
+        hours_to_solvency_deadline=solvency_for_cycle.get("hours_to_solvency_deadline"),
+        solvency_target=solvency_for_cycle.get("solvency_target"),
     )
     attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
     squad_vm = squad_value_summary(squad)

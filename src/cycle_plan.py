@@ -596,6 +596,8 @@ def build_cycle_plan(
     max_squad: int | None = None,
     rival_upgrades: list[dict[str, Any]] | None = None,
     hours_to_jornada: float | None = None,
+    hours_to_solvency_deadline: float | None = None,
+    solvency_target: str | None = None,
 ) -> dict[str, Any]:
     """
     Fuente de verdad de la pestaña Hoy.
@@ -605,8 +607,9 @@ def build_cycle_plan(
     2) Pujar/fichar si hay plazas libres (tras aceptar). El techo es maxDebt.
     3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
        en el margen residual.
-    4) Si el gasto deja negativo: ventas que cobren antes de la jornada
-       (aceptar oferta = ya; listar = siguiente ciclo).
+       4) Si el gasto deja negativo: ventas que cobren antes del deadline de
+       scoring (esta jornada si no ha empezado; la siguiente si ya está en curso).
+       Aceptar oferta = ya; listar = siguiente ciclo.
     5) Listar banquillo cuyo VM ya no tira, o mantener listados como colchón.
     """
     me = me or {}
@@ -706,9 +709,14 @@ def build_cycle_plan(
     cash_after_accepts = balance + cash_from_accepts
 
     mc = dict(market_cycle or {})
-    hours_deadline = _f(hours_to_jornada)
+    # Scoring: si la jornada ya empezó, el pitido de hoy no es el deadline.
+    hours_deadline = _f(hours_to_solvency_deadline)
+    if hours_deadline is None:
+        hours_deadline = _f(hours_to_jornada)
     if hours_deadline is None:
         hours_deadline = _f(mc.get("hours_to_jornada")) or _f(me.get("hours_to_jornada"))
+    next_gw = str(solvency_target or "").strip().lower() == "siguiente"
+    gw_deadline_txt = "la siguiente jornada" if next_gw else "la jornada"
     hours_to_end = _f(mc.get("hours_to_end"))
     cycle_h = _f(mc.get("cycle_hours")) or float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
     # Listas este ciclo; al empezar el siguiente aceptas y cobra al instante.
@@ -872,16 +880,25 @@ def build_cycle_plan(
     remaining = max(0.0, spendable - spent)
     slots_left = max(0, free_slots - len(bids))
     if slots_left > 0 and remaining > 0:
-        picked = _pick_hoy_clause(
-            gw_target_xi=gw_target_xi,
-            rival_upgrades=rival_upgrades,
-            remaining=remaining,
-            accept_ids=accept_ids,
-        )
-        if picked:
-            cost = _money(picked.get("clause") or picked.get("bid"))
-            if not _covers_shortfall(spent + cost):
-                picked = None
+        skip_clause: set[str] = set(accept_ids)
+        picked = None
+        for _ in range(6):
+            cand = _pick_hoy_clause(
+                gw_target_xi=gw_target_xi,
+                rival_upgrades=rival_upgrades,
+                remaining=remaining,
+                accept_ids=skip_clause,
+            )
+            if not cand:
+                break
+            cost = _money(cand.get("clause") or cand.get("bid"))
+            if _covers_shortfall(spent + cost):
+                picked = cand
+                break
+            pid = _pid(cand)
+            if not pid or pid in skip_clause:
+                break
+            skip_clause.add(pid)
         if picked:
             cost = _money(picked.get("clause") or picked.get("bid"))
             why = (
@@ -928,7 +945,7 @@ def build_cycle_plan(
                 "need_cash",
                 (
                     f"Acepta {_fmt_money(row['amount'])} por {row['player'].get('name')}: "
-                    f"cobra ya y tapa el negativo antes de la jornada. "
+                    f"cobra ya y tapa el negativo antes de {gw_deadline_txt}. "
                     f"Listar otro cobraría el siguiente ciclo."
                 ),
             )
@@ -956,7 +973,7 @@ def build_cycle_plan(
                     why=(
                         f"Pon en venta a {p.get('name')} (≈ {_fmt_money(proceeds)}): "
                         f"el siguiente ciclo aceptas y el dinero llega al instante, "
-                        f"antes de la jornada."
+                        f"antes de {gw_deadline_txt}."
                     ),
                     extra={
                         "expected_proceeds": proceeds,
@@ -970,7 +987,7 @@ def build_cycle_plan(
         names = _join_names([m.get("name") or "" for m in recover_lists])
         note = (
             f"lista a {names}: el siguiente ciclo aceptas y recuperas el negativo "
-            f"antes de la jornada"
+            f"antes de {gw_deadline_txt}"
         )
         for row in bids:
             why = (row.get("why") or "").rstrip(".")
@@ -1095,6 +1112,9 @@ def build_cycle_plan(
         "debt_shortfall": round(shortfall, 0),
         "debt_recovery": bool(recover_lists or (shortfall > 1 and listed_timely >= shortfall - 1)),
         "sells_settle_before_gw": bool(settle_new),
+        "hours_to_jornada": hours_to_jornada,
+        "hours_to_solvency_deadline": hours_deadline,
+        "solvency_target": "siguiente" if next_gw else "esta",
         "holds_count": len(holds),
     }
 
@@ -1171,6 +1191,11 @@ def _compose_narrative(
     verb_bid_inf: str,
 ) -> tuple[str, str]:
     parts: list[str] = []
+    gw_deadline_txt = (
+        "la siguiente jornada"
+        if str(constraints.get("solvency_target") or "") == "siguiente"
+        else "la jornada"
+    )
     if accepts:
         names = _join_names([m.get("name") or "" for m in accepts])
         parts.append(
@@ -1248,12 +1273,12 @@ def _compose_narrative(
             follow = " El siguiente ciclo aceptas (≈ VM) y el dinero llega al instante."
         if recover and len(recover) == len(lists):
             fade = (
-                "su cobro tapa el negativo antes de la jornada"
+                f"su cobro tapa el negativo antes de {gw_deadline_txt}"
                 if len(recover) == 1
-                else "su cobro tapa el negativo antes de la jornada"
+                else f"su cobro tapa el negativo antes de {gw_deadline_txt}"
             )
         elif recover:
-            fade = "parte recupera el negativo antes de la jornada"
+            fade = f"parte recupera el negativo antes de {gw_deadline_txt}"
         elif swaps and len(swaps) == len(lists):
             fade = "plantilla al tope y el mercado revaloriza más"
         elif any((_f(m.get("delta_5d")) or 0) <= 0 for m in lists):

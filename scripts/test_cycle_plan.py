@@ -1320,6 +1320,54 @@ def test_debt_bid_skipped_if_sale_misses_jornada() -> None:
     _assert(not any(m["name"] == "Objetivo" for m in bids), plan["moves"])
 
 
+def test_ongoing_gw_deadline_is_next_jornada() -> None:
+    """Domingo en curso: el pitido de hoy no tumba un gasto que cobra antes de la siguiente."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+        _fade_bench(),
+    ]
+    market = [
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 8_000_000,
+            "bid": 8_000_000,
+            "puja_recomendada": 8_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "debt_risk": True,
+            "budget_fit": "stretch",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        hours_to_jornada=4.5,
+        hours_to_solvency_deadline=130,
+        solvency_target="siguiente",
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 16, "cycle_hours": 24},
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(any(m["name"] == "Objetivo" for m in bids), plan["moves"])
+    _assert(plan["constraints"]["sells_settle_before_gw"] is True, plan["constraints"])
+    _assert(plan["constraints"]["solvency_target"] == "siguiente", plan["constraints"])
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_consecutive_up_counts_live_legs()
@@ -1356,4 +1404,5 @@ if __name__ == "__main__":
     test_hoy_one_clause_after_market_bids()
     test_debt_bid_skipped_without_recover_sale()
     test_debt_bid_skipped_if_sale_misses_jornada()
+    test_ongoing_gw_deadline_is_next_jornada()
     print("test_cycle_plan: OK")
