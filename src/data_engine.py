@@ -2525,8 +2525,8 @@ def build_action_plan(
     )
     plan.extend(sells)
     squad_n = len(me.get("squad") or [])
-    # Aceptar oferta justa = cerrar la venta listada. El negativo sí exige
-    # el conjunto mínimo que cubre; con saldo cubierto no se rechaza ~VM.
+    # Ofertas: aceptar solo si cubre caja/plaza o hay prima sobre VM.
+    # El resto queda en cartera (colchón), no se cierra por estar listado.
     cash_needed = max(0.0, -float(balance or 0))
     slots_needed = 1 if squad_n >= int(max_squad or 25) else 0
     offer_actions = build_offer_actions(
@@ -3990,7 +3990,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "wait_count": sum(1 for a in action_plan if a["action"] == "wait"),
             "sell_count": sum(1 for a in action_plan if a["action"] == "sell"),
             "offer_action_count": sum(
-                1 for a in action_plan if a["action"] in ("accept_offer", "decline_offer")
+                1
+                for a in action_plan
+                if a["action"] in ("accept_offer", "decline_offer", "hold_offer")
             ),
             "clause_bid_count": sum(1 for a in action_plan if a["action"] == "clause_bid"),
             "budget_pressure": budget_pressure,
@@ -4085,6 +4087,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                     "sell",
                     "accept_offer",
                     "decline_offer",
+                    "hold_offer",
                     "scout",
                 ],
             },

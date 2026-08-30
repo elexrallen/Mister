@@ -242,16 +242,17 @@ def test_offer_actions_only_needed_cover_debt():
     assert by_id["18004"]["action"] == "accept_offer"
     assert by_id["18004"]["offer_needed"] is True
     assert "opcional" not in (by_id["18004"]["why"] or "").lower()
-    assert by_id["56924"]["action"] == "decline_offer"
+    assert by_id["56924"]["action"] == "hold_offer"
     assert by_id["56924"]["offer_needed"] is False
     assert "no hace falta" in (by_id["56924"]["why"] or "").lower()
-    assert by_id["29403"]["action"] == "decline_offer"
+    assert "cartera" in (by_id["56924"]["why"] or "").lower()
+    assert by_id["29403"]["action"] == "hold_offer"
     assert by_id["29403"]["offer_needed"] is False
     assert "once" in (by_id["29403"]["why"] or "").lower()
 
 
-def test_offer_actions_positive_balance_accepts_fair_listed_sale():
-    """Listar y luego rechazar una oferta justa de la máquina es un bucle: Mister te saca del mercado."""
+def test_offer_actions_positive_balance_holds_fair_listed_sale():
+    """Listado = opción. Oferta al VM sin necesidad de caja/plaza: no cierres."""
     actions = build_offer_actions(
         {
             "pending_offers": [
@@ -259,8 +260,35 @@ def test_offer_actions_positive_balance_accepts_fair_listed_sale():
                     "player_id": "2",
                     "name": "B",
                     "amount": 5_000_000,
+                    "market_value": 5_000_000,
+                    "pct_of_vm": 1.0,
+                    "from_machine": True,
+                    "from_name": "Mister",
+                    "status": "pending",
+                }
+            ]
+        },
+        balance=1_000_000,
+        cash_needed=0,
+    )
+    assert actions and actions[0]["action"] == "hold_offer"
+    assert actions[0]["offer_needed"] is False
+    why = (actions[0].get("why") or "").lower()
+    assert "opcional" not in why
+    assert "cartera" in why
+    assert "no lo vuelvas a listar" not in why
+
+
+def test_offer_actions_accepts_premium_when_not_keeper():
+    actions = build_offer_actions(
+        {
+            "pending_offers": [
+                {
+                    "player_id": "2",
+                    "name": "B",
+                    "amount": 5_150_000,
                     "market_value": 4_900_000,
-                    "pct_of_vm": 1.02,
+                    "pct_of_vm": 1.05,
                     "from_machine": True,
                     "from_name": "Mister",
                     "status": "pending",
@@ -271,11 +299,9 @@ def test_offer_actions_positive_balance_accepts_fair_listed_sale():
         cash_needed=0,
     )
     assert actions and actions[0]["action"] == "accept_offer"
-    assert actions[0]["offer_needed"] is True
-    assert actions[0]["offer_need"] == "complete_listing"
-    assert "opcional" not in (actions[0].get("why") or "").lower()
-    assert "cierra la venta" in (actions[0].get("why") or "").lower()
-    assert "saca del mercado" in (actions[0].get("why") or "").lower()
+    assert actions[0]["offer_need"] == "premium"
+    why = (actions[0].get("why") or "").lower()
+    assert "por encima" in why or "pagan de más" in why or "paga" in why
 
 
 def test_offer_actions_declines_keeper_when_cash_ok():
@@ -307,11 +333,12 @@ def test_offer_actions_declines_keeper_when_cash_ok():
             }
         ],
     )
-    assert actions and actions[0]["action"] == "decline_offer"
+    assert actions and actions[0]["action"] == "hold_offer"
     assert actions[0]["offer_needed"] is False
     why = (actions[0].get("why") or "").lower()
-    assert "sigue en venta" not in why
     assert "titular" in why
+    assert "no lo vuelvas a listar" not in why
+    assert "cartera" in why
 
 
 def test_offer_actions_declines_poor_offer_when_cash_ok():
@@ -334,11 +361,14 @@ def test_offer_actions_declines_poor_offer_when_cash_ok():
         cash_needed=0,
     )
     assert actions and actions[0]["action"] == "decline_offer"
-    assert "oferta floja" in (actions[0].get("why") or "").lower()
+    why = (actions[0].get("why") or "").lower()
+    assert "oferta floja" in why
+    assert "vuelve a listarlo" in why
+    assert "colchón" in why
 
 
-def test_premier_listed_offers_are_not_a_reject_relist_loop():
-    """Premier: 5 listados, saldo positivo, ofertas ~VM → aceptar, no rechazar."""
+def test_premier_listed_offers_are_cushion_not_auto_sell():
+    """Premier: 5 listados, saldo positivo, ofertas ~VM → cartera, no vender todas."""
     pending = [
         ("1859", "Solanke", 2_239_730, 2_309_000, 0.97),
         ("11145", "Nmecha", 1_951_320, 1_932_000, 1.01),
@@ -370,8 +400,10 @@ def test_premier_listed_offers_are_not_a_reject_relist_loop():
         ],
     )
     assert len(actions) == 5
-    assert all(a["action"] == "accept_offer" for a in actions)
-    assert all(a["offer_need"] == "complete_listing" for a in actions)
+    assert not any(a["action"] == "accept_offer" for a in actions)
+    assert all(a["action"] == "hold_offer" for a in actions)
+    assert all("no lo vuelvas a listar" not in (a.get("why") or "").lower() for a in actions)
+    assert all(a.get("offer_need") != "complete_listing" for a in actions)
 
 
 def test_already_listed_skips_players_with_pending_offer():
@@ -438,7 +470,7 @@ def test_offer_actions_prefers_bench_to_cover_slot():
     by_id = {a["player_id"]: a for a in actions}
     assert by_id["bn"]["action"] == "accept_offer"
     assert by_id["bn"]["offer_needed"] is True
-    assert by_id["xi"]["action"] == "decline_offer"
+    assert by_id["xi"]["action"] == "hold_offer"
     assert by_id["xi"]["offer_needed"] is False
 
 
@@ -546,14 +578,16 @@ def test_offer_actions_keeps_prior_scorer_when_listed_cover():
         ],
     )
     by_id = {a["player_id"]: a for a in actions}
-    assert by_id["18004"]["action"] == "decline_offer"
+    assert by_id["18004"]["action"] == "hold_offer"
     assert by_id["18004"]["offer_needed"] is False
     why_b = (by_id["18004"]["why"] or "").lower()
     assert "opcional" not in why_b
-    assert "temp. pasada" in why_b
+    assert "cartera" in why_b
+    assert "no lo vuelvas a listar" not in why_b
     assert by_id["56924"]["action"] == "accept_offer"
     assert by_id["56924"]["offer_needed"] is True
     assert by_id["29403"]["offer_needed"] is False
+    assert by_id["29403"]["action"] == "hold_offer"
 
 
 def test_playbook_splits_needed_and_surplus_offers():
@@ -569,11 +603,11 @@ def test_playbook_splits_needed_and_surplus_offers():
                 "why": "Necesitas esta venta: el saldo es -15,864,844 € y esta oferta lo cubre.",
             },
             {
-                "action": "decline_offer",
+                "action": "hold_offer",
                 "name": "Etta Eyong",
                 "player_id": "56924",
                 "offer_needed": False,
-                "why": "No hace falta: con Ante Budimir ya cubres el negativo. Rechaza para no vender de más; el jugador sigue en venta.",
+                "why": "Oferta en cartera: con Ante Budimir ya cubres el plan. No hace falta cerrarla.",
             },
         ],
         me={"balance": -15_864_844},
@@ -581,10 +615,11 @@ def test_playbook_splits_needed_and_surplus_offers():
     )
     ids = {c["id"]: c for c in pb["checklist"]}
     assert "ofertas_necesarias" in ids
-    assert "ofertas_no_necesarias" in ids
+    assert "ofertas_cartera" in ids
     assert "opcional" not in (ids["ofertas_necesarias"]["detail"] or "").lower()
-    assert "opcional" not in (ids["ofertas_no_necesarias"]["detail"] or "").lower()
+    assert "opcional" not in (ids["ofertas_cartera"]["detail"] or "").lower()
     assert "necesitas esta venta" in ids["ofertas_necesarias"]["detail"].lower()
+    assert "cartera" in ids["ofertas_cartera"]["detail"].lower()
 
 
 def main():
@@ -599,10 +634,11 @@ def main():
         test_settle_before_deadline,
         test_offer_actions_accept_when_need_liquidity,
         test_offer_actions_only_needed_cover_debt,
-        test_offer_actions_positive_balance_accepts_fair_listed_sale,
+        test_offer_actions_positive_balance_holds_fair_listed_sale,
+        test_offer_actions_accepts_premium_when_not_keeper,
         test_offer_actions_declines_keeper_when_cash_ok,
         test_offer_actions_declines_poor_offer_when_cash_ok,
-        test_premier_listed_offers_are_not_a_reject_relist_loop,
+        test_premier_listed_offers_are_cushion_not_auto_sell,
         test_already_listed_skips_players_with_pending_offer,
         test_offer_actions_prefers_bench_to_cover_slot,
         test_offer_actions_keeps_prior_scorer_when_listed_cover,

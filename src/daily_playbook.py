@@ -183,7 +183,9 @@ def build_daily_playbook(
         if a.get("action") == "sell" and a.get("queue_role") != "already_listed"
     ]
     offer_actions = [
-        a for a in plan if a.get("action") in ("accept_offer", "decline_offer")
+        a
+        for a in plan
+        if a.get("action") in ("accept_offer", "decline_offer", "hold_offer")
     ]
     sales_state = (diag.get("sales_state") if isinstance(diag, dict) else None) or {}
     listed_count = int(sales_state.get("listed_count") or 0)
@@ -414,7 +416,12 @@ def build_daily_playbook(
         warnings.append("Saldo negativo: vigila el techo de deuda.")
     if offer_actions:
         needed_offers = [a for a in offer_actions if a.get("offer_needed")]
-        surplus_offers = [a for a in offer_actions if not a.get("offer_needed")]
+        hold_offers = [a for a in offer_actions if a.get("action") == "hold_offer"]
+        surplus_declines = [
+            a
+            for a in offer_actions
+            if a.get("action") == "decline_offer" and not a.get("offer_needed")
+        ]
         if needed_offers:
             names = ", ".join(str(a.get("name")) for a in needed_offers[:3])
             why0 = (needed_offers[0].get("why") or "").strip()
@@ -428,15 +435,27 @@ def build_daily_playbook(
                 priority="Alta",
                 related=[a.get("player_id") for a in needed_offers],
             )
-        if surplus_offers:
-            names = ", ".join(str(a.get("name")) for a in surplus_offers[:3])
-            why0 = (surplus_offers[0].get("why") or "").strip()
+        if hold_offers:
+            names = ", ".join(str(a.get("name")) for a in hold_offers[:3])
+            why0 = (hold_offers[0].get("why") or "").strip()
+            add(
+                "ofertas_cartera",
+                f"{len(hold_offers)} oferta(s) en cartera",
+                why0
+                or f"{names}. No hace falta cerrarlas; siguen de colchón.",
+                priority="Baja",
+                related=[a.get("player_id") for a in hold_offers],
+            )
+        if surplus_declines:
+            names = ", ".join(str(a.get("name")) for a in surplus_declines[:3])
+            why0 = (surplus_declines[0].get("why") or "").strip()
             add(
                 "ofertas_no_necesarias",
-                f"No hace falta aceptar {len(surplus_offers)} oferta(s)",
-                why0 or f"{names}. Rechaza para no vender de más.",
+                f"Rechaza {len(surplus_declines)} oferta(s) floja(s)",
+                why0
+                or f"{names}. Vuelve a listarlos si quieres mantener el colchón.",
                 priority="Media",
-                related=[a.get("player_id") for a in surplus_offers],
+                related=[a.get("player_id") for a in surplus_declines],
             )
     elif listed_count > 0 and pending_count == 0:
         add(

@@ -490,6 +490,8 @@ APPRECIATION_MIN_VM = 400_000
 APPRECIATION_MIN_ABS_GAIN = 80_000
 # Plan de ciclo: oferta del sistema por debajo de esto = outlier (no el “un poco”)
 CYCLE_OFFER_OUTLIER_PCT = 0.82
+# Prima: el sistema paga por encima del VM (colchón que sí se ejerce)
+CYCLE_OFFER_PREMIUM_PCT = 1.0
 # Señal fuerte de subida (el 10% del ejemplo; 8% ya merece rotar)
 CYCLE_STRONG_RISE = 0.08
 # Para listar a alguien que aún sube fuerte: el mercado debe superarlo por este margen

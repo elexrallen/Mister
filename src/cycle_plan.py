@@ -28,6 +28,7 @@ KIND_LIST = "list_for_sale"
 KIND_BID = "bid"
 KIND_CLAUSE = "clause_bid"
 KIND_DECLINE = "decline_offer"
+KIND_HOLD = "hold_offer"
 
 FORBIDDEN_ACTIONS = {"wait", "scout", "avoid"}
 
@@ -297,6 +298,25 @@ def _market_much_hotter(owned_delta: float | None, market_row: dict[str, Any] | 
     margin = float(getattr(config, "CYCLE_LIST_SWAP_MARGIN", 0.08) or 0.08)
     floor = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
     return md >= floor and md >= owned_delta + margin
+
+
+def _is_usable_starter(p: dict[str, Any], xi_ids: set[str]) -> bool:
+    if _pid(p) in xi_ids:
+        return True
+    lp = _lineup_pct(p)
+    return lp is not None and lp >= 70
+
+
+def _offer_quality_reason(player: dict[str, Any], xi_ids: set[str], pct: float | None) -> str | None:
+    """Prima sobre VM o fade real. XI / titular / keep-riding no se cierran solos."""
+    if _is_usable_starter(player, xi_ids) or _keep_riding(player):
+        return None
+    premium = float(getattr(config, "CYCLE_OFFER_PREMIUM_PCT", 1.0) or 1.0)
+    if pct is not None and pct > premium + 1e-9:
+        return "premium"
+    if _list_score(player) >= 28:
+        return "fade"
+    return None
 
 
 def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
@@ -580,15 +600,14 @@ def build_cycle_plan(
     """
     Fuente de verdad de la pestaña Hoy.
 
-    1) Aceptar ofertas del sistema (salvo outlier a la baja).
-    2) Pujar/fichar si hay plazas libres (tras aceptar). El techo es maxDebt,
-       no caja ≥ 0. Revalorización: solo libres del mercado, no listados de rivales.
+    1) Ofertas: aceptar solo prima/fade o si hace falta caja/plaza para el plan.
+       El resto queda en cartera (no es venta). Outlier → no cerrar.
+    2) Pujar/fichar si hay plazas libres (tras aceptar). El techo es maxDebt.
     3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
        en el margen residual.
-    4) Si el gasto deja negativo: solo si hay ventas rentables (banquillo, no XI)
-       cuyo cobro llega antes de la jornada. Esas ventas salen en el plan.
-    5) Listar banquillo cuyo VM ya no tira. Si aún revaloriza fuerte, solo
-       con plantilla llena y un recambio de mercado que suba claramente más.
+    4) Si el gasto deja negativo: ventas que cobren antes de la jornada
+       (aceptar oferta = ya; listar = siguiente ciclo).
+    5) Listar banquillo cuyo VM ya no tira, o mantener listados como colchón.
     """
     me = me or {}
     squad = list(squad or me.get("squad") or [])
@@ -630,6 +649,7 @@ def build_cycle_plan(
     accept_ids: set[str] = set()
     cash_from_accepts = 0.0
     slots_from_accepts = 0
+    hold_rows: list[dict[str, Any]] = []
 
     for offer in pending:
         pid = _pid(offer)
@@ -647,19 +667,39 @@ def build_cycle_plan(
         if pct is not None and pct < outlier_pct:
             why = (
                 f"Oferta a {pct * 100:.0f}% del VM ({_fmt_money(amount)} vs {_fmt_money(vm)}): "
-                f"demasiado baja; no cierres esta venta."
+                f"demasiado baja. Rechaza y vuelve a listarlo si quieres mantener el colchón."
             )
             moves.append(_player_ref(player, kind=KIND_DECLINE, why=why, extra=extra))
             continue
-        why = (
-            f"Oferta del sistema {_fmt_money(amount)}"
-            + (f" vs {_fmt_money(vm)} de VM" if vm else "")
-            + ". Cierra la venta: libera plaza y caja este ciclo."
-        )
-        moves.append(_player_ref(player, kind=KIND_ACCEPT, why=why, extra=extra))
-        accept_ids.add(pid)
-        cash_from_accepts += amount
-        slots_from_accepts += 1
+        packed = {
+            "pid": pid,
+            "player": player,
+            "amount": amount,
+            "vm": vm,
+            "pct": pct,
+            "extra": extra,
+        }
+        reason = _offer_quality_reason(player, xi_ids, pct)
+        if reason == "premium":
+            why = (
+                f"El sistema paga {_fmt_money(amount)} vs {_fmt_money(vm)} de VM: "
+                f"cierra, te están pagando de más y ya no conviene guardar la opción."
+            )
+            moves.append(_player_ref(player, kind=KIND_ACCEPT, why=why, extra={**extra, "accept_reason": "premium"}))
+            accept_ids.add(pid)
+            cash_from_accepts += amount
+            slots_from_accepts += 1
+        elif reason == "fade":
+            why = (
+                f"Oferta {_fmt_money(amount)} por {player.get('name')}: "
+                f"es un fade (VM plano / no entra en el once). Cierra la rotación."
+            )
+            moves.append(_player_ref(player, kind=KIND_ACCEPT, why=why, extra={**extra, "accept_reason": "fade"}))
+            accept_ids.add(pid)
+            cash_from_accepts += amount
+            slots_from_accepts += 1
+        else:
+            hold_rows.append(packed)
 
     free_slots = max(0, cap - squad_n + slots_from_accepts)
     spendable = mister_bid_cap(balance + cash_from_accepts, max_debt)
@@ -745,6 +785,37 @@ def build_cycle_plan(
             continue
         bid_cands.append((score, o))
     bid_cands.sort(key=lambda x: -x[0])
+
+    def _take_hold(row: dict[str, Any], reason: str, why: str) -> None:
+        nonlocal cash_from_accepts, slots_from_accepts, free_slots, cash_after_accepts
+        extra = {**row["extra"], "accept_reason": reason}
+        moves.append(_player_ref(row["player"], kind=KIND_ACCEPT, why=why, extra=extra))
+        accept_ids.add(row["pid"])
+        cash_from_accepts += row["amount"]
+        slots_from_accepts += 1
+        if row in hold_rows:
+            hold_rows.remove(row)
+        free_slots = max(0, cap - squad_n + slots_from_accepts)
+        cash_after_accepts = balance + cash_from_accepts
+
+    wanted_bids = min(max_bids, len(bid_cands))
+    if free_slots < wanted_bids:
+        need_n = wanted_bids - free_slots
+        pool = [
+            r
+            for r in hold_rows
+            if not _is_usable_starter(r["player"], xi_ids) and not _keep_riding(r["player"])
+        ]
+        pool.sort(key=lambda r: -_list_score(r["player"]))
+        for row in pool[:need_n]:
+            _take_hold(
+                row,
+                "need_slot",
+                (
+                    f"Acepta {_fmt_money(row['amount'])} por {row['player'].get('name')}: "
+                    f"libera plaza para el plan de este ciclo. El resto de ofertas sigue en cartera."
+                ),
+            )
 
     bids: list[dict[str, Any]] = []
     spent = 0.0
@@ -842,6 +913,27 @@ def build_cycle_plan(
     ][:3]
 
     shortfall = max(0.0, spent - cash_after_accepts)
+    if shortfall > 1 and not settle_new:
+        cash_pool = [
+            r
+            for r in hold_rows
+            if not _is_usable_starter(r["player"], xi_ids) and not _keep_riding(r["player"])
+        ]
+        cash_pool.sort(key=lambda r: -float(r["amount"]))
+        for row in cash_pool:
+            if spent - cash_after_accepts <= 1:
+                break
+            _take_hold(
+                row,
+                "need_cash",
+                (
+                    f"Acepta {_fmt_money(row['amount'])} por {row['player'].get('name')}: "
+                    f"cobra ya y tapa el negativo antes de la jornada. "
+                    f"Listar otro cobraría el siguiente ciclo."
+                ),
+            )
+        shortfall = max(0.0, spent - cash_after_accepts)
+
     recover_lists: list[dict[str, Any]] = []
     recover_ids: set[str] = set()
     recover_need = max(0.0, shortfall - listed_timely)
@@ -972,6 +1064,18 @@ def build_cycle_plan(
         )
     moves.extend(lists)
 
+    holds: list[dict[str, Any]] = []
+    for row in hold_rows:
+        why = (
+            f"Oferta {_fmt_money(row['amount'])}"
+            + (f" vs {_fmt_money(row['vm'])} de VM" if row["vm"] else "")
+            + ": en cartera, no hace falta cerrarla. Sigue listado como colchón."
+        )
+        holds.append(
+            _player_ref(row["player"], kind=KIND_HOLD, why=why, extra={**row["extra"], "hold": True})
+        )
+    moves.extend(holds)
+
     value_sum = squad_value_summary(squad)
     constraints = {
         "squad_size": squad_n,
@@ -991,6 +1095,7 @@ def build_cycle_plan(
         "debt_shortfall": round(shortfall, 0),
         "debt_recovery": bool(recover_lists or (shortfall > 1 and listed_timely >= shortfall - 1)),
         "sells_settle_before_gw": bool(settle_new),
+        "holds_count": len(holds),
     }
 
     headline, narrative = _compose_narrative(
@@ -999,6 +1104,7 @@ def build_cycle_plan(
         bids=bids,
         clauses=clauses,
         lists=lists,
+        holds=holds,
         next_targets=next_targets,
         constraints=constraints,
         fixed=fixed,
@@ -1045,6 +1151,7 @@ def build_cycle_plan(
             "bid": sum(1 for m in moves if m["kind"] == KIND_BID),
             "clause": sum(1 for m in moves if m["kind"] == KIND_CLAUSE),
             "decline": sum(1 for m in moves if m["kind"] == KIND_DECLINE),
+            "hold": sum(1 for m in moves if m["kind"] == KIND_HOLD),
         },
     }
 
@@ -1055,6 +1162,7 @@ def _compose_narrative(
     declines: list[dict[str, Any]],
     bids: list[dict[str, Any]],
     lists: list[dict[str, Any]],
+    holds: list[dict[str, Any]] | None = None,
     clauses: list[dict[str, Any]] | None = None,
     next_targets: list[dict[str, Any]],
     constraints: dict[str, Any],
@@ -1076,8 +1184,19 @@ def _compose_narrative(
         )
     if declines:
         names = _join_names([m.get("name") or "" for m in declines])
+        relist = (
+            "Vuelve a listarlo si quieres mantener el colchón."
+            if len(declines) == 1
+            else "Vuelve a listarlos si quieres mantener el colchón."
+        )
         parts.append(
-            f"No cierres la venta de {names}: la oferta está claramente por debajo del valor de mercado."
+            f"No cierres la venta de {names}: la oferta está claramente por debajo del valor de mercado. "
+            f"{relist}"
+        )
+    if holds:
+        n = len(holds)
+        parts.append(
+            f"{n} oferta{'s' if n != 1 else ''} en cartera; ninguna urgente — no hace falta cerrarlas."
         )
     if bids:
         bits = []
@@ -1173,6 +1292,8 @@ def _compose_narrative(
         headline = verb_bid_inf + " este ciclo"
     elif lists:
         headline = "Pon en venta"
+    elif holds:
+        headline = "Ofertas en cartera"
     else:
         headline = "Plan de este ciclo"
 

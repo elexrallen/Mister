@@ -28,9 +28,9 @@ SOLVENCY_STRICT_HOURS = 48
 SOLVENCY_SETTLE_BUFFER_HOURS = 2
 # Compat: nombre antiguo (ya no es buffer D-1 de 24h).
 SOLVENCY_D1_BUFFER_HOURS = SOLVENCY_SETTLE_BUFFER_HOURS
-# Oferta de la máquina/rival por debajo de esto = floja; a partir de aquí cierra
-# una venta que ya habíamos pedido listar. Rechazar en Mister saca al jugador
-# del mercado: listar → rechazar → volver a listar es un bucle vacío.
+# Oferta de la máquina/rival por debajo de esto = floja (rechaza y relista).
+# A partir de aquí es colchón: no se cierra solo por estar listado.
+# Rechazar en Mister saca al jugador del mercado.
 FAIR_OFFER_PCT = 0.90
 
 
@@ -4270,12 +4270,11 @@ def build_offer_actions(
     solvency_target: str = "siguiente",
     squad: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
-    """Veredicto accept/decline por oferta pending.
+    """Veredicto accept / hold / decline por oferta pending.
 
-    Si hace falta caja o plaza, solo se acepta el conjunto mínimo que cubre.
-    Si el saldo ya está cubierto, una oferta justa (~≥90% VM) cierra la venta
-    que ya se pidió listar: en Mister rechazar saca al jugador del mercado,
-    y volver a pedir que lo listes al día siguiente es un bucle vacío.
+    Listado = opción; aceptar = ejercerla. Solo se cierra si hace falta
+    caja o plaza, o si el sistema paga por encima del VM y no es titular.
+    El resto queda en cartera. Rechazar outlier: vuelve a listar el colchón.
     """
     state = sales_state if isinstance(sales_state, dict) else {}
     pending = list(state.get("pending_offers") or [])
@@ -4392,15 +4391,7 @@ def build_offer_actions(
         pct_txt = f"{pct * 100:.0f}% VM"
         fair = pct + 1e-9 >= FAIR_OFFER_PCT
         keeper = _is_offer_keeper(row)
-        # Sin hueco de caja/plaza: una oferta justa cierra la venta que ya
-        # pedimos listar. Rechazar en Mister saca al jugador del mercado.
-        complete_listing = (
-            not needed
-            and cash_needed <= 0
-            and slots_needed <= 0
-            and fair
-            and not keeper
-        )
+        premium = pct > 1.0 + 1e-9
         offer_need = "none"
         if needed and cash_needed > 0 and slots_needed > 0:
             offer_need = "solvency_and_slot"
@@ -4408,8 +4399,6 @@ def build_offer_actions(
             offer_need = "solvency"
         elif needed:
             offer_need = "slot"
-        elif complete_listing:
-            offer_need = "complete_listing"
 
         others = _join_es_names(
             [str(r["name"]) for r in needed_rows if r["player_id"] != pid]
@@ -4476,75 +4465,61 @@ def build_offer_actions(
                 label_note = "Acepta — necesaria para plaza"
             urgency = "high"
             prio = 92 if offer_need != "slot" else 88
-        elif complete_listing:
+        elif (
+            premium
+            and not keeper
+            and not in_xi
+            and cash_needed <= 0
+            and slots_needed <= 0
+        ):
             action = "accept_offer"
-            who = "la máquina" if row.get("from_machine") else (row.get("from_name") or "el rival")
             why = (
-                f"Lo pusimos en venta y {who} ofrece {amount:,.0f} € ({pct_txt}). "
-                "Acepta y cierra la venta: rechazar lo saca del mercado y mañana "
-                "te pediríamos volver a listarlo."
+                f"El sistema paga {amount:,.0f} € ({pct_txt}): por encima del VM. "
+                "Cierra; te pagan de más y no es titular."
             )
-            if in_xi and not keeper:
-                why += " Está en el once Mister, pero no es titular real."
-            label_note = "Acepta — cierra la venta listada"
+            label_note = "Acepta — prima sobre VM"
             urgency = "medium"
             prio = 80
-        else:
+            offer_need = "premium"
+        elif not fair:
             action = "decline_offer"
-            if cash_needed > 0 and needed_names:
-                why = (
-                    f"No hace falta: con {needed_names} ya cubres el negativo. "
-                    "Rechaza para no vender de más."
-                )
-                if thin and prior_bit and float(row.get("points") or 0) <= 0:
-                    why = (
-                        f"No hace falta venderlo para el negativo. "
-                        f"Esta temporada aún no cuenta (0 pts).{prior_bit}{play_bit} "
-                        f"Cubre con {needed_names}. Rechaza"
-                        + (
-                            " y mételo en el once."
-                            if real_starter and not in_xi
-                            else "."
-                        )
-                    )
-                elif real_starter and not in_xi:
-                    why = (
-                        f"No hace falta y es titular real {p_play * 100:.0f}%: "
-                        f"con {needed_names} ya cubres el negativo. Rechaza y mételo en el once."
-                    )
-                elif in_xi:
-                    why = (
-                        f"No hace falta y está en el once: con {needed_names} ya "
-                        "cubres el negativo. Rechaza."
-                    )
-                label_note = "Rechaza — no hace falta para caja"
-            elif cash_needed > 0:
-                why = (
-                    f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}) y no entra "
-                    "en lo que necesitas para cubrir el negativo."
-                )
-                label_note = "Rechaza — oferta floja"
-            elif keeper:
-                why = (
-                    f"No lo vendas: es titular probable ({p_play * 100:.0f}%) y el "
-                    "saldo ya está cubierto. Rechaza; al rechazar sale del mercado "
-                    "— no lo vuelvas a listar."
-                )
-                label_note = "Rechaza — titular que conviene quedar"
-            elif not fair:
-                why = (
-                    f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}). "
-                    "Si sigues queriendo venderlo, vuelve a listarlo mañana."
-                )
-                label_note = "Rechaza — oferta floja"
-            else:
-                why = (
-                    "No hace falta venderlo ahora. Rechaza; al rechazar sale del "
-                    "mercado — no lo vuelvas a listar salvo que pase a sobrar."
-                )
-                label_note = "Rechaza — no hace falta"
+            why = (
+                f"Rechaza: oferta floja ({amount:,.0f} €, {pct_txt}). "
+                "Vuelve a listarlo si quieres mantener el colchón."
+            )
+            label_note = "Rechaza — oferta floja"
             urgency = "low"
             prio = 36 if in_xi else 40
+        else:
+            action = "hold_offer"
+            if cash_needed > 0 and needed_names:
+                why = (
+                    f"Oferta en cartera ({amount:,.0f} €, {pct_txt}): "
+                    f"con {needed_names} ya cubres el plan. "
+                    f"No hace falta cerrarla; sigue de colchón."
+                )
+                if in_xi:
+                    why += " Está en el once."
+                elif keeper:
+                    why += f" Es titular probable ({p_play * 100:.0f}%)."
+            elif in_xi or keeper:
+                why = (
+                    f"Oferta en cartera ({amount:,.0f} €, {pct_txt})"
+                    + (
+                        f": es titular probable ({p_play * 100:.0f}%)"
+                        if keeper or p_play >= 0.7
+                        else ": está en el once"
+                    )
+                    + ". No hace falta cerrarla. Rechazar lo saca del mercado."
+                )
+            else:
+                why = (
+                    f"Oferta en cartera ({amount:,.0f} €, {pct_txt}): no hace falta cerrarla. "
+                    "Sigue listado como colchón."
+                )
+            label_note = "Cartera — no cierres"
+            urgency = "low"
+            prio = 20
 
         actions.append(
             {
@@ -4565,7 +4540,7 @@ def build_offer_actions(
                 "real_starter": real_starter,
                 "keep_xpts": float(row.get("keep_xpts") or 0),
                 "thin_sample": thin,
-                "offer_needed": needed or complete_listing,
+                "offer_needed": needed or (action == "accept_offer" and offer_need == "premium"),
                 "offer_need": offer_need,
                 "cash_needed": cash_needed,
                 "urgency": urgency,
@@ -6247,7 +6222,7 @@ def finalize_action_plan(
     buy_roles = ("primary", "primary_target", "secondary", "hedge")
     # Ofertas recibidas: rol de cola antes del ranking
     for item in plan:
-        if item.get("action") in ("accept_offer", "decline_offer"):
+        if item.get("action") in ("accept_offer", "decline_offer", "hold_offer"):
             item["queue_role"] = "review_offer"
             item["package_id"] = package_id
 
@@ -6375,9 +6350,13 @@ def finalize_action_plan(
         elif role == "hedge":
             item["_queue_rank"] = 8_500 + int(item.get("priority_score") or 0)
         elif role == "review_offer":
-            # Decisiones de oferta: por encima de nuevos listados
-            boost = 200 if item.get("action") == "accept_offer" else 0
-            item["_queue_rank"] = 10_350 + boost + int(item.get("priority_score") or 0)
+            # Decisiones de oferta: por encima de nuevos listados.
+            # Las de cartera no empujan el plan de hoy.
+            if item.get("action") == "hold_offer":
+                item["_queue_rank"] = 400 + int(item.get("priority_score") or 0)
+            else:
+                boost = 200 if item.get("action") == "accept_offer" else 0
+                item["_queue_rank"] = 10_350 + boost + int(item.get("priority_score") or 0)
         elif role == "already_listed":
             item["_queue_rank"] = 500 + int(item.get("priority_score") or 0)
         elif role == "sell_now":
@@ -6414,6 +6393,7 @@ def finalize_action_plan(
         "sell": 5,
         "accept_offer": 5,
         "decline_offer": 5,
+        "hold_offer": 8,
         "scout": 0 if fixed else 3,
     }
     max_pipeline_waits = 2

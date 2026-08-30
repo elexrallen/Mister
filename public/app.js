@@ -1659,6 +1659,7 @@
         : { label: "Poner en venta", verb: "Pon en venta a", cls: "is-sell" },
       accept_offer: { label: "Aceptar oferta", verb: "Acepta oferta por", cls: "is-sell" },
       decline_offer: { label: "Rechazar oferta", verb: "Rechaza oferta por", cls: "is-wait" },
+      hold_offer: { label: "Oferta en cartera", verb: "Deja la oferta de", cls: "is-wait" },
       avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
       wait: { label: fixed ? "No fichar" : "Esperar", verb: "Espera con", cls: "is-wait" },
       scout: { label: "Vigilar", verb: "Sigue a", cls: "is-scout" },
@@ -1752,7 +1753,11 @@
     if (action.action === "sell") {
       return action.list_at ?? action.expected_proceeds ?? action.price;
     }
-    if (action.action === "accept_offer" || action.action === "decline_offer") {
+    if (
+      action.action === "accept_offer" ||
+      action.action === "decline_offer" ||
+      action.action === "hold_offer"
+    ) {
       return action.bid ?? action.amount ?? action.price;
     }
     if (action.action === "clause_bid") return action.clause ?? action.acquisition_cost;
@@ -1780,7 +1785,13 @@
   function actionDetailFocusTab(item) {
     if (!item) return "market";
     if (item.action === "sell" || item.action === "lineup") return "squad";
-    if (item.action === "accept_offer" || item.action === "decline_offer") return "squad";
+    if (
+      item.action === "accept_offer" ||
+      item.action === "decline_offer" ||
+      item.action === "hold_offer"
+    ) {
+      return "squad";
+    }
     if (item.action === "clause_bid" || item.action === "scout") return "radar";
     return "market";
   }
@@ -1939,9 +1950,11 @@
       return;
     }
     const allMoves = Array.isArray(plan.moves) ? plan.moves : [];
-    const urgent = allMoves.filter((m) => m.kind === "accept_offer" || m.kind === "decline_offer");
-    const toward = allMoves.filter((m) => m.closes_gw_target && !urgent.includes(m));
-    const rest = allMoves.filter((m) => !urgent.includes(m) && !toward.includes(m));
+    const holds = allMoves.filter((m) => m.kind === "hold_offer");
+    const actionable = allMoves.filter((m) => m.kind !== "hold_offer");
+    const urgent = actionable.filter((m) => m.kind === "accept_offer" || m.kind === "decline_offer");
+    const toward = actionable.filter((m) => m.closes_gw_target && !urgent.includes(m));
+    const rest = actionable.filter((m) => !urgent.includes(m) && !toward.includes(m));
     const moves = [...urgent, ...toward, ...rest].slice(0, 4);
     const clock = cycleClockLabel(data);
     if (hint) {
@@ -1966,6 +1979,11 @@
       <div class="cycle-plan-meta">
         <span>Plantilla ${Number(cons.squad_size || 0)}/${Number(cons.max_squad || 0)}</span>
         <span>En venta ${Number(cons.listed_count || 0)}/${Number(cons.sale_limit || 0)}</span>
+        ${
+          Number(cons.holds_count || holds.length)
+            ? `<span>Ofertas en cartera ${Number(cons.holds_count || holds.length)}</span>`
+            : ""
+        }
         ${squadDelta ? `<span class="${Number(squadVm.delta_5d) >= 0 ? "delta-up" : "delta-down"}">VM ${escapeHtml(squadDelta)}</span>` : ""}
       </div>
     </article>`;
@@ -2013,8 +2031,9 @@
       : `<p class="queue-empty">Este ciclo no hay movimientos de mercado.</p>`;
     if (countRoot) {
       const n = moves.length;
-      const total = allMoves.length;
-      if (!n) countRoot.textContent = "Sin movimientos";
+      const total = actionable.length;
+      if (!n && holds.length) countRoot.textContent = "Ofertas en cartera";
+      else if (!n) countRoot.textContent = "Sin movimientos";
       else if (total > n) countRoot.textContent = `${n} de ${total}`;
       else countRoot.textContent = `${n} ${n === 1 ? "movimiento" : "movimientos"}`;
     }

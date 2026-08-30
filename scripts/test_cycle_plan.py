@@ -13,6 +13,7 @@ from cycle_plan import (  # noqa: E402
     KIND_BID,
     KIND_CLAUSE,
     KIND_DECLINE,
+    KIND_HOLD,
     KIND_LIST,
     attach_value_trends,
     build_cycle_plan,
@@ -299,6 +300,128 @@ def test_outlier_offer_is_declined() -> None:
     )
     _assert(any(m["kind"] == KIND_DECLINE for m in plan["moves"]), plan["moves"])
     _assert(not any(m["kind"] == KIND_ACCEPT for m in plan["moves"]), plan["moves"])
+    decline = next(m for m in plan["moves"] if m["kind"] == KIND_DECLINE)
+    why = (decline["why"] or "").lower()
+    _assert("vuelve a listar" in why, decline)
+    _assert("colchón" in why, decline)
+
+
+def test_fair_offer_on_xi_is_hold() -> None:
+    squad = [
+        {
+            "id": "star",
+            "name": "Estrella",
+            "position": "FW",
+            "price": 10_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 8,
+            "delta_5d": 0.12,
+            "rising": True,
+            "price_delta_1d": 0.02,
+        }
+    ]
+    offers = [
+        {
+            "player_id": "star",
+            "name": "Estrella",
+            "amount": 10_000_000,
+            "market_value": 10_000_000,
+            "pct_of_vm": 1.0,
+            "status": "pending",
+            "from_machine": True,
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 5_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": ["star"], "pending_offers": offers},
+        recommended_xi=_xi("star"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    kinds = [m["kind"] for m in plan["moves"]]
+    _assert(KIND_HOLD in kinds, kinds)
+    _assert(KIND_ACCEPT not in kinds, kinds)
+    _assert(plan["constraints"]["holds_count"] == 1, plan["constraints"])
+    _assert("cartera" in (plan["narrative"] or "").lower(), plan["narrative"])
+
+
+def test_keep_riding_fair_offer_is_hold() -> None:
+    squad = [
+        {
+            "id": "rise",
+            "name": "Sube",
+            "position": "MF",
+            "price": 3_000_000,
+            "lineup_prob": 0.4,
+            "xpts": 4.0,
+            "delta_5d": 0.12,
+            "rising": True,
+            "price_delta_1d": 0.02,
+        }
+    ]
+    offers = [
+        {
+            "player_id": "rise",
+            "name": "Sube",
+            "amount": 3_000_000,
+            "market_value": 3_000_000,
+            "pct_of_vm": 1.0,
+            "status": "pending",
+            "from_machine": True,
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": ["rise"], "pending_offers": offers},
+        recommended_xi=_xi(),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    kinds = [m["kind"] for m in plan["moves"]]
+    _assert(KIND_HOLD in kinds, kinds)
+    _assert(KIND_ACCEPT not in kinds, kinds)
+
+
+def test_premium_non_xi_offer_accepts() -> None:
+    squad = [
+        {
+            "id": "bench",
+            "name": "Fade",
+            "position": "MF",
+            "price": 4_000_000,
+            "lineup_prob": 0.2,
+            "xpts": 1.5,
+            "decelerating": True,
+            "delta_5d": 0.01,
+        }
+    ]
+    offers = [
+        {
+            "player_id": "bench",
+            "name": "Fade",
+            "amount": 4_200_000,
+            "market_value": 4_000_000,
+            "pct_of_vm": 1.05,
+            "status": "pending",
+            "from_machine": True,
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 1_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": ["bench"], "pending_offers": offers},
+        recommended_xi=_xi(),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    accept = next(m for m in plan["moves"] if m["kind"] == KIND_ACCEPT)
+    _assert(accept["name"] == "Fade", accept)
+    _assert(accept.get("accept_reason") in ("premium", "fade"), accept)
 
 
 def test_sale_limit_caps_listings() -> None:
@@ -1208,6 +1331,9 @@ if __name__ == "__main__":
     test_does_not_bid_falling_gap_filler()
     test_accept_offer_frees_slot_to_bid()
     test_outlier_offer_is_declined()
+    test_fair_offer_on_xi_is_hold()
+    test_keep_riding_fair_offer_is_hold()
+    test_premium_non_xi_offer_accepts()
     test_sale_limit_caps_listings()
     test_does_not_list_xi()
     test_empty_plan_has_no_wait_copy()
