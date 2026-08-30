@@ -144,6 +144,79 @@ def _game_kickoff(game: dict[str, Any]) -> tuple[int | None, str | None]:
     return ts_i, _iso_from_ts(ts_i) if ts_i else None
 
 
+_PLAYED_STATUSES = frozenset({"played", "finished", "final", "played_ft"})
+_LIVE_STATUSES = frozenset({"live", "ongoing", "inplay", "playing"})
+# Partido en curso: kickoff pasado pero Mister aún no lo marca played.
+_MATCH_WINDOW_SEC = 150 * 60
+
+
+def _kickoff_ts(row: dict[str, Any] | None) -> float | None:
+    if not isinstance(row, dict):
+        return None
+    raw = row.get("kickoff_ts")
+    if raw is None and row.get("gw_kickoff_ts") is not None:
+        raw = row.get("gw_kickoff_ts")
+    try:
+        if raw is not None and raw != "":
+            return float(raw)
+    except (TypeError, ValueError):
+        pass
+    iso = str(row.get("kickoff") or row.get("gw_kickoff") or "").strip()
+    if not iso:
+        return None
+    iso = iso.replace("Z", "+00:00")
+    try:
+        dt = datetime.fromisoformat(iso)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.timestamp()
+
+
+def fixture_is_unplayed(
+    row: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
+) -> bool:
+    """True si el partido aún no ha terminado (kickoff futuro, en juego, o status no played)."""
+    if not isinstance(row, dict):
+        return False
+    st = str(row.get("status") or "").strip().lower()
+    if st in _PLAYED_STATUSES:
+        return False
+    if st in _LIVE_STATUSES:
+        return True
+    base = now if now is not None else datetime.now(timezone.utc)
+    if base.tzinfo is None:
+        base = base.replace(tzinfo=timezone.utc)
+    now_ts = base.timestamp()
+    ts = _kickoff_ts(row)
+    if ts is None:
+        return st not in _PLAYED_STATUSES
+    if ts > now_ts:
+        return True
+    return (now_ts - ts) < _MATCH_WINDOW_SEC
+
+
+def next_unplayed_fixture(
+    rows: list[dict[str, Any]] | None,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
+    """Primer partido de la lista que aún no ha pitado / no está played."""
+    best: dict[str, Any] | None = None
+    best_ts: float | None = None
+    for row in rows or []:
+        if not isinstance(row, dict) or not fixture_is_unplayed(row, now=now):
+            continue
+        ts = _kickoff_ts(row)
+        if best is None or (ts is not None and (best_ts is None or ts < best_ts)):
+            best = row
+            best_ts = ts
+    return best
+
+
 def build_matchday(
     gw_data: dict[str, Any] | None,
     *,
@@ -554,10 +627,12 @@ def build_team_schedule(
     *,
     from_jornada: int | None = None,
     horizon: int = 5,
+    now: datetime | None = None,
+    skip_played: bool = True,
 ) -> dict[str, list[dict[str, Any]]]:
     """
     Próximos partidos por equipo: `{team_id: [{jornada, opponent_id, is_home, kickoff}]}`.
-    Base para planificar más allá de la jornada en curso.
+    Por defecto omite kickoffs ya pitados. Base para planificar más allá de la jornada en curso.
     """
     games_by_gw = (comp_data or {}).get("games")
     if not isinstance(games_by_gw, dict):
@@ -585,28 +660,24 @@ def build_team_schedule(
             home_id = str(game.get("id_home") or "")
             away_id = str(game.get("id_away") or "")
             ts, iso = _game_kickoff(game)
-            if home_id:
-                out.setdefault(home_id, []).append(
-                    {
-                        "jornada": jornada,
-                        "opponent_id": away_id or None,
-                        "is_home": True,
-                        "kickoff": iso,
-                        "kickoff_ts": ts,
-                        "status": game.get("status"),
-                    }
-                )
-            if away_id:
-                out.setdefault(away_id, []).append(
-                    {
-                        "jornada": jornada,
-                        "opponent_id": home_id or None,
-                        "is_home": False,
-                        "kickoff": iso,
-                        "kickoff_ts": ts,
-                        "status": game.get("status"),
-                    }
-                )
+            status = game.get("status")
+            for team_id, opp_id, is_home in (
+                (home_id, away_id or None, True),
+                (away_id, home_id or None, False),
+            ):
+                if not team_id:
+                    continue
+                row = {
+                    "jornada": jornada,
+                    "opponent_id": opp_id,
+                    "is_home": is_home,
+                    "kickoff": iso,
+                    "kickoff_ts": ts,
+                    "status": status,
+                }
+                if skip_played and not fixture_is_unplayed(row, now=now):
+                    continue
+                out.setdefault(team_id, []).append(row)
     return out
 
 

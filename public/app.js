@@ -3124,7 +3124,33 @@
   // "vs Barcelona · fuera · FDR 4.8": el partido concreto, no un número suelto
   function fixtureChip(row) {
     const r = row || {};
-    const rival = r.opponent_name || r.opponent || r.gw_opponent;
+    const played = Boolean(r.gw_played);
+    const gwRival = r.gw_opponent;
+    const nextRival = r.opponent_name || r.opponent;
+    const sameRival =
+      gwRival &&
+      nextRival &&
+      String(gwRival).trim().toLowerCase() === String(nextRival).trim().toLowerCase();
+    const showNextAfterPlayed =
+      played && nextRival && (r.fdr_applies_to_current_gw === false || !sameRival);
+
+    if (played && gwRival) {
+      const done = [`Ya vs ${gwRival}`];
+      if (r.gw_points != null && r.gw_points !== "") done.push(`${r.gw_points} pts`);
+      const doneHtml = `<span class="fixture-chip is-played" title="${escapeHtml(
+        r.fdr_why || ""
+      )}">${escapeHtml(done.join(" · "))}</span>`;
+      if (!showNextAfterPlayed) return doneHtml;
+      const fdr = r.fdr != null ? Number(r.fdr) : null;
+      const where = r.is_home === true ? "casa" : r.is_home === false ? "fuera" : "";
+      const tone = fdr == null ? "" : fdr <= 2.3 ? " is-easy" : fdr >= 3.7 ? " is-hard" : "";
+      const nextBits = [`Próximo vs ${nextRival}`];
+      if (where) nextBits.push(where);
+      if (fdr != null && Number.isFinite(fdr)) nextBits.push(`FDR ${fdr.toFixed(1)}`);
+      return `${doneHtml}<span class="fixture-chip${tone}">${escapeHtml(nextBits.join(" · "))}</span>`;
+    }
+
+    const rival = nextRival || gwRival;
     const fdr = r.fdr != null ? Number(r.fdr) : null;
     if (!rival && fdr == null) return "";
     const where = r.is_home === true ? "casa" : r.is_home === false ? "fuera" : "";
@@ -3132,7 +3158,7 @@
     const bits = [];
     if (rival) bits.push(`vs ${rival}`);
     if (where) bits.push(where);
-    if (fdr != null) bits.push(`FDR ${fdr.toFixed(1)}`);
+    if (fdr != null && Number.isFinite(fdr)) bits.push(`FDR ${fdr.toFixed(1)}`);
     return `<span class="fixture-chip${tone}" title="${escapeHtml(
       r.fdr_why || ""
     )}">${escapeHtml(bits.join(" · "))}</span>`;

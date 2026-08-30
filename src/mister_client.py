@@ -18,6 +18,7 @@ import json
 import logging
 import re
 import unicodedata
+from datetime import datetime
 from typing import Any
 
 import requests
@@ -1942,15 +1943,19 @@ def fetch_gameweek_bundle(
 def apply_gameweek_to_players(
     players: list[dict[str, Any]],
     bundle: dict[str, Any],
+    *,
+    now: datetime | None = None,
 ) -> int:
     """
     Vuelca en los jugadores las señales de jornada de Mister:
-    once probable (`preview`), puntos reales y rival con localía.
+    once probable (`preview`), puntos reales y rival de esta GW (`gw_*`).
+    El próximo no pitado (`next_*`) sale del calendario, no se copia del ya jugado.
     """
     preview = bundle.get("preview") or {}
     points = bundle.get("points") or {}
-    if not preview and not points:
-        return 0
+    schedule = bundle.get("team_schedule") if isinstance(bundle.get("team_schedule"), dict) else {}
+    matchday = bundle.get("matchday") if isinstance(bundle.get("matchday"), dict) else {}
+    current_j = matchday.get("jornada")
     preview_teams = set(bundle.get("preview_teams") or [])
     touched = 0
     seen: set[int] = set()
@@ -1958,28 +1963,25 @@ def apply_gameweek_to_players(
         if id(p) in seen:
             continue
         seen.add(id(p))
-        pid = str(p.get("id") or "")
+        pid = str(p.get("id") or p.get("player_id") or "")
         if not pid:
             continue
         pv = preview.get(pid)
         pts = points.get(pid)
         has_preview_of_his_match = str(p.get("team_id") or "") in preview_teams
-        if not pv and not pts and not has_preview_of_his_match:
-            continue
         if pv:
             p["gw_probable_xi"] = True
             p["gw_confirmed"] = bool(pv.get("gw_confirmed"))
             p["gw_fixture_id"] = pv.get("gw_fixture_id")
             p["gw_kickoff"] = pv.get("gw_kickoff")
+            if pv.get("gw_kickoff_ts") is not None:
+                p["gw_kickoff_ts"] = pv.get("gw_kickoff_ts")
             p["gw_is_home"] = pv.get("gw_is_home")
             opp_id = pv.get("gw_opponent_id")
             if opp_id:
-                p["next_opponent_team_id"] = opp_id
                 p["gw_opponent_id"] = opp_id
                 if not p.get("gw_opponent"):
                     p["gw_opponent"] = team_label(opp_id)
-            if pv.get("gw_is_home") is not None:
-                p["next_is_home"] = pv["gw_is_home"]
         elif has_preview_of_his_match:
             # Hay previa de su partido y no aparece: suplencia real, no falta de dato.
             p["gw_probable_xi"] = False
@@ -1987,8 +1989,48 @@ def apply_gameweek_to_players(
             p["gw_points"] = pts.get("points")
             p["gw_played"] = bool(pts.get("played"))
             p["gw_match_status"] = pts.get("status")
-        touched += 1
+        if pv or pts or has_preview_of_his_match or p.get("team_id"):
+            _stamp_next_fixture(p, schedule, current_jornada=current_j, now=now)
+            touched += 1
     return touched
+
+
+def _stamp_next_fixture(
+    player: dict[str, Any],
+    schedule: dict[str, list[dict[str, Any]]],
+    *,
+    current_jornada: Any = None,
+    now: datetime | None = None,
+) -> None:
+    """Escribe next_* desde el primer kickoff no pitado. No pisa gw_*."""
+    tid = str(player.get("team_id") or "")
+    rows = list(schedule.get(tid) or []) if tid else []
+    gw_row: dict[str, Any] | None = None
+    if player.get("gw_opponent_id") or player.get("gw_kickoff") or player.get("gw_kickoff_ts"):
+        gw_row = {
+            "jornada": current_jornada,
+            "opponent_id": player.get("gw_opponent_id"),
+            "is_home": player.get("gw_is_home"),
+            "kickoff": player.get("gw_kickoff"),
+            "kickoff_ts": player.get("gw_kickoff_ts"),
+            "status": "played" if player.get("gw_played") else player.get("gw_match_status"),
+        }
+        if not player.get("gw_played") and mister_gameweek.fixture_is_unplayed(gw_row, now=now):
+            rows = [gw_row, *rows]
+    nxt = mister_gameweek.next_unplayed_fixture(rows, now=now)
+    if nxt and nxt.get("opponent_id"):
+        player["next_opponent_team_id"] = str(nxt["opponent_id"])
+        player["next_is_home"] = nxt.get("is_home")
+        player["next_jornada"] = nxt.get("jornada")
+        player["next_kickoff"] = nxt.get("kickoff")
+        if nxt.get("kickoff_ts") is not None:
+            player["next_kickoff_ts"] = nxt.get("kickoff_ts")
+        return
+    if player.get("gw_played"):
+        player["next_opponent_team_id"] = None
+        player["next_is_home"] = None
+        player["next_jornada"] = None
+        player["next_kickoff"] = None
 
 
 def fetch_balance() -> dict[str, Any]:
@@ -2439,7 +2481,7 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         id_competition=fg_user.get("id_competition"),
         competition=str(fg_user.get("competition") or "") or None,
     )
-    if gameweek.get("preview") or gameweek.get("points"):
+    if gameweek.get("preview") or gameweek.get("points") or gameweek.get("team_schedule"):
         n_gw = apply_gameweek_to_players(
             list(squad) + list(market) + list(full_pool),
             gameweek,

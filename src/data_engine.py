@@ -2998,11 +2998,18 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     n_blank = apply_blank_gameweek(xpts_targets, md_blank)
     if n_blank:
         external_meta["blank_gw_players"] = n_blank
+    current_jornada = None
+    if isinstance(md_blank, dict) and md_blank.get("jornada") is not None:
+        try:
+            current_jornada = int(md_blank["jornada"])
+        except (TypeError, ValueError):
+            current_jornada = None
     n_fdr = annotate_players_with_fdr(
         xpts_targets,
         strength=team_strength,
         team_schedule=gw_bundle.get("team_schedule") if isinstance(gw_bundle.get("team_schedule"), dict) else None,
         team_names=team_names,
+        current_jornada=current_jornada,
     )
     n_xpts = annotate_players_with_xpts(xpts_targets, league_rules=scoring_rules)
     annotate_players_with_matchup(

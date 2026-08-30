@@ -238,6 +238,8 @@ def expected_points(
     fdr_mult = _num(player.get("fdr_multiplier"))
     if fdr_mult is None or fdr_mult <= 0:
         fdr_mult = 1.0
+    if player.get("fdr_applies_to_current_gw") is False:
+        fdr_mult = 1.0
 
     xpts = p_play * base * fdr_mult
     # Suelo: escenario en el que juega menos o cunde poco

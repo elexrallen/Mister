@@ -425,34 +425,55 @@ def annotate_players_with_fdr(
     team_schedule: dict[str, list[dict[str, Any]]] | None = None,
     team_names: dict[str, str] | None = None,
     horizon: int = 3,
+    current_jornada: int | None = None,
+    now: Any = None,
 ) -> int:
     """Escribe `fdr`, `fdr_multiplier`, rival y localía, y el resumen a 3 jornadas."""
     if not players:
         return 0
     names = team_names or {}
+    try:
+        from mister_gameweek import fixture_is_unplayed
+    except Exception:  # noqa: BLE001
+        fixture_is_unplayed = None
     touched = 0
     seen: set[int] = set()
     for p in players:
         if id(p) in seen:
             continue
         seen.add(id(p))
-        opponent_id = p.get("next_opponent_team_id") or p.get("gw_opponent_id")
+        opponent_id = p.get("next_opponent_team_id")
         is_home = p.get("next_is_home")
-        if is_home is None:
-            is_home = p.get("gw_is_home")
+        opp_name = names.get(str(opponent_id or "")) if opponent_id else None
+        if not opponent_id:
+            opponent_id = p.get("gw_opponent_id")
+            if is_home is None:
+                is_home = p.get("gw_is_home")
+            opp_name = names.get(str(opponent_id or "")) or p.get("gw_opponent")
         info = fdr_for(
             opponent_id,
             position=str(p.get("position") or ""),
             is_home=is_home,
             strength=strength,
-            opponent_name=names.get(str(opponent_id or "")) or p.get("gw_opponent"),
+            opponent_name=opp_name or p.get("gw_opponent"),
         )
         p.update(info)
+
+        next_j = p.get("next_jornada")
+        applies = True
+        if p.get("gw_played") and current_jornada is not None and next_j is not None:
+            try:
+                applies = int(next_j) <= int(current_jornada)
+            except (TypeError, ValueError):
+                applies = True
+        p["fdr_applies_to_current_gw"] = applies
 
         upcoming = (team_schedule or {}).get(str(p.get("team_id") or "")) or []
         if upcoming:
             rows = []
-            for fx in upcoming[:horizon]:
+            for fx in upcoming:
+                if fixture_is_unplayed is not None and not fixture_is_unplayed(fx, now=now):
+                    continue
                 sub = fdr_for(
                     fx.get("opponent_id"),
                     position=str(p.get("position") or ""),
@@ -469,6 +490,8 @@ def annotate_players_with_fdr(
                         "fdr": sub["fdr"],
                     }
                 )
+                if len(rows) >= horizon:
+                    break
             if rows:
                 p["fdr_next"] = rows
                 p["fdr_next_avg"] = round(sum(r["fdr"] for r in rows) / len(rows), 2)

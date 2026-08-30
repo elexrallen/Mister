@@ -703,6 +703,16 @@ footer,
   border-color: rgba(244, 63, 94, 0.28);
 }
 
+.fixture-chip.is-played {
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.08);
+}
+
+.matchday-xi-card .fixture-chip + .fixture-chip,
+.gw-cell .fixture-chip + .fixture-chip {
+  margin-top: 0.15rem;
+}
+
 .gw-cell {
   display: grid;
   gap: 0.2rem;
