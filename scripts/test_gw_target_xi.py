@@ -8,6 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
+import config  # noqa: E402
 from expected_points import expected_points, production_base  # noqa: E402
 from gw_target_xi import (  # noqa: E402
     build_gw_target_xi,
@@ -371,6 +372,31 @@ def test_merged_ff_previa_beats_unknown_p_play() -> None:
     _assert("unk" not in ids, ids)
 
 
+def test_gw_target_ignores_me_formation() -> None:
+    """El pool 4-3-3 gana; me.formation 5-4-1 no ancla el once objetivo."""
+    pool = _pool_of_eleven()
+    out = build_gw_target_xi(
+        pool,
+        squad=[],
+        me={"team_id": "me", "formation": "5-4-1"},
+    )
+    shape = out.get("shape") or {}
+    _assert(int(shape.get("DF") or 0) == 4, shape)
+    _assert(int(shape.get("MF") or 0) == 3, shape)
+    _assert(int(shape.get("FW") or 0) == 3, shape)
+    form = str(out.get("formation") or "")
+    _assert("5-4-1" not in form, form)
+    _assert(len(out.get("xi") or []) == 11, out.get("xi"))
+
+
+def test_ideal_formations_skips_paid_and_noise() -> None:
+    names = [str(x) for x in (getattr(config, "IDEAL_FORMATIONS", ()) or ())]
+    _assert("4-2-4" not in names, names)
+    _assert("4-2-3-1" not in names, names)
+    _assert("3-4-3" in names, names)
+    _assert("4-3-3" in names, names)
+
+
 if __name__ == "__main__":
     test_assembles_eleven_from_pool_without_ownership()
     test_coverage_eleven_of_eleven()
@@ -383,4 +409,6 @@ if __name__ == "__main__":
     test_near_slot_does_not_count_as_owned()
     test_merge_daily_market_wins_over_rival_owner()
     test_merged_ff_previa_beats_unknown_p_play()
+    test_gw_target_ignores_me_formation()
+    test_ideal_formations_skips_paid_and_noise()
     print("test_gw_target_xi: OK")

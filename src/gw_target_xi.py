@@ -133,12 +133,16 @@ def _xpts_total(block: dict[str, Any] | None) -> float:
     return total
 
 
-def _pick_best_formation(
+def pick_best_gw_xi(
     pool: list[dict[str, Any]],
     *,
-    matchday: dict[str, Any] | None,
-    captain_rule: dict[str, Any] | None,
+    matchday: dict[str, Any] | None = None,
+    captain_rule: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    """
+    Once de máximo xPts entre IDEAL_FORMATIONS (completo preferido).
+    No usa la formación bloqueada en Mister. Aplica al pool o a tu plantilla.
+    """
     best: dict[str, Any] | None = None
     best_x = -1.0
     seen: set[tuple] = set()
@@ -290,7 +294,7 @@ def build_gw_target_xi(
         if src.get("on_daily_market") or src.get("seller") == "market":
             market_ids.add(pid)
 
-    assembled = _pick_best_formation(
+    assembled = pick_best_gw_xi(
         list(pool or []),
         matchday=matchday,
         captain_rule=captain_rule,

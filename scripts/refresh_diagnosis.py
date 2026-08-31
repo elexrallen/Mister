@@ -14,11 +14,11 @@ sys.path.insert(0, str(ROOT / "src"))
 
 import config  # noqa: E402
 from competitive_actions import (  # noqa: E402
-    build_recommended_gw_xi,
     detect_competition_phase,
     estimate_gap_funding,
     tag_rival_market_listings,
 )
+from gw_target_xi import pick_best_gw_xi  # noqa: E402
 from data_engine import (  # noqa: E402
     build_action_plan,
     build_price_history_snapshot,
@@ -226,10 +226,14 @@ def main(argv: list[str] | None = None) -> None:
     }
     data["recommendations"] = []
     data["squad_notes"] = []
-    data["recommended_xi"] = build_recommended_gw_xi(
+    data["recommended_xi"] = pick_best_gw_xi(
         squad,
-        formation=me.get("formation"),
         matchday=data.get("matchday") if isinstance(data.get("matchday"), dict) else {},
+        captain_rule=(
+            (data.get("league_rules") or {}).get("captain")
+            if isinstance((data.get("league_rules") or {}).get("captain"), dict)
+            else None
+        ),
     )
     data["generated_at"] = datetime.now(timezone.utc).isoformat()
 

@@ -665,6 +665,9 @@ def parse_xi_shape(
         return {"GK": nums[0], "DF": nums[1], "MF": nums[2], "FW": nums[3]}
     if len(nums) == 3 and sum(nums) == 10:
         return {"GK": 1, "DF": nums[0], "MF": nums[1], "FW": nums[2]}
+    # 4-2-3-1 estilo: DF-MF_def-MF_ata-FW → DF + (MF_def+MF_ata) + FW
+    if len(nums) == 4 and sum(nums) == 10:
+        return {"GK": 1, "DF": nums[0], "MF": nums[1] + nums[2], "FW": nums[3]}
     return default
 
 

@@ -349,7 +349,8 @@ MIN_FW = 2
 IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
 # Once fantasy (suma 11); el resto del IDEAL_SQUAD es banquillo
 IDEAL_XI = {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
-# Formaciones Mister a probar para el ideal (elige la de más Σ EP del once)
+# Formaciones Mister gratis a probar (elige la de más Σ EP / xPts del once).
+# Sin 4-2-4 (de pago) ni 4-2-3-1 (no es un shape distinto: cae a 4-5-1 o 4-3-3).
 IDEAL_FORMATIONS = (
     "4-3-3",
     "4-4-2",
@@ -358,7 +359,6 @@ IDEAL_FORMATIONS = (
     "3-4-3",
     "5-3-2",
     "5-4-1",
-    "4-2-3-1",  # se interpreta como DF4 MF5 FW1 si no encaja 4 números
 )
 # Banquillo del ideal: mínimo puntos Mister (FF) por temporada
 IDEAL_BENCH_MIN_POINTS = 100

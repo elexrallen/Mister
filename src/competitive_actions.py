@@ -913,7 +913,7 @@ def build_gw_xi_advice(
 
 
 def _parse_formation(formation: str | None) -> dict[str, int]:
-    """'1-4-4-2' / '4-3-3' → cupos por posición. Fallback IDEAL_XI."""
+    """'1-4-4-2' / '4-3-3' / '4-2-3-1' → cupos por posición. Fallback IDEAL_XI."""
     default = dict(getattr(config, "IDEAL_XI", None) or {"GK": 1, "DF": 4, "MF": 3, "FW": 3})
     if not formation:
         return default
@@ -928,6 +928,9 @@ def _parse_formation(formation: str | None) -> dict[str, int]:
         return {"GK": nums[0], "DF": nums[1], "MF": nums[2], "FW": nums[3]}
     if len(nums) == 3 and sum(nums) == 10:
         return {"GK": 1, "DF": nums[0], "MF": nums[1], "FW": nums[2]}
+    # 4-2-3-1 estilo: DF-MF_def-MF_ata-FW → DF + (MF_def+MF_ata) + FW
+    if len(nums) == 4 and sum(nums) == 10:
+        return {"GK": 1, "DF": nums[0], "MF": nums[1] + nums[2], "FW": nums[3]}
     return default
 
 

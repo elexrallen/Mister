@@ -49,7 +49,7 @@ from fixture_difficulty import (
 from mister_gameweek import apply_blank_gameweek
 from expected_points import annotate_players_with_xpts
 from matchup_context import annotate_players_with_matchup
-from gw_target_xi import build_gw_target_xi, merge_target_universe
+from gw_target_xi import build_gw_target_xi, merge_target_universe, pick_best_gw_xi
 from model_calibration import build_calibration
 from performance_audit import attach_audit_to_payload, slim_decisions, slim_pipeline
 from fotmob_service import enrich_players_with_fotmob
@@ -59,7 +59,6 @@ from competitive_actions import (
     annotate_market_budget_risk,
     build_gw_xi_advice,
     build_offer_actions,
-    build_recommended_gw_xi,
     build_rival_upgrade_targets,
     build_sell_opportunities,
     detect_competition_phase,
@@ -3309,9 +3308,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     diagnostico_plantilla["market_cycle"] = market_cycle
 
-    recommended_xi = build_recommended_gw_xi(
+    recommended_xi = pick_best_gw_xi(
         squad,
-        formation=me.get("formation"),
         matchday=matchday_early or {},
         captain_rule=league_rules.get("captain")
         if isinstance(league_rules.get("captain"), dict)

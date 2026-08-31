@@ -17,6 +17,7 @@ from competitive_actions import (  # noqa: E402
     priority_score_buy,
     set_matchday_phase,
 )
+from gw_target_xi import pick_best_gw_xi  # noqa: E402
 from daily_playbook import build_daily_playbook  # noqa: E402
 from league_rules import captain_multiplier_for_price, resolve_captain_rule  # noqa: E402
 from model_calibration import build_calibration  # noqa: E402
@@ -648,6 +649,27 @@ def test_xi_without_risk_does_not_suggest_a_switch() -> None:
     assert out["formation_switch"] is None
 
 
+def test_pick_best_gw_xi_prefers_higher_xpts_formation() -> None:
+    # 3 DF fuertes + 1 flojo + 4 MF + 4 FW: 3-4-3 suma más que 4-3-3.
+    squad = [_sq_player("gk1", "GK", xpts=4.0, p_play=0.95)]
+    squad += [_sq_player(f"df{i}", "DF", xpts=8.0, p_play=0.9) for i in range(1, 4)]
+    squad.append(_sq_player("df4", "DF", xpts=1.0, p_play=0.9))
+    squad += [_sq_player(f"mf{i}", "MF", xpts=7.0, p_play=0.9) for i in range(1, 5)]
+    squad += [_sq_player(f"fw{i}", "FW", xpts=9.0, p_play=0.9) for i in range(1, 5)]
+
+    locked = build_recommended_gw_xi(squad, formation="4-3-3")
+    picked = pick_best_gw_xi(squad, matchday={}, captain_rule=None)
+    assert locked.get("formation") == "4-3-3", locked.get("formation")
+    assert picked.get("formation") != "4-3-3", picked.get("formation")
+    shape = picked.get("shape") or {}
+    assert int(shape.get("DF") or 0) == 3, shape
+    locked_x = float((locked.get("summary") or {}).get("xpts_total") or 0)
+    picked_x = float((picked.get("summary") or {}).get("xpts_total") or 0)
+    assert picked_x > locked_x, (picked_x, locked_x, picked.get("formation"))
+    ids = {str(r.get("player_id")) for r in (picked.get("xi") or [])}
+    assert "df4" not in ids, ids
+
+
 def test_playbook_names_the_risky_starters() -> None:
     xi = {
         "captain_enabled": False,
@@ -835,6 +857,7 @@ def main() -> None:
         test_xi_declares_risk_instead_of_selling_a_starter,
         test_xi_suggests_formation_that_avoids_the_zero,
         test_xi_without_risk_does_not_suggest_a_switch,
+        test_pick_best_gw_xi_prefers_higher_xpts_formation,
         test_playbook_names_the_risky_starters,
         test_calibration_ignores_the_open_gameweek,
         test_calibration_measures_bias_and_error,

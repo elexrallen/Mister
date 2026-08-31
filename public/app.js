@@ -880,6 +880,22 @@
     return "";
   }
 
+  function footballFormation(raw) {
+    if (!raw) return "";
+    const nums = String(raw)
+      .replace("–", "-")
+      .split("-")
+      .map((p) => parseInt(String(p).trim(), 10))
+      .filter((n) => Number.isFinite(n));
+    const sum = nums.reduce((a, b) => a + b, 0);
+    if (nums.length === 4 && sum === 11) return `${nums[1]}-${nums[2]}-${nums[3]}`;
+    if (nums.length === 3 && sum === 10) return nums.join("-");
+    if (nums.length === 4 && sum === 10) {
+      return `${nums[0]}-${nums[1] + nums[2]}-${nums[3]}`;
+    }
+    return String(raw);
+  }
+
   function renderMatchday(data) {
     const panel = document.getElementById("matchday-panel");
     if (!panel) return;
@@ -905,7 +921,7 @@
     if (kicker) {
       kicker.textContent = useTarget
         ? "Once objetivo de la jornada"
-        : "Tu once con la plantilla actual";
+        : "Tu once óptimo con la plantilla actual";
     }
     const title = document.getElementById("matchday-title");
     if (title) title.textContent = `${j} · ${form}`;
@@ -919,13 +935,25 @@
       const gw = (rec.summary && rec.summary.with_gw_signal) || 0;
       const bits = useTarget
         ? [`Da igual si los tienes (${n}/11)`]
-        : [`Once recomendado desde tu plantilla (${n}/11)`];
+        : [`Once óptimo desde tu plantilla (${n}/11)`];
       if (useTarget && coverage.owned_count != null) {
         bits.unshift(`${coverage.owned_count}/${n} en plantilla`);
       }
       if (gw) bits.push(`${gw} con previa FF`);
       else bits.push("sin previa FF completa — usa titularidad habitual");
       summary.textContent = bits.join(" · ");
+    }
+    const hintEl = document.getElementById("matchday-form-hint");
+    if (hintEl) {
+      const recForm = footballFormation(form);
+      const nowForm = footballFormation((data.me && data.me.formation) || "");
+      if (!useTarget && recForm && nowForm && recForm !== nowForm) {
+        hintEl.hidden = false;
+        hintEl.textContent = `Cambia a ${recForm} en Mister (ahora tienes ${nowForm}).`;
+      } else {
+        hintEl.hidden = true;
+        hintEl.textContent = "";
+      }
     }
     const sum = rec.summary || {};
     const elForm = document.getElementById("matchday-formation");
@@ -1158,9 +1186,15 @@
         const yForm = yours.formation || (data.me && data.me.formation) || form;
         const yXpts = yours.summary && yours.summary.xpts_total;
         if (yoursSum) {
+          const recForm = footballFormation(yForm);
+          const nowForm = footballFormation((data.me && data.me.formation) || "");
+          const switchBit =
+            recForm && nowForm && recForm !== nowForm
+              ? ` · cambia a ${recForm} en Mister (ahora ${nowForm})`
+              : "";
           yoursSum.textContent = `${yxi.length}/11 · ${yForm}${
             yXpts != null ? ` · ${Number(yXpts).toFixed(1)} xPts` : ""
-          }`;
+          }${switchBit}`;
         }
         yoursXi.innerHTML = yxi
           .map((r) => {
