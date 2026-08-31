@@ -793,7 +793,9 @@ footer,
   }
   .objectives-grid,
   .objectives-patches-wrap,
-  .objectives-sells {
+  .objectives-sells,
+  .objectives-watch-wrap,
+  .objectives-path-wrap {
     grid-column: 1 / -1;
   }
 }
@@ -837,9 +839,49 @@ footer,
   cursor: pointer;
 }
 
-.objectives-mode-btn.is-active {
-  background: rgba(45, 212, 191, 0.18);
-  color: #e2e8f0;
+.objectives-player.is-flex {
+  border: 1px dashed rgba(148, 163, 184, 0.45);
+  background: transparent;
+  opacity: 0.9;
+}
+
+.objectives-flex-label {
+  display: block;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+}
+
+.objectives-watch-wrap,
+.objectives-path-wrap {
+  margin-top: 0.75rem;
+}
+
+.objectives-watch-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+}
+
+.objectives-watch,
+.objectives-path {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.78rem;
+  color: #94a3b8;
+}
+
+.objectives-path-wrap summary {
+  cursor: pointer;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
 }
 
 .objectives-summary {
@@ -3122,7 +3164,6 @@ body {
 /* -------------------------------------------------------------------------- */
 
 body[data-view="today"] #campaign-banner,
-body[data-view="today"] #objectives-panel,
 body[data-view="today"] .tactical-main > section[aria-label="Filtros"],
 body[data-view="today"] #browse-section {
   display: none !important;
@@ -3144,7 +3185,8 @@ body[data-view="radar"] .tactical-main > section[aria-label="Filtros"],
 body[data-view="squad"] #daily-plan-panel,
 body[data-view="squad"] #tactical-kpis,
 body[data-view="squad"] #today-opportunities-panel,
-body[data-view="squad"] #campaign-banner {
+body[data-view="squad"] #campaign-banner,
+body[data-view="squad"] #objectives-panel {
   display: none !important;
 }
 
@@ -3158,16 +3200,20 @@ body[data-view="today"] #matchday-panel {
   display: grid !important;
 }
 
-body[data-view="today"] #daily-plan-panel {
+body[data-view="today"] #objectives-panel {
   order: 2;
 }
 
-body[data-view="today"] #tactical-kpis {
+body[data-view="today"] #daily-plan-panel {
   order: 3;
 }
 
-body[data-view="today"] #today-opportunities-panel {
+body[data-view="today"] #tactical-kpis {
   order: 4;
+}
+
+body[data-view="today"] #today-opportunities-panel {
+  order: 5;
 }
 
 .tactical-desktop-nav {

@@ -668,8 +668,8 @@
       (DATA.gw_target_xi && DATA.gw_target_xi.xi) || [],
       (DATA.recommended_xi && DATA.recommended_xi.xi) || [],
       (DATA.target_board && DATA.target_board.perfect_squad) || [],
-      (DATA.target_board && DATA.target_board.perfect_squad_aspirational) || [],
-      (DATA.target_board && DATA.target_board.perfect_squad_clauses) || [],
+      (DATA.target_board && DATA.target_board.destination_15) || [],
+      (DATA.target_board && DATA.target_board.watch_frees) || [],
     ];
     for (const list of pools) {
       if (!list || !list.length) continue;
@@ -1221,191 +1221,87 @@
     renderObjectives(data);
   }
 
-  let idealMode = "operable";
-  let objectivesData = null;
-
   function renderObjectives(data) {
     const panel = document.getElementById("objectives-panel");
     if (!panel) return;
-    if (data) objectivesData = data;
-    const src = objectivesData || data;
-    const board = src && src.target_board;
-    const operableSquad = (board && board.perfect_squad) || [];
-    const aspSquad = (board && board.perfect_squad_aspirational) || [];
-    const clSquad = (board && board.perfect_squad_clauses) || [];
-    if (!board || !operableSquad.length) {
+    const board = data && data.target_board;
+    const named = (board && (board.destination_15 || board.perfect_squad)) || [];
+    const players = named.filter((r) => r && r.status !== "flex" && r.player_id);
+    const flex = (board && board.flex_slots) || named.filter((r) => r && r.status === "flex");
+    if (!board || !players.length) {
       panel.hidden = true;
       return;
     }
     panel.hidden = false;
 
-    const clausesOn =
-      ((src.league || {}).rules || {}).clauses !== false && !isFixedMarket(src);
-    const toggle = document.getElementById("objectives-mode-toggle");
-    const clBtn = toggle && toggle.querySelector('[data-ideal-mode="clauses"]');
-    if (clBtn) clBtn.hidden = !(clausesOn && clSquad.length);
-    if (idealMode === "clauses" && (!clausesOn || !clSquad.length)) {
-      idealMode = "operable";
-    }
-    if (toggle && !toggle.dataset.bound) {
-      toggle.dataset.bound = "1";
-      toggle.querySelectorAll("[data-ideal-mode]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          idealMode = btn.getAttribute("data-ideal-mode") || "operable";
-          toggle.querySelectorAll("[data-ideal-mode]").forEach((b) => {
-            b.classList.toggle("is-active", b.getAttribute("data-ideal-mode") === idealMode);
-          });
-          renderObjectives(null);
-        });
-      });
-    }
-    if (toggle) {
-      toggle.querySelectorAll("[data-ideal-mode]").forEach((b) => {
-        b.classList.toggle("is-active", b.getAttribute("data-ideal-mode") === idealMode);
-      });
-    }
-
-    const isAsp = idealMode === "aspirational" && aspSquad.length;
-    const isCl = idealMode === "clauses" && clSquad.length;
-    const squad = isCl ? clSquad : isAsp ? aspSquad : operableSquad;
-    const wealth = board.wealth || {};
-    const totals = isCl
-      ? board.totals_clauses || {}
-      : isAsp
-        ? board.totals_aspirational || {}
-        : board.totals || {};
-    const summary = isCl
-      ? board.summary_clauses || {}
-      : isAsp
-        ? board.summary_aspirational || {}
-        : board.summary || {};
-    const operableIds = new Set(operableSquad.map((r) => String(r.player_id || "")));
-    const formation =
-      (summary && summary.formation) ||
-      (isCl
-        ? board.formation_clauses
-        : isAsp
-          ? board.formation_aspirational
-          : board.formation) ||
-      (totals && totals.formation) ||
-      "";
+    const totals = board.totals || {};
+    const summary = board.summary || {};
+    const cons = board.constraints || {};
+    const finance = board.finance || {};
+    const formation = summary.formation || board.formation || totals.formation || "";
+    const k = cons.cycles_left != null ? Number(cons.cycles_left) : Number(summary.cycles_left || 0);
 
     const title = document.getElementById("objectives-title");
-    if (title) {
-      const formBit = formation ? ` · ${formation}` : "";
-      title.textContent = isCl
-        ? `Plantilla perfecta · Cláusulas${formBit}`
-        : isAsp
-          ? `Plantilla perfecta · Aspiracional${formBit}`
-          : `Plantilla perfecta · Operable${formBit}`;
-    }
-    const kicker = panel.querySelector(".objectives-kicker");
+    if (title) title.textContent = formation ? `15 al KO · ${formation}` : "15 al KO";
+    const kicker = document.getElementById("objectives-kicker") || panel.querySelector(".objectives-kicker");
     if (kicker) {
-      kicker.textContent = isCl
-        ? `Ideal con cláusulas pagables${formation ? ` (${formation})` : ""} · no mueve funding`
-        : isAsp
-          ? `Ideal máx EP · formación óptima${formation ? ` (${formation})` : ""} · no mueve funding`
-          : `Rotar plantilla · formación óptima por EP${formation ? ` (${formation})` : ""} · oportunidad EP/€`;
+      kicker.textContent =
+        k > 0
+          ? `15 al KO · once por xPts · ${k} ciclo${k === 1 ? "" : "s"} de sorteo`
+          : "15 al KO · once por xPts · último ciclo";
     }
     const sumEl = document.getElementById("objectives-summary");
     if (sumEl) {
-      const keep =
-        summary.keep != null
-          ? summary.keep
-          : squad.filter((r) => r.status === "keep").length;
-      const buy =
-        summary.buy != null
-          ? summary.buy
-          : squad.filter((r) => r.status === "buy").length;
-      const starters =
-        summary.starters != null
-          ? summary.starters
-          : squad.filter((r) => r.role === "starter").length;
-      const bench =
-        summary.bench != null
-          ? summary.bench
-          : squad.filter((r) => r.role === "bench").length;
-      const fundedBit = isCl || isAsp
-        ? "vista informativa"
-        : totals.funded
-          ? "financiable"
-          : "faltan ventas/caja";
-      const incomplete = summary.incomplete
-        ? " · incompleta (faltan titulares o banquillo de campo ≥100 pts)"
-        : "";
-      const formTxt = formation ? `formación ${formation} · ` : "";
-      const rule = isCl
-        ? `${formTxt}titulares ≥70% + hist · cláusulas pagables`
-        : isAsp
-          ? `${formTxt}titulares ≥70% + hist · máx EP`
-          : `${formTxt}titulares ≥70% + hist · oportunidad EP/€`;
-      const clauseBit =
-        isCl && summary.clause_count
-          ? ` · ${summary.clause_count} cláusula${summary.clause_count === 1 ? "" : "s"}`
-          : "";
-      sumEl.textContent = `${squad.length} plazas · ${starters} titulares (${rule}) · ${bench} banquillo (campo ≥100 pts; GK2 = tándem) · ${keep} keep · ${buy} fichar${clauseBit} · ${fundedBit}${incomplete}`;
+      const keep = summary.keep != null ? summary.keep : players.filter((r) => r.status === "keep").length;
+      const buy = summary.buy != null ? summary.buy : players.filter((r) => r.status === "buy").length;
+      const incomplete = summary.incomplete ? " · once incompleto" : "";
+      sumEl.textContent = `${players.length} nombrados · ${keep} keep · ${buy} fichar · ${flex.length} flex${incomplete}`;
     }
-    const elW = document.getElementById("objectives-wealth");
-    const elC = document.getElementById("objectives-cost");
+
+    const elCyc = document.getElementById("objectives-cycles");
+    if (elCyc) elCyc.textContent = Number.isFinite(k) ? String(k) : "—";
     const elEp = document.getElementById("objectives-ep");
-    const elR = document.getElementById("objectives-reserve");
-    if (elW)
-      elW.textContent = formatMoney(
-        wealth.total != null ? wealth.total : (board.balance || 0) + (board.squad_value || 0)
-      );
-    if (elC) elC.textContent = formatMoney(totals.cost_sum);
     if (elEp) {
-      const xi = totals.ep_sum_starters != null ? Math.round(Number(totals.ep_sum_starters)) : null;
-      const all = totals.ep_sum != null ? Math.round(Number(totals.ep_sum)) : null;
-      elEp.textContent =
-        xi != null ? `${xi}${all != null ? ` (${all})` : ""}` : all != null ? String(all) : "—";
-    }
-    if (elR) {
-      if (isCl) {
-        elR.textContent = formatMoney(
-          totals.residual != null ? totals.residual : board.residual_after_reserve
-        );
-      } else if (isAsp) {
-        elR.textContent = "—";
-      } else {
-        const residual =
-          board.residual_after_reserve != null ? board.residual_after_reserve : board.balance;
-        elR.textContent = formatMoney(residual);
+      const dest = totals.xpts_starters != null ? Number(totals.xpts_starters) : Number(totals.ep_sum_starters);
+      const ceil = totals.xpts_ceiling != null ? Number(totals.xpts_ceiling) : null;
+      const yours = totals.xpts_yours != null ? Number(totals.xpts_yours) : null;
+      if (!Number.isFinite(dest)) elEp.textContent = "—";
+      else {
+        const bits = [String(Math.round(dest * 10) / 10)];
+        if (Number.isFinite(yours)) bits.push(`tú ${Math.round(yours * 10) / 10}`);
+        if (Number.isFinite(ceil)) bits.push(`techo ${Math.round(ceil * 10) / 10}`);
+        elEp.textContent = bits.join(" · ");
       }
     }
+    const elFit = document.getElementById("objectives-balance-fit");
+    if (elFit) {
+      elFit.textContent = finance.covers_with_sales
+        ? "cubre con ventas"
+        : finance.ok
+          ? "ok"
+          : finance.reason === "no_recover"
+            ? "faltan ventas"
+            : finance.reason === "max_debt"
+              ? "supera deuda"
+              : "—";
+    }
+    const elFlex = document.getElementById("objectives-flex");
+    if (elFlex) elFlex.textContent = String(flex.length);
 
     const statusBadge = (st, role, extra) => {
       const bits = [];
       if (st === "keep") bits.push(`<span class="badge badge-mint">Keep</span>`);
       else if (st === "buy") bits.push(`<span class="badge badge-alta">Fichar</span>`);
-      else bits.push(`<span class="badge badge-duda">${escapeHtml(st || "")}</span>`);
+      else if (st === "flex") bits.push(`<span class="badge badge-duda">Flex</span>`);
       if (role === "starter") bits.push(`<span class="badge badge-titular">Titular</span>`);
       else if (role === "bench") bits.push(`<span class="badge badge-banca">Banquillo</span>`);
       if (extra && extra.gk_tandem) bits.push(`<span class="badge badge-once">Tándem</span>`);
-      if (extra && extra.acquisition === "clause") {
+      if (st === "buy" && extra && extra.acquisition === "clause") {
         bits.push(`<span class="badge badge-duda">Cláusula</span>`);
-      } else if (extra && extra.acquisition === "market") {
+      } else if (st === "buy" && extra && extra.acquisition === "market") {
         bits.push(`<span class="badge badge-mint">Mercado</span>`);
-      } else if (extra && extra.acquisition === "free") {
+      } else if (st === "buy" && extra && extra.acquisition === "free") {
         bits.push(`<span class="badge badge-mint">Libre</span>`);
-      }
-      if (
-        isAsp &&
-        st === "buy" &&
-        extra &&
-        extra.player_id &&
-        !operableIds.has(String(extra.player_id))
-      ) {
-        bits.push(`<span class="badge badge-duda">Solo aspiracional</span>`);
-      }
-      if (
-        isCl &&
-        extra &&
-        extra.acquisition === "clause" &&
-        extra.player_id &&
-        !operableIds.has(String(extra.player_id))
-      ) {
-        bits.push(`<span class="badge badge-duda">Solo cláusulas</span>`);
       }
       return bits.join(" ");
     };
@@ -1413,16 +1309,27 @@
     const grid = document.getElementById("objectives-grid");
     if (grid) {
       const byPos = { GK: [], DF: [], MF: [], FW: [] };
-      for (const row of squad) {
+      for (const row of players) {
         const pos = row.position || "MF";
         if (!byPos[pos]) byPos[pos] = [];
         byPos[pos].push(row);
       }
+      for (const f of flex) {
+        const pos = f.position || "MF";
+        if (!byPos[pos]) byPos[pos] = [];
+        byPos[pos].push({ ...f, status: "flex" });
+      }
       const cols = ["GK", "DF", "MF", "FW"].map((pos) => {
         const rows = (byPos[pos] || [])
           .map((r) => {
-            const delta =
-              r.delta_5d != null ? `${(Number(r.delta_5d) * 100).toFixed(0)}%` : "—";
+            if (r.status === "flex") {
+              const bar = r.xpts_bar != null ? Number(r.xpts_bar).toFixed(1) : null;
+              return `<li class="objectives-player is-flex">
+                <div class="objectives-player-head">${statusBadge("flex", r.role, r)}</div>
+                <span class="objectives-flex-label">${escapeHtml(pos)} · listón ${bar != null ? bar : "—"} xPts</span>
+                <span class="objectives-meta">esperar sorteo</span>
+              </li>`;
+            }
             const cost =
               r.acquisition === "clause" && r.clause != null ? r.clause : r.price;
             const who =
@@ -1433,14 +1340,15 @@
                   : r.acquisition === "free"
                     ? " · Libre"
                     : "";
+            const xp = r.xpts != null ? Number(r.xpts) : null;
             return `<li class="objectives-player">
               <div class="objectives-player-head">${statusBadge(r.status, r.role, r)}</div>
               <button type="button" class="player-link" data-player-id="${escapeHtml(
                 String(r.player_id || "")
               )}">${escapeHtml(r.name || "—")}</button>
-              <span class="objectives-meta">${formatMoney(cost)}${escapeHtml(who)} · EP ${
-                r.ep_score != null ? Math.round(Number(r.ep_score)) : "—"
-              } · Δ ${delta}</span>
+              <span class="objectives-meta">${formatMoney(cost)}${escapeHtml(who)} · ${
+                xp != null ? `${xp.toFixed(1)} xPts` : "—"
+              }</span>
             </li>`;
           })
           .join("");
@@ -1458,30 +1366,44 @@
       });
     }
 
-    const patches = isAsp || isCl ? [] : board.daily_patches || [];
-    const wrap = document.getElementById("objectives-patches-wrap");
-    const list = document.getElementById("objectives-patches");
-    if (wrap && list) {
-      if (!patches.length) {
-        wrap.hidden = true;
-        list.innerHTML = "";
+    const sells = ((board.moves || {}).sell || []).slice(0, 8);
+    const sellEl = document.getElementById("objectives-sells");
+    if (sellEl) {
+      if (!sells.length) {
+        sellEl.hidden = true;
+        sellEl.textContent = "";
       } else {
-        wrap.hidden = false;
-        list.innerHTML = patches
-          .map(
-            (p) => `<li class="objectives-patch-item">
-            <span class="badge badge-duda">${escapeHtml(p.position || "parche")}</span>
-            <button type="button" class="player-link" data-player-id="${escapeHtml(
-              String(p.player_id || "")
-            )}">${escapeHtml(p.name || "—")}</button>
-            <span class="objectives-meta">${formatMoney(p.price)} · EP ${
-              p.ep_score != null ? Math.round(Number(p.ep_score)) : "—"
-            }</span>
-            <span class="objectives-why text-xs text-slate-400">${escapeHtml(p.why || "")}</span>
-          </li>`
-          )
+        sellEl.hidden = false;
+        sellEl.textContent = `Para equilibrar, lista: ${sells
+          .map((s) => s.name)
+          .filter(Boolean)
+          .join(" · ")}`;
+      }
+    }
+
+    const watch = board.watch_frees || [];
+    const watchWrap = document.getElementById("objectives-watch-wrap");
+    const watchList = document.getElementById("objectives-watch");
+    if (watchWrap && watchList) {
+      if (!watch.length || k <= 0) {
+        watchWrap.hidden = true;
+        watchList.innerHTML = "";
+      } else {
+        watchWrap.hidden = false;
+        watchList.innerHTML = watch
+          .map((w) => {
+            const p = w.p_appear != null ? Math.round(Number(w.p_appear) * 100) : null;
+            return `<li>
+              <button type="button" class="player-link" data-player-id="${escapeHtml(
+                String(w.player_id || "")
+              )}">${escapeHtml(w.name || "—")}</button>
+              <span class="objectives-meta">${escapeHtml(w.position || "")} · P≈${
+                p != null ? p : "—"
+              }% · ${w.xpts != null ? Number(w.xpts).toFixed(1) : "—"} xPts</span>
+            </li>`;
+          })
           .join("");
-        list.querySelectorAll("[data-player-id]").forEach((btn) => {
+        watchList.querySelectorAll("[data-player-id]").forEach((btn) => {
           btn.addEventListener("click", () => {
             const id = btn.getAttribute("data-player-id");
             if (typeof openPlayerSource === "function") openPlayerSource(id);
@@ -1490,23 +1412,34 @@
       }
     }
 
-    const sells = isAsp || isCl ? [] : ((board.moves || {}).sell || []).slice(0, 8);
-    const sellEl = document.getElementById("objectives-sells");
-    if (sellEl) {
-      if (!sells.length) {
-        sellEl.hidden = true;
-        sellEl.textContent = "";
+    const path = (board.path || []).filter((m) => Number(m.cycle) > 0);
+    const pathWrap = document.getElementById("objectives-path-wrap");
+    const pathList = document.getElementById("objectives-path");
+    if (pathWrap && pathList) {
+      if (!path.length || k <= 1) {
+        pathWrap.hidden = true;
+        pathList.innerHTML = "";
       } else {
-        sellEl.hidden = false;
-        sellEl.textContent = `Vender (lista a VM; caja en ${cashLagText()}): ${sells
-          .map((s) => s.name)
-          .filter(Boolean)
-          .join(" · ")}`;
+        pathWrap.hidden = false;
+        pathList.innerHTML = path
+          .map(
+            (m) => `<li>Ciclo ${Number(m.cycle) + 1}: ${escapeHtml(m.kind || "")} · ${escapeHtml(
+              m.name || ""
+            )} · ${escapeHtml(m.why || "")}</li>`
+          )
+          .join("");
       }
+    }
+
+    const destHint = document.getElementById("squad-dest-hint");
+    if (destHint) {
+      destHint.hidden = false;
+      destHint.textContent = `Destino al KO: ${players.length}/15${flex.length ? ` · ${flex.length} flex` : ""} · ver Hoy`;
     }
   }
 
   function renderMeta(data) {
+
     document.getElementById("updated-at").textContent = fmtDate(data.generated_at);
   }
 

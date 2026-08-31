@@ -1,9 +1,6 @@
 """
-Plantilla perfecta diaria bajo presupuesto total (saldo + valor de plantilla).
+15 alcanzable antes del KO: once por xPts, cobertura, rotación de caja.
 
-Tres vistas: operable (oportunidad / EP€), aspiracional (máx EP) y
-cláusulas (máx EP con rivales solo si la cláusula es conocida y cabe).
-El action plan / funding usan solo el ideal operable.
 Persiste entre runs en public/data/leagues/<slug>/target_board.json.
 """
 
@@ -22,6 +19,13 @@ from competitive_actions import (
     sell_cash_phrase,
     sell_settlement_fields,
     target_tier_from_budget_fit,
+    mister_bid_cap,
+    sells_settle_before_deadline,
+)
+from destination_15 import (
+    assemble_destination,
+    build_path,
+    sale_limit as dest_sale_limit,
 )
 
 log = logging.getLogger("target_board")
@@ -320,6 +324,14 @@ def _xpts_pct(p: dict[str, Any]) -> float | None:
     return max(0.0, min(100.0, (x / scale) * 100.0))
 
 
+def _player_xpts(p: dict[str, Any]) -> float | None:
+    raw = p.get("xpts")
+    try:
+        return float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def ep_score(p: dict[str, Any]) -> float:
     """Puntaje esperado 0–100 para plantilla ideal.
 
@@ -587,6 +599,11 @@ def _normalize_player(
         "ff_scoring": p.get("ff_scoring") or ext.get("ff_scoring"),
         "external": ext if ext else None,
         "lineup_prob_source": ext.get("lineup_prob_source") or p.get("lineup_prob_source"),
+        "xpts": _player_xpts(p),
+        "xpts_p_play": p.get("xpts_p_play") if p.get("xpts_p_play") is not None else ext.get("xpts_p_play"),
+        "xpts_base": p.get("xpts_base") if p.get("xpts_base") is not None else ext.get("xpts_base"),
+        "xpts_why": p.get("xpts_why") or ext.get("xpts_why"),
+        "fdr_multiplier": p.get("fdr_multiplier") if p.get("fdr_multiplier") is not None else ext.get("fdr_multiplier"),
     }
 
 
@@ -1782,6 +1799,57 @@ def _pick_best_formation_squad(
     return best_squad or [], best_label, best_xi, best_ideal, trials
 
 
+def _dest_to_row(p: dict[str, Any], *, owned_ids: set[str]) -> dict[str, Any]:
+    pid = str(p.get("player_id") or "")
+    keep = pid in owned_ids
+    acq = p.get("acquisition") or ("keep" if keep else p.get("reach") or "market")
+    price = float(p.get("price") or 0)
+    if not keep and acq == "clause" and p.get("clause") is not None:
+        try:
+            price = float(p.get("clause") or price)
+        except (TypeError, ValueError):
+            pass
+    xp = p.get("xpts")
+    try:
+        xp_f = float(xp) if xp is not None else None
+    except (TypeError, ValueError):
+        xp_f = None
+    return {
+        "slot": p.get("slot"),
+        "position": p.get("position"),
+        "role": p.get("role"),
+        "player_id": pid,
+        "name": p.get("name"),
+        "team": p.get("team"),
+        "team_id": p.get("team_id"),
+        "ep_score": p.get("ep_score") or 0,
+        "xpts": round(xp_f, 2) if xp_f is not None else None,
+        "price": price,
+        "status": p.get("status") or ("keep" if keep else "buy"),
+        "delta_5d": p.get("delta_5d"),
+        "value_note": p.get("value_note"),
+        "value_ratio": p.get("value_ratio"),
+        "lineup_prob": p.get("lineup_prob"),
+        "ff_mister_points": p.get("ff_mister_points"),
+        "ff_mister_avg": p.get("ff_mister_avg"),
+        "hist_ok": bool(p.get("hist_ok")),
+        "on_daily_market": bool(p.get("on_daily_market")),
+        "owned": keep,
+        "gk_tandem": bool(p.get("gk_tandem")),
+        "owner_name": p.get("owner_name"),
+        "owner_id": p.get("owner_id"),
+        "acquisition": acq,
+        "clause": p.get("clause"),
+        "clause_known": bool(p.get("clause_known")),
+        "seller": p.get("seller"),
+        "reach": p.get("reach"),
+        "why": p.get("why") or p.get("why_xi") or "",
+        "kind": p.get("kind") or "player",
+        "xpts_bar": p.get("xpts_bar"),
+        "p_appear": p.get("p_appear"),
+    }
+
+
 def build_target_board(
     *,
     slug: str,
@@ -1793,10 +1861,20 @@ def build_target_board(
     price_series: dict[str, list[float]] | None = None,
     previous: dict[str, Any] | None = None,
     market_mode: str = "auction",
+    me: dict[str, Any] | None = None,
+    league_rules: dict[str, Any] | None = None,
+    market_cycle: dict[str, Any] | None = None,
+    matchday: dict[str, Any] | None = None,
+    captain_rule: dict[str, Any] | None = None,
+    gw_target_xi: dict[str, Any] | None = None,
+    recommended_xi: dict[str, Any] | None = None,
+    max_squad: int | None = None,
+    hours_to_jornada: float | None = None,
+    sales_state: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
-    Plantilla perfecta dual: operable (oportunidad) + aspiracional (máx EP).
-    Funding / primary_targets salen solo del ideal operable.
+    15 alcanzable antes del KO. Once por xPts; funding / primary_targets
+    salen de los fichajes de mercado del destino.
     """
     bal = max(0.0, float(balance or 0))
     squad = list(squad or [])
@@ -1826,79 +1904,150 @@ def build_target_board(
         seen.add(n["player_id"])
         universe.append(n)
 
-    ideal = _ideal_counts()
-    starters_n = _starter_counts()
-    bench_n = _bench_slot_needs(ideal, starters_n)
+    me = me or {}
+    rules = league_rules or {}
+    mc = dict(market_cycle or {})
+    fixed = str(market_mode or "").strip().lower() == "fixed"
+    clauses_on = (not fixed) and rules.get("clauses") is not False
+    try:
+        max_debt = float(me["max_debt"]) if me.get("max_debt") is not None else None
+    except (TypeError, ValueError):
+        max_debt = None
+    cycle_h = _money(mc.get("cycle_hours")) or float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    lag = 0.0 if fixed else _money(mc.get("cash_lag_hours") or mc.get("hours_to_end") or cycle_h)
+    hours = hours_to_jornada
+    if hours is None:
+        hours = mc.get("hours_to_jornada")
+    try:
+        hours_f = float(hours) if hours is not None else None
+    except (TypeError, ValueError):
+        hours_f = None
+    settle_ok = bool(fixed) or sells_settle_before_deadline(
+        hours_to_deadline=hours_f,
+        cash_lag_hours=lag,
+    )
+    try:
+        k_future = int(mc.get("cycles_left_before_gw") or 0)
+    except (TypeError, ValueError):
+        k_future = 0
+    listed_ids = {str(x) for x in ((sales_state or {}).get("listed_ids") or []) if x}
+    for p in squad:
+        pid = _pid(p)
+        if pid and (p.get("on_sale") or p.get("listed_for_sale")):
+            listed_ids.add(pid)
+    listed_count = len(listed_ids)
+    sale_rem = max(0, dest_sale_limit(rules) - listed_count)
 
-    perfect, form_op, starters_n, ideal, trials_op = _pick_best_formation_squad(
-        universe,
-        budget_cap=budget_cap,
-        mode="operable",
-        owned_ids=owned_ids,
-        prev_idx=prev_idx,
-    )
-    perfect_asp, form_asp, starters_asp, ideal_asp, trials_asp = _pick_best_formation_squad(
-        universe,
-        budget_cap=budget_cap,
-        mode="aspirational",
-        owned_ids=owned_ids,
-        prev_idx=prev_idx,
-    )
-    perfect_cl, form_cl, starters_cl, ideal_cl, trials_cl = _pick_best_formation_squad(
-        universe,
-        budget_cap=budget_cap,
-        mode="clauses",
-        owned_ids=owned_ids,
-        prev_idx=prev_idx,
-    )
-    bench_n = _bench_slot_needs(ideal, starters_n)
+    n_free = 0
+    s_on_board = 0
+    for u in universe:
+        if u.get("owned"):
+            continue
+        seller = str(u.get("seller") or "").lower()
+        oid = str(u.get("owner_id") or "").strip()
+        is_free = seller == "free" or not oid or oid in ("0", "None")
+        if not is_free:
+            continue
+        n_free += 1
+        if u.get("on_daily_market") or seller == "market":
+            s_on_board += 1
 
+    dest = assemble_destination(
+        universe,
+        owned_ids=owned_ids,
+        balance=bal,
+        max_debt=max_debt,
+        settle_ok=settle_ok,
+        sale_remaining=sale_rem,
+        listed_ids=listed_ids,
+        k_future=k_future,
+        clauses_on=clauses_on,
+        matchday=matchday,
+        captain_rule=captain_rule,
+        gw_target_xi=gw_target_xi,
+        n_free=n_free,
+        s_on_board=s_on_board,
+    )
+    named = list(dest.get("xi") or []) + list(dest.get("bench") or [])
+    perfect = [_dest_to_row(p, owned_ids=owned_ids) for p in named]
+    flex_slots = list(dest.get("flex_slots") or [])
+    destination_15 = list(perfect) + [
+        {
+            "kind": "flex",
+            "status": "flex",
+            "position": f.get("position"),
+            "role": f.get("role") or "starter",
+            "player_id": "",
+            "name": "",
+            "xpts_bar": f.get("xpts_bar"),
+            "p_appear": f.get("p_appear"),
+            "why": f.get("why") or "",
+        }
+        for f in flex_slots
+    ]
+    form_op = str(dest.get("formation") or "")
+    finance = dest.get("finance") or {}
     keep_rows = [r for r in perfect if r.get("status") == "keep"]
     buy_rows = [r for r in perfect if r.get("status") == "buy"]
-    cost_buys = sum(float(r.get("price") or 0) for r in buy_rows)
-    net_buys = max(0.0, cost_buys)
-    value_kept = sum(float(r.get("price") or 0) for r in keep_rows)
-    spent = value_kept + cost_buys
-
+    sell_src = list(finance.get("sells") or [])
+    sell_rows = []
     picked_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
-    sell_cands: list[dict[str, Any]] = []
-    for u in universe:
-        if not u["owned"] or u["player_id"] in picked_ids:
+    for u in sell_src:
+        pid = str(u.get("player_id") or "")
+        if not pid:
             continue
         delta = u.get("delta_5d")
-        sell_cands.append(
+        sell_rows.append(
             {
-                "player_id": u["player_id"],
-                "name": u["name"],
-                "position": u["position"],
-                "ep_score": u["ep_score"],
-                "price": u["price"],
+                "player_id": pid,
+                "name": u.get("name"),
+                "position": u.get("position"),
+                "ep_score": u.get("ep_score") or 0,
+                "xpts": u.get("xpts"),
+                "price": _money(u.get("market_value") or u.get("price")),
                 "delta_5d": delta,
                 "value_note": u.get("value_note"),
                 "why": (
-                    f"Fuera del ideal · EP {u['ep_score']:.0f} · "
-                    + sell_cash_phrase(float(u["price"] or 0))
-                    + (f" · Δ {delta*100:.0f}%" if delta is not None else "")
+                    f"Fuera del 15 al KO · "
+                    + sell_cash_phrase(_money(u.get("market_value") or u.get("price")))
                 ),
-                **sell_settlement_fields(float(u["price"] or 0)),
+                **sell_settlement_fields(_money(u.get("market_value") or u.get("price"))),
             }
         )
-    sell_cands.sort(
+    if not sell_rows:
+        for u in universe:
+            if not u.get("owned") or u["player_id"] in picked_ids:
+                continue
+            delta = u.get("delta_5d")
+            sell_rows.append(
+                {
+                    "player_id": u["player_id"],
+                    "name": u["name"],
+                    "position": u["position"],
+                    "ep_score": u.get("ep_score") or 0,
+                    "xpts": u.get("xpts"),
+                    "price": u["price"],
+                    "delta_5d": delta,
+                    "value_note": u.get("value_note"),
+                    "why": (
+                        f"Fuera del 15 al KO · "
+                        + sell_cash_phrase(float(u["price"] or 0))
+                    ),
+                    **sell_settlement_fields(float(u["price"] or 0)),
+                }
+            )
+    sell_rows.sort(
         key=lambda x: (
             0 if x.get("value_note") == "falling" else 1,
-            float(x.get("ep_score") or 0),
+            float(x.get("xpts") or x.get("ep_score") or 0),
             -float(x.get("price") or 0),
         )
     )
-    # Rotación sugerida (ideal completo); shortfall de funding del DÍA más abajo
-    sell_rows = list(sell_cands)
+    net_buys = max(0.0, float(finance.get("cost") or 0))
     ideal_buy_cost = round(net_buys, 0)
-    funded_ideal = bal + sum(float(s.get("price") or 0) for s in sell_cands) >= net_buys
-
     primary_targets = _select_daily_primary_targets(
         buy_rows, balance=bal, squad=squad
     )
-    # Enriquecer flags
     primary_targets = [
         {
             "player_id": r.get("player_id"),
@@ -1907,117 +2056,74 @@ def build_target_board(
             "position": r.get("position"),
             "price": r.get("price"),
             "ep_score": r.get("ep_score"),
+            "xpts": r.get("xpts"),
             "status": "on_daily" if r.get("on_daily_market") else "affordable",
             "role": r.get("role"),
             "on_daily_market": bool(r.get("on_daily_market")),
         }
         for r in primary_targets
     ]
-    daily_primary_cost = round(sum(float(t.get("price") or 0) for t in primary_targets), 0)
-    # No congelar caja: el 15 se compra con el saldo de hoy; liquidez = ventas listadas.
-    cash_reserved = 0.0
-    residual_after = round(max(0.0, bal), 0)
-    shortfall = max(0.0, daily_primary_cost - bal)
-    freed_for_fund = 0.0
-    for s in sell_cands:
-        if freed_for_fund >= shortfall:
-            break
-        freed_for_fund += float(s.get("price") or 0)
-    funded = bal + freed_for_fund >= daily_primary_cost
-
-    daily_patches = _build_daily_patches(
-        structural_needs,
-        universe,
-        balance=bal,
-        cash_reserved=cash_reserved,
+    path = build_path(
+        named,
         owned_ids=owned_ids,
+        finance=finance,
+        k_future=k_future,
+        settle_ok=settle_ok,
     )
-
-    operable_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
-    aspirational_only = [
-        {
-            "player_id": r.get("player_id"),
-            "name": r.get("name"),
-            "position": r.get("position"),
-            "price": r.get("price"),
-            "ep_score": r.get("ep_score"),
-            "role": r.get("role"),
-            "status": r.get("status"),
-            "need": "perfect_squad_aspirational",
-        }
-        for r in perfect_asp
-        if r.get("status") == "buy" and str(r.get("player_id")) not in operable_ids
-    ]
-
-    slots = []
-    for patch in daily_patches:
-        slots.append(
-            {
-                "need": patch.get("need") or f"patch_{patch.get('position')}",
-                "position": patch.get("position"),
-                "priority": patch.get("priority") or "Media",
-                "reason": patch.get("why"),
-                "primary_target": {
-                    "player_id": patch.get("player_id"),
-                    "name": patch.get("name"),
-                    "price": patch.get("price"),
-                    "ep_score": patch.get("ep_score"),
-                    "status": "on_daily",
-                    "tier": "realistic",
-                    "afford_now": True,
-                    "why": patch.get("why"),
-                },
-                "targets": [],
-                "patch_policy": {
-                    "allow": residual_after >= 200_000,
-                    "max_spend": patch.get("max_spend"),
-                    "note": "Parche diario si mejora el 15 y hay saldo",
-                },
-                "budget_envelope": {
-                    "cash_reserve_for_slot": 0,
-                    "min_price": None,
-                    "max_price": patch.get("max_spend"),
-                },
-            }
-        )
-
-    current_ids = {str(r.get("player_id")) for r in perfect if r.get("player_id")}
-    dropped: list[dict[str, Any]] = []
-    for pid, old in prev_idx.items():
-        if pid in current_ids or pid in owned_ids:
-            continue
-        miss = int(old.get("miss_days") or 0) + 1
-        if miss > MAX_DROPPED_DAYS:
-            continue
-        row = dict(old)
-        row["status"] = "dropped"
-        row["miss_days"] = miss
-        dropped.append(row)
-
-    patch_allow = residual_after >= 200_000 and bool(daily_patches)
-    op_totals = _squad_totals(perfect, ideal=ideal, bal=bal, starters_n=starters_n)
-    asp_totals = _squad_totals(perfect_asp, ideal=ideal_asp, bal=bal, starters_n=starters_asp)
-    cl_totals = _squad_totals(perfect_cl, ideal=ideal_cl, bal=bal, starters_n=starters_cl)
-    asp_buy = [r for r in perfect_asp if r.get("status") == "buy"]
-    asp_keep = [r for r in perfect_asp if r.get("status") == "keep"]
-    cl_buy = [r for r in perfect_cl if r.get("status") == "buy"]
-    cl_keep = [r for r in perfect_cl if r.get("status") == "keep"]
-    cl_clause_rows = [r for r in cl_buy if r.get("acquisition") == "clause"]
-    clause_spend = round(sum(float(r.get("clause") or r.get("price") or 0) for r in cl_clause_rows), 0)
-    residual_clauses = round(max(0.0, budget_cap - float(cl_totals["cost_sum"] or 0)), 0)
-
+    bid_cap = mister_bid_cap(bal, max_debt)
+    peak = float(finance.get("peak") or 0)
+    covers = bool(finance.get("ok"))
+    xpts_st = float(dest.get("xpts_starters") or 0)
+    ceiling = None
+    yours = None
+    cov = (gw_target_xi or {}).get("coverage") or {}
+    if cov.get("target_xpts") is not None:
+        try:
+            ceiling = float(cov["target_xpts"])
+        except (TypeError, ValueError):
+            ceiling = None
+    if cov.get("your_xi_xpts") is not None:
+        try:
+            yours = float(cov["your_xi_xpts"])
+        except (TypeError, ValueError):
+            yours = None
+    rec_x = None
+    if recommended_xi:
+        try:
+            rec_x = float((recommended_xi.get("summary") or {}).get("xpts_total") or 0) or None
+        except (TypeError, ValueError):
+            rec_x = yours
+    constraints = {
+        "cycles_left": k_future,
+        "cash_lag_hours": round(lag, 2),
+        "settle_before_ko": settle_ok,
+        "sale_limit": dest_sale_limit(rules),
+        "sale_remaining": sale_rem,
+        "max_debt": max_debt,
+        "bid_cap": bid_cap,
+        "max_squad": max_squad,
+        "n_free": n_free,
+        "s_on_board": s_on_board,
+        "p_appear": dest.get("p_appear"),
+        "hours_to_jornada": hours_f,
+    }
+    starters_n = dest.get("shape") or _starter_counts()
+    bench_n = {
+        p: max(0, int((_ideal_for_xi(starters_n)).get(p, 0)) - int(starters_n.get(p, 0)))
+        for p in ("GK", "DF", "MF", "FW")
+    }
+    op_keep = len(keep_rows)
+    op_buy = len(buy_rows)
+    cost_sum = sum(float(r.get("price") or 0) for r in perfect)
+    residual_after = round(max(0.0, bal + float(finance.get("proceeds") or 0) - net_buys), 0) if settle_ok else round(max(0.0, bal - net_buys), 0)
     board = {
         "generated_at": _now_iso(),
         "league_slug": slug,
         "market_mode": market_mode,
-        "mode_default": "operable",
+        "mode_default": "ko",
         "formation": form_op,
-        "formation_aspirational": form_asp,
-        "formation_clauses": form_cl,
-        "formation_shape": dict(starters_n),
-        "formation_trials": trials_op[:8],
-        "formation_trials_aspirational": trials_asp[:8],
-        "formation_trials_clauses": trials_cl[:8],
+        "formation_shape": dest.get("shape") or {},
+        "formation_trials": dest.get("trials") or [],
         "balance": bal,
         "squad_value": sval,
         "wealth": {
@@ -2027,129 +2133,81 @@ def build_target_board(
             "liquidity_floor": round(floor, 0),
             "budget_cap": round(budget_cap, 0),
         },
-        "budget_operable": {
-            "budget_cap": round(budget_cap, 0),
-            "note": "wealth − liquidez; prioriza oportunidad (EP/€, libres/mercado)",
-        },
-        "ideal_buy_cost": ideal_buy_cost,
         "perfect_squad": perfect,
-        "perfect_squad_aspirational": perfect_asp,
-        "perfect_squad_clauses": perfect_cl,
+        "perfect_squad_aspirational": [],
+        "perfect_squad_clauses": [],
+        "destination_15": destination_15,
+        "flex_slots": flex_slots,
+        "watch_frees": dest.get("watch_frees") or [],
+        "path": path,
+        "constraints": constraints,
+        "finance": {
+            "ok": covers,
+            "cost": finance.get("cost"),
+            "proceeds": finance.get("proceeds"),
+            "peak": peak,
+            "covers_with_sales": covers,
+            "reason": finance.get("reason") or "",
+        },
         "moves": {
             "keep": keep_rows,
             "buy": buy_rows,
             "sell": sell_rows,
         },
         "totals": {
-            **{k: op_totals[k] for k in (
-                "ep_sum", "ep_sum_starters", "cost_sum", "net_buys",
-                "slots_filled", "slots_target",
-            )},
-            "sell_to_fund": round(freed_for_fund if shortfall > 0 else 0.0, 0),
-            "funded": funded,
-            "funded_ideal": funded_ideal,
+            "ep_sum": dest.get("xpts_total"),
+            "ep_sum_starters": xpts_st,
+            "xpts_starters": xpts_st,
+            "xpts_total": dest.get("xpts_total"),
+            "xpts_ceiling": ceiling,
+            "xpts_yours": rec_x if rec_x is not None else yours,
+            "cost_sum": round(cost_sum, 0),
+            "net_buys": round(net_buys, 0),
+            "slots_filled": len(perfect),
+            "slots_target": 15,
+            "flex": len(flex_slots),
+            "sell_to_fund": round(float(finance.get("proceeds") or 0), 0),
+            "funded": covers,
             "formation": form_op,
             "ideal_buy_cost": ideal_buy_cost,
             "daily_primary_count": len(primary_targets),
         },
-        "totals_aspirational": {
-            "ep_sum": asp_totals["ep_sum"],
-            "ep_sum_starters": asp_totals["ep_sum_starters"],
-            "cost_sum": asp_totals["cost_sum"],
-            "net_buys": asp_totals["net_buys"],
-            "slots_filled": asp_totals["slots_filled"],
-            "slots_target": asp_totals["slots_target"],
-            "funded": None,
-            "formation": form_asp,
-        },
-        "totals_clauses": {
-            "ep_sum": cl_totals["ep_sum"],
-            "ep_sum_starters": cl_totals["ep_sum_starters"],
-            "cost_sum": cl_totals["cost_sum"],
-            "net_buys": cl_totals["net_buys"],
-            "slots_filled": cl_totals["slots_filled"],
-            "slots_target": cl_totals["slots_target"],
-            "clause_count": len(cl_clause_rows),
-            "clause_spend": clause_spend,
-            "residual": residual_clauses,
-            "funded": None,
-            "formation": form_cl,
-        },
-        "daily_patches": daily_patches,
-        "cash_reserved": cash_reserved,
+        "totals_aspirational": {"mode": "aspirational", "slots_filled": 0},
+        "totals_clauses": {"mode": "clauses", "slots_filled": 0},
+        "daily_patches": [],
+        "cash_reserved": 0.0,
         "residual_after_reserve": residual_after,
         "primary_targets": primary_targets,
-        "aspirational_targets": aspirational_only,
-        "slots": slots,
-        "dropped": dropped[:12],
-        "patch_policy": {
-            "allow": patch_allow,
-            "max_spend": round(
-                min(residual_after, float(getattr(config, "PACKAGE_SECONDARY_MAX", 2_500_000))),
-                0,
-            ),
-        },
+        "aspirational_targets": dest.get("watch_frees") or [],
+        "slots": [],
+        "dropped": [],
+        "patch_policy": {"allow": False, "max_spend": 0.0},
         "summary": {
             "slots": len(perfect),
-            "starters": op_totals["starters"],
-            "bench": op_totals["bench"],
-            "starters_target": sum(starters_n.values()),
-            "bench_target": sum(bench_n.values()),
-            "incomplete": op_totals["incomplete"],
-            "keep": op_totals["keep"],
-            "buy": op_totals["buy"],
+            "starters": len(dest.get("xi") or []),
+            "bench": len(dest.get("bench") or []),
+            "starters_target": sum(int(v) for v in (starters_n or {}).values()),
+            "bench_target": sum(int(v) for v in bench_n.values()),
+            "incomplete": not bool(dest.get("complete")),
+            "keep": op_keep,
+            "buy": op_buy,
             "sell": len(sell_rows),
-            "patches": len(daily_patches),
+            "patches": 0,
             "on_daily": sum(1 for r in buy_rows if r.get("on_daily_market")),
-            "cash_reserved": cash_reserved,
-            "ep_sum": op_totals["ep_sum"],
-            "ep_sum_starters": op_totals["ep_sum_starters"],
-            "mode": "operable",
+            "cash_reserved": 0.0,
+            "ep_sum": dest.get("xpts_total"),
+            "ep_sum_starters": xpts_st,
+            "mode": "ko",
             "formation": form_op,
-            "xi_rule": f"formación {form_op} · titulares ≥70% + hist · oportunidad EP/€",
-            "bench_min_points": int(
-                _bench_min_points(universe[0] if universe else None)
-            ),
+            "xi_rule": f"formación {form_op} · once por xPts · 15 al KO",
+            "flex": len(flex_slots),
+            "cycles_left": k_future,
         },
-        "summary_aspirational": {
-            "slots": len(perfect_asp),
-            "starters": asp_totals["starters"],
-            "bench": asp_totals["bench"],
-            "incomplete": asp_totals["incomplete"],
-            "keep": len(asp_keep),
-            "buy": len(asp_buy),
-            "ep_sum": asp_totals["ep_sum"],
-            "ep_sum_starters": asp_totals["ep_sum_starters"],
-            "mode": "aspirational",
-            "formation": form_asp,
-            "xi_rule": f"formación {form_asp} · titulares ≥70% + hist · máx Σ EP",
-            "bench_min_points": int(
-                _bench_min_points(universe[0] if universe else None)
-            ),
-        },
-        "summary_clauses": {
-            "slots": len(perfect_cl),
-            "starters": cl_totals["starters"],
-            "bench": cl_totals["bench"],
-            "incomplete": cl_totals["incomplete"],
-            "keep": len(cl_keep),
-            "buy": len(cl_buy),
-            "clause_count": len(cl_clause_rows),
-            "clause_spend": clause_spend,
-            "ep_sum": cl_totals["ep_sum"],
-            "ep_sum_starters": cl_totals["ep_sum_starters"],
-            "mode": "clauses",
-            "formation": form_cl,
-            "xi_rule": (
-                f"formación {form_cl} · titulares ≥70% + hist · "
-                "máx EP con cláusulas pagables"
-            ),
-            "bench_min_points": int(
-                _bench_min_points(universe[0] if universe else None)
-            ),
-        },
+        "summary_aspirational": {"mode": "aspirational", "slots": 0},
+        "summary_clauses": {"mode": "clauses", "slots": 0},
     }
     return board
+
 
 def _select_daily_primary_targets(
     buy_rows: list[dict[str, Any]],

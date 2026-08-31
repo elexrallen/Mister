@@ -3655,6 +3655,18 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         squad_value=float(me.get("squad_value") or 0) or None,
         price_series=price_series,
         market_mode=market_mode,
+        me=me,
+        league_rules=league_rules,
+        market_cycle=market_cycle,
+        matchday=matchday_early or {},
+        captain_rule=league_rules.get("captain")
+        if isinstance(league_rules.get("captain"), dict)
+        else None,
+        gw_target_xi=gw_target_xi,
+        recommended_xi=recommended_xi,
+        max_squad=config.league_max_squad(league_cfg),
+        hours_to_jornada=hours_j,
+        sales_state=sales_state if isinstance(sales_state, dict) else None,
     )
     try:
         save_target_board(slug, target_board)

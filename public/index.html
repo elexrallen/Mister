@@ -35,7 +35,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=68" />
+  <link rel="stylesheet" href="./styles.css?v=70" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -164,41 +164,40 @@
       </div>
     </section>
 
-    <section id="objectives-panel" class="objectives-panel" aria-label="Plantilla perfecta" hidden>
+    <section id="objectives-panel" class="objectives-panel" aria-label="15 al KO" hidden>
       <div class="objectives-main">
-        <p class="objectives-kicker">Formación óptima por EP · saldo + valor plantilla</p>
-        <p id="objectives-title" class="objectives-title">Plantilla perfecta</p>
-        <div id="objectives-mode-toggle" class="objectives-mode-toggle" role="group" aria-label="Modo plantilla">
-          <button type="button" class="objectives-mode-btn is-active" data-ideal-mode="operable">Operable</button>
-          <button type="button" class="objectives-mode-btn" data-ideal-mode="aspirational">Aspiracional</button>
-          <button type="button" class="objectives-mode-btn" data-ideal-mode="clauses" hidden>Cláusulas</button>
-        </div>
+        <p class="objectives-kicker" id="objectives-kicker">15 al KO · once por xPts</p>
+        <p id="objectives-title" class="objectives-title">15 al KO</p>
         <p id="objectives-summary" class="objectives-summary">—</p>
       </div>
       <div class="objectives-stats">
         <div>
-          <span class="objectives-stat-label">Wealth</span>
-          <span id="objectives-wealth" class="objectives-stat-value">—</span>
+          <span class="objectives-stat-label">Ciclos</span>
+          <span id="objectives-cycles" class="objectives-stat-value">—</span>
         </div>
         <div>
-          <span class="objectives-stat-label">Coste ideal</span>
-          <span id="objectives-cost" class="objectives-stat-value">—</span>
-        </div>
-        <div>
-          <span class="objectives-stat-label">EP once (total)</span>
+          <span class="objectives-stat-label">xPts destino</span>
           <span id="objectives-ep" class="objectives-stat-value">—</span>
         </div>
         <div>
-          <span class="objectives-stat-label">Residual</span>
-          <span id="objectives-reserve" class="objectives-stat-value">—</span>
+          <span class="objectives-stat-label">Equilibrio</span>
+          <span id="objectives-balance-fit" class="objectives-stat-value">—</span>
+        </div>
+        <div>
+          <span class="objectives-stat-label">Huecos flex</span>
+          <span id="objectives-flex" class="objectives-stat-value">—</span>
         </div>
       </div>
       <div id="objectives-grid" class="objectives-grid" aria-label="Plantilla por líneas"></div>
-      <div id="objectives-patches-wrap" class="objectives-patches-wrap" hidden>
-        <p class="objectives-patches-title">Parches hoy</p>
-        <ul id="objectives-patches" class="objectives-patches"></ul>
-      </div>
       <p id="objectives-sells" class="objectives-sells text-xs text-slate-400" hidden></p>
+      <div id="objectives-watch-wrap" class="objectives-watch-wrap" hidden>
+        <p class="objectives-watch-title">Vigilancia libres</p>
+        <ul id="objectives-watch" class="objectives-watch"></ul>
+      </div>
+      <details id="objectives-path-wrap" class="objectives-path-wrap" hidden>
+        <summary>Próximos ciclos</summary>
+        <ul id="objectives-path" class="objectives-path"></ul>
+      </details>
     </section>
 
     <section aria-label="Indicadores clave" class="kpi-strip" id="tactical-kpis">
@@ -357,7 +356,8 @@
             <div>
               <p class="section-kicker">Estructura</p>
               <h3 id="health-title" class="section-title">Salud táctica</h3>
-              <p class="section-hint">Titulares + alternativas por línea · objetivo 15 (2/5/5/3)</p>
+              <p class="section-hint">Lo que tienes ahora · titulares + alternativas por línea</p>
+              <p id="squad-dest-hint" class="section-hint" hidden></p>
             </div>
             <div class="health-score" id="health-score" title="Salud de plantilla">—</div>
           </div>
@@ -542,6 +542,6 @@
     </div>
   </div>
 
-  <script src="./app.js?v=71" defer></script>
+  <script src="./app.js?v=72" defer></script>
 </body>
 </html>
