@@ -10,12 +10,12 @@ from typing import Any
 
 import config
 from competitive_actions import (
+    build_recommended_gw_xi,
     clause_premium_ratio,
     mister_bid_cap,
     sells_settle_before_deadline,
 )
 from cycle_plan import CLAUSE_MIN_XPTS_GAP, _clause_upgrade_is_material
-from gw_target_xi import pick_best_gw_xi
 
 WATCH_MAX = 3
 WATCH_P_MIN = 0.12
@@ -318,8 +318,9 @@ def _pick_xi(
     captain_rule: dict[str, Any] | None,
 ) -> dict[str, Any]:
     pool = [_to_xi_player(p) for p in players]
-    return pick_best_gw_xi(
+    return build_recommended_gw_xi(
         pool,
+        formation=formation,
         matchday=matchday,
         captain_rule=captain_rule,
     )
@@ -343,6 +344,37 @@ def _shape_from_label(formation: str | None) -> dict[str, int]:
     if len(nums) == 4 and sum(nums) == 10:
         return {"GK": 1, "DF": nums[0], "MF": nums[1] + nums[2], "FW": nums[3]}
     return default
+
+
+def formation_label_for_shape(shape: dict[str, int], fallback: str = "") -> str:
+    """Etiqueta DF-MF-FW coherente con los cupos del once (p.ej. 3-5-2)."""
+    df = int(shape.get("DF") or 0)
+    mf = int(shape.get("MF") or 0)
+    fw = int(shape.get("FW") or 0)
+    gk = int(shape.get("GK") or 1)
+    if gk == 1 and df + mf + fw == 10:
+        return f"{df}-{mf}-{fw}"
+    if gk + df + mf + fw == 11:
+        return f"{gk}-{df}-{mf}-{fw}"
+    return fallback or "4-3-3"
+
+
+def _aligned_formation(
+    assembled: dict[str, Any] | None,
+    *,
+    shape: dict[str, int],
+    fallback: str,
+) -> str:
+    raw = str((assembled or {}).get("formation") or fallback or "").strip()
+    expected = _shape_from_label(raw) if raw else {}
+    if (
+        raw
+        and int(expected.get("DF") or 0) == int(shape.get("DF") or 0)
+        and int(expected.get("MF") or 0) == int(shape.get("MF") or 0)
+        and int(expected.get("FW") or 0) == int(shape.get("FW") or 0)
+    ):
+        return raw
+    return formation_label_for_shape(shape, fallback)
 
 
 def _gk_team_key(u: dict[str, Any]) -> str | None:
@@ -773,9 +805,10 @@ def assemble_destination(
 
         xi_ann = _annotate_status(xi_rows, owned_ids)
         bench_ann = _annotate_status(bench_rows, owned_ids)
+        form_label = _aligned_formation(assembled, shape=shape, fallback=display)
         key = _pack_key(xi_ann, bench_ann, flex, shape, fin)
         trial = {
-            "formation": display,
+            "formation": form_label,
             "shape": dict(shape),
             "xpts_starters": round(sum(_xpts(r) for r in xi_ann), 2),
             "complete": bool(complete),
@@ -786,7 +819,7 @@ def assemble_destination(
         if best_key is None or key > best_key:
             best_key = key
             best = {
-                "formation": display,
+                "formation": form_label,
                 "shape": dict(shape),
                 "xi": xi_ann,
                 "bench": bench_ann,

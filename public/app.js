@@ -1238,7 +1238,20 @@
     const summary = board.summary || {};
     const cons = board.constraints || {};
     const finance = board.finance || {};
-    const formation = summary.formation || board.formation || totals.formation || "";
+    const starters = players.filter((r) => r.role === "starter");
+    const shapeCounts = { GK: 0, DF: 0, MF: 0, FW: 0 };
+    for (const r of starters) {
+      const pos = r.position || "MF";
+      if (shapeCounts[pos] != null) shapeCounts[pos] += 1;
+    }
+    const fromXi =
+      shapeCounts.DF + shapeCounts.MF + shapeCounts.FW === 10
+        ? `${shapeCounts.DF}-${shapeCounts.MF}-${shapeCounts.FW}`
+        : "";
+    const sh = board.formation_shape || {};
+    const fromShape =
+      sh.DF != null && sh.MF != null && sh.FW != null ? `${sh.DF}-${sh.MF}-${sh.FW}` : "";
+    const formation = fromXi || fromShape || summary.formation || board.formation || totals.formation || "";
     const k = cons.cycles_left != null ? Number(cons.cycles_left) : Number(summary.cycles_left || 0);
 
     const title = document.getElementById("objectives-title");

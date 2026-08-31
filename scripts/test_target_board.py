@@ -514,6 +514,24 @@ def test_rising_starter_not_sold_for_spike() -> None:
     _assert("f1" in _dest_ids(dest), _dest_ids(dest))
 
 
+def test_formation_label_matches_xi_shape() -> None:
+    dest = _assemble(_universe(_owned_15()))
+    form = str(dest.get("formation") or "")
+    shape = dest.get("shape") or {}
+    counts: dict[str, int] = {}
+    for r in dest.get("xi") or []:
+        pos = str(r.get("position") or "MF").upper()
+        counts[pos] = counts.get(pos, 0) + 1
+    _assert(counts.get("DF") == int(shape.get("DF") or 0), (form, shape, counts))
+    _assert(counts.get("MF") == int(shape.get("MF") or 0), (form, shape, counts))
+    _assert(counts.get("FW") == int(shape.get("FW") or 0), (form, shape, counts))
+    parts = [p for p in form.replace("–", "-").split("-") if p]
+    if len(parts) == 3:
+        _assert(int(parts[0]) == counts.get("DF", 0), (form, counts))
+        _assert(int(parts[1]) == counts.get("MF", 0), (form, counts))
+        _assert(int(parts[2]) == counts.get("FW", 0), (form, counts))
+
+
 if __name__ == "__main__":
     test_appear_probability_lottery_not_queue()
     test_classify_reach_ghost_vs_clause_vs_watch()
@@ -527,4 +545,5 @@ if __name__ == "__main__":
     test_typical_week_strips_fdr()
     test_clause_rental_does_not_enter()
     test_rising_starter_not_sold_for_spike()
+    test_formation_label_matches_xi_shape()
     print("test_target_board: OK")
