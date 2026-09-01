@@ -175,7 +175,7 @@ FEED_HTML = """
 </div>
 <div id="feed-954857107" class="card card-gameweek_end_pools" data-comments="0">
   <a href="users/15402265/ruben"></a>
-  <div class="played green">+9.999.999</div>
+  <div class="played green">+2.100.000</div>
 </div>
 <div id="feed-954857081" class="card card-gameweek_end" data-comments="0">
   <ul>
@@ -219,10 +219,12 @@ def test_parse_feed_transfer_and_prize() -> None:
     assert isco["price"] == 11_765_002
 
     prizes = parse_feed_prizes(FEED_HTML)
-    amounts = {p["uc"]: p["amount"] for p in prizes}
-    assert amounts["15402265"] == 1_650_000
-    assert amounts["15399715"] == 1_600_000
-    assert 9_999_999 not in amounts.values()
+    by_id = {p["id"]: p for p in prizes}
+    assert by_id["prize-954857081-15402265"]["amount"] == 1_650_000
+    assert by_id["prize-954857081-15399715"]["amount"] == 1_600_000
+    pool = by_id["prize-pool-954857107-15402265"]
+    assert pool["amount"] == 2_100_000
+    assert pool["kind"] == "pools"
 
 
 def test_parse_feed_ajax_cards_cases() -> None:
@@ -292,7 +294,17 @@ def test_parse_feed_ajax_cards_cases() -> None:
                 },
             },
         },
-        {"id": 9, "category": "gameweek_end_pools", "data": {"table": []}},
+        {"id": 9, "category": "gameweek_end_pools", "data": {
+            "id_gameweek": 4044,
+            "gameweek": 3,
+            "table": [
+                {"id": 15399697, "name": "PaitoPau", "hits": 7, "amount": 2_100_000},
+                {"id": 15399113, "name": "Francisco", "hits": 5, "amount": 1_500_000},
+                {"id": 15399131, "name": "Abel", "hits": 4, "amount": 1_200_000},
+                {"id": 15399168, "name": "Emilio", "hits": 4, "amount": 1_200_000},
+                {"id": 15399759, "name": "Adriano", "hits": 0, "amount": None},
+            ],
+        }},
         {"id": 10, "category": "player_transfer", "data": [{"id": 1}]},
         {"id": 11, "category": "clauses_drops", "data": [{"id": 2}]},
     ]
@@ -308,12 +320,20 @@ def test_parse_feed_ajax_cards_cases() -> None:
     sell = next(t for t in txs if t["player_id"] == "68248")
     assert sell["from_uc"] == "15399848"
     assert sell["to_uc"] is None
-    assert {p["uc"]: p["amount"] for p in prizes} == {
+    assert {p["uc"]: p["amount"] for p in prizes if p.get("kind") != "pools"} == {
         "15402265": 1_650_000,
         "15399715": 1_600_000,
     }
     assert prizes[0]["id"] == "prize-gw3968-15402265"
     assert prizes[0]["gameweek_id"] == "3968"
+    pool_prizes = {p["uc"]: p for p in prizes if p.get("kind") == "pools"}
+    assert pool_prizes["15399697"]["amount"] == 2_100_000
+    assert pool_prizes["15399113"]["amount"] == 1_500_000
+    assert pool_prizes["15399131"]["amount"] == 1_200_000
+    assert pool_prizes["15399168"]["amount"] == 1_200_000
+    assert "15399759" not in pool_prizes
+    assert pool_prizes["15399697"]["id"] == "prize-pool-gw4044-15399697"
+    assert pool_prizes["15399697"]["gameweek_id"] == "4044"
 
     dup_cards = cards + [
         {
@@ -333,11 +353,14 @@ def test_parse_feed_ajax_cards_cases() -> None:
         }
     ]
     _, prizes_dedup = parse_feed_ajax_cards(dup_cards)
-    assert len(prizes_dedup) == 2
-    assert {p["uc"]: p["amount"] for p in prizes_dedup} == {
+    gw_prizes = [p for p in prizes_dedup if p.get("kind") != "pools"]
+    assert len(gw_prizes) == 2
+    assert {p["uc"]: p["amount"] for p in gw_prizes} == {
         "15402265": 1_650_000,
         "15399715": 1_600_000,
     }
+    pool_dup = [p for p in prizes_dedup if p.get("kind") == "pools"]
+    assert len(pool_dup) == 4
 
 
 def test_ledger_initial_cash_and_bid_cap() -> None:
@@ -540,6 +563,98 @@ def test_incremental_feed_does_not_double_count() -> None:
         assert out2[0]["liquidity_estimated"] == cash1 - 2_000_000
 
 
+def test_quiniela_and_gameweek_prizes_stack() -> None:
+    sorteo = date(2026, 7, 24)
+    rivals = [{"team_id": "10", "manager": "Rival", "squad_value": 40_000_000}]
+    prizes = [
+        {
+            "id": "prize-gw4044-10",
+            "uc": "10",
+            "amount": 2_250_000,
+            "gameweek_id": "4044",
+            "kind": "gameweek",
+        },
+        {
+            "id": "prize-pool-gw4044-10",
+            "uc": "10",
+            "amount": 1_200_000,
+            "gameweek_id": "4044",
+            "kind": "pools",
+        },
+    ]
+    out, _meta = build_rival_finances(
+        profiles=_boot_profiles(),
+        rivals=rivals,
+        me_uc="99",
+        me_balance=0,
+        me_squad_value=0,
+        feed_prizes=prizes,
+        starting_budget=50_000_000,
+        sorteo_date=sorteo,
+        start_mode="random_minus_vm",
+        max_debt_level=4,
+    )
+    # 50M − 10M VM − 5M compra + 2.25M jornada + 1.2M quiniela
+    assert out[0]["liquidity_estimated"] == 38_450_000
+
+
+def test_incremental_applies_quiniela_after_gameweek_prize() -> None:
+    sorteo = date(2026, 7, 24)
+    rivals = [{"team_id": "10", "manager": "Rival", "squad_value": 40_000_000}]
+    gw_prize = {
+        "id": "prize-gw4044-10",
+        "uc": "10",
+        "amount": 2_250_000,
+        "gameweek_id": "4044",
+        "kind": "gameweek",
+    }
+    pool_prize = {
+        "id": "prize-pool-gw4044-10",
+        "uc": "10",
+        "amount": 1_200_000,
+        "gameweek_id": "4044",
+        "kind": "pools",
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        out1, meta1 = run_rival_finances(
+            community_id="test-liga",
+            rivals=rivals,
+            me_uc="99",
+            profiles=_boot_profiles(),
+            feed_prizes=[gw_prize],
+            starting_budget=50_000_000,
+            sorteo_date=sorteo,
+            start_mode="random_minus_vm",
+            max_debt_level=4,
+            persist=True,
+            root=root,
+        )
+        assert meta1["update_mode"] == "bootstrap"
+        cash1 = out1[0]["liquidity_estimated"]
+        assert cash1 == 37_250_000
+
+        snap = load_finance_snapshot("test-liga", root=root)
+        assert snap is not None
+        out2, meta2 = run_rival_finances(
+            community_id="test-liga",
+            rivals=rivals,
+            me_uc="99",
+            profiles=[],
+            feed_prizes=[gw_prize, pool_prize],
+            starting_budget=50_000_000,
+            sorteo_date=sorteo,
+            start_mode="random_minus_vm",
+            max_debt_level=4,
+            snapshot=snap,
+            persist=True,
+            root=root,
+        )
+        assert meta2["update_mode"] == "feed_incremental"
+        assert meta2["new_prizes"] == 1
+        assert out2[0]["liquidity_estimated"] == cash1 + 1_200_000
+
+
 def test_stale_snapshot_forces_bootstrap() -> None:
     now = datetime.now(timezone.utc)
     snap = {
@@ -632,6 +747,8 @@ def main() -> None:
         test_estimate_rival_liquidity_keeps_bid_cap,
         test_contest_start_mode_is_cash,
         test_incremental_feed_does_not_double_count,
+        test_quiniela_and_gameweek_prizes_stack,
+        test_incremental_applies_quiniela_after_gameweek_prize,
         test_stale_snapshot_forces_bootstrap,
         test_new_manager_forces_bootstrap,
         test_probe_json_if_present,

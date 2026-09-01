@@ -332,16 +332,17 @@ def parse_feed_transfers(html: str) -> list[dict[str, Any]]:
 
 
 def parse_feed_prizes(html: str) -> list[dict[str, Any]]:
-    """card-gameweek_end: `+1.650.000` por manager (se suman si hay varias jornadas)."""
+    """card-gameweek_end y card-gameweek_end_pools: `+1.650.000` por manager."""
     if not html:
         return []
     prizes: list[dict[str, Any]] = []
     for m in re.finditer(
-        r'<div id="feed-(\d+)" class="card card-gameweek_end"[\s\S]*?(?=<div id="feed-|\Z)',
+        r'<div id="feed-(\d+)" class="card card-gameweek_end(_pools)?"[\s\S]*?(?=<div id="feed-|\Z)',
         html,
         re.I,
     ):
-        feed_id, block = m.group(1), m.group(0)
+        feed_id, pools_suffix, block = m.group(1), m.group(2), m.group(0)
+        kind = "pools" if pools_suffix else "gameweek"
         for row in re.finditer(
             r'href=["\']users/(\d+)/[^"\']*["\'][\s\S]{0,600}?'
             r'<div class="played[^"]*">\s*([^<]+)',
@@ -354,10 +355,13 @@ def parse_feed_prizes(html: str) -> list[dict[str, Any]]:
                 continue
             prizes.append(
                 {
-                    "id": f"prize-{feed_id}-{uc}",
+                    "id": prize_event_id(str(uc), None, feed_id, kind=kind),
                     "uc": str(uc),
                     "amount": amount,
-                    "source": "feed_gameweek_end",
+                    "source": (
+                        "feed_gameweek_end_pools" if kind == "pools" else "feed_gameweek_end"
+                    ),
+                    "kind": kind,
                 }
             )
     return prizes
@@ -375,11 +379,25 @@ def normalize_gameweek_id(raw: Any) -> str | None:
     return text
 
 
-def prize_event_id(uc: str, gameweek_id: str | None, card_id: str = "") -> str:
-    """Una jornada + manager = un premio. El feed a veces publica la misma GW dos veces."""
+def prize_kind(raw: Any) -> str:
+    """`gameweek` (clasificación) vs `pools` (quiniela/porra cobrada)."""
+    text = str(raw or "").strip().lower()
+    if "pool" in text:
+        return "pools"
+    return "gameweek"
+
+
+def prize_event_id(
+    uc: str,
+    gameweek_id: str | None,
+    card_id: str = "",
+    kind: str = "gameweek",
+) -> str:
+    """Una jornada + manager + tipo = un premio. Clasificación y quiniela conviven."""
+    prefix = "prize-pool" if prize_kind(kind) == "pools" else "prize"
     if gameweek_id:
-        return f"prize-gw{gameweek_id}-{uc}"
-    return f"prize-{card_id}-{uc}"
+        return f"{prefix}-gw{gameweek_id}-{uc}"
+    return f"{prefix}-{card_id}-{uc}"
 
 
 def _gameweek_prize_positions(card_data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -396,6 +414,43 @@ def _gameweek_prize_positions(card_data: dict[str, Any]) -> list[dict[str, Any]]
     return []
 
 
+def _pool_prize_rows(card_data: dict[str, Any]) -> list[dict[str, Any]]:
+    table = card_data.get("table")
+    if isinstance(table, list):
+        return [r for r in table if isinstance(r, dict)]
+    return []
+
+
+def _append_ajax_prize(
+    prizes: list[dict[str, Any]],
+    seen: set[tuple[str, str, str]],
+    *,
+    uc: Any,
+    amount: float,
+    gw: str | None,
+    card_id: str,
+    kind: str,
+) -> None:
+    if not uc or amount == 0:
+        return
+    uc_s = str(uc)
+    kind_s = prize_kind(kind)
+    gw_key = (kind_s, gw or f"card:{card_id}", uc_s)
+    if gw_key in seen:
+        return
+    seen.add(gw_key)
+    prizes.append(
+        {
+            "id": prize_event_id(uc_s, gw, card_id, kind=kind_s),
+            "uc": uc_s,
+            "amount": amount,
+            "source": "feed_gameweek_end_pools" if kind_s == "pools" else "feed_gameweek_end",
+            "gameweek_id": gw,
+            "kind": kind_s,
+        }
+    )
+
+
 def parse_feed_ajax_cards(
     cards: list[dict[str, Any]] | None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
@@ -404,13 +459,14 @@ def parse_feed_ajax_cards(
 
     Economía:
       - transfer: P2P, compra/venta Mister, clausulazo (`type=clause`)
-      - gameweek_end: premios (`payment` por manager)
-    Se ignora: player_transfer (fichajes reales), gameweek_end_pools,
-    clauses_drops (baja de cláusula, no caja), market, posts, porra, etc.
+      - gameweek_end: premios de clasificación (`payment` por manager)
+      - gameweek_end_pools: quiniela/porra cobrada (`amount` por manager)
+    Se ignora: player_transfer (fichajes reales), clauses_drops (baja de
+    cláusula, no caja), market, posts, porra abierta, pool_public, etc.
     """
     transfers: list[dict[str, Any]] = []
     prizes: list[dict[str, Any]] = []
-    seen_prize_gw: set[tuple[str, str]] = set()
+    seen_prize_gw: set[tuple[str, str, str]] = set()
     if not cards:
         return transfers, prizes
     for card in cards:
@@ -449,23 +505,27 @@ def parse_feed_ajax_cards(
             data = card.get("data") if isinstance(card.get("data"), dict) else {}
             gw = normalize_gameweek_id(data.get("id_gameweek") or data.get("gameweek"))
             for pos in _gameweek_prize_positions(data):
-                uc = pos.get("idUc") or pos.get("id_uc")
-                amount = parse_mister_money(pos.get("payment") or pos.get("amount"))
-                if not uc or amount == 0:
-                    continue
-                uc_s = str(uc)
-                gw_key = (gw or f"card:{card_id}", uc_s)
-                if gw_key in seen_prize_gw:
-                    continue
-                seen_prize_gw.add(gw_key)
-                prizes.append(
-                    {
-                        "id": prize_event_id(uc_s, gw, card_id),
-                        "uc": uc_s,
-                        "amount": amount,
-                        "source": "feed_gameweek_end",
-                        "gameweek_id": gw,
-                    }
+                _append_ajax_prize(
+                    prizes,
+                    seen_prize_gw,
+                    uc=pos.get("idUc") or pos.get("id_uc"),
+                    amount=parse_mister_money(pos.get("payment") or pos.get("amount")),
+                    gw=gw,
+                    card_id=card_id,
+                    kind="gameweek",
+                )
+        elif cat == "gameweek_end_pools":
+            data = card.get("data") if isinstance(card.get("data"), dict) else {}
+            gw = normalize_gameweek_id(data.get("id_gameweek") or data.get("gameweek"))
+            for row in _pool_prize_rows(data):
+                _append_ajax_prize(
+                    prizes,
+                    seen_prize_gw,
+                    uc=row.get("id") or row.get("id_uc") or row.get("idUc"),
+                    amount=parse_mister_money(row.get("amount") or row.get("payment")),
+                    gw=gw,
+                    card_id=card_id,
+                    kind="pools",
                 )
     return transfers, prizes
 
@@ -706,7 +766,8 @@ def unseen_prizes(
         eid = str(p.get("id") or "")
         uc = str(p.get("uc") or "")
         gw = normalize_gameweek_id(p.get("gameweek_id"))
-        gw_eid = prize_event_id(uc, gw) if gw and uc else ""
+        kind = prize_kind(p.get("kind") or p.get("source"))
+        gw_eid = prize_event_id(uc, gw, kind=kind) if gw and uc else ""
         if eid and eid in seen_ids:
             continue
         if gw_eid and gw_eid in seen_ids:
@@ -836,13 +897,14 @@ def compute_bootstrap_state(
     cash = apply_cash_events(cash, events)
 
     prizes_by_uc: dict[str, float] = {}
-    seen_prize_gw: set[tuple[str, str]] = set()
+    seen_prize_gw: set[tuple[str, str, str]] = set()
     for p in feed_prizes or []:
         uc = str(p.get("uc") or "")
         if not uc:
             continue
         gw = normalize_gameweek_id(p.get("gameweek_id"))
-        gw_key = (gw or str(p.get("id") or ""), uc)
+        kind = prize_kind(p.get("kind") or p.get("source"))
+        gw_key = (kind, gw or str(p.get("id") or ""), uc)
         if gw_key in seen_prize_gw:
             continue
         seen_prize_gw.add(gw_key)
@@ -871,7 +933,8 @@ def compute_bootstrap_state(
             seen_ids.append(eid)
         uc = str(p.get("uc") or "")
         gw = normalize_gameweek_id(p.get("gameweek_id"))
-        gw_eid = prize_event_id(uc, gw) if gw and uc else ""
+        kind = prize_kind(p.get("kind") or p.get("source"))
+        gw_eid = prize_event_id(uc, gw, kind=kind) if gw and uc else ""
         if gw_eid and gw_eid != eid:
             seen_ids.append(gw_eid)
     return {
@@ -958,7 +1021,8 @@ def apply_feed_delta(
         if eid:
             seen_ids.add(eid)
         gw = normalize_gameweek_id(p.get("gameweek_id"))
-        gw_eid = prize_event_id(uc, gw) if gw and uc else ""
+        kind = prize_kind(p.get("kind") or p.get("source"))
+        gw_eid = prize_event_id(uc, gw, kind=kind) if gw and uc else ""
         if gw_eid:
             seen_ids.add(gw_eid)
 
