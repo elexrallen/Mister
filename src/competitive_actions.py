@@ -1238,7 +1238,9 @@ def build_recommended_gw_xi(
     Formación Mister (p.ej. 1-4-4-2) o IDEAL_XI. Ranking por % jornada FF + fallback titularidad.
     """
     shape = _parse_formation(formation)
-    jornada = (matchday or {}).get("jornada")
+    jornada = (matchday or {}).get("scoring_jornada")
+    if jornada is None:
+        jornada = (matchday or {}).get("jornada")
     fixtures = (matchday or {}).get("fixtures_count")
 
     scored: list[dict[str, Any]] = []

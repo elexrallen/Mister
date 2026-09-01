@@ -217,6 +217,80 @@ def next_unplayed_fixture(
     return best
 
 
+def coerce_jornada(value: Any) -> int | None:
+    """'6' / 6.0 / 6 → 6. None si no es un número de jornada."""
+    if value is None or value == "":
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def fixture_for_jornada(
+    rows: list[dict[str, Any]] | None,
+    jornada: Any,
+    *,
+    now: datetime | None = None,
+) -> dict[str, Any] | None:
+    """Partido no pitado de esa jornada; no cae al siguiente kickoff de otra GW."""
+    target = coerce_jornada(jornada)
+    if target is None:
+        return None
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        if coerce_jornada(row.get("jornada")) != target:
+            continue
+        if fixture_is_unplayed(row, now=now):
+            return row
+    return None
+
+
+def resolve_scoring_jornada(
+    team_schedule: dict[str, list[dict[str, Any]]] | None,
+    *,
+    now: datetime | None = None,
+) -> int | None:
+    """
+    Jornada del primer kickoff no pitado de toda la liga.
+
+    Con calendarios reordenados (J6 el jueves, J4 el viernes) el once entero
+    se alinea a esa jornada, no al próximo partido de cada equipo.
+    """
+    best_j: int | None = None
+    best_ts: float | None = None
+    for rows in (team_schedule or {}).values():
+        nxt = next_unplayed_fixture(rows, now=now)
+        if not nxt:
+            continue
+        jornada = coerce_jornada(nxt.get("jornada"))
+        if jornada is None:
+            continue
+        ts = _kickoff_ts(nxt)
+        if best_j is None or (ts is not None and (best_ts is None or ts < best_ts)):
+            best_j = jornada
+            best_ts = ts
+    return best_j
+
+
+def playing_team_ids_for_jornada(
+    team_schedule: dict[str, list[dict[str, Any]]] | None,
+    jornada: Any,
+    *,
+    now: datetime | None = None,
+) -> set[str]:
+    """Equipos con un partido no pitado en esa jornada de scoring."""
+    target = coerce_jornada(jornada)
+    if target is None:
+        return set()
+    out: set[str] = set()
+    for tid, rows in (team_schedule or {}).items():
+        if fixture_for_jornada(rows, target, now=now):
+            out.add(str(tid))
+    return out
+
+
 def build_matchday(
     gw_data: dict[str, Any] | None,
     *,
@@ -371,22 +445,32 @@ def apply_blank_gameweek(
     matchday: dict[str, Any] | None,
     *,
     min_fixtures: int = 6,
+    team_schedule: dict[str, list[dict[str, Any]]] | None = None,
+    now: datetime | None = None,
 ) -> int:
     """
     Marca `gw_blank` / `gw_out` a jugadores cuyo equipo NO disputa esta jornada.
 
     Mister muestra el icono de prohibido (no puntúa). Sin esto, el motor puede
     alinearlos por % titular de temporada (p.ej. Hermansen 100% FF sin rival).
-    Solo actúa si el panel trae suficientes partidos (evita falsos blanks).
+
+    Si hay `scoring_jornada` + `team_schedule`, blankea contra esa jornada
+    (aunque el panel del jueves solo traiga 1 partido). Si no, usa el panel
+    y exige suficientes fixtures para no inventar blanks.
     """
     if not isinstance(matchday, dict):
         return 0
-    fixtures = matchday.get("fixtures") or []
-    if not isinstance(fixtures, list) or len(fixtures) < min_fixtures:
-        return 0
-    playing = playing_team_ids(matchday)
-    if len(playing) < min_fixtures:
-        return 0
+    scoring_j = coerce_jornada(matchday.get("scoring_jornada"))
+    playing: set[str] = set()
+    if scoring_j is not None and isinstance(team_schedule, dict) and team_schedule:
+        playing = playing_team_ids_for_jornada(team_schedule, scoring_j, now=now)
+    if not playing:
+        fixtures = matchday.get("fixtures") or []
+        if not isinstance(fixtures, list) or len(fixtures) < min_fixtures:
+            return 0
+        playing = playing_team_ids(matchday)
+        if len(playing) < min_fixtures:
+            return 0
 
     touched = 0
     seen: set[int] = set()
@@ -400,9 +484,11 @@ def apply_blank_gameweek(
         if tid in playing:
             if p.get("gw_blank"):
                 p["gw_blank"] = False
+                p["gw_out"] = False
             ext = p.get("external")
             if isinstance(ext, dict) and ext.get("gw_blank"):
                 ext["gw_blank"] = False
+                ext["gw_out"] = False
             continue
         p["gw_blank"] = True
         p["gw_out"] = True
@@ -526,10 +612,36 @@ def build_standings_table(comp_data: dict[str, Any] | None) -> dict[str, dict[st
     return out
 
 
+def _competition_game_is_played(
+    game: dict[str, Any],
+    *,
+    now: datetime | None = None,
+) -> bool:
+    """True solo si el partido del calendario ya ha pitado (no por el número de jornada)."""
+    ts, iso = _game_kickoff(game)
+    row = {"status": game.get("status"), "kickoff_ts": ts, "kickoff": iso}
+    st = str(game.get("status") or "").strip().lower()
+    if st in _PLAYED_STATUSES:
+        return True
+    if st in _LIVE_STATUSES:
+        return False
+    if fixture_is_unplayed(row, now=now):
+        # Dump histórico sin status/kickoff pero con marcador → ya se jugó.
+        if (
+            not st
+            and ts is None
+            and (game.get("goals_home") is not None or game.get("goals_away") is not None)
+        ):
+            return True
+        return False
+    return True
+
+
 def build_played_opponents(
     comp_data: dict[str, Any] | None,
     *,
     before_jornada: int | None = None,
+    now: datetime | None = None,
 ) -> dict[str, list[str]]:
     """
     Rivales ya disputados por equipo, en orden de jornada.
@@ -551,10 +663,12 @@ def build_played_opponents(
             jornada = int(key)
         except (TypeError, ValueError):
             continue
-        if before_jornada is not None and jornada >= before_jornada:
-            break
+        if before_jornada is not None and jornada > before_jornada:
+            continue
         for game in games_by_gw.get(key) or []:
             if not isinstance(game, dict):
+                continue
+            if not _competition_game_is_played(game, now=now):
                 continue
             home_id = str(game.get("id_home") or "")
             away_id = str(game.get("id_away") or "")
@@ -569,6 +683,7 @@ def build_played_fixtures(
     comp_data: dict[str, Any] | None,
     *,
     before_jornada: int | None = None,
+    now: datetime | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """
     Partidos ya disputados por equipo, con localía.
@@ -590,10 +705,12 @@ def build_played_fixtures(
             jornada = int(key)
         except (TypeError, ValueError):
             continue
-        if before_jornada is not None and jornada >= before_jornada:
-            break
+        if before_jornada is not None and jornada > before_jornada:
+            continue
         for game in games_by_gw.get(key) or []:
             if not isinstance(game, dict):
+                continue
+            if not _competition_game_is_played(game, now=now):
                 continue
             home_id = str(game.get("id_home") or "")
             away_id = str(game.get("id_away") or "")
@@ -633,6 +750,10 @@ def build_team_schedule(
     """
     Próximos partidos por equipo: `{team_id: [{jornada, opponent_id, is_home, kickoff}]}`.
     Por defecto omite kickoffs ya pitados. Base para planificar más allá de la jornada en curso.
+
+    El horizon cuenta jornadas que aportan al menos un partido no pitado.
+    Una jornada de número menor que el panel (p.ej. J4 con panel en J6) entra
+    si todavía tiene partidos pendientes.
     """
     games_by_gw = (comp_data or {}).get("games")
     if not isinstance(games_by_gw, dict):
@@ -649,11 +770,9 @@ def build_team_schedule(
             jornada = int(key)
         except (TypeError, ValueError):
             continue
-        if from_jornada is not None and jornada < from_jornada:
+        if from_jornada is not None and jornada < from_jornada and not skip_played:
             continue
-        taken += 1
-        if taken > horizon:
-            break
+        batch: list[tuple[str, dict[str, Any]]] = []
         for game in games_by_gw.get(key) or []:
             if not isinstance(game, dict):
                 continue
@@ -677,7 +796,14 @@ def build_team_schedule(
                 }
                 if skip_played and not fixture_is_unplayed(row, now=now):
                     continue
-                out.setdefault(team_id, []).append(row)
+                batch.append((team_id, row))
+        if not batch:
+            continue
+        if taken >= horizon:
+            break
+        for team_id, row in batch:
+            out.setdefault(team_id, []).append(row)
+        taken += 1
     return out
 
 

@@ -1927,15 +1927,20 @@ def fetch_gameweek_bundle(
     comp = mister_gameweek.fetch_competition(ajax_post, id_competition)
     if comp:
         bundle["table"] = mister_gameweek.build_standings_table(comp)
-        jornada = (bundle.get("matchday") or {}).get("jornada")
-        bundle["team_schedule"] = mister_gameweek.build_team_schedule(
-            comp, from_jornada=jornada if isinstance(jornada, int) else None
+        jornada = mister_gameweek.coerce_jornada(
+            (bundle.get("matchday") or {}).get("jornada")
         )
+        bundle["team_schedule"] = mister_gameweek.build_team_schedule(
+            comp, from_jornada=jornada
+        )
+        scoring_j = mister_gameweek.resolve_scoring_jornada(bundle["team_schedule"])
+        if isinstance(bundle.get("matchday"), dict) and scoring_j is not None:
+            bundle["matchday"]["scoring_jornada"] = scoring_j
         bundle["played_opponents"] = mister_gameweek.build_played_opponents(
-            comp, before_jornada=jornada if isinstance(jornada, int) else None
+            comp, before_jornada=jornada
         )
         bundle["played_fixtures"] = mister_gameweek.build_played_fixtures(
-            comp, before_jornada=jornada if isinstance(jornada, int) else None
+            comp, before_jornada=jornada
         )
     return bundle
 
@@ -1949,13 +1954,19 @@ def apply_gameweek_to_players(
     """
     Vuelca en los jugadores las señales de jornada de Mister:
     once probable (`preview`), puntos reales y rival de esta GW (`gw_*`).
-    El próximo no pitado (`next_*`) sale del calendario, no se copia del ya jugado.
+    El `next_*` es el rival de la jornada de scoring (primer kickoff no pitado
+    de la liga), no el próximo partido cronológico de cada equipo.
     """
     preview = bundle.get("preview") or {}
     points = bundle.get("points") or {}
     schedule = bundle.get("team_schedule") if isinstance(bundle.get("team_schedule"), dict) else {}
     matchday = bundle.get("matchday") if isinstance(bundle.get("matchday"), dict) else {}
     current_j = matchday.get("jornada")
+    scoring_j = mister_gameweek.resolve_scoring_jornada(schedule, now=now)
+    if scoring_j is None:
+        scoring_j = mister_gameweek.coerce_jornada(matchday.get("scoring_jornada"))
+    if scoring_j is not None:
+        matchday["scoring_jornada"] = scoring_j
     preview_teams = set(bundle.get("preview_teams") or [])
     touched = 0
     seen: set[int] = set()
@@ -1990,9 +2001,36 @@ def apply_gameweek_to_players(
             p["gw_played"] = bool(pts.get("played"))
             p["gw_match_status"] = pts.get("status")
         if pv or pts or has_preview_of_his_match or p.get("team_id"):
-            _stamp_next_fixture(p, schedule, current_jornada=current_j, now=now)
+            _stamp_next_fixture(
+                p,
+                schedule,
+                current_jornada=current_j,
+                scoring_jornada=scoring_j,
+                now=now,
+            )
             touched += 1
     return touched
+
+
+def _clear_next_fixture(player: dict[str, Any]) -> None:
+    player["next_opponent_team_id"] = None
+    player["next_is_home"] = None
+    player["next_jornada"] = None
+    player["next_kickoff"] = None
+    player.pop("next_kickoff_ts", None)
+
+
+def _stamp_blank_for_scoring(player: dict[str, Any]) -> None:
+    """Sin partido en la jornada de scoring: no puntúa; no usar rival de otra GW."""
+    _clear_next_fixture(player)
+    player["gw_blank"] = True
+    player["gw_out"] = True
+    player["gw_probable_xi"] = False
+    ext = player.get("external")
+    if isinstance(ext, dict):
+        ext["gw_blank"] = True
+        ext["gw_out"] = True
+        ext["gw_starter"] = False
 
 
 def _stamp_next_fixture(
@@ -2000,9 +2038,10 @@ def _stamp_next_fixture(
     schedule: dict[str, list[dict[str, Any]]],
     *,
     current_jornada: Any = None,
+    scoring_jornada: Any = None,
     now: datetime | None = None,
 ) -> None:
-    """Escribe next_* desde el primer kickoff no pitado. No pisa gw_*."""
+    """Escribe next_* del rival de la jornada de scoring. No pisa gw_*."""
     tid = str(player.get("team_id") or "")
     rows = list(schedule.get(tid) or []) if tid else []
     gw_row: dict[str, Any] | None = None
@@ -2017,7 +2056,11 @@ def _stamp_next_fixture(
         }
         if not player.get("gw_played") and mister_gameweek.fixture_is_unplayed(gw_row, now=now):
             rows = [gw_row, *rows]
-    nxt = mister_gameweek.next_unplayed_fixture(rows, now=now)
+    target_j = mister_gameweek.coerce_jornada(scoring_jornada)
+    if target_j is not None:
+        nxt = mister_gameweek.fixture_for_jornada(rows, target_j, now=now)
+    else:
+        nxt = mister_gameweek.next_unplayed_fixture(rows, now=now)
     if nxt and nxt.get("opponent_id"):
         player["next_opponent_team_id"] = str(nxt["opponent_id"])
         player["next_is_home"] = nxt.get("is_home")
@@ -2025,12 +2068,19 @@ def _stamp_next_fixture(
         player["next_kickoff"] = nxt.get("kickoff")
         if nxt.get("kickoff_ts") is not None:
             player["next_kickoff_ts"] = nxt.get("kickoff_ts")
+        if player.get("gw_blank"):
+            player["gw_blank"] = False
+            player["gw_out"] = False
+        ext = player.get("external")
+        if isinstance(ext, dict) and ext.get("gw_blank"):
+            ext["gw_blank"] = False
+            ext["gw_out"] = False
+        return
+    if target_j is not None:
+        _stamp_blank_for_scoring(player)
         return
     if player.get("gw_played"):
-        player["next_opponent_team_id"] = None
-        player["next_is_home"] = None
-        player["next_jornada"] = None
-        player["next_kickoff"] = None
+        _clear_next_fixture(player)
 
 
 def fetch_balance() -> dict[str, Any]:
@@ -2494,6 +2544,9 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         n_blank = apply_blank_gameweek(
             list(squad) + list(market) + list(full_pool),
             gameweek.get("matchday") if isinstance(gameweek.get("matchday"), dict) else None,
+            team_schedule=gameweek.get("team_schedule")
+            if isinstance(gameweek.get("team_schedule"), dict)
+            else None,
         )
         if n_blank:
             log.info("Blank GW aplicado a %s jugadores", n_blank)

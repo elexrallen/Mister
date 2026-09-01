@@ -2994,15 +2994,25 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         md_blank = gw_bundle["matchday"]
     elif isinstance(external_meta.get("matchday"), dict):
         md_blank = external_meta["matchday"]
-    n_blank = apply_blank_gameweek(xpts_targets, md_blank)
+    n_blank = apply_blank_gameweek(
+        xpts_targets,
+        md_blank,
+        team_schedule=gw_bundle.get("team_schedule")
+        if isinstance(gw_bundle.get("team_schedule"), dict)
+        else None,
+    )
     if n_blank:
         external_meta["blank_gw_players"] = n_blank
     current_jornada = None
-    if isinstance(md_blank, dict) and md_blank.get("jornada") is not None:
-        try:
-            current_jornada = int(md_blank["jornada"])
-        except (TypeError, ValueError):
-            current_jornada = None
+    if isinstance(md_blank, dict):
+        raw_j = md_blank.get("scoring_jornada")
+        if raw_j is None:
+            raw_j = md_blank.get("jornada")
+        if raw_j is not None:
+            try:
+                current_jornada = int(raw_j)
+            except (TypeError, ValueError):
+                current_jornada = None
     n_fdr = annotate_players_with_fdr(
         xpts_targets,
         strength=team_strength,
