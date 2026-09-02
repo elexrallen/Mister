@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-02T17:44:46.841456+00:00",
+  "generated_at": "2026-09-02T22:02:45.437468+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1074,7 +1074,7 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 6,
+    "cycles_left": 5,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1082,10 +1082,10 @@
     "max_debt": 14369540.0,
     "bid_cap": 14369540.0,
     "max_squad": 25,
-    "n_free": 234,
+    "n_free": 236,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 49.25975751527778
+    "hours_to_jornada": 44.96122043861111
   },
   "finance": {
     "ok": false,
@@ -1617,7 +1617,7 @@
     "ep_sum_starters": 88.37,
     "xpts_starters": 88.37,
     "xpts_total": 93.6,
-    "xpts_ceiling": 120.57,
+    "xpts_ceiling": 127.43,
     "xpts_yours": 113.55,
     "cost_sum": 47309000.0,
     "net_buys": 0.0,
@@ -1668,7 +1668,7 @@
     "formation": "3-4-3",
     "xi_rule": "formación 3-4-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 6
+    "cycles_left": 5
   },
   "summary_aspirational": {
     "mode": "aspirational",
