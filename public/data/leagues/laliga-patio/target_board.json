@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-02T08:07:39.827211+00:00",
+  "generated_at": "2026-09-02T08:28:01.779890+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1085,7 +1085,7 @@
     "n_free": 199,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 34.877865748611114
+    "hours_to_jornada": 34.538328633333336
   },
   "finance": {
     "ok": false,
