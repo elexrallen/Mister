@@ -112,6 +112,37 @@ def test_adds_pool_mine_missing_from_html() -> None:
     _assert(nuevo.get("in_lineup") is False, nuevo)
 
 
+def test_keeps_pool_mine_when_roster_parser_misses_them() -> None:
+    """Perfil público incompleto no tumba un propio que el pool confirma."""
+    squad = [
+        {"id": "1", "name": "A", "from_lineup_only": False},
+        {"id": "915014", "name": "N. Mendy", "position": "DF", "from_lineup_only": False},
+    ]
+    pool = [
+        {"id": "1", "name": "A", "owner_id": "me", "is_mine": True},
+        {"id": "915014", "name": "Nobel Mendy", "owner_id": "me", "is_mine": True, "position": "DF"},
+    ]
+    roster = {"1", *[f"p{i}" for i in range(10)]}
+    out = reconcile_squad_with_pool(squad, pool, "me", roster_ids=roster)
+    _assert({p["id"] for p in out} == {"1", "915014"}, [p["id"] for p in out])
+
+
+def test_adds_pool_mine_when_roster_and_html_miss_them() -> None:
+    """Fichaje reciente: /team y /users no lo pintan; el pool sí lo marca mío."""
+    squad = [{"id": "1", "name": "A", "from_lineup_only": False}]
+    pool = [
+        {"id": "1", "name": "A", "owner_id": "me", "is_mine": True},
+        {"id": "915014", "name": "Nobel Mendy", "owner_id": "me", "is_mine": True, "position": "DF"},
+    ]
+    roster = {"1", *[f"p{i}" for i in range(10)]}
+    out = reconcile_squad_with_pool(squad, pool, "me", roster_ids=roster)
+    ids = {p["id"] for p in out}
+    _assert(ids == {"1", "915014"}, ids)
+    mendy = next(p for p in out if p["id"] == "915014")
+    _assert(mendy.get("position") == "DF", mendy)
+    _assert(mendy.get("in_lineup") is False, mendy)
+
+
 def test_keeps_when_pool_misses_player() -> None:
     squad = [{"id": "9", "name": "X", "from_lineup_only": True}]
     out = reconcile_squad_with_pool(squad, [{"id": "1", "owner_id": "me"}], "me")
@@ -140,6 +171,8 @@ if __name__ == "__main__":
     test_drops_when_rival_html_already_has_them()
     test_own_profile_roster_drops_sold()
     test_adds_pool_mine_missing_from_html()
+    test_keeps_pool_mine_when_roster_parser_misses_them()
+    test_adds_pool_mine_when_roster_and_html_miss_them()
     test_keeps_when_pool_misses_player()
     test_drops_uncatalogued_ghost_when_pool_mine_is_complete()
     print("ok")

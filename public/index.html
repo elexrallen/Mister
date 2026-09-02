@@ -35,7 +35,7 @@
       },
     };
   </script>
-  <link rel="stylesheet" href="./styles.css?v=70" />
+  <link rel="stylesheet" href="./styles.css?v=71" />
   <title>Mister Fantasy Advisor</title>
 </head>
 <body class="bg-ink-950 text-slate-100 font-sans antialiased min-h-screen pb-mobile-nav" data-view="today">
@@ -271,10 +271,10 @@
             <span>Posición</span>
             <select id="filter-pos" class="filter-input">
               <option value="">Todas</option>
-              <option value="GK">GK</option>
-              <option value="DF">DF</option>
-              <option value="MF">MF</option>
-              <option value="FW">FW</option>
+              <option value="GK">POR · Portería</option>
+              <option value="DF">DEF · Defensa</option>
+              <option value="MF">MED · Medio</option>
+              <option value="FW">DEL · Delantera</option>
             </select>
           </label>
           <label class="filter-field">
@@ -396,7 +396,7 @@
         </header>
         <section class="tactical-block" id="clauses-ranking-panel" aria-labelledby="clauses-ranking-title" hidden>
         <h3 id="clauses-ranking-title" class="tactical-block-title">Más robados por cláusula</h3>
-        <p class="section-hint">Ranking de Mister en esta competición. Si es tuyo y la cláusula no está al máximo, protégelo.</p>
+        <p class="section-hint">Top 100 de Mister en esta competición. Si es tuyo y la cláusula no está al máximo, protégelo.</p>
         <div class="list-sort" data-list="clauses" aria-label="Ordenar más robados"></div>
         <div id="clauses-ranking-cards" class="card-list mb-6"></div>
         <div class="table-wrap desktop-only mb-8">
@@ -542,6 +542,6 @@
     </div>
   </div>
 
-  <script src="./app.js?v=73" defer></script>
+  <script src="./app.js?v=74" defer></script>
 </body>
 </html>

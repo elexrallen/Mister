@@ -1725,8 +1725,10 @@ def reconcile_squad_with_pool(
     """
     El HTML de /team deja vendidos en el once guardado (lineup-player) y a
     veces también en la lista lateral. El pool /ajax/sw/players es la
-    autoridad de ownership (id_uc / is_mine). El perfil público /users/me y
-    las plantillas rivales confirman ventas que el pool aún no ha movido.
+    autoridad de ownership (id_uc / is_mine). El perfil público /users/me
+    solo confirma ventas cuando el pool no cataloga al jugador: un parser
+    incompleto o un fichaje reciente no debe tumbar a alguien que el pool
+    sigue marcando como mío.
     """
     squad = list(squad or [])
     by_id = {str(p.get("id")): p for p in (pool or []) if p.get("id")}
@@ -1749,9 +1751,6 @@ def reconcile_squad_with_pool(
         if not pid:
             kept.append(p)
             continue
-        if roster_ok and pid not in roster:
-            dropped.append(name)
-            continue
         if pid in foreign:
             dropped.append(name)
             continue
@@ -1763,6 +1762,10 @@ def reconcile_squad_with_pool(
                 continue
             dropped.append(name)
             continue
+        # Pool no lo cataloga: el perfil público puede confirmar una venta.
+        if roster_ok and pid not in roster:
+            dropped.append(name)
+            continue
         ghost_xi = bool(p.get("from_lineup_only"))
         if ghost_xi and len(mine_from_pool) >= 11:
             dropped.append(name)
@@ -1772,8 +1775,6 @@ def reconcile_squad_with_pool(
 
     for pid, src in by_id.items():
         if pid in kept_ids or not player_is_mine(src, my):
-            continue
-        if roster_ok and pid not in roster:
             continue
         if pid in foreign:
             continue

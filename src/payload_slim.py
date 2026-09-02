@@ -14,9 +14,8 @@ from typing import Any
 
 # Libres TOP que la pestaña Radar puede recorrer. El pool completo no pinta.
 FREE_AGENTS_PUBLIC_CAP = 48
-# Ranking Mister “más robado por cláusula”. El aviso oficial llega hasta 100;
-# el dashboard enseña el top útil.
-CLAUSES_RANKING_PUBLIC_CAP = 25
+# Ranking Mister “más robado por cláusula”. El aviso oficial llega hasta 100.
+CLAUSES_RANKING_PUBLIC_CAP = 100
 
 # Ficha de listado (mercado / libres / plantilla). Lo que app.js lee.
 _PLAYER_KEYS = (

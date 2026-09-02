@@ -13,6 +13,12 @@
   let deferredPrompt = null;
 
   const POS_ORDER = { GK: 0, DF: 1, MF: 2, FW: 3 };
+  const POS_META = {
+    GK: { short: "POR", label: "Portería", cls: "pos-gk" },
+    DF: { short: "DEF", label: "Defensa", cls: "pos-df" },
+    MF: { short: "MED", label: "Medio", cls: "pos-mf" },
+    FW: { short: "DEL", label: "Delantera", cls: "pos-fw" },
+  };
   const PRIO_ORDER = { Alta: 0, Media: 1, Baja: 2 };
 
   function isFixedMarket(data) {
@@ -390,7 +396,14 @@
     return `<span class="badge ${cls}">${p || "—"}</span>`;
   };
 
-  const posChip = (pos) => `<span class="pos-chip">${pos || "—"}</span>`;
+  const posChip = (pos) => {
+    const key = String(pos || "").toUpperCase();
+    const meta = POS_META[key];
+    if (!meta) {
+      return `<span class="pos-chip">${escapeHtml(pos || "—")}</span>`;
+    }
+    return `<span class="pos-chip ${meta.cls}" title="${escapeHtml(meta.label)}">${meta.short}</span>`;
+  };
 
   const externalStatusBadge = (p) => {
     const ext = p.external || {};
@@ -2876,7 +2889,7 @@
                   : "";
               return tacticalCard(rec, {
                 kicker: `Top ${p.clause_rank ?? "—"}`,
-                badge: clausesOwnerBadge(p),
+                badge: `<span class="tactical-card-badges">${posChip(p.position)}${clausesOwnerBadge(p)}</span>`,
                 sub: escapeHtml(`${p.team || "—"} · ${clausesOwnerLabel(p)}`),
                 stats:
                   tacticalStat(

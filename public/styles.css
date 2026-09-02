@@ -1906,14 +1906,35 @@ tr.row-highlight td,
 
 .pos-chip {
   display: inline-block;
-  min-width: 2rem;
+  min-width: 2.4rem;
   text-align: center;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.15rem 0.4rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.15rem 0.45rem;
   border-radius: 0.35rem;
   background: rgba(255, 255, 255, 0.06);
   color: #cbd5e1;
+}
+
+.pos-chip.pos-gk {
+  background: rgba(234, 179, 8, 0.22);
+  color: #fde047;
+}
+
+.pos-chip.pos-df {
+  background: rgba(59, 130, 246, 0.22);
+  color: #93c5fd;
+}
+
+.pos-chip.pos-mf {
+  background: rgba(34, 197, 94, 0.22);
+  color: #86efac;
+}
+
+.pos-chip.pos-fw {
+  background: rgba(244, 63, 94, 0.22);
+  color: #fda4af;
 }
 
 .delta-up { color: #5eead4; }
@@ -3471,8 +3492,6 @@ body[data-view="today"] #today-opportunities-panel {
 }
 
 .command-player-meta .pos-chip {
-  color: #05080d;
-  background: var(--cyan);
   border-radius: 0.1rem;
 }
 
@@ -4492,6 +4511,13 @@ body[data-view="today"] #tactical-kpis .kpi-value {
   align-items: center;
   justify-content: space-between;
   gap: 0.45rem;
+}
+
+.tactical-card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
 }
 
 .tactical-card-kicker {

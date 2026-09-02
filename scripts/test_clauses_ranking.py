@@ -83,12 +83,12 @@ def test_owner_kinds_mine_rival_free() -> None:
     assert by_id["mine"]["clause_multiplier"] == 2.0
 
 
-def test_cap_is_25() -> None:
-    pool = [_p(str(i), f"J{i:03d}", i + 1) for i in range(40)]
+def test_cap_is_100() -> None:
+    pool = [_p(str(i), f"J{i:03d}", i + 1) for i in range(110)]
     rows = find_clauses_ranking(pool, clauses_enabled=True)
     assert len(rows) == CLAUSES_RANKING_PUBLIC_CAP
     assert rows[0]["clause_rank"] == 1
-    assert rows[-1]["clause_rank"] == 25
+    assert rows[-1]["clause_rank"] == 100
 
 
 def test_slim_keeps_clause_rank_fields() -> None:
@@ -110,7 +110,7 @@ def test_slim_keeps_clause_rank_fields() -> None:
     payload = {
         "clauses_ranking": [
             {"id": str(i), "name": f"P{i}", "clause_rank": i, "owner_kind": "free"}
-            for i in range(1, 40)
+            for i in range(1, 110)
         ],
         "free_agents_top": [],
         "market_opportunities": [],
@@ -121,7 +121,7 @@ def test_slim_keeps_clause_rank_fields() -> None:
     assert len(public["clauses_ranking"]) == CLAUSES_RANKING_PUBLIC_CAP
     assert public["clauses_ranking"][0]["clause_rank"] == 1
     assert public["meta"]["payload"]["clauses_ranking_cap"] == CLAUSES_RANKING_PUBLIC_CAP
-    assert len(payload["clauses_ranking"]) == 39
+    assert len(payload["clauses_ranking"]) == 109
 
 
 def main() -> None:
@@ -129,7 +129,7 @@ def main() -> None:
         test_orders_by_rank_and_skips_nulls,
         test_disabled_clauses_empty,
         test_owner_kinds_mine_rival_free,
-        test_cap_is_25,
+        test_cap_is_100,
         test_slim_keeps_clause_rank_fields,
     ]
     for fn in tests:
