@@ -540,10 +540,10 @@ def clean_player_name(raw: str) -> str:
     return t
 
 
-# Captura .name aunque haya hijos (emoji/SVG); luego clean_player_name
+# Captura .name aunque haya hijos (emoji/SVG) o clases extra; luego clean_player_name
 _NAME_UNDER_RE = (
-    r'<div class="name">([\s\S]*?)</div>\s*'
-    r'<div class="underName">([\s\S]*?)</div>'
+    r'<div class="name[^"]*">([\s\S]*?)</div>\s*'
+    r'<div class="underName[^"]*">([\s\S]*?)</div>'
 )
 
 
@@ -979,7 +979,7 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
         after = html[m.end() : m.end() + 1600]
         end = after.find("</button>")
         body = after[:end] if end >= 0 else after
-        name_m = re.search(r'<div class="name">([\s\S]*?)</div>', body)
+        name_m = re.search(r'<div class="name[^"]*">([\s\S]*?)</div>', body)
         if not name_m:
             continue
         name = clean_player_name(name_m.group(1))
@@ -1022,9 +1022,9 @@ def parse_team_players(html: str) -> list[dict[str, Any]]:
 
     # 2) Lista / banquillo: misma estructura que mercado (position con comillas simples/dobles)
     pattern = re.compile(
-        r"teams/(\d+)\.png[\s\S]{0,250}?"
-        r"data-position=['\"](\d)['\"][\s\S]{0,350}?"
-        r"data-id_player=['\"](\d+)['\"][\s\S]{0,500}?"
+        r"teams/(\d+)\.png[\s\S]{0,600}?"
+        r"data-position=['\"](\d)['\"][\s\S]{0,500}?"
+        r"data-id_player=['\"](\d+)['\"][\s\S]{0,800}?"
         + _NAME_UNDER_RE,
         re.I,
     )
@@ -1167,13 +1167,13 @@ def parse_user_squad(html: str) -> list[dict[str, Any]]:
     seen: set[str] = set()
     pattern = re.compile(
         r'data-id_player=["\'](\d+)["\']([\s\S]{0,900}?)'
-        r'<div class="name">([\s\S]*?)</div>',
+        r'<div class="name[^"]*">([\s\S]*?)</div>',
         re.I,
     )
     for m in pattern.finditer(html):
         pid, mid, name_raw = m.groups()
         name = clean_player_name(name_raw)
-        if not name or pid in seen:
+        if not name or pid in seen or pid == "0":
             continue
         seen.add(pid)
         window_before = html[max(0, m.start() - 350) : m.start()]
@@ -1751,15 +1751,16 @@ def reconcile_squad_with_pool(
         if not pid:
             kept.append(p)
             continue
+        src = by_id.get(pid)
+        if src is not None and player_is_mine(src, my):
+            # Pool mío gana a HTML rival/feed (p.ej. "Nobel Mendy cambia de…").
+            kept.append(p)
+            kept_ids.add(pid)
+            continue
         if pid in foreign:
             dropped.append(name)
             continue
-        src = by_id.get(pid)
         if src is not None:
-            if player_is_mine(src, my):
-                kept.append(p)
-                kept_ids.add(pid)
-                continue
             dropped.append(name)
             continue
         # Pool no lo cataloga: el perfil público puede confirmar una venta.
@@ -1775,8 +1776,6 @@ def reconcile_squad_with_pool(
 
     for pid, src in by_id.items():
         if pid in kept_ids or not player_is_mine(src, my):
-            continue
-        if pid in foreign:
             continue
         kept.append(_pool_row_as_squad(src))
         kept_ids.add(pid)
@@ -2451,11 +2450,8 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     rivals, me_row = parse_standings(standings_html, my_uc) if standings_html else ([], None)
     if rivals:
         rivals = enrich_rivals_with_squads(rivals)
-    # IDs rivales del HTML /users (antes de que el pool pise plantillas).
-    # Si vendí a un rival, su perfil ya lo tiene aunque /team conserve el XI.
-    html_foreign_ids: set[str] = set()
-    for rival in rivals:
-        html_foreign_ids |= squad_player_ids(rival.get("squad"))
+    # No usar el HTML /users como foreign: esas fichas incluyen el feed
+    # (transferencias, "X cambia de…") y marcan como ajenos a fichajes propios.
 
     own_roster: list[dict[str, Any]] = []
     profile_path = (me_row or {}).get("profile_path") or (f"users/{my_uc}" if my_uc else "")
@@ -2497,7 +2493,12 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     pool_foreign_ids: set[str] = set()
     for rival in rivals:
         pool_foreign_ids |= squad_player_ids(rival.get("squad"))
-    foreign_ids = html_foreign_ids | pool_foreign_ids | market_foreign_ids
+    mine_ids = {
+        str(p.get("id"))
+        for p in (full_pool or [])
+        if p.get("id") and player_is_mine(p, my_uc)
+    }
+    foreign_ids = (pool_foreign_ids | market_foreign_ids) - mine_ids
     prev_n = len(squad)
     squad = reconcile_squad_with_pool(
         squad,

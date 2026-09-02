@@ -73,7 +73,7 @@ def test_drops_sold_even_if_still_in_html_sidebar() -> None:
 
 
 def test_drops_when_rival_html_already_has_them() -> None:
-    """Pool aún dice is_mine (retraso); el perfil rival ya los tiene."""
+    """HTML rival (feed) no tumba a un propio que el pool sigue marcando mío."""
     squad = [
         {"id": "65186", "name": "N. Mukiele", "from_lineup_only": True},
         {"id": "1859", "name": "D. Solanke", "from_lineup_only": False},
@@ -85,7 +85,23 @@ def test_drops_when_rival_html_already_has_them() -> None:
     out = reconcile_squad_with_pool(
         squad, pool, "me", foreign_ids={"65186"}
     )
-    _assert([p["id"] for p in out] == ["1859"], [p["id"] for p in out])
+    _assert({p["id"] for p in out} == {"65186", "1859"}, [p["id"] for p in out])
+
+
+def test_adds_pool_mine_even_if_foreign_html_mentions_them() -> None:
+    """Nobel Mendy en el feed de un rival no debe quedar fuera de la plantilla."""
+    squad = [{"id": "1", "name": "A", "from_lineup_only": False}]
+    pool = [
+        {"id": "1", "name": "A", "owner_id": "me", "is_mine": True},
+        {"id": "915014", "name": "Nobel Mendy", "owner_id": "me", "is_mine": True, "position": "DF"},
+    ]
+    out = reconcile_squad_with_pool(
+        squad, pool, "me", foreign_ids={"915014"}
+    )
+    ids = {p["id"] for p in out}
+    _assert("915014" in ids, ids)
+    mendy = next(p for p in out if p["id"] == "915014")
+    _assert(mendy.get("position") == "DF", mendy)
 
 
 def test_own_profile_roster_drops_sold() -> None:
@@ -169,6 +185,7 @@ if __name__ == "__main__":
     test_drops_ghost_xi_now_free()
     test_drops_sold_even_if_still_in_html_sidebar()
     test_drops_when_rival_html_already_has_them()
+    test_adds_pool_mine_even_if_foreign_html_mentions_them()
     test_own_profile_roster_drops_sold()
     test_adds_pool_mine_missing_from_html()
     test_keeps_pool_mine_when_roster_parser_misses_them()

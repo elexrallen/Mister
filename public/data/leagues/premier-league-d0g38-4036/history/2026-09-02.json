@@ -1,6 +1,6 @@
 {
   "date": "2026-09-02",
-  "captured_at": "2026-09-02T08:20:51.677547+00:00",
+  "captured_at": "2026-09-02T08:38:43.390230+00:00",
   "cycle_hour_utc": 8,
   "league_slug": "premier-league-d0g38-4036",
   "jornada": 3,
@@ -1406,6 +1406,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 241.1
+    "pipeline_seconds": 200.5
   }
 }

@@ -32,6 +32,7 @@ from mister_client import (
     mister_player_photo_url,
     mister_team_logo_url,
     player_is_mine,
+    reconcile_squad_with_pool,
 )
 from league_rules import (
     ff_hint_for_provider,
@@ -2797,6 +2798,22 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     if sales_state:
         me_raw = dict(me_raw)
         me_raw["sales_state"] = sales_state
+    my_uc = str(live_meta.get("id_uc") or me_raw.get("team_id") or "")
+    if full_pool and my_uc:
+        merged_squad = reconcile_squad_with_pool(
+            list(me_raw.get("squad") or []),
+            full_pool,
+            my_uc,
+        )
+        if len(merged_squad) != len(me_raw.get("squad") or []):
+            me_raw = dict(me_raw)
+            me_raw["squad"] = merged_squad
+            log.info(
+                "Plantilla [%s]: pool propio reconciliado %s → %s",
+                slug,
+                len(league.get("me", {}).get("squad") or []),
+                len(merged_squad),
+            )
     squad = [
         enrich_player(p, perf_idx, allow_synthetic=not honest_live)
         for p in me_raw.get("squad", [])
