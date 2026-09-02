@@ -18,6 +18,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import unicodedata
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -332,7 +333,7 @@ def parse_feed_transfers(html: str) -> list[dict[str, Any]]:
 
 
 def parse_feed_prizes(html: str) -> list[dict[str, Any]]:
-    """card-gameweek_end y card-gameweek_end_pools: `+1.650.000` por manager."""
+    """card-gameweek_end, card-gameweek_end_pools y card-payment (admin)."""
     if not html:
         return []
     prizes: list[dict[str, Any]] = []
@@ -364,6 +365,56 @@ def parse_feed_prizes(html: str) -> list[dict[str, Any]]:
                     "kind": kind,
                 }
             )
+    for m in re.finditer(
+        r'<div id="feed-(\d+)" class="card card-payment"[\s\S]*?(?=<div id="feed-|\Z)',
+        html,
+        re.I,
+    ):
+        feed_id, block = m.group(1), m.group(0)
+        matched = False
+        for row in re.finditer(
+            r'href=["\']users/(\d+)/[^"\']*["\'][\s\S]{0,600}?'
+            r'<div class="played[^"]*">\s*([^<]+)',
+            block,
+            re.I,
+        ):
+            uc, raw_amt = row.group(1), row.group(2)
+            amount = parse_mister_money(raw_amt)
+            if amount == 0:
+                continue
+            matched = True
+            prizes.append(
+                {
+                    "id": prize_event_id(str(uc), None, feed_id, kind="admin"),
+                    "uc": str(uc),
+                    "amount": amount,
+                    "source": "feed_admin_payment",
+                    "kind": "admin",
+                }
+            )
+        if matched:
+            continue
+        for row in re.finditer(
+            r'<div class="name[^"]*">\s*([^<]+)[\s\S]{0,400}?'
+            r'<div class="played[^"]*">\s*([^<]+)',
+            block,
+            re.I,
+        ):
+            name, raw_amt = row.group(1).strip(), row.group(2)
+            amount = parse_mister_money(raw_amt)
+            if amount == 0 or not name:
+                continue
+            slug = _norm_manager_name(name).replace(" ", "-") or feed_id
+            prizes.append(
+                {
+                    "id": prize_event_id(slug, None, feed_id, kind="admin"),
+                    "uc": "",
+                    "name": name,
+                    "amount": amount,
+                    "source": "feed_admin_payment",
+                    "kind": "admin",
+                }
+            )
     return prizes
 
 
@@ -380,10 +431,12 @@ def normalize_gameweek_id(raw: Any) -> str | None:
 
 
 def prize_kind(raw: Any) -> str:
-    """`gameweek` (clasificación) vs `pools` (quiniela/porra cobrada)."""
+    """`gameweek` | `pools` (quiniela) | `admin` (bonificación/sanción manual)."""
     text = str(raw or "").strip().lower()
     if "pool" in text:
         return "pools"
+    if "admin" in text or text in ("payment", "payments"):
+        return "admin"
     return "gameweek"
 
 
@@ -393,11 +446,82 @@ def prize_event_id(
     card_id: str = "",
     kind: str = "gameweek",
 ) -> str:
-    """Una jornada + manager + tipo = un premio. Clasificación y quiniela conviven."""
-    prefix = "prize-pool" if prize_kind(kind) == "pools" else "prize"
+    """Una jornada + manager + tipo = un premio. Clasificación, quiniela y admin conviven."""
+    kind_s = prize_kind(kind)
+    if kind_s == "pools":
+        prefix = "prize-pool"
+    elif kind_s == "admin":
+        prefix = "prize-admin"
+    else:
+        prefix = "prize"
     if gameweek_id:
         return f"{prefix}-gw{gameweek_id}-{uc}"
     return f"{prefix}-{card_id}-{uc}"
+
+
+def _norm_manager_name(name: str) -> str:
+    nk = unicodedata.normalize("NFKD", name or "")
+    text = "".join(c for c in nk if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def manager_name_index(
+    rivals: list[dict[str, Any]] | None,
+    *,
+    me_uc: str | None = None,
+    me_name: str | None = None,
+) -> dict[str, str]:
+    """nombre normalizado → id_uc. El AJAX de `payment` a veces solo trae el nombre."""
+    out: dict[str, str] = {}
+    for row in rivals or []:
+        uc = str(row.get("team_id") or row.get("id_uc") or "")
+        if not uc:
+            continue
+        for key in ("manager", "name", "team_name", "uc_name"):
+            n = _norm_manager_name(str(row.get(key) or ""))
+            if n:
+                out.setdefault(n, uc)
+    if me_uc and me_name:
+        n = _norm_manager_name(me_name)
+        if n:
+            out.setdefault(n, str(me_uc))
+    return out
+
+
+def resolve_prize_managers(
+    prizes: list[dict[str, Any]],
+    name_index: dict[str, str],
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for p in prizes:
+        row = dict(p)
+        uc = str(row.get("uc") or "")
+        if not uc:
+            n = _norm_manager_name(str(row.get("name") or ""))
+            uc = name_index.get(n) or ""
+            if uc:
+                row["uc"] = uc
+            else:
+                log.warning(
+                    "Premio admin sin manager: name=%s id=%s",
+                    row.get("name"),
+                    row.get("id"),
+                )
+        out.append(row)
+    return out
+
+
+def _signed_payment_amount(row: dict[str, Any]) -> int:
+    amount = parse_mister_money(row.get("amount") or row.get("payment"))
+    if amount == 0:
+        return 0
+    sign = str(row.get("sign") or "").strip()
+    css = str(row.get("class") or "").strip().lower()
+    if sign == "-" or css in ("red", "negative"):
+        return -abs(amount)
+    if sign == "+":
+        return abs(amount)
+    return amount
 
 
 def _gameweek_prize_positions(card_data: dict[str, Any]) -> list[dict[str, Any]]:
@@ -461,8 +585,10 @@ def parse_feed_ajax_cards(
       - transfer: P2P, compra/venta Mister, clausulazo (`type=clause`)
       - gameweek_end: premios de clasificación (`payment` por manager)
       - gameweek_end_pools: quiniela/porra cobrada (`amount` por manager)
+      - payment: bonificación/sanción manual del admin (`amount` + `sign`)
     Se ignora: player_transfer (fichajes reales), clauses_drops (baja de
-    cláusula, no caja), market, posts, porra abierta, pool_public, etc.
+    cláusula, no caja), market, posts, porra abierta, pool_public,
+    admin (cambio de normas, no caja), etc.
     """
     transfers: list[dict[str, Any]] = []
     prizes: list[dict[str, Any]] = []
@@ -526,6 +652,32 @@ def parse_feed_ajax_cards(
                     gw=gw,
                     card_id=card_id,
                     kind="pools",
+                )
+        elif cat == "payment":
+            data = card.get("data") if isinstance(card.get("data"), dict) else {}
+            rows = data.get("payments") if isinstance(data.get("payments"), list) else []
+            reason = str(data.get("reason") or "").strip() or None
+            for i, row in enumerate(rows, start=1):
+                if not isinstance(row, dict):
+                    continue
+                amount = _signed_payment_amount(row)
+                if amount == 0:
+                    continue
+                uc_raw = row.get("id") or row.get("id_uc") or row.get("idUc")
+                uc_s = str(uc_raw) if uc_raw not in (None, "", 0, "0") else ""
+                name = str(row.get("name") or "").strip()
+                slug = _norm_manager_name(name).replace(" ", "-") or str(i)
+                ident = uc_s or slug
+                prizes.append(
+                    {
+                        "id": prize_event_id(ident, None, card_id, kind="admin"),
+                        "uc": uc_s,
+                        "name": name or None,
+                        "amount": amount,
+                        "source": "feed_admin_payment",
+                        "kind": "admin",
+                        "reason": reason,
+                    }
                 )
     return transfers, prizes
 
@@ -879,6 +1031,7 @@ def compute_bootstrap_state(
     profiles: list[dict[str, Any]],
     rivals: list[dict[str, Any]],
     me_uc: str | None,
+    me_name: str | None = None,
     feed_transfers: list[dict[str, Any]] | None = None,
     feed_prizes: list[dict[str, Any]] | None = None,
     starting_budget: float = DEFAULT_STARTING_BUDGET,
@@ -896,6 +1049,10 @@ def compute_bootstrap_state(
     events = merge_ledger(ledger_from_profiles(profiles), feed_transfers or [])
     cash = apply_cash_events(cash, events)
 
+    feed_prizes = resolve_prize_managers(
+        list(feed_prizes or []),
+        manager_name_index(rivals, me_uc=me_uc, me_name=me_name),
+    )
     prizes_by_uc: dict[str, float] = {}
     seen_prize_gw: set[tuple[str, str, str]] = set()
     for p in feed_prizes or []:
@@ -986,6 +1143,9 @@ def apply_feed_delta(
     snap: dict[str, Any],
     feed_transfers: list[dict[str, Any]] | None,
     feed_prizes: list[dict[str, Any]] | None,
+    rivals: list[dict[str, Any]] | None = None,
+    me_uc: str | None = None,
+    me_name: str | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Aplica solo movimientos/premios del feed que el snapshot aún no ha visto."""
     out = dict(snap)
@@ -996,8 +1156,12 @@ def apply_feed_delta(
     seen_ids = set(str(x) for x in (out.get("seen_ids") or []))
     seen_fps = set(str(x) for x in (out.get("seen_fps") or []))
 
+    feed_prizes = resolve_prize_managers(
+        list(feed_prizes or []),
+        manager_name_index(rivals, me_uc=me_uc, me_name=me_name),
+    )
     new_tx = unseen_feed_events(feed_transfers or [], seen_ids, seen_fps)
-    new_pr = unseen_prizes(feed_prizes or [], seen_ids)
+    new_pr = unseen_prizes(feed_prizes, seen_ids)
     cash = apply_cash_events(cash, new_tx)
     for ev in new_tx:
         item = {"player_id": ev.get("player_id"), "price": ev.get("price"), "type": ev.get("type")}
@@ -1066,6 +1230,7 @@ def run_rival_finances(
     me_uc: str | None,
     me_balance: float | None = None,
     me_squad_value: float | None = None,
+    me_name: str | None = None,
     profiles: list[dict[str, Any]] | None = None,
     feed_transfers: list[dict[str, Any]] | None = None,
     feed_prizes: list[dict[str, Any]] | None = None,
@@ -1112,6 +1277,7 @@ def run_rival_finances(
             profiles=profiles or [],
             rivals=rivals,
             me_uc=me_uc,
+            me_name=me_name,
             feed_transfers=feed_transfers,
             feed_prizes=feed_prizes,
             starting_budget=starting_budget,
@@ -1135,7 +1301,14 @@ def run_rival_finances(
         ledger_n = int(state.get("events_n") or 0)
         prizes_n = int(state.get("prizes_n") or 0)
     else:
-        snap, delta = apply_feed_delta(snapshot or {}, feed_transfers, feed_prizes)
+        snap, delta = apply_feed_delta(
+            snapshot or {},
+            feed_transfers,
+            feed_prizes,
+            rivals=rivals,
+            me_uc=me_uc,
+            me_name=me_name,
+        )
         state = _state_from_snapshot(snap)
         extra = {
             "update_mode": "feed_incremental",
@@ -1189,6 +1362,7 @@ def build_rival_finances(
     me_uc: str | None,
     me_balance: float | None = None,
     me_squad_value: float | None = None,
+    me_name: str | None = None,
     feed_transfers: list[dict[str, Any]] | None = None,
     feed_prizes: list[dict[str, Any]] | None = None,
     starting_budget: float = DEFAULT_STARTING_BUDGET,
@@ -1204,6 +1378,7 @@ def build_rival_finances(
         profiles=profiles,
         rivals=rivals,
         me_uc=me_uc,
+        me_name=me_name,
         feed_transfers=feed_transfers,
         feed_prizes=feed_prizes,
         starting_budget=starting_budget,

@@ -203,6 +203,10 @@ FEED_HTML = """
     </li>
   </ul>
 </div>
+<div id="feed-955647908" class="card card-payment" data-comments="0">
+  <div class="name">Manuel</div>
+  <div class="played green">+3.200.000</div>
+</div>
 """
 
 
@@ -225,6 +229,10 @@ def test_parse_feed_transfer_and_prize() -> None:
     pool = by_id["prize-pool-954857107-15402265"]
     assert pool["amount"] == 2_100_000
     assert pool["kind"] == "pools"
+    admin = by_id["prize-admin-955647908-manuel"]
+    assert admin["amount"] == 3_200_000
+    assert admin["kind"] == "admin"
+    assert admin["name"] == "Manuel"
 
 
 def test_parse_feed_ajax_cards_cases() -> None:
@@ -307,6 +315,18 @@ def test_parse_feed_ajax_cards_cases() -> None:
         }},
         {"id": 10, "category": "player_transfer", "data": [{"id": 1}]},
         {"id": 11, "category": "clauses_drops", "data": [{"id": 2}]},
+        {
+            "id": 955647908,
+            "category": "payment",
+            "data": {
+                "reason": "Por llorón",
+                "payments": [
+                    {"name": "Manuel", "amount": 3_200_000, "sign": "+", "class": "green"},
+                    {"name": "Abel", "amount": 500_000, "sign": "-", "class": "red"},
+                ],
+            },
+        },
+        {"id": 12, "category": "admin", "data": {"key": "market_speed", "value": 2}},
     ]
     txs, prizes = parse_feed_ajax_cards(cards)
     assert len(txs) == 3
@@ -320,7 +340,7 @@ def test_parse_feed_ajax_cards_cases() -> None:
     sell = next(t for t in txs if t["player_id"] == "68248")
     assert sell["from_uc"] == "15399848"
     assert sell["to_uc"] is None
-    assert {p["uc"]: p["amount"] for p in prizes if p.get("kind") != "pools"} == {
+    assert {p["uc"]: p["amount"] for p in prizes if p.get("kind") not in ("pools", "admin")} == {
         "15402265": 1_650_000,
         "15399715": 1_600_000,
     }
@@ -334,6 +354,11 @@ def test_parse_feed_ajax_cards_cases() -> None:
     assert "15399759" not in pool_prizes
     assert pool_prizes["15399697"]["id"] == "prize-pool-gw4044-15399697"
     assert pool_prizes["15399697"]["gameweek_id"] == "4044"
+    admin_prizes = {p["name"]: p for p in prizes if p.get("kind") == "admin"}
+    assert admin_prizes["Manuel"]["amount"] == 3_200_000
+    assert admin_prizes["Manuel"]["id"] == "prize-admin-955647908-manuel"
+    assert admin_prizes["Manuel"]["reason"] == "Por llorón"
+    assert admin_prizes["Abel"]["amount"] == -500_000
 
     dup_cards = cards + [
         {
@@ -353,7 +378,7 @@ def test_parse_feed_ajax_cards_cases() -> None:
         }
     ]
     _, prizes_dedup = parse_feed_ajax_cards(dup_cards)
-    gw_prizes = [p for p in prizes_dedup if p.get("kind") != "pools"]
+    gw_prizes = [p for p in prizes_dedup if p.get("kind") not in ("pools", "admin")]
     assert len(gw_prizes) == 2
     assert {p["uc"]: p["amount"] for p in gw_prizes} == {
         "15402265": 1_650_000,
@@ -655,6 +680,84 @@ def test_incremental_applies_quiniela_after_gameweek_prize() -> None:
         assert out2[0]["liquidity_estimated"] == cash1 + 1_200_000
 
 
+def test_admin_payment_resolves_name_and_stacks() -> None:
+    sorteo = date(2026, 7, 24)
+    rivals = [{"team_id": "10", "manager": "Manuel", "squad_value": 40_000_000}]
+    prizes = [
+        {
+            "id": "prize-admin-955647908-manuel",
+            "name": "Manuel",
+            "amount": 3_200_000,
+            "kind": "admin",
+            "source": "feed_admin_payment",
+        }
+    ]
+    out, _meta = build_rival_finances(
+        profiles=_boot_profiles(),
+        rivals=rivals,
+        me_uc="99",
+        me_balance=0,
+        me_squad_value=0,
+        feed_prizes=prizes,
+        starting_budget=50_000_000,
+        sorteo_date=sorteo,
+        start_mode="random_minus_vm",
+        max_debt_level=4,
+    )
+    # 50M − 10M VM − 5M compra + 3.2M admin
+    assert out[0]["liquidity_estimated"] == 38_200_000
+
+
+def test_incremental_applies_admin_payment() -> None:
+    sorteo = date(2026, 7, 24)
+    rivals = [{"team_id": "10", "manager": "Manuel", "squad_value": 40_000_000}]
+    admin_prize = {
+        "id": "prize-admin-955647908-manuel",
+        "name": "Manuel",
+        "amount": 3_200_000,
+        "kind": "admin",
+        "source": "feed_admin_payment",
+    }
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        out1, meta1 = run_rival_finances(
+            community_id="test-liga",
+            rivals=rivals,
+            me_uc="99",
+            profiles=_boot_profiles(),
+            feed_prizes=[],
+            starting_budget=50_000_000,
+            sorteo_date=sorteo,
+            start_mode="random_minus_vm",
+            max_debt_level=4,
+            persist=True,
+            root=root,
+        )
+        assert meta1["update_mode"] == "bootstrap"
+        cash1 = out1[0]["liquidity_estimated"]
+        assert cash1 == 35_000_000
+
+        snap = load_finance_snapshot("test-liga", root=root)
+        assert snap is not None
+        out2, meta2 = run_rival_finances(
+            community_id="test-liga",
+            rivals=rivals,
+            me_uc="99",
+            profiles=[],
+            feed_prizes=[admin_prize],
+            starting_budget=50_000_000,
+            sorteo_date=sorteo,
+            start_mode="random_minus_vm",
+            max_debt_level=4,
+            snapshot=snap,
+            persist=True,
+            root=root,
+        )
+        assert meta2["update_mode"] == "feed_incremental"
+        assert meta2["new_prizes"] == 1
+        assert out2[0]["liquidity_estimated"] == cash1 + 3_200_000
+
+
 def test_stale_snapshot_forces_bootstrap() -> None:
     now = datetime.now(timezone.utc)
     snap = {
@@ -749,6 +852,8 @@ def main() -> None:
         test_incremental_feed_does_not_double_count,
         test_quiniela_and_gameweek_prizes_stack,
         test_incremental_applies_quiniela_after_gameweek_prize,
+        test_admin_payment_resolves_name_and_stacks,
+        test_incremental_applies_admin_payment,
         test_stale_snapshot_forces_bootstrap,
         test_new_manager_forces_bootstrap,
         test_probe_json_if_present,

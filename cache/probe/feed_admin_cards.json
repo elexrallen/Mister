@@ -1,0 +1,1359 @@
+[
+  {
+    "id": 955647908,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "14h",
+    "created": "2026-09-01 20:07:27",
+    "category": "payment",
+    "data": {
+      "reason": "Por llorón",
+      "payments": [
+        {
+          "name": "Manuel",
+          "amount": 3200000,
+          "sign": "+",
+          "class": "green"
+        }
+      ]
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-09-01 20:07:27",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-09-01 20:07:27",
+    "ajax": 0,
+    "commentable": true
+  },
+  {
+    "id": 955647633,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "14h",
+    "created": "2026-09-01 20:03:53",
+    "category": "admin",
+    "data": {
+      "key": "prizes",
+      "value": {
+        "points": 0,
+        "goals": 200000,
+        "best_xi": 250000,
+        "positions": {
+          "1": 1200000,
+          "2": 1400000,
+          "3": 1600000,
+          "4": 1800000,
+          "9": 3000000,
+          "8": 2800000,
+          "7": 2600000,
+          "6": 2300000,
+          "5": 2000000,
+          "10": 3200000
+        }
+      },
+      "msg": "El administrador ha modificado las bonificaciones"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-09-01 20:03:53",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-09-01 20:03:53",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 955607211,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "18h",
+    "created": "2026-09-01 15:26:15",
+    "category": "admin",
+    "data": {
+      "key": "market_speed",
+      "value": 2,
+      "msg": "El administrador ha establecido la velocidad de mercado en Intenso"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-09-01 15:26:15",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-09-01 15:26:15",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 955607014,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "18h",
+    "created": "2026-09-01 15:24:27",
+    "category": "admin",
+    "data": {
+      "key": "market_speed",
+      "value": 3,
+      "msg": "El administrador ha establecido la velocidad de mercado en Muy intenso"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-09-01 15:24:27",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-09-01 15:24:27",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 955606993,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "18h",
+    "created": "2026-09-01 15:24:13",
+    "category": "admin",
+    "data": {
+      "key": "market_speed",
+      "value": 3,
+      "msg": "El administrador ha establecido la velocidad de mercado en Muy intenso"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-09-01 15:24:13",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-09-01 15:24:13",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 955555681,
+    "id_competition": 1,
+    "id_community": null,
+    "date": "23h",
+    "created": "2026-09-01 10:45:05",
+    "category": "gameweek_end",
+    "data": {
+      "id_gameweek": 4044,
+      "gameweek": 3,
+      "ranking": {
+        "dettach": false,
+        "me": {},
+        "ranking": {
+          "communityId": 2500716,
+          "gameweekId": 4044,
+          "positions": [
+            {
+              "idUc": 15399168,
+              "players": 0,
+              "points": 65,
+              "rank": 1,
+              "teamValue": 80261000,
+              "user": {
+                "id": 3120920,
+                "name": "Emilio",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071568Z",
+                "last_seen": "2026-09-02T07:47:27.071570Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 147,
+                  "initials": "E",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 11,
+              "payment": 2250000
+            },
+            {
+              "idUc": 15399697,
+              "players": 0,
+              "points": 49,
+              "rank": 2,
+              "teamValue": 64078000,
+              "user": {
+                "id": 3120984,
+                "name": "PaitoPau",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071575Z",
+                "last_seen": "2026-09-02T07:47:27.071576Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 307,
+                  "initials": "P",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 8,
+              "payment": 2250000
+            },
+            {
+              "idUc": 15399149,
+              "players": 0,
+              "points": 47,
+              "rank": 3,
+              "teamValue": 65828000,
+              "user": {
+                "id": 3120909,
+                "name": "Jony",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071578Z",
+                "last_seen": "2026-09-02T07:47:27.071579Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 74,
+                  "initials": "J",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 11,
+              "payment": 2700000
+            },
+            {
+              "idUc": 15399131,
+              "players": 0,
+              "points": 45,
+              "rank": 4,
+              "teamValue": 69786000,
+              "user": {
+                "id": 3120907,
+                "name": "Abel",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071581Z",
+                "last_seen": "2026-09-02T07:47:27.071581Z",
+                "fb_id": 27761407376811477,
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 159,
+                  "initials": "A",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 10,
+              "payment": 2450000
+            },
+            {
+              "idUc": 15402265,
+              "players": 0,
+              "points": 44,
+              "rank": 5,
+              "teamValue": 63503000,
+              "user": {
+                "id": 3121403,
+                "name": "Ruben",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071583Z",
+                "last_seen": "2026-09-02T07:47:27.071584Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 323,
+                  "initials": "R",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 11,
+              "payment": 2200000
+            },
+            {
+              "idUc": 15556877,
+              "players": 0,
+              "points": 39,
+              "rank": 6,
+              "teamValue": 45648000,
+              "user": {
+                "id": 746531,
+                "name": "Armando Jurado",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071585Z",
+                "last_seen": "2026-09-02T07:47:27.071586Z",
+                "fb_id": 2171020509846739,
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 344,
+                  "initials": "AJ",
+                  "pic": "https://graph.facebook.com/2171020509846739/picture?width=120&height=120"
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 7,
+              "payment": 2500000
+            },
+            {
+              "idUc": 15399759,
+              "players": 0,
+              "points": 37,
+              "rank": 7,
+              "teamValue": 58926000,
+              "user": {
+                "id": 2378738,
+                "name": "Adriano de Dios Muñoz",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071588Z",
+                "last_seen": "2026-09-02T07:47:27.071589Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 224,
+                  "initials": "AD",
+                  "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/users/64c55e8e4522c.png"
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 7,
+              "payment": 2600000
+            },
+            {
+              "idUc": 15399113,
+              "players": 0,
+              "points": 35,
+              "rank": 8,
+              "teamValue": 43041000,
+              "user": {
+                "id": 217907,
+                "name": "Francisco",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071591Z",
+                "last_seen": "2026-09-02T07:47:27.071591Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 75,
+                  "initials": "F",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 9,
+              "payment": 3200000
+            },
+            {
+              "idUc": 15399715,
+              "players": 0,
+              "points": 33,
+              "rank": 9,
+              "teamValue": 46321000,
+              "user": {
+                "id": 2610347,
+                "name": "Jponce13",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071593Z",
+                "last_seen": "2026-09-02T07:47:27.071594Z",
+                "fb_id": "",
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 195,
+                  "initials": "J",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 9,
+              "payment": 3000000
+            },
+            {
+              "idUc": 15399848,
+              "players": 0,
+              "points": 22,
+              "rank": 10,
+              "teamValue": 73054000,
+              "user": {
+                "id": 217954,
+                "name": "Manuel",
+                "email": null,
+                "created": "2026-09-02T07:47:27.071595Z",
+                "last_seen": "2026-09-02T07:47:27.071596Z",
+                "fb_id": 379262052515343,
+                "apple_id": null,
+                "google_id": null,
+                "ue_id": null,
+                "runa_id": null,
+                "deleted": false,
+                "verified": false,
+                "lang": "en",
+                "currency": "EUR",
+                "cash": 0,
+                "credits": 0,
+                "nav_bottom": true,
+                "promos": false,
+                "avatar": {
+                  "color": 58,
+                  "initials": "M",
+                  "pic": null
+                }
+              },
+              "negative": false,
+              "linedUpPlayers": 11,
+              "scoredLinedUpPlayers": 6,
+              "payment": null
+            }
+          ]
+        }
+      }
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-09-01 10:45:05",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-09-01 10:45:05",
+    "ajax": 0,
+    "commentable": true
+  },
+  {
+    "id": 955304877,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "2d",
+    "created": "2026-08-31 05:00:31",
+    "category": "transfer",
+    "data": [
+      {
+        "id_transfer": 543640196,
+        "id_uc_from": 0,
+        "id_uc_to": 15556877,
+        "type": "normal",
+        "price": 10000001,
+        "days": 0,
+        "id_group": 818388886,
+        "from": "Mister",
+        "to": "Armando Jurado",
+        "id_user1": 0,
+        "id_user2": 746531,
+        "fb_id1": null,
+        "fb_id2": 2171020509846739,
+        "pic1": null,
+        "pic2": "facebook",
+        "id": 561,
+        "name": "Marcos Llorente",
+        "position": 2,
+        "id_team": 2,
+        "points": 14,
+        "avg": 4.7,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1772620881,
+        "streak": "4,5,5",
+        "streak_sum": 14,
+        "value": 10155000,
+        "prev_value": 10119000,
+        "bids": null,
+        "avatar_from": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "avatar_to": {
+          "color": 344,
+          "initials": "AJ",
+          "pic": "https://graph.facebook.com/2171020509846739/picture?width=120&height=120"
+        },
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/561.png?version=20260304114121",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/2.png?version="
+      },
+      {
+        "id_transfer": 543643947,
+        "id_uc_from": 0,
+        "id_uc_to": 15399759,
+        "type": "normal",
+        "price": 7787000,
+        "days": 0,
+        "id_group": 818467466,
+        "from": "Mister",
+        "to": "Adriano de Dios Muñoz",
+        "id_user1": 0,
+        "id_user2": 2378738,
+        "fb_id1": null,
+        "fb_id2": null,
+        "pic1": null,
+        "pic2": "cdn://cdn-mister/users/64c55e8e4522c.png",
+        "id": 12946,
+        "name": "Santi Comesaña",
+        "position": 3,
+        "id_team": 20,
+        "points": 6,
+        "avg": 2,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1759709600,
+        "streak": "1,3,2",
+        "streak_sum": 6,
+        "value": 7385000,
+        "prev_value": 7501000,
+        "bids": null,
+        "avatar_from": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "avatar_to": {
+          "color": 224,
+          "initials": "AD",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/users/64c55e8e4522c.png"
+        },
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/12946.png?version=20251006021320",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/20.png?version="
+      },
+      {
+        "id_transfer": 543672989,
+        "id_uc_from": 0,
+        "id_uc_to": 15399168,
+        "type": "normal",
+        "price": 15681050,
+        "days": 0,
+        "id_group": 818709162,
+        "from": "Mister",
+        "to": "Emilio",
+        "id_user1": 0,
+        "id_user2": 3120920,
+        "fb_id1": null,
+        "fb_id2": null,
+        "pic1": null,
+        "pic2": null,
+        "id": 7024,
+        "name": "Fede Valverde",
+        "position": 3,
+        "id_team": 15,
+        "points": 13,
+        "avg": 4.3,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1759509567,
+        "streak": "5,3,5",
+        "streak_sum": 13,
+        "value": 15651000,
+        "prev_value": 15646000,
+        "bids": null,
+        "avatar_from": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "avatar_to": {
+          "color": 147,
+          "initials": "E",
+          "pic": null
+        },
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/7024.png?version=20251003183927",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/15.png?version="
+      },
+      {
+        "id_transfer": 543672938,
+        "id_uc_from": 0,
+        "id_uc_to": 15399168,
+        "type": "normal",
+        "price": 1190000,
+        "days": 0,
+        "id_group": 818708826,
+        "from": "Mister",
+        "to": "Emilio",
+        "id_user1": 0,
+        "id_user2": 3120920,
+        "fb_id1": null,
+        "fb_id2": null,
+        "pic1": null,
+        "pic2": null,
+        "id": 70932,
+        "name": "Sergio Martinez",
+        "position": 3,
+        "id_team": 15,
+        "points": 15,
+        "avg": 7.5,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1781863080,
+        "streak": "11,4,-",
+        "streak_sum": 15,
+        "value": 1127000,
+        "prev_value": 1105000,
+        "bids": "818275484,818626238",
+        "avatar_from": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "avatar_to": {
+          "color": 147,
+          "initials": "E",
+          "pic": null
+        },
+        "other_bids": [
+          {
+            "name": "Francisco",
+            "bid": 1129380
+          },
+          {
+            "name": "Jony",
+            "bid": 1045310
+          }
+        ],
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/70932.png?version=20260619115800",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/15.png?version="
+      },
+      {
+        "id_transfer": 543672079,
+        "id_uc_from": 0,
+        "id_uc_to": 15399168,
+        "type": "normal",
+        "price": 341050,
+        "days": 0,
+        "id_group": 818703611,
+        "from": "Mister",
+        "to": "Emilio",
+        "id_user1": 0,
+        "id_user2": 3120920,
+        "fb_id1": null,
+        "fb_id2": null,
+        "pic1": null,
+        "pic2": null,
+        "id": 61009,
+        "name": "Ángel Ortiz",
+        "position": 2,
+        "id_team": 4,
+        "points": 4,
+        "avg": 4,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1759513360,
+        "streak": "4,-,-",
+        "streak_sum": 4,
+        "value": 368000,
+        "prev_value": 348000,
+        "bids": 818627004,
+        "avatar_from": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "avatar_to": {
+          "color": 147,
+          "initials": "E",
+          "pic": null
+        },
+        "other_bids": [
+          {
+            "name": "Jony",
+            "bid": 341010
+          }
+        ],
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/61009.png?version=20251003194240",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/4.png?version="
+      },
+      {
+        "id_transfer": 543671790,
+        "id_uc_from": 0,
+        "id_uc_to": 15399113,
+        "type": "normal",
+        "price": 205000,
+        "days": 0,
+        "id_group": 818702011,
+        "from": "Mister",
+        "to": "Francisco",
+        "id_user1": 0,
+        "id_user2": 217907,
+        "fb_id1": null,
+        "fb_id2": null,
+        "pic1": null,
+        "pic2": null,
+        "id": 59532,
+        "name": "Marash Kumbulla",
+        "position": 2,
+        "id_team": 14,
+        "points": 0,
+        "avg": 0,
+        "status": "doubt",
+        "id_competition": 1,
+        "ts_pic": 1723925697,
+        "streak": "-,-,-",
+        "streak_sum": 0,
+        "value": 199000,
+        "prev_value": 160000,
+        "bids": null,
+        "avatar_from": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "avatar_to": {
+          "color": 75,
+          "initials": "F",
+          "pic": null
+        },
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/59532.png?version=20240817221457",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png?version="
+      }
+    ],
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-31 05:00:31",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-08-31 05:00:01",
+    "ajax": 0,
+    "commentable": true
+  },
+  {
+    "id": 954351891,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "8d",
+    "created": "2026-08-25 14:23:33",
+    "category": "admin",
+    "data": {
+      "key": "prizes",
+      "value": {
+        "points": 0,
+        "goals": 200000,
+        "best_xi": 250000,
+        "positions": {
+          "1": 1200000,
+          "2": 1400000,
+          "3": 1600000,
+          "4": 1800000,
+          "9": 3000000,
+          "8": 2800000,
+          "7": 2600000,
+          "6": 2300000,
+          "5": 2000000
+        }
+      },
+      "msg": "El administrador ha modificado las bonificaciones"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-25 14:23:33",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-08-25 14:23:33",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 954350771,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "8d",
+    "created": "2026-08-25 14:14:32",
+    "category": "admin",
+    "data": {
+      "key": "pools",
+      "value": 1,
+      "msg": "El administrador ha abierto el juego de predicciones"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-25 14:14:32",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-08-25 14:14:32",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 953933209,
+    "id_competition": null,
+    "id_community": null,
+    "date": "10d",
+    "created": "2026-08-23 08:37:11",
+    "category": "porra",
+    "data": {
+      "id": 491,
+      "info": {
+        "id": 491,
+        "title": "⚽ PORRA Atlético - Villarreal / LaLiga",
+        "entry": 25,
+        "prize": 150,
+        "id_home": 2,
+        "id_away": 20,
+        "deadline": "2026-08-23 17:00:00",
+        "url": null,
+        "resolved": 1,
+        "winners": 0,
+        "homeLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/2.png?version=",
+        "awayLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/20.png?version="
+      },
+      "open": false,
+      "purchased": false,
+      "prediction": null,
+      "players": {
+        "Atlético": [
+          {
+            "id": 31,
+            "name": "Jan Oblak",
+            "team": "Atlético"
+          },
+          {
+            "id": 59642,
+            "name": "Juan Musso",
+            "team": "Atlético"
+          },
+          {
+            "id": 4947928,
+            "name": "Salvi Esquivel",
+            "team": "Atlético"
+          },
+          {
+            "id": 71021,
+            "name": "Alejandro Grimaldo",
+            "team": "Atlético"
+          },
+          {
+            "id": 1385821,
+            "name": "Cristian Romero",
+            "team": "Atlético"
+          },
+          {
+            "id": 70181,
+            "name": "Dani Martínez",
+            "team": "Atlético"
+          },
+          {
+            "id": 64459,
+            "name": "Dávid Hancko",
+            "team": "Atlético"
+          },
+          {
+            "id": 1255969,
+            "name": "Jorge Domínguez",
+            "team": "Atlético"
+          },
+          {
+            "id": 35434,
+            "name": "Marc Pubill",
+            "team": "Atlético"
+          },
+          {
+            "id": 561,
+            "name": "Marcos Llorente",
+            "team": "Atlético"
+          },
+          {
+            "id": 15338,
+            "name": "Robin Le Normand",
+            "team": "Atlético"
+          },
+          {
+            "id": 22502,
+            "name": "Alex Baena",
+            "team": "Atlético"
+          },
+          {
+            "id": 1396108,
+            "name": "Arnau Ortiz",
+            "team": "Atlético"
+          },
+          {
+            "id": 58994,
+            "name": "Carlos Martín",
+            "team": "Atlético"
+          },
+          {
+            "id": 29222,
+            "name": "Giuliano Simeone",
+            "team": "Atlético"
+          },
+          {
+            "id": 56578,
+            "name": "Johnny Cardoso",
+            "team": "Atlético"
+          },
+          {
+            "id": 15653,
+            "name": "Kang-In Lee",
+            "team": "Atlético"
+          },
+          {
+            "id": 42,
+            "name": "Koke",
+            "team": "Atlético"
+          },
+          {
+            "id": 71176,
+            "name": "Morten Hjulmand",
+            "team": "Atlético"
+          },
+          {
+            "id": 68711,
+            "name": "Obed Vargas",
+            "team": "Atlético"
+          },
+          {
+            "id": 51135,
+            "name": "Pablo Barrios",
+            "team": "Atlético"
+          },
+          {
+            "id": 70183,
+            "name": "Rayane Belaid",
+            "team": "Atlético"
+          },
+          {
+            "id": 63868,
+            "name": "Rodrigo Mendoza",
+            "team": "Atlético"
+          },
+          {
+            "id": 68676,
+            "name": "Ademola Lookman",
+            "team": "Atlético"
+          },
+          {
+            "id": 31355,
+            "name": "Alexander Sørloth",
+            "team": "Atlético"
+          },
+          {
+            "id": 4836153,
+            "name": "Jonathan David",
+            "team": "Atlético"
+          },
+          {
+            "id": 59476,
+            "name": "Julián Álvarez",
+            "team": "Atlético"
+          }
+        ],
+        "Villarreal": [
+          {
+            "id": 59581,
+            "name": "Luiz Júnior",
+            "team": "Villarreal"
+          },
+          {
+            "id": 71649,
+            "name": "Péter Gulácsi",
+            "team": "Villarreal"
+          },
+          {
+            "id": 68640,
+            "name": "Alex Freeman",
+            "team": "Villarreal"
+          },
+          {
+            "id": 55743,
+            "name": "Carlos Romero",
+            "team": "Villarreal"
+          },
+          {
+            "id": 23369,
+            "name": "Juan Foyth",
+            "team": "Villarreal"
+          },
+          {
+            "id": 59593,
+            "name": "Logan Costa",
+            "team": "Villarreal"
+          },
+          {
+            "id": 60210,
+            "name": "Pau Navarro",
+            "team": "Villarreal"
+          },
+          {
+            "id": 65347,
+            "name": "Renato Veiga",
+            "team": "Villarreal"
+          },
+          {
+            "id": 54832,
+            "name": "Santiago Mouriño",
+            "team": "Villarreal"
+          },
+          {
+            "id": 53107,
+            "name": "Sergi Cardona",
+            "team": "Villarreal"
+          },
+          {
+            "id": 70496,
+            "name": "Alassane Diatta",
+            "team": "Villarreal"
+          },
+          {
+            "id": 53098,
+            "name": "Alberto Moleiro",
+            "team": "Villarreal"
+          },
+          {
+            "id": 68259,
+            "name": "Carlos Macia",
+            "team": "Villarreal"
+          },
+          {
+            "id": 33896,
+            "name": "Ilias Akhomach",
+            "team": "Villarreal"
+          },
+          {
+            "id": 3845074,
+            "name": "Nathan Saliba",
+            "team": "Villarreal"
+          },
+          {
+            "id": 52162,
+            "name": "Pape Gueye",
+            "team": "Villarreal"
+          },
+          {
+            "id": 12946,
+            "name": "Santi Comesaña",
+            "team": "Villarreal"
+          },
+          {
+            "id": 61092,
+            "name": "Tajon Buchanan",
+            "team": "Villarreal"
+          },
+          {
+            "id": 52189,
+            "name": "Ayoze Pérez",
+            "team": "Villarreal"
+          },
+          {
+            "id": 65704,
+            "name": "Georges Mikautadze",
+            "team": "Villarreal"
+          },
+          {
+            "id": 476,
+            "name": "Gerard Moreno",
+            "team": "Villarreal"
+          },
+          {
+            "id": 59382,
+            "name": "Nicolas Pépé",
+            "team": "Villarreal"
+          },
+          {
+            "id": 65625,
+            "name": "Tani Oluwaseyi",
+            "team": "Villarreal"
+          }
+        ]
+      }
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-23 08:37:11",
+    "id_uc": 15402265,
+    "text": "Así",
+    "name": "Ruben",
+    "id_user": 3121403,
+    "fb_id": null,
+    "picture": null,
+    "comments": 1,
+    "c_date": "8d",
+    "final_date": "2026-08-24 23:44:44",
+    "ajax": 0,
+    "commentable": true,
+    "avatar": {
+      "color": 323,
+      "initials": "R",
+      "pic": null
+    }
+  },
+  {
+    "id": 953795276,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "11d",
+    "created": "2026-08-22 09:40:37",
+    "category": "admin",
+    "data": {
+      "key": "transfer_wait",
+      "value": 0,
+      "msg": "El administrador ha quitado el tiempo de espera para poder poner en venta nuevos fichajes"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-22 09:40:37",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-08-22 09:40:37",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 953795251,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "11d",
+    "created": "2026-08-22 09:40:08",
+    "category": "admin",
+    "data": {
+      "key": "market_stay",
+      "value": 1,
+      "msg": "El administrador ha establecido la duración de jugadores en el mercado en 1 ciclos"
+    },
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-22 09:40:08",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-08-22 09:40:08",
+    "ajax": 0,
+    "commentable": false
+  },
+  {
+    "id": 952415842,
+    "id_competition": null,
+    "id_community": 2500716,
+    "date": "20d",
+    "created": "2026-08-13 07:24:27",
+    "category": "transfer",
+    "data": [
+      {
+        "id_transfer": 538551793,
+        "id_uc_from": 15399697,
+        "id_uc_to": 0,
+        "type": "normal",
+        "price": 6384510,
+        "days": 0,
+        "id_group": 809068878,
+        "from": "PaitoPau",
+        "to": "Mister",
+        "id_user1": 3120984,
+        "id_user2": 0,
+        "fb_id1": null,
+        "fb_id2": null,
+        "pic1": null,
+        "pic2": null,
+        "id": 306,
+        "name": "Diego Llorente",
+        "position": 2,
+        "id_team": 4,
+        "points": 3,
+        "avg": 3,
+        "status": null,
+        "id_competition": 1,
+        "ts_pic": 1720546716,
+        "streak": "3,-,-",
+        "streak_sum": 3,
+        "value": 4406000,
+        "prev_value": 4529000,
+        "bids": null,
+        "avatar_from": {
+          "color": 307,
+          "initials": "P",
+          "pic": null
+        },
+        "avatar_to": {
+          "color": 0,
+          "initials": "M",
+          "pic": "https://cdn-mister.mundodeportivo.com/file/cdn-mister/app-icon.png"
+        },
+        "photoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/306.png?version=20240709193836",
+        "teamLogoUrl": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/4.png?version="
+      }
+    ],
+    "sticky": 0,
+    "id_segment": null,
+    "expiration_date": null,
+    "updated": "2026-08-13 07:24:27",
+    "id_uc": null,
+    "text": null,
+    "name": null,
+    "id_user": null,
+    "fb_id": null,
+    "picture": null,
+    "comments": 0,
+    "c_date": null,
+    "final_date": "2026-08-13 07:24:27",
+    "ajax": 0,
+    "commentable": true
+  }
+]

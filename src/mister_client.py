@@ -2676,6 +2676,13 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             me_uc=my_uc or None,
             me_balance=float(bal),
             me_squad_value=float(squad_value or 0),
+            me_name=str(
+                (me_row or {}).get("manager")
+                or fg_user.get("uc_name")
+                or fg_user.get("name")
+                or ""
+            )
+            or None,
             profiles=profiles,
             feed_transfers=feed_tx,
             feed_prizes=feed_pr,
