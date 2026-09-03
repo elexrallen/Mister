@@ -466,12 +466,20 @@ def _ideal_for_xi(xi: dict[str, int]) -> dict[str, int]:
     return ideal
 
 
+def _xi_positions_fill(rows: list[dict[str, Any]], shape: dict[str, int]) -> bool:
+    """True si cada línea del once cubre el cupo de la formación."""
+    counts: dict[str, int] = {}
+    for row in rows or []:
+        pos = str(row.get("position") or "").upper()
+        counts[pos] = counts.get(pos, 0) + 1
+    for pos in ("GK", "DF", "MF", "FW"):
+        if int(counts.get(pos) or 0) < int(shape.get(pos) or 0):
+            return False
+    return True
+
+
 def _xi_complete(assembled: dict[str, Any], shape: dict[str, int]) -> bool:
-    summary = assembled.get("summary") or {}
-    if summary.get("complete") is True:
-        return True
-    n = len(assembled.get("xi") or [])
-    return n >= sum(int(v) for v in shape.values())
+    return _xi_positions_fill(assembled.get("xi") or [], shape)
 
 
 def _xi_xpts_total(assembled: dict[str, Any]) -> float:
@@ -580,8 +588,7 @@ def _pack_key(
     shape: dict[str, int],
     finance: dict[str, Any],
 ) -> tuple:
-    target = sum(int(v) for v in shape.values()) or 11
-    complete = 1 if len(xi_rows) >= target else 0
+    complete = 1 if _xi_positions_fill(xi_rows, shape) else 0
     xpts = sum(_xpts(r) for r in xi_rows)
     return (
         complete,
