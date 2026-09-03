@@ -395,6 +395,7 @@ def test_ideal_formations_skips_paid_and_noise() -> None:
     _assert("4-2-3-1" not in names, names)
     _assert("3-4-3" in names, names)
     _assert("4-3-3" in names, names)
+    _assert("3-3-4" in names, names)
 
 
 if __name__ == "__main__":

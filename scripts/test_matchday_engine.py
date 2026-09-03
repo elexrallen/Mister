@@ -650,7 +650,7 @@ def test_xi_without_risk_does_not_suggest_a_switch() -> None:
 
 
 def test_pick_best_gw_xi_prefers_higher_xpts_formation() -> None:
-    # 3 DF fuertes + 1 flojo + 4 MF + 4 FW: 3-4-3 suma más que 4-3-3.
+    # 3 DF fuertes + 1 flojo + 4 MF + 4 FW: 3-3-4 (4 delanteros) suma más que 4-3-3.
     squad = [_sq_player("gk1", "GK", xpts=4.0, p_play=0.95)]
     squad += [_sq_player(f"df{i}", "DF", xpts=8.0, p_play=0.9) for i in range(1, 4)]
     squad.append(_sq_player("df4", "DF", xpts=1.0, p_play=0.9))
@@ -660,9 +660,11 @@ def test_pick_best_gw_xi_prefers_higher_xpts_formation() -> None:
     locked = build_recommended_gw_xi(squad, formation="4-3-3")
     picked = pick_best_gw_xi(squad, matchday={}, captain_rule=None)
     assert locked.get("formation") == "4-3-3", locked.get("formation")
-    assert picked.get("formation") != "4-3-3", picked.get("formation")
+    assert picked.get("formation") == "3-3-4", picked.get("formation")
     shape = picked.get("shape") or {}
     assert int(shape.get("DF") or 0) == 3, shape
+    assert int(shape.get("MF") or 0) == 3, shape
+    assert int(shape.get("FW") or 0) == 4, shape
     locked_x = float((locked.get("summary") or {}).get("xpts_total") or 0)
     picked_x = float((picked.get("summary") or {}).get("xpts_total") or 0)
     assert picked_x > locked_x, (picked_x, locked_x, picked.get("formation"))

@@ -133,6 +133,19 @@ def _xpts_total(block: dict[str, Any] | None) -> float:
     return total
 
 
+def _xi_shape_filled(cand: dict[str, Any]) -> bool:
+    """True si el once cubre los cupos de cada línea, no solo 11 cuerpos."""
+    shape = cand.get("shape") or {}
+    counts: dict[str, int] = {}
+    for row in cand.get("xi") or []:
+        pos = str(row.get("position") or "").upper()
+        counts[pos] = counts.get(pos, 0) + 1
+    for pos in ("GK", "DF", "MF", "FW"):
+        if int(counts.get(pos) or 0) < int(shape.get(pos) or 0):
+            return False
+    return True
+
+
 def pick_best_gw_xi(
     pool: list[dict[str, Any]],
     *,
@@ -144,7 +157,7 @@ def pick_best_gw_xi(
     No usa la formación bloqueada en Mister. Aplica al pool o a tu plantilla.
     """
     best: dict[str, Any] | None = None
-    best_x = -1.0
+    best_score: tuple | None = None
     seen: set[tuple] = set()
     names = list(getattr(config, "IDEAL_FORMATIONS", ()) or ())
     if not names:
@@ -162,12 +175,15 @@ def pick_best_gw_xi(
             continue
         seen.add(key)
         xpts = _xpts_total(cand)
-        complete = bool((cand.get("summary") or {}).get("complete"))
-        score = (1 if complete else 0, xpts)
-        best_score = (1 if best and (best.get("summary") or {}).get("complete") else 0, best_x)
-        if best is None or score > best_score:
+        summary = cand.get("summary") or {}
+        complete = bool(summary.get("complete"))
+        filled = _xi_shape_filled(cand)
+        risk = int(summary.get("risk_slots") or 0)
+        # Cupos reales > 11 cuerpos > menos ceros/blanks > Σ xPts
+        score = (1 if filled else 0, 1 if complete else 0, -risk, xpts)
+        if best is None or best_score is None or score > best_score:
             best = cand
-            best_x = xpts
+            best_score = score
     return best or build_recommended_gw_xi(
         pool, matchday=matchday, captain_rule=captain_rule
     )

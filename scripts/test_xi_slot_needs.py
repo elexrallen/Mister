@@ -54,6 +54,8 @@ def _p(
 def test_parse_433() -> None:
     assert parse_xi_shape("1-4-3-3") == {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
     assert parse_xi_shape("4-3-3") == {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
+    assert parse_xi_shape("3-3-4") == {"GK": 1, "DF": 3, "MF": 3, "FW": 4}
+    assert parse_xi_shape("1-3-3-4") == {"GK": 1, "DF": 3, "MF": 3, "FW": 4}
 
 
 def test_433_missing_fourth_df_is_xi_starter() -> None:

@@ -349,14 +349,16 @@ MIN_FW = 2
 IDEAL_SQUAD = {"GK": 2, "DF": 5, "MF": 5, "FW": 3}
 # Once fantasy (suma 11); el resto del IDEAL_SQUAD es banquillo
 IDEAL_XI = {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
-# Formaciones Mister gratis a probar (elige la de más Σ EP / xPts del once).
-# Sin 4-2-4 (de pago) ni 4-2-3-1 (no es un shape distinto: cae a 4-5-1 o 4-3-3).
+# Formaciones Mister a probar (elige la de más Σ EP / xPts del once).
+# Incluye 3-3-4 (de pago, 4 delanteros). Sin 4-2-4 (de pago) ni 4-2-3-1
+# (no es un shape distinto: cae a 4-5-1 o 4-3-3).
 IDEAL_FORMATIONS = (
     "4-3-3",
     "4-4-2",
     "4-5-1",
     "3-5-2",
     "3-4-3",
+    "3-3-4",
     "5-3-2",
     "5-4-1",
 )

@@ -532,6 +532,15 @@ def test_formation_label_matches_xi_shape() -> None:
         _assert(int(parts[2]) == counts.get("FW", 0), (form, counts))
 
 
+def test_destination_trials_include_334() -> None:
+    dest = _assemble(_universe(_owned_15()))
+    labels = {
+        str(t.get("formation") or t.get("formation_raw") or "")
+        for t in (dest.get("trials") or [])
+    }
+    _assert("3-3-4" in labels, labels)
+
+
 if __name__ == "__main__":
     test_appear_probability_lottery_not_queue()
     test_classify_reach_ghost_vs_clause_vs_watch()
@@ -546,4 +555,5 @@ if __name__ == "__main__":
     test_clause_rental_does_not_enter()
     test_rising_starter_not_sold_for_spike()
     test_formation_label_matches_xi_shape()
+    test_destination_trials_include_334()
     print("test_target_board: OK")
