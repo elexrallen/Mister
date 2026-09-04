@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-04T14:32:39.328758+00:00",
+  "generated_at": "2026-09-04T14:56:59.832822+00:00",
   "league_slug": "serie-a-d0g8-5236",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1182,10 +1182,10 @@
     "max_debt": 23171000.0,
     "bid_cap": 23171000.0,
     "max_squad": 25,
-    "n_free": 354,
+    "n_free": 281,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 4.2119912572222225
+    "hours_to_jornada": 3.806343486388889
   },
   "finance": {
     "ok": true,
@@ -1735,7 +1735,7 @@
     "ep_sum_starters": 57.45,
     "xpts_starters": 57.45,
     "xpts_total": 60.62,
-    "xpts_ceiling": 194.36,
+    "xpts_ceiling": 178.67,
     "xpts_yours": 79.49,
     "cost_sum": 32932500.0,
     "net_buys": 3154500.0,
