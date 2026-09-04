@@ -41,6 +41,12 @@ COMPETITION_MAP: dict[int, dict] = {
         "default_max_squad": 22,
         "default_market_mode": "fixed",
     },
+    10: {
+        "external": "seriea",
+        "competition": "Serie A",
+        "default_max_squad": 25,
+        "default_market_mode": "auction",
+    },
 }
 
 # Overrides opcionales keyed por id_community (ganan sobre discovery en campos
@@ -420,9 +426,12 @@ SOLVENCY_D1_BUFFER_HOURS = SOLVENCY_SETTLE_BUFFER_HOURS
 # Cupo máximo de plantilla Mister (fallback si no hay team_limit)
 MAX_SQUAD_SIZE_LALIGA = 25
 MAX_SQUAD_SIZE_PREMIER = 22
+MAX_SQUAD_SIZE_SERIEA = 25
 # id_competition Mister → clave de scrapers externos (FF/JP)
 LALIGA_COMPETITION_ID = 1
 PREMIER_COMPETITION_ID = 3
+SERIE_A_COMPETITION_ID = 10
+EXTERNAL_COMPETITION_KEYS = frozenset({"laliga", "premier", "seriea"})
 EXTERNAL_BY_COMPETITION_ID: dict[int, str] = {
     cid: str(meta["external"])
     for cid, meta in COMPETITION_MAP.items()
@@ -431,7 +440,7 @@ EXTERNAL_BY_COMPETITION_ID: dict[int, str] = {
 
 
 def league_max_squad(league_cfg: dict | None = None) -> int:
-    """Tope de jugadores en plantilla: 25 LaLiga / 22 Premier."""
+    """Tope de jugadores en plantilla: 25 LaLiga/Serie A · 22 Premier."""
     cfg = league_cfg or {}
     raw = cfg.get("max_squad")
     if raw is not None:
@@ -444,12 +453,16 @@ def league_max_squad(league_cfg: dict | None = None) -> int:
     ext = external_competition_key(league_cfg=cfg)
     if ext == "premier":
         return int(MAX_SQUAD_SIZE_PREMIER)
+    if ext == "seriea":
+        return int(MAX_SQUAD_SIZE_SERIEA)
     try:
         cid = int(cfg["id_competition"]) if cfg.get("id_competition") is not None else None
     except (TypeError, ValueError):
         cid = None
     if cid == int(PREMIER_COMPETITION_ID):
         return int(MAX_SQUAD_SIZE_PREMIER)
+    if cid == int(SERIE_A_COMPETITION_ID):
+        return int(MAX_SQUAD_SIZE_SERIEA)
     return int(MAX_SQUAD_SIZE_LALIGA)
 
 
@@ -458,10 +471,10 @@ def external_competition_key(
     league_cfg: dict | None = None,
     id_competition: int | None = None,
 ) -> str | None:
-    """Resuelve `laliga` | `premier` | None para scrapers externos."""
+    """Resuelve `laliga` | `premier` | `seriea` | None para scrapers externos."""
     cfg = league_cfg or {}
     ext = (cfg.get("external") or "").strip().lower()
-    if ext in ("laliga", "premier"):
+    if ext in EXTERNAL_COMPETITION_KEYS:
         return ext
     cid = id_competition
     if cid is None and cfg.get("id_competition") is not None:

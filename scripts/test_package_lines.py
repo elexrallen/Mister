@@ -310,6 +310,8 @@ def test_premier_max_22() -> None:
     _assert(league_max_squad({"external": "premier", "max_squad": 22}) == 22, "premier")
     _assert(league_max_squad({"external": "laliga", "max_squad": 25}) == 25, "laliga")
     _assert(league_max_squad({"id_competition": 3}) == 22, "premier by id")
+    _assert(league_max_squad({"id_competition": 10}) == 25, "seriea by id")
+    _assert(league_max_squad({"external": "seriea"}) == 25, "seriea external")
 
 
 def test_squad_full_prioritizes_sells() -> None:

@@ -74,6 +74,18 @@ COMPETITION_PROFILES: dict[str, dict[str, Any]] = {
         "top_floor": 10.0,
         "label": "Fantasy RPG",
     },
+    "seriea": {
+        "url_tpl": f"{BASE}/analytics/serie-a/estadisticas-puntos/{{year}}",
+        "cache_name": "ff_seriea_points.json",
+        "score_columns": [
+            ("Total - Fantasy✨", "Media - Fantasy✨"),
+            ("Total - Fantasy", "Media - Fantasy"),
+            ("Total - Futmondo Stats", "Media - Futmondo Stats"),
+        ],
+        "avg_scale": 16.0,  # Fantasy✨ ~ banda SofaScore/RPG
+        "top_floor": 10.0,
+        "label": "Fantasy✨",
+    },
 }
 
 # Partidos de liga por temporada (proxy titularidad fallback = apps / SEASON_GAMES).
@@ -84,7 +96,10 @@ MIXTO_AVG_SCALE = 8.0
 
 def _profile(competition: str) -> dict[str, Any]:
     key = (competition or "laliga").strip().lower()
-    return COMPETITION_PROFILES.get(key, COMPETITION_PROFILES["laliga"])
+    if key not in COMPETITION_PROFILES:
+        # Sin fallback a LaLiga: medias/columnas de otra liga contaminan Serie A/Premier.
+        raise ValueError(f"COMPETITION_PROFILES desconocido para competition={key!r}")
+    return COMPETITION_PROFILES[key]
 
 
 def league_avg_scale(competition: str | None = None) -> float:

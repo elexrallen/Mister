@@ -90,7 +90,7 @@ export default {
       // body vacío → all
     }
 
-    if (!["all", "laliga-patio", "premier"].includes(league)) {
+    if (!/^(all|[a-z0-9-]+)$/.test(league)) {
       league = "all";
     }
 

@@ -24,12 +24,16 @@ MAX_TEAM_PAGES = 12
 FF_PATH: dict[str, str] = {
     "laliga": "laliga",
     "premier": "premier-league",
+    "seriea": "serie-a",
 }
 
 
 def _ff_path(competition: str) -> str:
     key = (competition or "laliga").strip().lower()
-    return FF_PATH.get(key, FF_PATH["laliga"])
+    # Sin fallback silencioso a LaLiga: mezclaría clubs de otra competición.
+    if key not in FF_PATH:
+        raise ValueError(f"FF_PATH desconocido para competition={key!r}")
+    return FF_PATH[key]
 
 
 def _abs(url: str | None) -> str | None:
@@ -140,7 +144,7 @@ def fetch_futbolfantasy(
     Devuelve registros de jugadores FF.
     priority_teams: equipos de plantilla propia (sin tope; siempre se scrapean).
     team_names: resto (mercado/universo); se añaden hasta MAX_TEAM_PAGES.
-    competition: `laliga` | `premier`.
+    competition: `laliga` | `premier` | `seriea`.
     """
     path = _ff_path(competition)
     try:

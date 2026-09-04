@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-04T08:16:40.120965+00:00",
+  "generated_at": "2026-09-04T14:32:39.459730+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -63,6 +63,59 @@
       "path": "leagues/premier-league-d0g38-4036/latest_data.json",
       "balance": 49800,
       "rank": 3,
+      "market_mode": "auction",
+      "max_squad": 25,
+      "provider": "mr",
+      "provider_label": "SofaScore",
+      "clauses": true,
+      "loans": true,
+      "factors": [
+        "scoring_sofascore",
+        "auction_urgency",
+        "clause_bids",
+        "loans_liquidity",
+        "max_squad_25",
+        "fast_market",
+        "gw_cash_bonus",
+        "sale_limit_5",
+        "custom_rules_text",
+        "captain_by_value"
+      ],
+      "rules": {
+        "provider": "mr",
+        "provider_label": "SofaScore",
+        "max_squad": 25,
+        "market_mode": "auction",
+        "clauses": true,
+        "loans": true,
+        "market_speed": 3,
+        "factors": [
+          "scoring_sofascore",
+          "auction_urgency",
+          "clause_bids",
+          "loans_liquidity",
+          "max_squad_25",
+          "fast_market",
+          "gw_cash_bonus",
+          "sale_limit_5",
+          "custom_rules_text",
+          "captain_by_value"
+        ],
+        "source": "fg_user+admin"
+      }
+    },
+    {
+      "slug": "serie-a-d0g8-5236",
+      "name": "Serie A © - D0G8",
+      "competition": "Serie A",
+      "id_community": "2525236",
+      "id_competition": 10,
+      "season_start": null,
+      "default": false,
+      "generated_at": "2026-09-04T14:32:39.394058+00:00",
+      "path": "leagues/serie-a-d0g8-5236/latest_data.json",
+      "balance": 14228000,
+      "rank": 17,
       "market_mode": "auction",
       "max_squad": 25,
       "provider": "mr",

@@ -17,8 +17,10 @@ from .futbolfantasy import fetch_futbolfantasy
 from .ff_matchday import fetch_ff_matchday
 from .jornadaperfecta import fetch_jornadaperfecta
 
-# Competiciones con scrapers FF/JP cableados
-SUPPORTED_EXTERNAL = frozenset({"laliga", "premier"})
+# Competiciones con scrapers FF cableados (JP solo LaLiga/Premier)
+SUPPORTED_EXTERNAL = frozenset({"laliga", "premier", "seriea"})
+# JP no tiene rutas Serie A reales (redirige a LaLiga)
+JP_SUPPORTED = frozenset({"laliga", "premier"})
 # Estados de la previa FF que hacen innecesario el respaldo de Jornada Perfecta
 FF_MATCHDAY_OK = frozenset({"ok", "cache"})
 
@@ -31,7 +33,7 @@ def fetch_all_external(
 ) -> dict[str, Any]:
     """
     Ejecuta los scrapers hub fail-soft.
-    competition: `laliga` | `premier` (u otra → vacíos + status skip).
+    competition: `laliga` | `premier` | `seriea` (u otra → vacíos + status skip).
     priority_teams: equipos de plantilla propia (FF sin tope de páginas).
     """
     comp = (competition or "laliga").strip().lower()
@@ -61,9 +63,13 @@ def fetch_all_external(
     md_status = str(matchday.get("status") or "fail")
     status["ff_matchday"] = md_status if md_status in ("ok", "partial", "cache") else "fail"
 
-    # Jornada Perfecta solo si FF no cubre la previa: es un scrape caro y redundante
-    if md_status in FF_MATCHDAY_OK and ff:
-        jp: list[dict[str, Any]] = []
+    # Jornada Perfecta solo si FF no cubre la previa: es un scrape caro y redundante.
+    # Serie A: JP no tiene hub real → skip siempre.
+    if comp not in JP_SUPPORTED:
+        jp = []
+        status["jornadaperfecta"] = "skip"
+    elif md_status in FF_MATCHDAY_OK and ff:
+        jp = []
         status["jornadaperfecta"] = "skip"
     else:
         jp = fetch_jornadaperfecta(competition=comp)

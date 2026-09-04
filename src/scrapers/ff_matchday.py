@@ -97,6 +97,35 @@ PREMIER_CLUB_SLUGS = frozenset(
     }
 )
 
+SERIEA_CLUB_SLUGS = frozenset(
+    {
+        "atalanta",
+        "bologna",
+        "cagliari",
+        "como",
+        "fiorentina",
+        "frosinone",
+        "genoa",
+        "inter",
+        "internazionale",
+        "juventus",
+        "lazio",
+        "lecce",
+        "milan",
+        "ac-milan",
+        "monza",
+        "napoli",
+        "napoles",
+        "parma",
+        "roma",
+        "as-roma",
+        "sassuolo",
+        "torino",
+        "udinese",
+        "venezia",
+    }
+)
+
 MONTHS_ES = {
     "ene": 1,
     "feb": 2,
@@ -217,6 +246,8 @@ def _competition_club_slugs(competition: str) -> frozenset[str]:
     comp = (competition or "laliga").strip().lower()
     if "premier" in comp:
         return PREMIER_CLUB_SLUGS
+    if "serie" in comp:
+        return SERIEA_CLUB_SLUGS
     return LALIGA_CLUB_SLUGS
 
 

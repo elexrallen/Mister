@@ -29,7 +29,8 @@ PROVIDER_LABELS: dict[str, str] = {
 PROVIDER_FF_HINT: dict[str, dict[str, Any]] = {
     "mix": {"prefer_competition": None, "avg_scale": 8.0, "label": "Mister Mixto", "factor": "scoring_mixto"},
     "mix2": {"prefer_competition": None, "avg_scale": 8.0, "label": "Mister Mixto 2", "factor": "scoring_mixto"},
-    "mr": {"prefer_competition": "premier", "avg_scale": 16.0, "label": "SofaScore / RPG-like", "factor": "scoring_sofascore"},
+    # prefer_competition solo se fuerza a Premier cuando la liga ES Premier (ver ff_hint_for_provider)
+    "mr": {"prefer_competition": None, "avg_scale": 16.0, "label": "SofaScore / RPG-like", "factor": "scoring_sofascore"},
     "as": {"prefer_competition": None, "avg_scale": 8.0, "label": "Cronistas AS", "factor": "scoring_as"},
     "marca": {"prefer_competition": None, "avg_scale": 8.0, "label": "Cronistas MARCA", "factor": "scoring_marca"},
     "marca_stats": {"prefer_competition": None, "avg_scale": 8.0, "label": "MARCA + Stats", "factor": "scoring_marca"},
@@ -81,20 +82,30 @@ def ff_hint_for_provider(provider: str | None, *, competition: str | None = None
     `prefer_competition` None → usar la competición de la liga.
     """
     key = (provider or "").strip().lower()
+    comp = (competition or "laliga").strip().lower()
+    high_scale = comp in ("premier", "seriea")
     base = dict(PROVIDER_FF_HINT.get(key) or {
         "prefer_competition": None,
-        "avg_scale": 8.0 if (competition or "laliga") != "premier" else 16.0,
+        "avg_scale": 16.0 if high_scale else 8.0,
         "label": provider_label(key) or "FF",
         "factor": f"scoring_{key or 'unknown'}",
     })
-    comp = (competition or "laliga").strip().lower()
     if key == "mr" and comp == "premier":
         base["prefer_competition"] = "premier"
+        base["avg_scale"] = 16.0
         base["label"] = "Fantasy RPG / SofaScore"
+    elif key == "mr" and comp == "seriea":
+        # Fantasy✨ en FF analytics; no forzar Premier
+        base["prefer_competition"] = "seriea"
+        base["avg_scale"] = 16.0
+        base["label"] = "Fantasy✨ / SofaScore"
     elif key in ("mix", "mix2") and comp == "premier":
         # Premier a veces publica Mixto; preferir columnas Mixto si existen
         base["prefer_competition"] = "premier"
         base["force_mixto_columns"] = True
+    elif key in ("mix", "mix2") and comp == "seriea":
+        base["prefer_competition"] = "seriea"
+        base["avg_scale"] = 16.0
     return base
 
 
