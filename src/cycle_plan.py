@@ -17,8 +17,10 @@ from competitive_actions import (
     _money,
     appreciation_play_score,
     clause_roi_gate,
+    cpu_spread_min_solvency_hours,
     is_rival_market_listing,
     mister_bid_cap,
+    resolve_transfer_wait_hours,
     sells_settle_before_deadline,
     xi_owned_ids,
 )
@@ -738,11 +740,14 @@ def build_cycle_plan(
     pending = [o for o in (state.get("pending_offers") or []) if isinstance(o, dict)]
     by_id = {_pid(p): p for p in squad if _pid(p)}
     outlier_pct = float(getattr(config, "CYCLE_OFFER_OUTLIER_PCT", 0.82) or 0.82)
+    premium_pct = float(getattr(config, "CYCLE_OFFER_PREMIUM_PCT", 1.0) or 1.0)
+    impatient_pct = float(getattr(config, "CPU_SPREAD_IMPATIENT_PCT", 0.98) or 0.98)
     max_bids = int(getattr(config, "CYCLE_MAX_BIDS", 3) or 3)
     max_lists = min(int(getattr(config, "CYCLE_MAX_LISTS", 5) or 5), sale_remaining)
     fixed = (market_mode or "auction") == "fixed"
     verb_bid = "ficha" if fixed else "puja"
     verb_bid_inf = "Fichar" if fixed else "Pujar"
+    transfer_wait_h = resolve_transfer_wait_hours(rules.get("transfer_wait"))
 
     moves: list[dict[str, Any]] = []
     accept_ids: set[str] = set()
@@ -750,6 +755,23 @@ def build_cycle_plan(
     slots_from_accepts = 0
     hold_rows: list[dict[str, Any]] = []
 
+    mc_pre = dict(market_cycle or {})
+    hours_deadline_pre = _f(hours_to_solvency_deadline)
+    if hours_deadline_pre is None:
+        hours_deadline_pre = _f(hours_to_jornada)
+    if hours_deadline_pre is None:
+        hours_deadline_pre = _f(mc_pre.get("hours_to_jornada")) or _f(
+            me.get("hours_to_jornada")
+        )
+    cycle_h_pre = _f(mc_pre.get("cycle_hours")) or float(
+        getattr(config, "MARKET_CYCLE_HOURS", 24) or 24
+    )
+    min_sol_h = cpu_spread_min_solvency_hours(
+        transfer_wait_hours=transfer_wait_h, cycle_hours=cycle_h_pre
+    )
+    solvency_tight = (
+        hours_deadline_pre is not None and hours_deadline_pre < min_sol_h * 1.25
+    )
     for offer in pending:
         pid = _pid(offer)
         player = by_id.get(pid) or offer
@@ -794,6 +816,36 @@ def build_cycle_plan(
                 f"es un fade (VM plano / no entra en el once). Cierra la rotación."
             )
             moves.append(_player_ref(player, kind=KIND_ACCEPT, why=why, extra={**extra, "accept_reason": "fade"}))
+            accept_ids.add(pid)
+            cash_from_accepts += amount
+            slots_from_accepts += 1
+        elif (
+            bool(offer.get("from_machine", True))
+            and pct is not None
+            and not _is_usable_starter(player, xi_ids)
+            and not _keep_riding(player)
+            and (
+                (transfer_wait_h > 0 and pct >= premium_pct)
+                or (solvency_tight and pct >= impatient_pct)
+            )
+        ):
+            why = (
+                f"Oferta máquina {_fmt_money(amount)} ({pct * 100:.1f}% VM): "
+                f"cierra sin esperar más"
+                + (
+                    " — espera compra→venta alarga el puente."
+                    if transfer_wait_h > 0 and pct >= premium_pct
+                    else " — el deadline de solvencia aprieta."
+                )
+            )
+            moves.append(
+                _player_ref(
+                    player,
+                    kind=KIND_ACCEPT,
+                    why=why,
+                    extra={**extra, "accept_reason": "cpu_spread_impatient"},
+                )
+            )
             accept_ids.add(pid)
             cash_from_accepts += amount
             slots_from_accepts += 1
@@ -877,14 +929,19 @@ def build_cycle_plan(
             or o.get("fills_need")
         )
         if not fills_hole:
-            if o.get("debt_risk"):
+            if o.get("debt_risk") and not o.get("cpu_spread_play"):
                 continue
             if o.get("budget_fit") not in ("comfortable", "tight", None):
-                continue
+                if not o.get("cpu_spread_play"):
+                    continue
         if closes_target:
             score += 36.0
             o = dict(o)
             o["closes_gw_target"] = True
+        if o.get("cpu_spread_play"):
+            score = max(score, 14.0)
+            o = dict(o)
+            o["cpu_spread_play"] = True
         if score < 12 and not closes_target:
             continue
         bid_cands.append((score, o))
@@ -946,6 +1003,13 @@ def build_cycle_plan(
                 why_bits.append(f"revaloriza {_fmt_pct(d5)}")
             if o.get("decelerating") is False and o.get("rising"):
                 why_bits.append("sigue al alza")
+            if o.get("cpu_spread_play"):
+                if transfer_wait_h <= 0:
+                    why_bits.append("harvest CPU: listar ya al fichar")
+                else:
+                    why_bits.append(
+                        f"harvest CPU: listar tras {transfer_wait_h:.0f}h de espera"
+                    )
             why = (
                 f"{'Ficha' if fixed else 'Puja por'} {o.get('name')} "
                 f"({_fmt_money(cost)}"
@@ -956,6 +1020,8 @@ def build_cycle_plan(
                 "bid": cost,
                 "amount": cost,
                 "closes_gw_target": bool(o.get("closes_gw_target")),
+                "cpu_spread_play": bool(o.get("cpu_spread_play")),
+                "cpu_spread_list_now": bool(o.get("cpu_spread_play")) and transfer_wait_h <= 0,
                 "appreciation_play": bool(
                     o.get("appreciation_play")
                     or (

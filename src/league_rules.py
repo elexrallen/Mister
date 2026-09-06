@@ -154,6 +154,14 @@ def compute_factors(rules: dict[str, Any]) -> list[str]:
     sale_limit = economy.get("sale_limit")
     if sale_limit:
         factors.append(f"sale_limit_{int(sale_limit)}")
+    try:
+        tw = int(rules.get("transfer_wait") or 0)
+    except (TypeError, ValueError):
+        tw = 0
+    if tw > 0:
+        factors.append(f"transfer_wait_{tw}")
+    else:
+        factors.append("transfer_wait_off")
     if rules.get("custom_rules"):
         factors.append("custom_rules_text")
     if rules.get("show_balances"):
@@ -480,6 +488,13 @@ def normalize_rules(
         market_stay = int(_pick("market_stay", default=1) or 1)
     except (TypeError, ValueError):
         market_stay = 1
+    # Espera compra→venta (admin). 0 = se puede listar al fichar (p.ej. Liga del patio).
+    try:
+        transfer_wait = int(_pick("transfer_wait", default=0) or 0)
+    except (TypeError, ValueError):
+        transfer_wait = 0
+    if transfer_wait < 0:
+        transfer_wait = 0
 
     custom_rules = _pick("custom_rules", default=None)
     if custom_rules is not None:
@@ -512,6 +527,7 @@ def normalize_rules(
         "loans_floor": loans_floor,
         "market_speed": market_speed,
         "market_stay": market_stay,
+        "transfer_wait": transfer_wait,
         "salaries": _truthy(_pick("salaries", default=0)),
         "live_changes": _truthy(_pick("live_changes", default=0)),
         "show_balances": _truthy(_pick("show_balances", default=0)),

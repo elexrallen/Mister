@@ -2411,6 +2411,283 @@ def promote_appreciation_plays(
     return replaced
 
 
+def resolve_transfer_wait_hours(raw: Any) -> float:
+    """Admin `transfer_wait`: 0=off; 1..5 → N×24h; ≥6 → horas literales."""
+    try:
+        v = int(raw or 0)
+    except (TypeError, ValueError):
+        v = 0
+    if v <= 0:
+        return 0.0
+    if v < 6:
+        return float(v * 24)
+    return float(v)
+
+
+def cpu_spread_min_solvency_hours(
+    *,
+    transfer_wait_hours: float,
+    cycle_hours: float,
+    holds_allowed: int | None = None,
+) -> float:
+    """lock = wait + (1 oferta + holds + 1 aire) × ciclo."""
+    ch = max(1.0, float(cycle_hours or 24))
+    holds = int(
+        holds_allowed
+        if holds_allowed is not None
+        else getattr(config, "CPU_SPREAD_HOLDS_ALLOWED", 1)
+    )
+    holds = max(0, holds)
+    wait = max(0.0, float(transfer_wait_hours or 0))
+    return wait + (1 + holds + 1) * ch
+
+
+def is_cpu_spread_candidate(
+    item: dict[str, Any],
+    *,
+    bid_cap: float | None = None,
+    balance: float | None = None,
+) -> bool:
+    """¿Libre ~VM en zona dulce de ticket para harvest CPU?"""
+    if not bool(getattr(config, "CPU_SPREAD_ENABLED", True)):
+        return False
+    if not item.get("on_daily_market") and item.get("seller") != "market":
+        return False
+    if _blocks_appreciation(item):
+        return False
+    if item.get("solvency_blocked") or item.get("budget_fit") == "blocked":
+        return False
+    if item.get("gw_out") or (item.get("external") or {}).get("gw_out"):
+        return False
+    avail = _ext_avail(item)
+    if avail in ("injured", "suspended"):
+        return False
+
+    vm = _money(item.get("market_value") or item.get("price") or item.get("cost"))
+    buy = _money(
+        item.get("bid")
+        or item.get("puja_recomendada")
+        or item.get("ask_price")
+        or item.get("price")
+        or item.get("cost")
+    )
+    if vm <= 0 or buy <= 0:
+        return False
+    ratio_max = float(getattr(config, "CPU_SPREAD_BUY_VM_RATIO_MAX", 1.01) or 1.01)
+    if buy / vm > ratio_max + 1e-9:
+        return False
+
+    min_vm = float(getattr(config, "CPU_SPREAD_MIN_VM", 4_000_000) or 4_000_000)
+    premium = float(getattr(config, "CPU_SPREAD_EXPECTED_PREMIUM", 0.025) or 0.025)
+    min_edge = float(getattr(config, "CPU_SPREAD_MIN_EXPECTED_EDGE", 100_000) or 100_000)
+    if vm < min_vm and vm * premium < min_edge:
+        return False
+
+    max_price = float(getattr(config, "CPU_SPREAD_MAX_PRICE", 10_000_000) or 10_000_000)
+    if buy > max_price:
+        return False
+
+    if bid_cap is not None:
+        try:
+            cap = float(bid_cap)
+        except (TypeError, ValueError):
+            cap = 0.0
+        frac = float(getattr(config, "CPU_SPREAD_MAX_DEBT_FRACTION", 0.30) or 0.30)
+        if cap > 0 and buy > cap * frac + 1:
+            return False
+        if buy > cap + 1:
+            return False
+    return True
+
+
+def promote_cpu_spread_harvest(
+    plan: list[dict[str, Any]],
+    *,
+    league_rules: dict[str, Any] | None = None,
+    sales_state: dict[str, Any] | None = None,
+    me: dict[str, Any] | None = None,
+    hours_to_solvency: float | None = None,
+    cycle_hours: float | None = None,
+    solvency_strict: bool = False,
+    has_critical_need: bool = False,
+    max_buys: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Carril terciario: comprar libre ~VM para cosechar prima CPU al listar.
+    Solo si no hay buy estructural ni appreciation; no toca priority_score_buy.
+    """
+    if not plan or not bool(getattr(config, "CPU_SPREAD_ENABLED", True)):
+        return plan
+    if solvency_strict or has_critical_need:
+        return plan
+
+    strong = [
+        i
+        for i in plan
+        if i.get("action") == "buy_now"
+        and (
+            i.get("fills_coverage_gap")
+            or i.get("fills_structural")
+            or i.get("fills_need")
+            or i.get("is_upgrade")
+            or i.get("upgrade_worth_buy")
+            or i.get("is_key_market")
+            or i.get("is_primary_target")
+            or i.get("is_board_objective")
+            or i.get("appreciation_play")
+            or i.get("cpu_spread_play")
+        )
+    ]
+    if strong:
+        return plan
+
+    rules = league_rules if isinstance(league_rules, dict) else {}
+    me_d = me if isinstance(me, dict) else {}
+    state = sales_state if isinstance(sales_state, dict) else {}
+    wait_h = resolve_transfer_wait_hours(rules.get("transfer_wait"))
+    try:
+        ch = float(
+            cycle_hours
+            if cycle_hours is not None
+            else (me_d.get("cycle_hours") or getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+        )
+    except (TypeError, ValueError):
+        ch = float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    min_h = cpu_spread_min_solvency_hours(transfer_wait_hours=wait_h, cycle_hours=ch)
+    try:
+        h_sol = float(hours_to_solvency) if hours_to_solvency is not None else None
+    except (TypeError, ValueError):
+        h_sol = None
+    if h_sol is not None and h_sol < min_h:
+        return plan
+
+    sale_limit = 5
+    try:
+        eco = rules.get("economy") if isinstance(rules.get("economy"), dict) else {}
+        sale_limit = int(eco.get("sale_limit") or rules.get("sale_limit") or 5)
+    except (TypeError, ValueError):
+        sale_limit = 5
+    listed_n = 0
+    try:
+        listed_n = int(state.get("listed_count") or len(state.get("listed") or []) or 0)
+    except (TypeError, ValueError):
+        listed_n = 0
+    sale_remaining = max(0, sale_limit - listed_n)
+    # Colchón 5/5: se puede rotar (unlist) un slot flojo; no bloqueamos.
+    can_rotate = sale_remaining > 0 or listed_n > 0
+
+    bal = _money(me_d.get("balance"))
+    try:
+        max_debt = float(me_d["max_debt"]) if me_d.get("max_debt") is not None else None
+    except (TypeError, ValueError):
+        max_debt = None
+    bid_cap = mister_bid_cap(bal, max_debt)
+
+    try:
+        max_squad = int(rules.get("max_squad") or me_d.get("max_squad") or 25)
+    except (TypeError, ValueError):
+        max_squad = 25
+    squad_n = len(me_d.get("squad") or [])
+    if squad_n >= max_squad:
+        return plan
+
+    cap = int(
+        max_buys
+        if max_buys is not None
+        else getattr(config, "CPU_SPREAD_MAX_BUYS", 1)
+    )
+    if cap <= 0 or not can_rotate:
+        return plan
+
+    cands: list[tuple[float, dict[str, Any], list[str]]] = []
+    for item in plan:
+        if item.get("action") not in ("wait", "buy_now"):
+            continue
+        if not is_cpu_spread_candidate(item, bid_cap=bid_cap, balance=bal):
+            continue
+        # Wait>0: preferir caja holgada (sin deuda) salvo ticket pequeño
+        buy = _money(item.get("bid") or item.get("puja_recomendada") or item.get("price"))
+        uses_debt = buy > bal + 1
+        if wait_h > 0 and uses_debt:
+            frac = float(getattr(config, "CPU_SPREAD_MAX_DEBT_FRACTION", 0.30) or 0.30)
+            if bid_cap <= 0 or buy > bid_cap * (frac * 0.5) + 1:
+                continue
+        vm = _money(item.get("market_value") or item.get("price"))
+        premium = float(getattr(config, "CPU_SPREAD_EXPECTED_PREMIUM", 0.025) or 0.025)
+        edge = vm * premium
+        # Preferir más edge € y compra más cerca del VM
+        ratio = buy / vm if vm > 0 else 99.0
+        score = edge / 1_000.0 - max(0.0, ratio - 1.0) * 50.0
+        bits = [
+            f"VM {_money(vm):,.0f}",
+            f"ask {_money(buy):,.0f}",
+            f"edge~{edge:,.0f}",
+        ]
+        if wait_h <= 0:
+            bits.append("listar ya")
+        else:
+            bits.append(f"listar tras {wait_h:.0f}h")
+        if sale_remaining <= 0:
+            bits.append("rotar colchón")
+        cands.append((score, item, bits))
+
+    cands.sort(key=lambda x: (-x[0], _money(x[1].get("price"))))
+    promoted_ids: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for score, item, bits in cands:
+        if len(promoted_ids) >= cap:
+            break
+        pid = str(item.get("player_id") or item.get("id") or "")
+        if pid and pid in promoted_ids:
+            continue
+        row = dict(item)
+        row["action"] = "buy_now"
+        row["cpu_spread_play"] = True
+        row["appreciation_play"] = False
+        row["urgency"] = row.get("urgency") or "low"
+        row["priority_score"] = int(row.get("priority_score") or 0) + int(
+            min(28, max(8, score / 10.0))
+        )
+        row["transfer_wait_hours"] = wait_h
+        row["cpu_spread_list_now"] = wait_h <= 0
+        tip = (
+            "harvest CPU: libre ~VM para cobrar prima de la máquina al listar"
+            if wait_h <= 0
+            else (
+                "harvest CPU: libre ~VM; listar cuando venza la espera compra→venta "
+                f"({wait_h:.0f}h)"
+            )
+        )
+        detail = "; ".join(bits[:4])
+        why = (row.get("why") or "").strip()
+        row["why"] = f"{tip} ({detail}); {why}" if why else f"{tip} ({detail})"
+        cats = list(row.get("categories") or [])
+        if "cpu_spread_harvest" not in cats:
+            cats.insert(0, "cpu_spread_harvest")
+        row["categories"] = cats
+        if pid:
+            promoted_ids.add(pid)
+        out.append(row)
+
+    if not promoted_ids:
+        return plan
+
+    replaced: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    by_id = {str(r.get("player_id") or r.get("id") or ""): r for r in out}
+    for item in plan:
+        pid = str(item.get("player_id") or item.get("id") or "")
+        if pid and pid in by_id and pid not in seen:
+            replaced.append(by_id[pid])
+            seen.add(pid)
+        elif not (pid and pid in promoted_ids):
+            replaced.append(item)
+    for pid, row in by_id.items():
+        if pid and pid not in seen:
+            replaced.append(row)
+    return replaced
+
+
 def is_key_market_candidate(
     o: dict[str, Any],
     *,
@@ -5449,8 +5726,8 @@ def _another_full_bid_ok(item: dict[str, Any], pos_full_count: dict[str, int]) -
 
 def _intent_eligible(item: dict[str, Any]) -> bool:
     """Excluye líneas sobradas sin gap/upgrade rentable del pool de intents/primary."""
-    if item.get("appreciation_play"):
-        # Flip de valor: permitido aunque la línea esté cubierta (tope de precio aparte)
+    if item.get("appreciation_play") or item.get("cpu_spread_play"):
+        # Flip / harvest: permitido aunque la línea esté cubierta (tope de precio aparte)
         return True
     if item.get("overstocked") and not (
         item.get("fills_coverage_gap")
@@ -5567,6 +5844,9 @@ def select_intent_lines(
     apprec_pool = [
         i for i in daily_buys if _intent_eligible(i) and i.get("appreciation_play")
     ]
+    cpu_spread_pool = [
+        i for i in daily_buys if _intent_eligible(i) and i.get("cpu_spread_play")
+    ]
     preferred = [
         i
         for i in daily_buys
@@ -5574,7 +5854,7 @@ def select_intent_lines(
         and ((bal - _item_buy_cost(i)) >= cash_reserve or i.get("leaves_gap_budget"))
     ]
     eligible = [i for i in daily_buys if _intent_eligible(i)]
-    pool = key_hit or gap_pool or apprec_pool or preferred or eligible
+    pool = key_hit or gap_pool or apprec_pool or cpu_spread_pool or preferred or eligible
     if not pool:
         return []
     first = max(pool, key=sort_key)
@@ -5839,10 +6119,24 @@ def finalize_action_plan(
         for i in plan
         if i.get("action") == "buy_now"
         and _is_daily_market_item(i)
-        and (i.get("target_tier") or target_tier_from_budget_fit(i.get("budget_fit"))) == "realistic"
+        and (
+            (i.get("target_tier") or target_tier_from_budget_fit(i.get("budget_fit")))
+            == "realistic"
+            or (
+                i.get("cpu_spread_play")
+                and (i.get("target_tier") or target_tier_from_budget_fit(i.get("budget_fit")))
+                == "stretch"
+                and not i.get("solvency_blocked")
+            )
+        )
         and (
             i.get("budget_fit") in ("comfortable", "tight", "funding", None)
             or i.get("swap_funded")
+            or (
+                i.get("cpu_spread_play")
+                and i.get("budget_fit") == "stretch"
+                and not i.get("solvency_blocked")
+            )
         )
     ]
 
@@ -5888,7 +6182,14 @@ def finalize_action_plan(
             if slots_left <= 0:
                 blocked_no_slot_ids.add(pid)
                 continue
-            if cost > sim:
+            if item.get("cpu_spread_play"):
+                # Deuda puente: techo = bid_cap Mister, no el saldo en caja.
+                cap = _money(item.get("bid_cap"))
+                if cap <= 0:
+                    cap = mister_bid_cap(bal, None)
+                if cost > cap + 1:
+                    continue
+            elif cost > sim:
                 continue
             funded_intent_ids.add(pid)
             intents.append(item)
@@ -6050,7 +6351,19 @@ def finalize_action_plan(
         pid = str(item.get("player_id") or "")
         item["package_id"] = package_id
         if pid in funded_intent_ids:
-            if item.get("is_key_market") or item.get("is_primary_target") or pid in primary_ids:
+            if item.get("cpu_spread_play"):
+                item["queue_role"] = "cpu_spread"
+                list_hint = (
+                    "listar ya tras fichar"
+                    if item.get("cpu_spread_list_now")
+                    else "listar cuando venza la espera compra→venta"
+                )
+                item["package_note"] = (
+                    f"Harvest CPU — fichar ~VM y {list_hint}"
+                    if fixed
+                    else f"Harvest CPU — pujar ~VM y {list_hint}"
+                )
+            elif item.get("is_key_market") or item.get("is_primary_target") or pid in primary_ids:
                 item["queue_role"] = "primary_target" if pid == primary_id else "secondary"
                 item["package_note"] = (
                     "Clave del mercado — fichar al precio"
@@ -6224,7 +6537,7 @@ def finalize_action_plan(
             line["hedge"] = _pkg_player_ref(priced_hedges[hid])
             line["exit_if_both"] = "sell_worse_next_cycle"
 
-    buy_roles = ("primary", "primary_target", "secondary", "hedge")
+    buy_roles = ("primary", "primary_target", "secondary", "hedge", "cpu_spread")
     # Ofertas recibidas: rol de cola antes del ranking
     for item in plan:
         if item.get("action") in ("accept_offer", "decline_offer", "hold_offer"):
@@ -6354,6 +6667,9 @@ def finalize_action_plan(
             item["_queue_rank"] = 9_000 + int(item.get("priority_score") or 0)
         elif role == "hedge":
             item["_queue_rank"] = 8_500 + int(item.get("priority_score") or 0)
+        elif role == "cpu_spread":
+            base = int(getattr(config, "CPU_SPREAD_QUEUE_BASE", 8_200) or 8_200)
+            item["_queue_rank"] = base + int(item.get("priority_score") or 0)
         elif role == "review_offer":
             # Decisiones de oferta: por encima de nuevos listados.
             # Las de cartera no empujan el plan de hoy.
@@ -6430,7 +6746,11 @@ def finalize_action_plan(
             )
         if a == "buy_now" and sim_balance is not None:
             cost = _item_buy_cost(item)
-            if cost > sim_balance:
+            if item.get("cpu_spread_play") or role == "cpu_spread":
+                cap = _money(item.get("bid_cap"))
+                if cap > 0 and cost > cap + 1:
+                    return False
+            elif cost > sim_balance:
                 return False
         if a == "clause_bid" and sim_balance is not None:
             cost = _money(

@@ -2214,6 +2214,7 @@ def fg_user_rules_snapshot(fg_user: dict[str, Any] | None) -> dict[str, Any]:
         "loans_floor",
         "market_speed",
         "market_stay",
+        "transfer_wait",
         "salaries",
         "live_changes",
         "show_balances",

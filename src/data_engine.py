@@ -73,6 +73,7 @@ from competitive_actions import (
     other_gaps_min_cost,
     promote_funded_swaps,
     promote_appreciation_plays,
+    promote_cpu_spread_harvest,
     prune_parking_sells_without_buy,
     reconcile_avoid_conflicts,
     resolve_hours_to_jornada,
@@ -2655,6 +2656,21 @@ def build_action_plan(
 
     # Sin hueco/upgrade/objetivo: fichar revalorizaciones del mercado de hoy
     plan = promote_appreciation_plays(plan)
+    # Tras appreciation: harvest CPU (±VM) solo si el ciclo sigue vacío
+    plan = promote_cpu_spread_harvest(
+        plan,
+        league_rules=rules,
+        sales_state=sales_state,
+        me=me,
+        hours_to_solvency=float(hours_solvency)
+        if hours_solvency is not None
+        else None,
+        cycle_hours=float(cash_lag) if cash_lag else None,
+        solvency_strict=solvency_strict_window(
+            float(hours_solvency) if hours_solvency is not None else None
+        ),
+        has_critical_need=bool(critical_pos or need_pos_alta),
+    )
     # Evitar contradicciones: avoid gana sobre buy/swap del mismo jugador
     plan = reconcile_avoid_conflicts(plan)
 
@@ -2695,6 +2711,7 @@ def build_action_plan(
             "clauses": clauses_ok,
             "loans": loans_ok,
             "market_urgency": market_urgency,
+            "transfer_wait": rules.get("transfer_wait"),
             "factors": list(rules.get("factors") or []),
             "economy": rules.get("economy") if isinstance(rules.get("economy"), dict) else None,
             "sale_limit": (rules.get("economy") or {}).get("sale_limit")

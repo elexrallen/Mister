@@ -514,6 +514,20 @@ CYCLE_LIST_SWAP_MARGIN = 0.08
 CYCLE_MAX_BIDS = 3
 CYCLE_MAX_LISTS = 5
 
+# Harvest del spread CPU (±~5% VM): carril terciario bajo appreciation.
+# Histograma live (~2026-09): media pct_of_vm≈0.97; primas >1.0 escasas → selectivo.
+CPU_SPREAD_ENABLED = True
+CPU_SPREAD_MAX_BUYS = 1
+CPU_SPREAD_MIN_VM = 4_000_000
+CPU_SPREAD_MIN_EXPECTED_EDGE = 100_000  # VM * EXPECTED_PREMIUM
+CPU_SPREAD_EXPECTED_PREMIUM = 0.025
+CPU_SPREAD_MAX_PRICE = 10_000_000
+CPU_SPREAD_MAX_DEBT_FRACTION = 0.30  # holgura maxDebt por ticket
+CPU_SPREAD_BUY_VM_RATIO_MAX = 1.01  # comprar ~al VM
+CPU_SPREAD_HOLDS_ALLOWED = 1  # holds selectivos antes de forzar salida
+CPU_SPREAD_IMPATIENT_PCT = 0.98  # accept máquina si aprieta solvencia / wait>0
+CPU_SPREAD_QUEUE_BASE = 8_200  # debajo de secondary(9k) / hedge(8.5k)
+
 # Pool completo Mister via POST /ajax/sw/players (páginas de 50)
 MISTER_POOL_PAGE_SIZE = 50
 MISTER_POOL_MAX_OFFSET = 2000

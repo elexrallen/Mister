@@ -41,6 +41,7 @@ La URL de scrape (LaLiga vs Premier) sigue la competición; el provider ajusta u
 | Cláusulas | `clauses` | Si off → no `clause_bid` |
 | Cesiones | `loans` | Si off → no asumir liquidez por loan |
 | Ritmo mercado | `market_speed` / `market_stay` | `market_urgency`; mercado rápido promueve `wait`→`buy_now` |
+| Espera compra→venta | `transfer_wait` (admin; 0 = off) | Factor `transfer_wait_off` / `transfer_wait_N`; gate del harvest CPU (listar al fichar solo si 0) |
 | Capitán | `captain` (`is_captain_enabled` + modo) | Factor `captain_by_value` (o `captain_x{n}` si override fijo); `recommended_xi.captain` por ganancia esperada |
 | Texto admin | `custom_rules` | Factor `custom_rules_text` (visible en JSON) |
 
