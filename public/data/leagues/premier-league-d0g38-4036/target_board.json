@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T08:11:03.340344+00:00",
+  "generated_at": "2026-09-06T13:26:46.036856+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 9.27,
+      "xpts_starters": 12.14,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -134,13 +134,13 @@
       "name": "J. Pickford",
       "team": "Everton",
       "team_id": "56",
-      "ep_score": 43.9,
-      "xpts": 8.73,
+      "ep_score": 46.6,
+      "xpts": 11.6,
       "price": 11395000.0,
       "status": "keep",
       "delta_5d": 0.0087,
       "value_note": "stable",
-      "value_ratio": 3.85,
+      "value_ratio": 4.09,
       "lineup_prob": 100.0,
       "ff_mister_points": 158.8,
       "ff_mister_avg": 4.18,
@@ -155,7 +155,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "8.7 xPts · 11,395,000 € · keep · starter",
+      "why": "11.6 xPts · 11,395,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -206,13 +206,13 @@
       "name": "J. Pickford",
       "team": "Everton",
       "team_id": "56",
-      "ep_score": 43.9,
-      "xpts": 8.73,
+      "ep_score": 46.6,
+      "xpts": 11.6,
       "price": 11395000.0,
       "status": "keep",
       "delta_5d": 0.0087,
       "value_note": "stable",
-      "value_ratio": 3.85,
+      "value_ratio": 4.09,
       "lineup_prob": 100.0,
       "ff_mister_points": 158.8,
       "ff_mister_avg": 4.18,
@@ -227,7 +227,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "8.7 xPts · 11,395,000 € · keep · starter",
+      "why": "11.6 xPts · 11,395,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -279,10 +279,10 @@
     "max_debt": 15048300.0,
     "bid_cap": 15048300.0,
     "max_squad": 25,
-    "n_free": 38,
+    "n_free": 39,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 4.822727171111111
+    "hours_to_jornada": 2.059832323611111
   },
   "finance": {
     "ok": true,
@@ -302,13 +302,13 @@
         "name": "J. Pickford",
         "team": "Everton",
         "team_id": "56",
-        "ep_score": 43.9,
-        "xpts": 8.73,
+        "ep_score": 46.6,
+        "xpts": 11.6,
         "price": 11395000.0,
         "status": "keep",
         "delta_5d": 0.0087,
         "value_note": "stable",
-        "value_ratio": 3.85,
+        "value_ratio": 4.09,
         "lineup_prob": 100.0,
         "ff_mister_points": 158.8,
         "ff_mister_avg": 4.18,
@@ -323,7 +323,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "8.7 xPts · 11,395,000 € · keep · starter",
+        "why": "11.6 xPts · 11,395,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -367,12 +367,12 @@
     "sell": []
   },
   "totals": {
-    "ep_sum": 9.27,
-    "ep_sum_starters": 9.27,
-    "xpts_starters": 9.27,
-    "xpts_total": 9.27,
-    "xpts_ceiling": 102.63,
-    "xpts_yours": 15.23,
+    "ep_sum": 12.14,
+    "ep_sum_starters": 12.14,
+    "xpts_starters": 12.14,
+    "xpts_total": 12.14,
+    "xpts_ceiling": 112.18,
+    "xpts_yours": 19.53,
     "cost_sum": 12074000.0,
     "net_buys": 0.0,
     "slots_filled": 2,
@@ -416,8 +416,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 9.27,
-    "ep_sum_starters": 9.27,
+    "ep_sum": 12.14,
+    "ep_sum_starters": 12.14,
     "mode": "ko",
     "formation": "4-3-3",
     "xi_rule": "formación 4-3-3 · once por xPts · 15 al KO",
