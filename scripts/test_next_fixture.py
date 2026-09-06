@@ -402,6 +402,117 @@ def test_laliga_split_gw_blanks_team_without_scoring_fixture() -> None:
     assert n >= 1
 
 
+def test_mid_gw_played_not_blanked_while_scoring_still_current() -> None:
+    """
+    Premier mid-GW: scoring_jornada sigue en J3 (quedan partidos), el schedule
+    ya no trae el partido pitado → no blankear a quien ya jugó; next → J4.
+    """
+    now = datetime(2026, 9, 6, 14, 0, tzinfo=timezone.utc)
+    players = [
+        {
+            "id": "gv",
+            "name": "Gvardiol",
+            "team_id": "60",
+            "position": "DF",
+            "lineup_prob": 0.9,
+        },
+        {
+            "id": "pk",
+            "name": "Pickford",
+            "team_id": "56",
+            "position": "GK",
+            "lineup_prob": 0.95,
+        },
+        {
+            "id": "blank",
+            "name": "Bye",
+            "team_id": "99",
+            "position": "FW",
+            "lineup_prob": 1.0,
+        },
+    ]
+    sched = {
+        # City ya jugó J3: solo queda J4 en schedule
+        "60": [
+            {
+                "jornada": 4,
+                "opponent_id": "70",
+                "is_home": True,
+                "kickoff_ts": int(datetime(2026, 9, 13, 15, 0, tzinfo=timezone.utc).timestamp()),
+                "status": "fixture",
+            }
+        ],
+        # Everton aún juega J3
+        "56": [
+            {
+                "jornada": 3,
+                "opponent_id": "51",
+                "is_home": False,
+                "kickoff_ts": int(datetime(2026, 9, 6, 16, 30, tzinfo=timezone.utc).timestamp()),
+                "status": "fixture",
+            }
+        ],
+    }
+    matchday = {
+        "jornada": 3,
+        "scoring_jornada": 3,
+        "fixtures": [
+            {"home_id": "60", "away_id": "55", "status": "played"},
+            {"home_id": "51", "away_id": "56", "status": "fixture"},
+            {"home_id": "52", "away_id": "53", "status": "played"},
+            {"home_id": "54", "away_id": "57", "status": "played"},
+            {"home_id": "58", "away_id": "59", "status": "played"},
+            {"home_id": "61", "away_id": "62", "status": "played"},
+        ],
+    }
+    apply_gameweek_to_players(
+        players,
+        {
+            "matchday": matchday,
+            "team_schedule": sched,
+            "preview": {
+                "gv": {
+                    "gw_opponent_id": "55",
+                    "gw_is_home": True,
+                    "gw_kickoff_ts": int(
+                        datetime(2026, 9, 5, 14, 0, tzinfo=timezone.utc).timestamp()
+                    ),
+                },
+                "pk": {
+                    "gw_opponent_id": "51",
+                    "gw_is_home": False,
+                    "gw_kickoff_ts": int(
+                        datetime(2026, 9, 6, 16, 30, tzinfo=timezone.utc).timestamp()
+                    ),
+                },
+            },
+            "points": {"gv": {"points": 6, "played": True, "status": "played"}},
+        },
+        now=now,
+    )
+    n = apply_blank_gameweek(players, matchday, team_schedule=sched, now=now)
+    by_id = {p["id"]: p for p in players}
+    assert by_id["gv"]["gw_played"] is True
+    assert by_id["gv"].get("gw_blank") in (False, None), by_id["gv"]
+    assert by_id["gv"].get("gw_out") in (False, None), by_id["gv"]
+    assert by_id["gv"]["next_jornada"] == 4
+    assert by_id["pk"].get("gw_blank") in (False, None)
+    assert by_id["pk"]["next_jornada"] == 3
+    assert by_id["blank"].get("gw_blank") is True
+    assert n >= 1
+    # El once no se queda solo en pendientes: Gvardiol (ya jugó) sigue usable
+    for p in players:
+        p["xpts"] = 8.0 if p["id"] != "blank" else 0.1
+    xi = build_recommended_gw_xi(players, matchday=matchday)
+    by_slot = {r.get("player_id"): r for r in (xi.get("xi") or [])}
+    assert "gv" in by_slot, xi
+    assert by_slot["gv"].get("signal") != "blank", by_slot["gv"]
+    if "blank" in by_slot:
+        # Solo entra como relleno si faltan FW; marcado blank/riesgo
+        assert by_slot["blank"].get("signal") == "blank", by_slot["blank"]
+        assert by_slot["blank"].get("slot_risk") is True, by_slot["blank"]
+
+
 if __name__ == "__main__":
     test_fixture_is_unplayed_by_kickoff_and_status()
     test_next_unplayed_skips_played()
@@ -416,4 +527,5 @@ if __name__ == "__main__":
     test_laliga_split_gw_aligns_to_j6_before_thursday()
     test_laliga_split_gw_aligns_to_j4_after_thursday()
     test_laliga_split_gw_blanks_team_without_scoring_fixture()
+    test_mid_gw_played_not_blanked_while_scoring_still_current()
     print("test_next_fixture: OK")

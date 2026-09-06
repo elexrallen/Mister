@@ -2057,8 +2057,22 @@ def _stamp_next_fixture(
         if not player.get("gw_played") and mister_gameweek.fixture_is_unplayed(gw_row, now=now):
             rows = [gw_row, *rows]
     target_j = mister_gameweek.coerce_jornada(scoring_jornada)
+    cur_j = mister_gameweek.coerce_jornada(current_jornada)
     if target_j is not None:
         nxt = mister_gameweek.fixture_for_jornada(rows, target_j, now=now)
+        # Schedule omite played: si ya puntuó en la jornada de scoring, avanza
+        # al siguiente kickoff en vez de marcar blank (bug mid-GW Premier).
+        already_done = bool(player.get("gw_played"))
+        if (
+            not already_done
+            and gw_row
+            and cur_j is not None
+            and cur_j == target_j
+            and not mister_gameweek.fixture_is_unplayed(gw_row, now=now)
+        ):
+            already_done = True
+        if nxt is None and already_done:
+            nxt = mister_gameweek.next_unplayed_fixture(rows, now=now)
     else:
         nxt = mister_gameweek.next_unplayed_fixture(rows, now=now)
     if nxt and nxt.get("opponent_id"):
@@ -2077,6 +2091,17 @@ def _stamp_next_fixture(
             ext["gw_out"] = False
         return
     if target_j is not None:
+        # Ya jugó esta scoring GW pero no hay next en schedule: no blankear.
+        if player.get("gw_played"):
+            if player.get("gw_blank"):
+                player["gw_blank"] = False
+                player["gw_out"] = False
+            ext = player.get("external")
+            if isinstance(ext, dict) and ext.get("gw_blank"):
+                ext["gw_blank"] = False
+                ext["gw_out"] = False
+            _clear_next_fixture(player)
+            return
         _stamp_blank_for_scoring(player)
         return
     if player.get("gw_played"):

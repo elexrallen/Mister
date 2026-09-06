@@ -457,13 +457,20 @@ def apply_blank_gameweek(
     Si hay `scoring_jornada` + `team_schedule`, blankea contra esa jornada
     (aunque el panel del jueves solo traiga 1 partido). Si no, usa el panel
     y exige suficientes fixtures para no inventar blanks.
+
+    Importante: el schedule omite partidos ya pitados. En jornada en curso hay
+    que unir el panel (y respetar `gw_played`) para no blankear a quien ya jugó.
     """
     if not isinstance(matchday, dict):
         return 0
     scoring_j = coerce_jornada(matchday.get("scoring_jornada"))
+    panel_j = coerce_jornada(matchday.get("jornada"))
     playing: set[str] = set()
     if scoring_j is not None and isinstance(team_schedule, dict) and team_schedule:
         playing = playing_team_ids_for_jornada(team_schedule, scoring_j, now=now)
+        # Misma jornada en el panel: incluye equipos que YA jugaron
+        if panel_j is None or panel_j == scoring_j:
+            playing |= playing_team_ids(matchday)
     if not playing:
         fixtures = matchday.get("fixtures") or []
         if not isinstance(fixtures, list) or len(fixtures) < min_fixtures:
@@ -481,7 +488,11 @@ def apply_blank_gameweek(
         tid = str(p.get("team_id") or "")
         if not tid:
             continue
-        if tid in playing:
+        # Ya puntuó en la jornada de scoring: no es blank (schedule sin played)
+        played_this_scoring = bool(p.get("gw_played")) and (
+            scoring_j is None or panel_j is None or panel_j == scoring_j
+        )
+        if tid in playing or played_this_scoring:
             if p.get("gw_blank"):
                 p["gw_blank"] = False
                 p["gw_out"] = False
