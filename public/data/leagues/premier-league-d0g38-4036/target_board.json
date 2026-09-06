@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-06T13:26:46.036856+00:00",
+  "generated_at": "2026-09-06T13:58:22.796730+00:00",
   "league_slug": "premier-league-d0g38-4036",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -276,13 +276,13 @@
     "settle_before_ko": false,
     "sale_limit": 5,
     "sale_remaining": 0,
-    "max_debt": 15048300.0,
-    "bid_cap": 15048300.0,
+    "max_debt": 1375280.0,
+    "bid_cap": 1375280.0,
     "max_squad": 25,
     "n_free": 39,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 2.059832323611111
+    "hours_to_jornada": 1.532854447222222
   },
   "finance": {
     "ok": true,
