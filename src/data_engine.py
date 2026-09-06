@@ -67,6 +67,7 @@ from competitive_actions import (
     estimate_gap_funding,
     evaluate_bid_finance,
     finalize_action_plan,
+    harvest_blocks_on_critical_need,
     is_key_market_candidate,
     liquidity_balance,
     mister_bid_cap,
@@ -87,6 +88,7 @@ from competitive_actions import (
     trade_asset_score,
     wait_risk,
 )
+from rival_finances import resolve_me_debt_caps
 from target_board import (
     board_objective_ids,
     board_primary_ids,
@@ -839,6 +841,7 @@ def classify_market_opportunities(
     competition_phase: str = "preseason",
     market_mode: str = "auction",
     max_debt: float | None = None,
+    max_debt_remaining: float | None = None,
     balance_future: float | None = None,
     hours_to_jornada: float | None = None,
     days_to_kickoff: float | int | None = None,
@@ -849,7 +852,8 @@ def classify_market_opportunities(
     Clasifica oportunidades: carencias, titularidad, cobertura por posición.
     Insiste si falta profundidad; demota si la línea ya está cubierta.
     market_mode=fixed → precio listado sin sobrepuja.
-    Techo Mister = max_debt; solvencia al inicio de jornada objetivo.
+    Techo de valoración = bid_cap_ceiling (o max_debt si no hay techo);
+    max_debt_remaining = holgura para abrir pujas nuevas.
     """
     pos_prices: dict[str, list[float]] = {}
     for p in market:
@@ -864,7 +868,11 @@ def classify_market_opportunities(
     needs = structural_needs or []
     preseasonish = competition_phase in ("preseason", "ramp")
     fixed = (market_mode or "auction") == "fixed"
-    bid_ceiling_cap = mister_bid_cap(my_balance, max_debt)
+    # max_debt aquí = techo de fit (ceiling); residual aparte
+    debt_for_fit = max_debt
+    remaining = max_debt_remaining if max_debt_remaining is not None else max_debt
+    bid_ceiling_cap = mister_bid_cap(my_balance, debt_for_fit)
+    residual_cap = mister_bid_cap(my_balance, remaining)
     cash_lag = float(int(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24))
 
     opportunities: list[dict[str, Any]] = []
@@ -965,7 +973,7 @@ def classify_market_opportunities(
             recommended = money(list_price * (1 + premium))
             bid_ceiling = money(list_price * (1 + premium + 0.05))
         min_bid = list_price
-        # Capear techos de puja al maxDebt Mister
+        # Capear techos de puja al techo total (no a la holgura residual)
         if bid_ceiling_cap > 0:
             recommended = min(recommended, bid_ceiling_cap)
             bid_ceiling = min(bid_ceiling, bid_ceiling_cap)
@@ -1015,7 +1023,7 @@ def classify_market_opportunities(
             recommended,
             my_balance,
             min_cost=min_bid,
-            max_debt=max_debt,
+            max_debt=debt_for_fit,
             balance_future=balance_future,
             hours_to_jornada=hours_to_jornada,
             days_to_kickoff=days_to_kickoff,
@@ -1023,9 +1031,12 @@ def classify_market_opportunities(
             sell_proceeds_timely=sell_proceeds_timely,
             cash_lag_hours=cash_lag,
         )
+        residual_tight = recommended > residual_cap + 1
         blocked = fin.get("budget_fit") == "blocked" or bool(fin.get("solvency_blocked"))
         if blocked:
             score -= 40  # aspiracional: no empujar el plan del día
+        elif residual_tight:
+            score -= 12  # cabe en techo, pero no hay holgura para abrir otra
         elif bool(fin.get("debt_risk")):
             score -= 8
         elif recommended > float(fin.get("liquidity") or 0) * 0.85 and float(fin.get("liquidity") or 0) > 0:
@@ -1203,6 +1214,10 @@ def classify_market_opportunities(
             "affordable": not blocked and fin.get("budget_fit") in ("comfortable", "tight", "stretch"),
             "budget_fit": fin.get("budget_fit"),
             "bid_cap": fin.get("bid_cap"),
+            "bid_cap_ceiling": debt_for_fit,
+            "max_debt_remaining": remaining,
+            "residual_bid_cap": residual_cap,
+            "residual_tight": residual_tight,
             "debt_risk": bool(fin.get("debt_risk")),
             "solvency_ok": bool(fin.get("solvency_ok")),
             "solvency_blocked": bool(fin.get("solvency_blocked")),
@@ -1760,14 +1775,50 @@ def build_action_plan(
     balance = float(me.get("balance") or 0)
     max_debt_raw = me.get("max_debt")
     try:
-        max_debt = float(max_debt_raw) if max_debt_raw is not None else None
+        max_debt_api = float(max_debt_raw) if max_debt_raw is not None else None
     except (TypeError, ValueError):
-        max_debt = None
+        max_debt_api = None
     bal_future_raw = me.get("balance_future")
     try:
         balance_future = float(bal_future_raw) if bal_future_raw is not None else None
     except (TypeError, ValueError):
         balance_future = None
+    eco = rules.get("economy") if isinstance(rules.get("economy"), dict) else {}
+    debt_level = me.get("max_debt_level")
+    if debt_level is None:
+        debt_level = eco.get("max_debt")
+    try:
+        remaining_hint = (
+            float(me["max_debt_remaining"])
+            if me.get("max_debt_remaining") is not None
+            else max_debt_api
+        )
+    except (TypeError, ValueError):
+        remaining_hint = max_debt_api
+    debt_caps = resolve_me_debt_caps(
+        balance,
+        remaining_hint,
+        squad_value=float(me.get("squad_value") or 0) or None,
+        max_debt_level=debt_level,
+        balance_future=balance_future,
+    )
+    if me.get("bid_cap_ceiling") is not None:
+        try:
+            debt_caps["bid_cap_ceiling"] = float(me["bid_cap_ceiling"])
+        except (TypeError, ValueError):
+            pass
+    # Fit / techo total vs holgura para abrir puja nueva
+    max_debt = (
+        float(debt_caps["bid_cap_ceiling"])
+        if debt_caps.get("bid_cap_ceiling") is not None
+        else max_debt_api
+    )
+    remaining_debt = (
+        float(debt_caps["max_debt_remaining"])
+        if debt_caps.get("max_debt_remaining") is not None
+        else max_debt_api
+    )
+    residual_cap = mister_bid_cap(balance, remaining_debt)
     days_to_kickoff = (diagnostico_plantilla or {}).get("days_to_kickoff")
     hours_to_jornada = (diagnostico_plantilla or {}).get("hours_to_jornada")
     matchday_ctx = (diagnostico_plantilla or {}).get("matchday")
@@ -1890,6 +1941,8 @@ def build_action_plan(
         bf = str(fin.get("budget_fit") or o.get("budget_fit") or "blocked")
         debt_risk = bool(fin.get("debt_risk") or o.get("debt_risk"))
         solvency_blocked = bool(fin.get("solvency_blocked") or o.get("solvency_blocked"))
+        residual_tight = cost > residual_cap + 1
+        ceiling_txt = float(fin.get("bid_cap") or max_debt or 0)
 
         pos = o.get("position")
         other_min = other_gaps_min_cost(
@@ -2255,7 +2308,7 @@ def build_action_plan(
             if not any("no titular" in w for w in why_parts):
                 why_parts.append("FF jornada: no titular probable — evitar fichar ahora")
 
-        # Techo = maxDebt. stretch legal si cierra hueco / objetivo; flips no.
+        # Techo = capacidad total. stretch legal si cierra hueco / objetivo; flips no.
         worth_debt = bool(
             fills
             or fills_cov
@@ -2266,16 +2319,15 @@ def build_action_plan(
         )
         if buy_now and bf not in ("comfortable", "tight"):
             if bf == "stretch" and worth_debt:
-                cap_txt = float(fin.get("bid_cap") or 0)
                 why_parts.append(
-                    f"cabe en el techo de deuda ({cap_txt:,.0f} €)"
+                    f"cabe en el techo de deuda ({ceiling_txt:,.0f} €)"
                     + (" — usas margen" if debt_risk else "")
                 )
             else:
                 buy_now = False
                 if solvency_blocked or bf == "blocked":
                     why_parts.append(
-                        f"supera techo Mister ({float(fin.get('bid_cap') or 0):,.0f} €)"
+                        f"supera techo Mister ({ceiling_txt:,.0f} €)"
                     )
                 elif crowds_out:
                     why_parts.append(
@@ -2288,13 +2340,22 @@ def build_action_plan(
                     )
                 else:
                     why_parts.append(
-                        f"supera techo Mister ({float(fin.get('bid_cap') or balance):,.0f} €)"
+                        f"supera techo Mister ({ceiling_txt or balance:,.0f} €)"
                         if cost > float(fin.get("bid_cap") or balance)
                         else f"fuera de margen ({balance:,.0f} €)"
                     )
         elif buy_now and debt_risk:
             why_parts.append(
-                f"usas deuda (techo {float(fin.get('bid_cap') or 0):,.0f} €)"
+                f"usas deuda (techo {ceiling_txt:,.0f} €)"
+            )
+
+        # Holgura residual: no abrir otra puja si el techo residual no llega
+        if buy_now and residual_tight:
+            buy_now = False
+            why_parts.append(
+                f"holgura residual baja ({residual_cap:,.0f} €); "
+                f"techo total ~{ceiling_txt:,.0f} € — si ya pujaste, mantener; "
+                "si no, libera margen antes de abrir otra"
             )
 
         if leaves_budget and (buy_now or fills):
@@ -2388,6 +2449,10 @@ def build_action_plan(
             "solvency_blocked": solvency_blocked,
             "solvency_ok": bool(fin.get("solvency_ok")),
             "bid_cap": fin.get("bid_cap"),
+            "bid_cap_ceiling": max_debt,
+            "max_debt_remaining": remaining_debt,
+            "residual_bid_cap": residual_cap,
+            "residual_tight": residual_tight,
             "hours_to_jornada": fin.get("hours_to_jornada"),
         }
 
@@ -2661,7 +2726,12 @@ def build_action_plan(
         plan,
         league_rules=rules,
         sales_state=sales_state,
-        me=me,
+        me={
+            **me,
+            "max_debt": remaining_debt,
+            "max_debt_remaining": remaining_debt,
+            "bid_cap_ceiling": max_debt,
+        },
         hours_to_solvency=float(hours_solvency)
         if hours_solvency is not None
         else None,
@@ -2669,7 +2739,13 @@ def build_action_plan(
         solvency_strict=solvency_strict_window(
             float(hours_solvency) if hours_solvency is not None else None
         ),
-        has_critical_need=bool(critical_pos or need_pos_alta),
+        has_critical_need=harvest_blocks_on_critical_need(
+            critical_pos=critical_pos,
+            need_pos_alta=need_pos_alta,
+            structural_needs=structural_needs,
+            diagnostico_plantilla=diagnostico_plantilla,
+            squad=me.get("squad") if isinstance(me.get("squad"), list) else None,
+        ),
     )
     # Evitar contradicciones: avoid gana sobre buy/swap del mismo jugador
     plan = reconcile_avoid_conflicts(plan)
@@ -3158,15 +3234,53 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         bal_future_f = float(bal_future_me) if bal_future_me is not None else None
     except (TypeError, ValueError):
         bal_future_f = None
+    eco_lvl = (league_rules.get("economy") or {}).get("max_debt") if isinstance(
+        league_rules.get("economy"), dict
+    ) else None
+    debt_level_me = me.get("max_debt_level")
+    if debt_level_me is None:
+        debt_level_me = eco_lvl
+    try:
+        remaining_me = (
+            float(me["max_debt_remaining"])
+            if me.get("max_debt_remaining") is not None
+            else max_debt_f
+        )
+    except (TypeError, ValueError):
+        remaining_me = max_debt_f
+    debt_caps_me = resolve_me_debt_caps(
+        float(me.get("balance") or 0),
+        remaining_me,
+        squad_value=float(me.get("squad_value") or 0) or None,
+        max_debt_level=debt_level_me,
+        balance_future=bal_future_f,
+    )
+    if me.get("bid_cap_ceiling") is not None:
+        try:
+            debt_caps_me["bid_cap_ceiling"] = float(me["bid_cap_ceiling"])
+        except (TypeError, ValueError):
+            pass
+    me["max_debt_remaining"] = debt_caps_me.get("max_debt_remaining", remaining_me)
+    me["bid_cap_ceiling"] = debt_caps_me.get("bid_cap_ceiling")
+    me["bids_reserved"] = debt_caps_me.get("bids_reserved")
+    me["max_debt_level"] = debt_caps_me.get("max_debt_level", debt_level_me)
+    me["bid_cap"] = debt_caps_me.get("bid_cap")
+    debt_for_fit = (
+        float(debt_caps_me["bid_cap_ceiling"])
+        if debt_caps_me.get("bid_cap_ceiling") is not None
+        else max_debt_f
+    )
     log.info(
-        "Diagnóstico estructural salud=%s needs=%s consejos=%s phase=%s days_to_j1=%s hours_jornada=%s max_debt=%s",
+        "Diagnóstico estructural salud=%s needs=%s consejos=%s phase=%s days_to_j1=%s hours_jornada=%s "
+        "max_debt_remaining=%s bid_cap_ceiling=%s",
         diagnostico_plantilla.get("salud_score"),
         len(diagnostico_plantilla.get("structural_needs") or []),
         len(diagnostico_plantilla.get("consejos") or []),
         competition_phase,
         comp.get("days_to_kickoff"),
         hours_j,
-        max_debt_f,
+        me.get("max_debt_remaining"),
+        me.get("bid_cap_ceiling"),
     )
 
     opportunities = classify_market_opportunities(
@@ -3181,7 +3295,8 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         squad=squad,
         competition_phase=competition_phase,
         market_mode=market_mode,
-        max_debt=max_debt_f,
+        max_debt=debt_for_fit,
+        max_debt_remaining=me.get("max_debt_remaining"),
         balance_future=bal_future_f,
         hours_to_jornada=hours_j,
         days_to_kickoff=comp.get("days_to_kickoff"),
@@ -3410,7 +3525,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         float(me.get("balance") or 0),
         points_phase=points_phase,
         market_mode=market_mode,
-        max_debt=max_debt_f,
+        max_debt=debt_for_fit,
         balance_future=bal_future_f,
         hours_to_jornada=hours_j,
         days_to_kickoff=comp.get("days_to_kickoff"),
@@ -3424,7 +3539,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             rivals,
             balance=float(me.get("balance") or 0),
             points_phase=points_phase,
-            max_debt=max_debt_f,
+            max_debt=debt_for_fit,
             balance_future=bal_future_f,
             hours_to_jornada=hours_j,
             days_to_kickoff=comp.get("days_to_kickoff"),
@@ -3442,7 +3557,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         perf_idx,
         allow_synthetic=not honest_live,
         balance=float(me.get("balance") or 0),
-        max_debt=max_debt_f,
+        max_debt=debt_for_fit,
         balance_future=bal_future_f,
         hours_to_jornada=hours_j,
         days_to_kickoff=comp.get("days_to_kickoff"),
@@ -3880,8 +3995,22 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     if hours_solvency_out is None:
         hours_solvency_out = hours_out
     liquidity_now = liquidity_balance(bal, bal_future_out)
-    bid_cap_now = mister_bid_cap(bal, max_debt_out)
-    solvency_ok = bid_cap_now > 0
+    bid_cap_now = mister_bid_cap(
+        bal,
+        float(me.get("max_debt_remaining"))
+        if me.get("max_debt_remaining") is not None
+        else max_debt_out,
+    )
+    ceiling_out = me.get("bid_cap_ceiling")
+    try:
+        ceiling_out_f = float(ceiling_out) if ceiling_out is not None else None
+    except (TypeError, ValueError):
+        ceiling_out_f = None
+    if ceiling_out_f is None:
+        ceiling_out_f = debt_caps_me.get("bid_cap_ceiling")
+    solvency_ok = bid_cap_now > 0 or (
+        ceiling_out_f is not None and float(ceiling_out_f) > 0
+    )
     solvency_strict = solvency_strict_window(
         float(hours_solvency_out) if hours_solvency_out is not None else None
     )
@@ -4018,7 +4147,11 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "balance": me.get("balance"),
             "balance_future": bal_future_out,
             "max_debt": max_debt_out,
-            "bid_cap": mister_bid_cap(bal, max_debt_out),
+            "max_debt_remaining": me.get("max_debt_remaining", max_debt_out),
+            "bid_cap": bid_cap_now,
+            "bid_cap_ceiling": ceiling_out_f,
+            "bids_reserved": me.get("bids_reserved"),
+            "max_debt_level": me.get("max_debt_level"),
             "solvency_ok": solvency_ok,
             "solvency_strict": solvency_strict,
             "hours_to_jornada": hours_out,
@@ -4036,7 +4169,10 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "balance": me.get("balance"),
             "balance_future": bal_future_out,
             "max_debt": max_debt_out,
-            "bid_cap": mister_bid_cap(bal, max_debt_out),
+            "max_debt_remaining": me.get("max_debt_remaining", max_debt_out),
+            "bid_cap": bid_cap_now,
+            "bid_cap_ceiling": ceiling_out_f,
+            "bids_reserved": me.get("bids_reserved"),
             "solvency_ok": solvency_ok,
             "solvency_strict": solvency_strict,
             "hours_to_jornada": hours_out,

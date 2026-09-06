@@ -120,6 +120,76 @@ def rival_bid_cap(
     return float(balance or 0) + float(squad_value or 0) * frac
 
 
+def resolve_me_debt_caps(
+    balance: float,
+    max_debt_api: float | None,
+    *,
+    squad_value: float | None = None,
+    max_debt_level: Any = None,
+    balance_future: float | None = None,
+) -> dict[str, Any]:
+    """
+    Separa holgura residual (API maxDebt) del techo teórico de puja.
+
+    - maxDebt del AJAX = capacidad restante para NUEVAS pujas (tras las abiertas).
+    - Techo = saldo + VM_plantilla × fracción(nivel), misma fórmula que rivales.
+    - bids_reserved ≈ techo − residual, o saldo − balance_future.
+    """
+    bal = float(balance or 0)
+    remaining: float | None
+    try:
+        remaining = float(max_debt_api) if max_debt_api is not None else None
+    except (TypeError, ValueError):
+        remaining = None
+
+    ceiling: float | None = None
+    try:
+        sv = float(squad_value) if squad_value is not None else None
+    except (TypeError, ValueError):
+        sv = None
+    if sv is not None and sv > 0:
+        ceiling = rival_bid_cap(bal, sv, max_debt_level)
+
+    reserved: float | None = None
+    if balance_future is not None:
+        try:
+            reserved = max(0.0, bal - float(balance_future))
+        except (TypeError, ValueError):
+            reserved = None
+
+    if ceiling is None and remaining is not None and reserved is not None:
+        ceiling = remaining + reserved
+    elif ceiling is not None and remaining is not None and reserved is None:
+        reserved = max(0.0, ceiling - remaining)
+    elif ceiling is not None and remaining is None and reserved is not None:
+        remaining = max(0.0, ceiling - reserved)
+
+    # Holgura para abrir puja nueva (= API residual si existe).
+    if remaining is not None:
+        bid_cap_new = remaining
+    else:
+        bid_cap_new = max(0.0, bal)
+
+    fit_cap = ceiling if ceiling is not None else remaining
+    if fit_cap is None:
+        fit_cap = bid_cap_new
+
+    level_out: float | None
+    try:
+        level_out = float(max_debt_level) if max_debt_level is not None else None
+    except (TypeError, ValueError):
+        level_out = None
+
+    return {
+        "max_debt_remaining": remaining,
+        "bid_cap_ceiling": ceiling,
+        "bids_reserved": reserved,
+        "max_debt_level": level_out,
+        "bid_cap": bid_cap_new,
+        "bid_cap_for_fit": fit_cap,
+    }
+
+
 def vm_at_date(points: list[dict[str, Any]], target: date | None) -> int | None:
     """VM en `target` o el punto más cercano (empate → el anterior o igual)."""
     if not points or target is None:

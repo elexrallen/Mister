@@ -11,6 +11,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from competitive_actions import (  # noqa: E402
     cpu_spread_min_solvency_hours,
     finalize_action_plan,
+    harvest_blocks_on_critical_need,
     is_cpu_spread_candidate,
     promote_appreciation_plays,
     promote_cpu_spread_harvest,
@@ -164,6 +165,85 @@ def test_promote_skips_critical_and_strict() -> None:
     _assert(not any(i.get("cpu_spread_play") for i in out2), "strict blocks")
 
 
+def test_gk_tandem_does_not_block_harvest() -> None:
+    # Titular usable + alerta tándem → no tumba harvest
+    _assert(
+        not harvest_blocks_on_critical_need(
+            critical_pos={"GK"},
+            need_pos_alta={"GK"},
+            structural_needs=[
+                {"need": "gk_tandem", "position": "GK", "priority": "Alta"}
+            ],
+            diagnostico_plantilla={"lineas": {"GK": {"starters_real": 1}}},
+        ),
+        "gk tandem soft",
+    )
+    # Sin titular GK → sí bloquea
+    _assert(
+        harvest_blocks_on_critical_need(
+            critical_pos={"GK"},
+            need_pos_alta={"GK"},
+            structural_needs=[
+                {"need": "gk_backup", "position": "GK", "priority": "Alta"}
+            ],
+            diagnostico_plantilla={"lineas": {"GK": {"starters_real": 0}}},
+        ),
+        "no starter blocks",
+    )
+    # FW Alta real sigue bloqueando aunque GK sea soft
+    _assert(
+        harvest_blocks_on_critical_need(
+            critical_pos=set(),
+            need_pos_alta={"GK", "FW"},
+            structural_needs=[
+                {"need": "gk_tandem", "position": "GK", "priority": "Alta"},
+                {"need": "fw_starters", "position": "FW", "priority": "Alta"},
+            ],
+            diagnostico_plantilla={"lineas": {"GK": {"starters_real": 1}}},
+        ),
+        "fw still blocks",
+    )
+
+
+def test_harvest_uses_ceiling_size_but_residual_for_new() -> None:
+    # Ticket 5M cabe en techo 28M (fracción), pero residual 1.4M no permite abrir
+    harvest = _free_agent(vm=5_000_000, buy=5_000_000)
+    out = promote_cpu_spread_harvest(
+        [harvest],
+        league_rules={"transfer_wait": 0, "max_squad": 25, "sale_limit": 5},
+        sales_state={"listed_count": 2},
+        me={
+            "balance": 250_000,
+            "max_debt": 1_400_000,
+            "max_debt_remaining": 1_400_000,
+            "bid_cap_ceiling": 28_000_000,
+            "squad": [{}] * 16,
+        },
+        hours_to_solvency=120.0,
+        cycle_hours=12.0,
+        has_critical_need=False,
+    )
+    _assert(not any(i.get("cpu_spread_play") for i in out), "residual blocks new")
+
+    # Con holgura residual suficiente sí promueve (tamaño vs techo)
+    out2 = promote_cpu_spread_harvest(
+        [harvest],
+        league_rules={"transfer_wait": 0, "max_squad": 25, "sale_limit": 5},
+        sales_state={"listed_count": 2},
+        me={
+            "balance": 250_000,
+            "max_debt": 10_000_000,
+            "max_debt_remaining": 10_000_000,
+            "bid_cap_ceiling": 28_000_000,
+            "squad": [{}] * 16,
+        },
+        hours_to_solvency=120.0,
+        cycle_hours=12.0,
+        has_critical_need=False,
+    )
+    _assert(any(i.get("cpu_spread_play") for i in out2), "ceiling allows size")
+
+
 def test_promote_below_appreciation() -> None:
     """Appreciation gana: si ya hay appreciation_play buy, no harvest."""
     harvest = _free_agent()
@@ -314,6 +394,8 @@ if __name__ == "__main__":
         test_candidate_gates_vm_and_ratio,
         test_promote_only_when_idle,
         test_promote_skips_critical_and_strict,
+        test_gk_tandem_does_not_block_harvest,
+        test_harvest_uses_ceiling_size_but_residual_for_new,
         test_promote_below_appreciation,
         test_finalize_queue_role_cpu_spread,
         test_cycle_impatient_accept_when_wait,

@@ -20,6 +20,7 @@ from rival_finances import (  # noqa: E402
     parse_feed_transfers,
     parse_player_profile,
     profile_is_initial_held,
+    resolve_me_debt_caps,
     rival_bid_cap,
     run_rival_finances,
     snapshot_needs_bootstrap,
@@ -36,6 +37,26 @@ def test_bid_cap_formula_patio() -> None:
     assert rival_bid_cap(17_940_654, 88_359_000, 4) == 40_030_404
     # Saldo negativo: −15.864.844 + 99.063.000 × 0,25
     assert rival_bid_cap(-15_864_844, 99_063_000, 4) == 8_900_906
+
+
+def test_resolve_me_debt_caps_residual_vs_ceiling() -> None:
+    # Patio-like: residual API ~1.36M, future −27M, VM ~110M, nivel 4
+    caps = resolve_me_debt_caps(
+        248_000,
+        1_360_000,
+        squad_value=110_000_000,
+        max_debt_level=4,
+        balance_future=-27_000_000,
+    )
+    assert caps["max_debt_remaining"] == 1_360_000
+    assert caps["bid_cap"] == 1_360_000
+    # techo = 248k + 110M*0.25 = 27_748_000
+    assert caps["bid_cap_ceiling"] == 27_748_000
+    assert caps["bids_reserved"] == 248_000 - (-27_000_000)
+    assert caps["bid_cap_for_fit"] == 27_748_000
+    # Ticket 10M: cabe en techo, no en residual
+    assert 10_000_000 <= caps["bid_cap_for_fit"]
+    assert 10_000_000 > caps["bid_cap"]
 
 
 def test_parse_es_date_sept() -> None:
@@ -840,6 +861,7 @@ def test_probe_json_if_present() -> None:
 def main() -> None:
     tests = [
         test_bid_cap_formula_patio,
+        test_resolve_me_debt_caps_residual_vs_ceiling,
         test_parse_es_date_sept,
         test_huijsen_is_initial,
         test_vlachodimos_is_market,

@@ -2580,6 +2580,12 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
         id_competition_i = None
 
     finance_meta: dict[str, Any] = {}
+    cid = str(community)
+    comms = fg_user.get("communities") if isinstance(fg_user.get("communities"), dict) else {}
+    comm_row = comms.get(cid) if isinstance(comms.get(cid), dict) else {}
+    debt_lvl = comm_row.get("max_debt") if comm_row else None
+    if debt_lvl is None:
+        debt_lvl = (admin_data or {}).get("max_debt") if isinstance(admin_data, dict) else None
     try:
         from datetime import date as date_cls
 
@@ -2594,7 +2600,6 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             start_mode_for_league,
         )
 
-        cid = str(community)
         ov = dict(config.LEAGUE_OVERRIDES.get(cid) or {})
         raw_sorteo = ov.get("sorteo_date")
         if isinstance(raw_sorteo, str) and raw_sorteo:
@@ -2613,11 +2618,6 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             ov.get("starting_budget")
             or getattr(config, "DEFAULT_STARTING_BUDGET", 50_000_000)
         )
-        comms = fg_user.get("communities") if isinstance(fg_user.get("communities"), dict) else {}
-        comm_row = comms.get(cid) if isinstance(comms.get(cid), dict) else {}
-        debt_lvl = comm_row.get("max_debt") if comm_row else None
-        if debt_lvl is None:
-            debt_lvl = (admin_data or {}).get("max_debt") if isinstance(admin_data, dict) else None
         smode = start_mode_for_league(
             str(fg_user.get("type") or ""),
             str(fg_user.get("mode") or ""),
@@ -2754,6 +2754,21 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             f"premios={finance_meta.get('prizes_events')})"
         )
 
+    squad_value_out = squad_value or int((me_row or {}).get("squad_value") or 0)
+    debt_caps: dict[str, Any] = {}
+    try:
+        from rival_finances import resolve_me_debt_caps
+
+        debt_caps = resolve_me_debt_caps(
+            float(bal),
+            float(max_debt) if max_debt is not None else None,
+            squad_value=float(squad_value_out or 0) or None,
+            max_debt_level=debt_lvl,
+            balance_future=float(bal_future) if bal_future is not None else None,
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("resolve_me_debt_caps falló: %s", exc)
+
     return {
         "league": {
             "id": str(community),
@@ -2768,8 +2783,14 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
             "team_name": team_name,
             "balance": bal,
             "balance_future": bal_future,
+            # max_debt = holgura residual API (nuevas pujas), no techo total
             "max_debt": max_debt,
-            "squad_value": squad_value or int((me_row or {}).get("squad_value") or 0),
+            "max_debt_remaining": debt_caps.get("max_debt_remaining", max_debt),
+            "bid_cap": debt_caps.get("bid_cap"),
+            "bid_cap_ceiling": debt_caps.get("bid_cap_ceiling"),
+            "bids_reserved": debt_caps.get("bids_reserved"),
+            "max_debt_level": debt_caps.get("max_debt_level", debt_lvl),
+            "squad_value": squad_value_out,
             "rank": int((me_row or {}).get("rank") or 0) or None,
             "points": int((me_row or {}).get("points") or 0),
             "formation": fg_user.get("formation"),

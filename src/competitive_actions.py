@@ -53,6 +53,74 @@ def mister_bid_cap(balance: float, max_debt: float | None = None) -> float:
     return md
 
 
+def harvest_blocks_on_critical_need(
+    *,
+    critical_pos: set[Any] | None = None,
+    need_pos_alta: set[Any] | None = None,
+    structural_needs: list[dict[str, Any]] | None = None,
+    diagnostico_plantilla: dict[str, Any] | None = None,
+    squad: list[dict[str, Any]] | None = None,
+) -> bool:
+    """
+    True si hay carencia dura que tumba harvest CPU.
+    Tándem / suplente GK con titular usable NO bloquea (casi no juega).
+    """
+    lineas = (diagnostico_plantilla or {}).get("lineas") or {}
+    gk = lineas.get("GK") if isinstance(lineas.get("GK"), dict) else {}
+    try:
+        gk_starters = int(gk.get("starters_real") or gk.get("starters") or 0)
+    except (TypeError, ValueError):
+        gk_starters = 0
+    if gk_starters <= 0 and squad:
+        thr = float(getattr(config, "LINEUP_PROB_TITULAR", 0.70))
+        gk_starters = sum(
+            1
+            for s in squad
+            if s.get("position") == "GK"
+            and not (
+                s.get("injury")
+                or (s.get("external") or {}).get("availability")
+                in ("injured", "suspended")
+            )
+            and float(s.get("lineup_prob") or 0) >= thr
+        )
+
+    soft_gk_needs = {"gk_tandem", "gk_backup", "gk_no_tandem", "gk_single"}
+    blocking: set[str] = set()
+    for pos in critical_pos or set():
+        p = str(pos or "")
+        if not p:
+            continue
+        if p == "GK" and gk_starters >= 1:
+            continue
+        blocking.add(p)
+
+    # Alta estructural: solo GK soft no cuenta si hay titular
+    alta_pos = {str(p) for p in (need_pos_alta or set()) if p}
+    soft_gk_alta = False
+    for n in structural_needs or []:
+        if n.get("priority") != "Alta":
+            continue
+        need = str(n.get("need") or "")
+        pos = str(n.get("position") or "")
+        if need in soft_gk_needs and gk_starters >= 1:
+            soft_gk_alta = True
+            continue
+        if pos == "GK" and gk_starters >= 1 and need.startswith("gk_"):
+            soft_gk_alta = True
+            continue
+        if pos:
+            blocking.add(pos)
+
+    for pos in alta_pos:
+        if pos == "GK" and (gk_starters >= 1 or soft_gk_alta):
+            continue
+        if pos:
+            blocking.add(pos)
+
+    return bool(blocking)
+
+
 def liquidity_balance(balance: float, balance_future: float | None = None) -> float:
     """Mejor estimación de caja post-pujas pendientes."""
     if balance_future is not None:
@@ -2581,7 +2649,25 @@ def promote_cpu_spread_harvest(
         max_debt = float(me_d["max_debt"]) if me_d.get("max_debt") is not None else None
     except (TypeError, ValueError):
         max_debt = None
-    bid_cap = mister_bid_cap(bal, max_debt)
+    try:
+        remaining = (
+            float(me_d["max_debt_remaining"])
+            if me_d.get("max_debt_remaining") is not None
+            else max_debt
+        )
+    except (TypeError, ValueError):
+        remaining = max_debt
+    try:
+        ceiling = (
+            float(me_d["bid_cap_ceiling"])
+            if me_d.get("bid_cap_ceiling") is not None
+            else None
+        )
+    except (TypeError, ValueError):
+        ceiling = None
+    # Tamaño de ticket vs techo total; abrir nueva puja vs residual
+    size_cap = mister_bid_cap(bal, ceiling if ceiling is not None else remaining)
+    new_cap = mister_bid_cap(bal, remaining)
 
     try:
         max_squad = int(rules.get("max_squad") or me_d.get("max_squad") or 25)
@@ -2603,14 +2689,17 @@ def promote_cpu_spread_harvest(
     for item in plan:
         if item.get("action") not in ("wait", "buy_now"):
             continue
-        if not is_cpu_spread_candidate(item, bid_cap=bid_cap, balance=bal):
+        if not is_cpu_spread_candidate(item, bid_cap=size_cap, balance=bal):
             continue
         # Wait>0: preferir caja holgada (sin deuda) salvo ticket pequeño
         buy = _money(item.get("bid") or item.get("puja_recomendada") or item.get("price"))
+        # Nueva puja: hace falta holgura residual (no confundir con techo total)
+        if buy > new_cap + 1:
+            continue
         uses_debt = buy > bal + 1
         if wait_h > 0 and uses_debt:
             frac = float(getattr(config, "CPU_SPREAD_MAX_DEBT_FRACTION", 0.30) or 0.30)
-            if bid_cap <= 0 or buy > bid_cap * (frac * 0.5) + 1:
+            if size_cap <= 0 or buy > size_cap * (frac * 0.5) + 1:
                 continue
         vm = _money(item.get("market_value") or item.get("price"))
         premium = float(getattr(config, "CPU_SPREAD_EXPECTED_PREMIUM", 0.025) or 0.025)
