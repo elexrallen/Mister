@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-07T12:49:59.959823+00:00",
+  "generated_at": "2026-09-07T16:47:01.746403+00:00",
   "league_slug": "serie-a-d0g8-5236",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 93.26,
+      "xpts_starters": 93.28,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 89.24,
+      "xpts_starters": 89.26,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 89.24,
+      "xpts_starters": 89.26,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 91.62,
+      "xpts_starters": 91.64,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 91.62,
+      "xpts_starters": 91.64,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 91.57,
+      "xpts_starters": 91.59,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 89.45,
+      "xpts_starters": 89.47,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 80.2,
+      "xpts_starters": 80.22,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -135,7 +135,7 @@
       "team": "Udinese",
       "team_id": "201",
       "ep_score": 74.7,
-      "xpts": 10.51,
+      "xpts": 10.48,
       "price": 8099000.0,
       "status": "keep",
       "delta_5d": 0.0536,
@@ -338,13 +338,13 @@
       "name": "D. Frattesi 💥",
       "team": "Lazio",
       "team_id": "193",
-      "ep_score": 46.8,
-      "xpts": 11.87,
+      "ep_score": 46.9,
+      "xpts": 11.92,
       "price": 2960000.0,
       "status": "keep",
       "delta_5d": 0.1513,
       "value_note": "rising",
-      "value_ratio": 15.81,
+      "value_ratio": 15.84,
       "lineup_prob": 90.0,
       "ff_mister_points": 64.0,
       "ff_mister_avg": 2.91,
@@ -615,7 +615,7 @@
       "team": "Udinese",
       "team_id": "201",
       "ep_score": 74.7,
-      "xpts": 10.51,
+      "xpts": 10.48,
       "price": 8099000.0,
       "status": "keep",
       "delta_5d": 0.0536,
@@ -818,13 +818,13 @@
       "name": "D. Frattesi 💥",
       "team": "Lazio",
       "team_id": "193",
-      "ep_score": 46.8,
-      "xpts": 11.87,
+      "ep_score": 46.9,
+      "xpts": 11.92,
       "price": 2960000.0,
       "status": "keep",
       "delta_5d": 0.1513,
       "value_note": "rising",
-      "value_ratio": 15.81,
+      "value_ratio": 15.84,
       "lineup_prob": 90.0,
       "ff_mister_points": 64.0,
       "ff_mister_avg": 2.91,
@@ -1095,10 +1095,10 @@
     "max_debt": 12743994.0,
     "bid_cap": 12743994.0,
     "max_squad": 25,
-    "n_free": 248,
+    "n_free": 249,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 3.6754895683333335
+    "hours_to_jornada": 1.9734568925
   },
   "finance": {
     "ok": true,
@@ -1119,7 +1119,7 @@
         "team": "Udinese",
         "team_id": "201",
         "ep_score": 74.7,
-        "xpts": 10.51,
+        "xpts": 10.48,
         "price": 8099000.0,
         "status": "keep",
         "delta_5d": 0.0536,
@@ -1322,13 +1322,13 @@
         "name": "D. Frattesi 💥",
         "team": "Lazio",
         "team_id": "193",
-        "ep_score": 46.8,
-        "xpts": 11.87,
+        "ep_score": 46.9,
+        "xpts": 11.92,
         "price": 2960000.0,
         "status": "keep",
         "delta_5d": 0.1513,
         "value_note": "rising",
-        "value_ratio": 15.81,
+        "value_ratio": 15.84,
         "lineup_prob": 90.0,
         "ff_mister_points": 64.0,
         "ff_mister_avg": 2.91,
@@ -1591,12 +1591,12 @@
     "sell": []
   },
   "totals": {
-    "ep_sum": 95.97,
-    "ep_sum_starters": 93.26,
-    "xpts_starters": 93.26,
-    "xpts_total": 95.97,
-    "xpts_ceiling": 192.71,
-    "xpts_yours": 117.0,
+    "ep_sum": 95.99,
+    "ep_sum_starters": 93.28,
+    "xpts_starters": 93.28,
+    "xpts_total": 95.99,
+    "xpts_ceiling": 194.87,
+    "xpts_yours": 117.12,
     "cost_sum": 46394000.0,
     "net_buys": 0.0,
     "slots_filled": 14,
@@ -1640,8 +1640,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 95.97,
-    "ep_sum_starters": 93.26,
+    "ep_sum": 95.99,
+    "ep_sum_starters": 93.28,
     "mode": "ko",
     "formation": "4-3-3",
     "xi_rule": "formación 4-3-3 · once por xPts · 15 al KO",
