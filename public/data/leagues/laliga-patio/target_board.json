@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-08T07:20:00.693563+00:00",
+  "generated_at": "2026-09-08T08:18:26.818279+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1027,7 +1027,7 @@
     "max_debt": 19960541.0,
     "bid_cap": 19960541.0,
     "max_squad": 25,
-    "n_free": 179,
+    "n_free": 180,
     "s_on_board": 0,
     "p_appear": 0.0,
     "hours_to_jornada": null
@@ -1528,7 +1528,7 @@
     "ep_sum_starters": 54.27,
     "xpts_starters": 54.27,
     "xpts_total": 58.84,
-    "xpts_ceiling": 88.24,
+    "xpts_ceiling": 88.25,
     "xpts_yours": 54.27,
     "cost_sum": 112804000.0,
     "net_buys": 0.0,
