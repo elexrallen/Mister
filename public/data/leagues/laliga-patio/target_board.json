@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-09T08:22:36.691523+00:00",
+  "generated_at": "2026-09-09T15:17:20.172646+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -274,7 +274,7 @@
       "xpts": 8.0,
       "price": 2776500.0,
       "status": "buy",
-      "delta_5d": 0.1474,
+      "delta_5d": 0.2019,
       "value_note": "rising",
       "value_ratio": 18.26,
       "lineup_prob": 84.0,
@@ -788,7 +788,7 @@
       "xpts": 8.0,
       "price": 2776500.0,
       "status": "buy",
-      "delta_5d": 0.1474,
+      "delta_5d": 0.2019,
       "value_note": "rising",
       "value_ratio": 18.26,
       "lineup_prob": 84.0,
@@ -1200,10 +1200,10 @@
     "max_debt": 21888321.0,
     "bid_cap": 21888321.0,
     "max_squad": 25,
-    "n_free": 191,
+    "n_free": 182,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 58.6289450925
+    "hours_to_jornada": 51.717047731388895
   },
   "finance": {
     "ok": true,
@@ -1705,7 +1705,7 @@
         "xpts": 8.0,
         "price": 2776500.0,
         "status": "buy",
-        "delta_5d": 0.1474,
+        "delta_5d": 0.2019,
         "value_note": "rising",
         "value_ratio": 18.26,
         "lineup_prob": 84.0,
