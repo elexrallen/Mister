@@ -7,7 +7,8 @@ Donde:
   - `p_juega`  combina la previa de Mister (once probable, confirmado o no),
     el % de FutbolFantasy y los minutos reales derivados de la racha Mister.
   - `produccion_base` mezcla histórico FF, racha y media Mister. Con menos
-    de 5 partidos el histórico manda; media y racha corta no se doblecuentan.
+    de 5 partidos el histórico manda salvo que dispare vs la forma Mister
+    (Fantasy✨ ~14–17 vs SofaScore ~6): entonces manda la racha/media viva.
   - `ajuste_fdr` viene de `fixture_difficulty` (rival y localía).
 
 Regla de oro: una jornada se pierde por ceros, no por falta de estrellas. Por eso
@@ -36,6 +37,12 @@ P_PLAY_UNKNOWN = 0.45
 RECENT_MIN_SAMPLE = 5
 # A partir de aquí manda la temporada en curso sobre el histórico
 SEASON_TRUST_SAMPLE = 10
+# Hist FF vs forma Mister: si el hist está en otra escala (Serie A Fantasy✨
+# ~17 vs SofaScore ~6), el 85 % hist con 3 PJ infla el xPts. Patio Mixto
+# (hist ~7, slump de 1–2 pts) no entra: el ancla viva es demasiado baja.
+HIST_INFLATION_RATIO = 1.4
+HIST_ANCHOR_MIN = 3.0
+LIVE_BASE_CAP_MULT = 1.75
 
 
 def _num(value: Any) -> float | None:
@@ -154,12 +161,43 @@ def _historic_avg(player: dict[str, Any]) -> float | None:
     return hist
 
 
+def _mister_anchor(current: float | None, season_avg: float | None) -> float | None:
+    """La forma viva más creíble (racha o media Mister), para detectar hist inflado."""
+    vals = [v for v in (current, season_avg) if v is not None and v > 0]
+    return max(vals) if vals else None
+
+
+def _hist_inflated(hist: float | None, anchor: float | None) -> bool:
+    """True si el hist FF no puede ser la misma escala que la forma Mister."""
+    if hist is None or anchor is None:
+        return False
+    if anchor < HIST_ANCHOR_MIN:
+        return False
+    return hist > HIST_INFLATION_RATIO * anchor
+
+
+def _cap_base(
+    base: float,
+    scale: float,
+    live: float | None,
+    inflated: bool,
+) -> float:
+    ceiling = scale * 2.0
+    if inflated:
+        if live is not None and live > 0:
+            ceiling = min(ceiling, max(live * LIVE_BASE_CAP_MULT, scale * 0.55))
+        else:
+            ceiling = min(ceiling, scale * 0.9)
+    return max(0.0, min(base, ceiling))
+
+
 def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
     """
     Puntos esperados por partido jugado, en la escala del provider.
 
     Con muestra corta el histórico FF manda y la racha solo matiza. Media
     Mister y racha de <5 jornadas son el mismo n: no se cuentan dos veces.
+    Si el hist dispara vs una forma Mister ya creíble, manda la forma viva.
     """
     played = _played_points(player)
     n = len(played)
@@ -185,10 +223,18 @@ def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
         current = season_avg
         current_label = "media Mister"
 
+    anchor = _mister_anchor(current, season_avg)
+    inflated = _hist_inflated(hist, anchor)
+    live = current if current is not None else season_avg
+
     if n < RECENT_MIN_SAMPLE:
         if hist is not None and current is not None:
-            base = 0.85 * hist + 0.15 * current
-            why = f"histórico FF {hist:.1f} · {current_label} (aún no manda)"
+            if inflated:
+                base = 0.30 * hist + 0.70 * current
+                why = f"histórico FF {hist:.1f} desinflado · {current_label} manda"
+            else:
+                base = 0.85 * hist + 0.15 * current
+                why = f"histórico FF {hist:.1f} · {current_label} (aún no manda)"
         elif hist is not None:
             base = hist
             why = f"histórico FF {hist:.1f}"
@@ -199,8 +245,12 @@ def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
             return scale * 0.55, "sin histórico"
     elif n < SEASON_TRUST_SAMPLE:
         if hist is not None and current is not None:
-            base = 0.5 * hist + 0.5 * current
-            why = f"histórico FF {hist:.1f} + {current_label}"
+            if inflated:
+                base = 0.20 * hist + 0.80 * current
+                why = f"{current_label} manda · histórico FF {hist:.1f} desinflado"
+            else:
+                base = 0.5 * hist + 0.5 * current
+                why = f"histórico FF {hist:.1f} + {current_label}"
         elif current is not None:
             base = current
             why = current_label
@@ -211,8 +261,12 @@ def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
             return scale * 0.55, "sin histórico"
     else:
         if current is not None and hist is not None:
-            base = 0.70 * current + 0.30 * hist
-            why = f"{current_label} + histórico FF"
+            if inflated:
+                base = 0.85 * current + 0.15 * hist
+                why = f"{current_label} manda · histórico FF desinflado"
+            else:
+                base = 0.70 * current + 0.30 * hist
+                why = f"{current_label} + histórico FF"
         elif current is not None:
             base = current
             why = current_label
@@ -222,7 +276,7 @@ def production_base(player: dict[str, Any], scale: float) -> tuple[float, str]:
         else:
             return scale * 0.55, "sin histórico"
 
-    return max(0.0, min(base, scale * 2.0)), why
+    return _cap_base(base, scale, live, inflated), why
 
 
 def expected_points(

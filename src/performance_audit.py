@@ -429,6 +429,7 @@ def evaluate_xi(
             "current_pts": None,
             "naive_price_pts": None,
             "gap_vs_current_pct": None,
+            "gap_vs_naive_pct": None,
             "per_jornada": [],
             "reading": (
                 "Aún no hay snapshots con once recomendado y jornada cerrada. "
@@ -437,16 +438,29 @@ def evaluate_xi(
         }
 
     rec_total = sum(g["recommended"] for g in per_gw)
-    cur_vals = [g["current"] for g in per_gw if g["current"] is not None]
-    naive_vals = [g["naive_price"] for g in per_gw if g["naive_price"] is not None]
-    cur_total = sum(cur_vals) if cur_vals else None
-    naive_total = sum(naive_vals) if naive_vals else None
+    paired_current = [g for g in per_gw if g["current"] is not None]
+    paired_naive = [g for g in per_gw if g["naive_price"] is not None]
+    cur_total = sum(g["current"] for g in paired_current) if paired_current else None
+    naive_total = sum(g["naive_price"] for g in paired_naive) if paired_naive else None
+    rec_vs_current = (
+        sum(g["recommended"] for g in paired_current) if paired_current else None
+    )
+    rec_vs_naive = sum(g["recommended"] for g in paired_naive) if paired_naive else None
     gap_pct = None
-    if cur_total is not None and cur_total != 0:
-        gap_pct = (rec_total - cur_total) / abs(cur_total) * 100.0
+    if (
+        rec_vs_current is not None
+        and cur_total is not None
+        and cur_total != 0
+    ):
+        gap_pct = (rec_vs_current - cur_total) / abs(cur_total) * 100.0
+    gap_naive = None
+    if rec_vs_naive is not None and naive_total is not None and naive_total != 0:
+        gap_naive = (rec_vs_naive - naive_total) / abs(naive_total) * 100.0
     status = "ok"
-    if gap_pct is not None and gap_pct < -1.0:
-        status = "fail" if gap_pct <= -15.0 else "warn"
+    for gap in (gap_pct, gap_naive):
+        if gap is None or gap >= -1.0:
+            continue
+        status = "fail" if gap <= -15.0 else ("warn" if status != "fail" else status)
     reading = (
         f"Once recomendado {rec_total:.0f} pts en {len(per_gw)} jornada(s) cerrada(s)"
     )
@@ -456,6 +470,8 @@ def evaluate_xi(
             reading += f" ({gap_pct:+.1f}%)"
     if naive_total is not None:
         reading += f"; naive por precio {naive_total:.0f}"
+        if gap_naive is not None:
+            reading += f" ({gap_naive:+.1f}%)"
     reading += "."
     return {
         "status": status,
@@ -464,6 +480,7 @@ def evaluate_xi(
         "current_pts": round(cur_total, 1) if cur_total is not None else None,
         "naive_price_pts": round(naive_total, 1) if naive_total is not None else None,
         "gap_vs_current_pct": round(gap_pct, 1) if gap_pct is not None else None,
+        "gap_vs_naive_pct": round(gap_naive, 1) if gap_naive is not None else None,
         "per_jornada": per_gw,
         "reading": reading,
     }
@@ -655,6 +672,7 @@ def apply_gates(
     rho = _num(ranking.get("spearman"))
     lift = _num(ranking.get("lift"))
     gap = _num(xi.get("gap_vs_current_pct"))
+    gap_naive = _num(xi.get("gap_vs_naive_pct"))
 
     out = [
         _gate(
@@ -685,7 +703,13 @@ def apply_gates(
             "xi_vs_current",
             gap is None or gap >= -float(g["max_xi_gap_pct"]),
             f"once vs alineado {xi.get('gap_vs_current_pct')}% (suelo -{g['max_xi_gap_pct']}%)",
-            skip=xi.get("status") in ("empty", "thin", None),
+            skip=xi.get("status") in ("empty", "thin", None) or gap is None,
+        ),
+        _gate(
+            "xi_vs_naive",
+            gap_naive is None or gap_naive >= -float(g["max_xi_gap_pct"]),
+            f"once vs naive-precio {xi.get('gap_vs_naive_pct')}% (suelo -{g['max_xi_gap_pct']}%)",
+            skip=xi.get("status") in ("empty", "thin", None) or gap_naive is None,
         ),
         _gate(
             "market_buy_vs_avoid",

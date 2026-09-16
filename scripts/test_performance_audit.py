@@ -113,9 +113,56 @@ def test_xi_fails_when_worse_than_aligned() -> None:
     snaps = _closed_gw_snaps()
     snaps[0]["decisions"]["xi_ids"] = ["d", "e"]  # 1+0
     snaps[0]["decisions"]["current_starter_ids"] = ["a", "b", "c"]  # 23
+    snaps[0]["decisions"]["squad_ids"] = ["d", "e", "a", "b", "c"]
+    snaps[0]["prices"] = {"d": 10, "e": 9, "a": 1, "b": 1, "c": 1}
     rep = evaluate_xi(snaps, current_jornada=2)
     assert rep["status"] == "fail", rep
     assert rep["gap_vs_current_pct"] is not None and rep["gap_vs_current_pct"] < -15, rep
+
+
+def test_xi_compares_current_only_on_overlapping_gws() -> None:
+    """No mezclar 4 jornadas de recomendado contra 1 de alineado."""
+    snaps = _closed_gw_snaps()
+    snaps.append(
+        {
+            "date": "2026-08-17",
+            "jornada": 3,
+            "gameweek_status": "pending",
+            "prices": {"a": 100, "b": 90, "c": 50},
+            "xpts": {"a": [5.0, 0.9]},
+            "decisions": {
+                "xi_ids": ["a", "b", "c"],
+                "current_starter_ids": [],
+                "squad_ids": ["a", "b", "c"],
+            },
+        }
+    )
+    snaps.append(
+        {
+            "date": "2026-08-18",
+            "jornada": 3,
+            "gameweek_status": "ongoing",
+            "gw_points": {"a": 10, "b": 10, "c": 10},
+        }
+    )
+    rep = evaluate_xi(snaps, current_jornada=4)
+    assert rep["sample_gws"] == 2, rep
+    # J1 rec 23 vs current 18; J3 rec 30 sin alineado → gap solo J1
+    assert rep["gap_vs_current_pct"] is not None
+    assert abs(rep["gap_vs_current_pct"] - (23 - 18) / 18 * 100) < 0.5, rep
+
+
+def test_xi_vs_naive_gate_fails_when_price_beats_model() -> None:
+    snaps = _closed_gw_snaps()
+    snaps[0]["decisions"]["xi_ids"] = ["e", "d"]  # 0+1
+    snaps[0]["decisions"]["current_starter_ids"] = ["e", "d"]
+    snaps[0]["decisions"]["squad_ids"] = ["a", "b", "c", "d", "e"]
+    snaps[0]["prices"] = {"a": 300, "b": 200, "c": 150, "d": 10, "e": 5}
+    # naive top-2 by price among squad = a,b → 10+7=17; rec e+d = 1
+    rep = evaluate_xi(snaps, current_jornada=2)
+    assert rep["gap_vs_naive_pct"] is not None and rep["gap_vs_naive_pct"] < -15, rep
+    failed = [g["id"] for g in apply_gates({"ranking": {"sample": 40, "spearman": 0.4, "lift": 2}, "calibration": {"sample": 40, "by_p_play": {"titular": {"mae": 1, "bias": 0}}}, "xi": rep, "market": {"status": "ok"}, "pipeline": {"status": "ok"}}) if not g["ok"] and not g["skip"]]
+    assert "xi_vs_naive" in failed, (failed, rep)
 
 
 def test_xi_empty_without_decisions() -> None:
@@ -319,6 +366,8 @@ def main() -> None:
         test_ranking_empty_when_too_few,
         test_xi_recommended_beats_current_and_price_naive,
         test_xi_fails_when_worse_than_aligned,
+        test_xi_compares_current_only_on_overlapping_gws,
+        test_xi_vs_naive_gate_fails_when_price_beats_model,
         test_xi_empty_without_decisions,
         test_market_buy_now_beats_avoid,
         test_market_fails_when_avoids_score_more,

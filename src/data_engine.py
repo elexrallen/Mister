@@ -3920,15 +3920,27 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     matchday_meta = matchday_early
     gw_xi_advice = build_gw_xi_advice(squad, matchday=matchday_meta or {})
     # recommended_xi ya calculado tras bootstrap (antes del action plan)
-    my_gw_lineup = gw_bundle.get("my_lineup") if isinstance(gw_bundle.get("my_lineup"), dict) else None
-    if my_gw_lineup:
-        recommended_xi["current"] = {
-            "captain_id": my_gw_lineup.get("captain_id"),
-            "captain_set": bool(my_gw_lineup.get("captain_set")),
-            "starter_ids": [r.get("player_id") for r in my_gw_lineup.get("starters") or []],
-            "points": my_gw_lineup.get("points"),
-            "rank": my_gw_lineup.get("rank"),
-        }
+    my_gw_lineup = gw_bundle.get("my_lineup") if isinstance(gw_bundle.get("my_lineup"), dict) else {}
+    starter_ids = [
+        str(r.get("player_id"))
+        for r in (my_gw_lineup.get("starters") or [])
+        if r.get("player_id")
+    ]
+    if not starter_ids:
+        # Premier/Serie A a veces no traen lineup.positions dict-of-dicts;
+        # el HTML /team sí marca in_lineup.
+        starter_ids = [
+            str(p.get("id"))
+            for p in squad
+            if isinstance(p, dict) and p.get("in_lineup") is True and p.get("id")
+        ]
+    recommended_xi["current"] = {
+        "captain_id": my_gw_lineup.get("captain_id"),
+        "captain_set": bool(my_gw_lineup.get("captain_set")),
+        "starter_ids": starter_ids,
+        "points": my_gw_lineup.get("points"),
+        "rank": my_gw_lineup.get("rank"),
+    }
     attach_mister_assets(gw_xi_advice, player_index=asset_index)
     attach_mister_assets(recommended_xi.get("players") or [], player_index=asset_index)
     attach_mister_assets(recommended_xi.get("xi") or [], player_index=asset_index)

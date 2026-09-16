@@ -20,12 +20,18 @@ Los umbrales viven en `DEFAULT_GATES` de [`src/performance_audit.py`](../src/per
 
 - Spearman ≥ 0.15 y lift ≥ 1.15× (n ≥ 30)
 - MAE de titulares ≤ 3.5 y sesgo optimista ≤ +2.5
-- Once recomendado no peor que el alineado en más de un 15 %
+- Once recomendado no peor que el alineado **ni que el naive de precio** en más de un 15 %
 - `buy_now` no rinde claramente menos que `avoid`
 - Mister no puede caer a mock ni a rate-limit duro
 
 Si la muestra es fina (pretemporada, jornada 1 sin cerrar), los umbrales se **omiten**
-en vez de fallar en falso.
+en vez de fallar en falso. El tramo **suplente** no guía el reading: el filtro
+`xpts ≥ 0.5 o real > 0` deja fuera ceros predichos y sesga ese MAE.
+
+El hist FF que dispara vs la forma Mister (p.ej. Fantasy✨ 17 vs SofaScore 6) se
+desinfla en [`src/expected_points.py`](../src/expected_points.py). **Las jornadas
+ya cerradas no cambian**: el auditor lee predicciones guardadas. El clamp se ve
+en el JSON vivo y a partir de la siguiente jornada (J5+ Serie A, etc.).
 
 ## Cómo se ejecuta
 
@@ -38,6 +44,7 @@ python src/performance_audit.py --league laliga-patio --fail-on-gates --json-out
 
 # Tests
 python scripts/test_performance_audit.py
+python scripts/test_expected_points.py
 ```
 
 En GitHub:
@@ -56,8 +63,17 @@ payload vivo lleva el informe slim en `meta.performance_audit`.
 - **spearman / lift** — el xPts ha dejado de ordenar; revisar titularidad FF o FDR.
 - **titular_mae / titular_bias** — promete de más (o falla) en quien debería jugar.
 - **xi_vs_current** — el once recomendado está dejando puntos vs el que ya alineas.
+- **xi_vs_naive** — el once recomendado rinde peor que alinear los más caros de la plantilla.
 - **market_buy_vs_avoid** — la cola de fichajes rinde peor que lo que marcamos avoid.
 - **pipeline** — auth caducada (mock) o FutbolFantasy cortando a 429.
 
 El playbook diario ya enseña el balance de la última jornada; esta auditoría es
 la misma idea, pero **con umbral y CI**, para no enterarnos a ojo.
+
+## Tras un retoque del modelo
+
+Re-auditar no reescribe el histórico: J3–J4 de Serie A seguirán midiendo el xPts
+que ya se guardó (MAE titular 4.29, once vs naive ~−12 %). El clamp de
+`production_base` se ve en el JSON vivo (Diouf 15.7→~9.6 pts/partido) y en las
+jornadas que se cierren a partir de ahora. Patio no debe moverse: el hist Mixto
+~7 con slump de 1–2 pts no se considera inflado.

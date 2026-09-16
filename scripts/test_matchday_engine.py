@@ -38,6 +38,7 @@ from mister_client import (  # noqa: E402
 from mister_gameweek import (  # noqa: E402
     apply_blank_gameweek,
     build_matchday,
+    extract_my_lineup,
     extract_preview,
     parse_feed_fixtures,
     parse_feed_gameweek_id,
@@ -202,6 +203,59 @@ def test_build_matchday_without_data_is_unavailable() -> None:
     md = build_matchday(None)
     assert md["status"] == "unavailable"
     assert md["fixtures"] == []
+
+
+def test_extract_my_lineup_classic_positions_map() -> None:
+    gw = {
+        "lineupSize": 11,
+        "lineup": {
+            "positions": {
+                "1": {"1": {"id": 10, "name": "Portero", "position": 1, "slot": 1, "captain": 0, "played": 0}},
+                "2": {
+                    "2": {"id": 20, "name": "Central", "position": 2, "slot": 2, "captain": 0, "played": 1},
+                    "3": {"id": 21, "name": "Lateral", "position": 2, "slot": 3, "captain": 1, "played": 0},
+                },
+            }
+        },
+        "gameweek_user": {"points": 12, "rank": 3},
+        "bench": [{"id": 99, "name": "Banco"}],
+    }
+    out = extract_my_lineup(gw)
+    ids = [r["player_id"] for r in out["starters"]]
+    assert ids == ["10", "20", "21"], ids
+    assert out["captain_id"] == "21", out
+    assert out["captain_set"] is True
+    assert out["points"] == 12
+    assert out["starters"][0]["position"] == "GK"
+    assert out["bench"][0]["player_id"] == "99"
+
+
+def test_extract_my_lineup_positions_as_lists() -> None:
+    gw = {
+        "lineup": {
+            "positions": {
+                "1": [{"id": 1, "name": "GK", "position": 1}],
+                "4": [{"id_player": 9, "name": "9", "position": 4}],
+            }
+        }
+    }
+    out = extract_my_lineup(gw)
+    ids = [r["player_id"] for r in out["starters"]]
+    assert ids == ["1", "9"], ids
+
+
+def test_extract_my_lineup_flat_players_list() -> None:
+    gw = {
+        "lineup": {
+            "players": [
+                {"player_id": "a", "name": "A", "position": "MF", "captain": True},
+                {"id": "b", "name": "B", "position": "FW"},
+            ]
+        }
+    }
+    out = extract_my_lineup(gw)
+    assert [r["player_id"] for r in out["starters"]] == ["a", "b"]
+    assert out["captain_id"] == "a"
 
 
 def test_extract_preview_marks_probable_xi() -> None:
@@ -730,6 +784,8 @@ def test_calibration_measures_bias_and_error() -> None:
     assert rep["mae"] == 4.33, rep
     assert rep["by_p_play"]["titular"]["bias"] == -1.0, rep["by_p_play"]
     assert rep["by_p_play"]["duda"]["bias"] == 6.0, rep["by_p_play"]
+    # El tramo suplente sesga (ceros con xPts bajo se filtran): no debe guiar el reading
+    assert "suplente" not in (rep.get("reading") or ""), rep.get("reading")
 
 
 def test_calibration_names_the_biggest_misses() -> None:
@@ -833,6 +889,9 @@ def main() -> None:
         test_parse_feed_fixtures_keeps_kickoff_and_teams,
         test_build_matchday_sorts_by_kickoff,
         test_build_matchday_without_data_is_unavailable,
+        test_extract_my_lineup_classic_positions_map,
+        test_extract_my_lineup_positions_as_lists,
+        test_extract_my_lineup_flat_players_list,
         test_extract_preview_marks_probable_xi,
         test_fdr_without_table_separates_top_from_bottom,
         test_fdr_home_advantage_is_about_five_percent,

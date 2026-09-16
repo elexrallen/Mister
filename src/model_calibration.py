@@ -189,7 +189,11 @@ def _reading(status: str, overall: dict[str, Any], bands: dict[str, list[float]]
     bias = overall.get("bias") or 0.0
     mae = overall.get("mae")
     worst = max(
-        ((name, _stats(errs)) for name, errs in bands.items() if errs),
+        (
+            (name, _stats(errs))
+            for name, errs in bands.items()
+            if errs and name != "suplente"
+        ),
         key=lambda kv: abs(kv[1].get("bias") or 0.0),
         default=None,
     )
@@ -202,4 +206,5 @@ def _reading(status: str, overall: dict[str, Any], bands: dict[str, list[float]]
         parts.append(f"con sesgo casi nulo ({bias:+.1f})")
     if worst and abs(worst[1].get("bias") or 0.0) > 1.0:
         parts.append(f"; el fallo se concentra en el tramo '{worst[0]}'")
+    # El tramo suplente sesga: se excluyen ceros con xPts < 0.5, así que no se cita.
     return " ".join(parts)

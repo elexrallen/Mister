@@ -38,6 +38,9 @@ jobs:
       - name: Run performance audit tests
         run: python scripts/test_performance_audit.py
 
+      - name: Run expected points tests
+        run: python scripts/test_expected_points.py
+
   history:
     name: Umbrales sobre histórico
     runs-on: ubuntu-latest

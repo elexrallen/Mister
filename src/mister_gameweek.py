@@ -557,32 +557,85 @@ def extract_gw_points(gw_data: dict[str, Any] | None) -> dict[str, dict[str, Any
     return out
 
 
+def _coerce_lineup_pid(value: Any) -> str | None:
+    if value in (None, "", 0, "0"):
+        return None
+    return str(value)
+
+
+def _lineup_player_id(player: dict[str, Any]) -> str | None:
+    for key in ("id", "player_id", "id_player"):
+        pid = _coerce_lineup_pid(player.get(key))
+        if pid:
+            return pid
+    inner = player.get("player")
+    if isinstance(inner, dict):
+        return _lineup_player_id(inner)
+    return None
+
+
+def _lineup_position_label(player: dict[str, Any], pos_code: Any = None) -> str | None:
+    raw = player.get("position")
+    if isinstance(raw, str) and raw in POSITION_BY_CODE.values():
+        return raw
+    for candidate in (raw, pos_code):
+        try:
+            code = int(candidate) if candidate is not None and str(candidate).isdigit() else None
+        except (TypeError, ValueError):
+            code = None
+        if code in POSITION_BY_CODE:
+            return POSITION_BY_CODE[code]
+    return None
+
+
+def _iter_lineup_players(node: Any, *, depth: int = 0) -> list[tuple[dict[str, Any], Any]]:
+    """Jugadores del once: dict-of-dicts (LaLiga), dict-of-lists u lista plana."""
+    if depth > 6 or node is None:
+        return []
+    if isinstance(node, dict):
+        if _lineup_player_id(node):
+            return [(node, node.get("slot"))]
+        out: list[tuple[dict[str, Any], Any]] = []
+        for key, value in node.items():
+            for player, slot in _iter_lineup_players(value, depth=depth + 1):
+                out.append((player, slot if slot is not None else key))
+        return out
+    if isinstance(node, list):
+        out = []
+        for value in node:
+            out.extend(_iter_lineup_players(value, depth=depth + 1))
+        return out
+    return []
+
+
 def extract_my_lineup(gw_data: dict[str, Any] | None) -> dict[str, Any]:
     """Mi once de la jornada tal y como está guardado en Mister (incluye capitán)."""
     lineup = (gw_data or {}).get("lineup")
-    positions = lineup.get("positions") if isinstance(lineup, dict) else None
+    if lineup is None:
+        lineup = (gw_data or {}).get("my_lineup")
     starters: list[dict[str, Any]] = []
     captain_id: str | None = None
-    if isinstance(positions, dict):
-        for pos_code, slots in positions.items():
-            if not isinstance(slots, dict):
-                continue
-            for slot, p in slots.items():
-                if not isinstance(p, dict) or not p.get("id"):
-                    continue
-                pid = str(p["id"])
-                if p.get("captain"):
-                    captain_id = pid
-                starters.append(
-                    {
-                        "player_id": pid,
-                        "name": p.get("name"),
-                        "position": POSITION_BY_CODE.get(int(pos_code) if str(pos_code).isdigit() else 0),
-                        "slot": p.get("slot") or slot,
-                        "captain": bool(p.get("captain")),
-                        "played": bool(p.get("played")),
-                    }
-                )
+    seen: set[str] = set()
+    source = lineup
+    if isinstance(lineup, dict):
+        source = lineup.get("positions") or lineup.get("players") or lineup.get("starters") or lineup
+    for player, slot in _iter_lineup_players(source):
+        pid = _lineup_player_id(player)
+        if not pid or pid in seen:
+            continue
+        seen.add(pid)
+        if player.get("captain"):
+            captain_id = pid
+        starters.append(
+            {
+                "player_id": pid,
+                "name": player.get("name") or player.get("short"),
+                "position": _lineup_position_label(player, slot),
+                "slot": player.get("slot") or slot,
+                "captain": bool(player.get("captain")),
+                "played": bool(player.get("played")),
+            }
+        )
     bench = [
         {"player_id": str(p.get("id")), "name": p.get("name")}
         for p in (gw_data or {}).get("bench") or []
