@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-18T15:08:59.348131+00:00",
+  "generated_at": "2026-09-18T21:48:34.624522+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 56.15,
+      "xpts_starters": 56.3,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 53.52,
+      "xpts_starters": 53.67,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -45,10 +45,10 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 49.49,
+      "xpts_starters": 55.13,
       "complete": true,
       "flex": 0,
-      "cost": 0
+      "cost": 23223000.0
     },
     {
       "formation": "3-5-2",
@@ -58,10 +58,10 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 54.43,
+      "xpts_starters": 56.7,
       "complete": true,
       "flex": 0,
-      "cost": 0
+      "cost": 1707000.0
     },
     {
       "formation": "3-4-3",
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 58.13,
+      "xpts_starters": 58.28,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 58.51,
+      "xpts_starters": 58.64,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -97,10 +97,10 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 50.2,
+      "xpts_starters": 53.95,
       "complete": true,
       "flex": 0,
-      "cost": 0
+      "cost": 7363500.0
     },
     {
       "formation": "5-4-1",
@@ -110,20 +110,20 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 47.24,
+      "xpts_starters": 54.04,
       "complete": true,
       "flex": 0,
-      "cost": 0
+      "cost": 26044000.0
     }
   ],
-  "balance": 0.0,
-  "squad_value": 124161000.0,
+  "balance": 153189.0,
+  "squad_value": 123343000.0,
   "wealth": {
-    "balance": 0.0,
-    "squad_value": 124161000.0,
-    "total": 124161000.0,
+    "balance": 153189.0,
+    "squad_value": 123343000.0,
+    "total": 123496189.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 124161000.0
+    "budget_cap": 123496189.0
   },
   "perfect_squad": [
     {
@@ -169,7 +169,7 @@
       "team": "Barcelona",
       "team_id": "3",
       "ep_score": 61.8,
-      "xpts": 4.92,
+      "xpts": 4.95,
       "price": 3591000.0,
       "status": "keep",
       "delta_5d": 0.2087,
@@ -189,7 +189,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.9 xPts · 3,591,000 € · keep · starter",
+      "why": "5.0 xPts · 3,591,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -271,7 +271,7 @@
       "team": "Levante",
       "team_id": "12",
       "ep_score": 48.6,
-      "xpts": 6.87,
+      "xpts": 6.89,
       "price": 1571000.0,
       "status": "keep",
       "delta_5d": 0.1938,
@@ -304,8 +304,8 @@
       "name": "Pedri",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 44.2,
-      "xpts": 4.55,
+      "ep_score": 44.3,
+      "xpts": 4.58,
       "price": 21796000.0,
       "status": "keep",
       "delta_5d": -0.0027,
@@ -325,7 +325,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.5 xPts · 21,796,000 € · keep · starter",
+      "why": "4.6 xPts · 21,796,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -339,7 +339,7 @@
       "team": "Athletic",
       "team_id": "1",
       "ep_score": 44.2,
-      "xpts": 4.53,
+      "xpts": 4.54,
       "price": 2734000.0,
       "status": "keep",
       "delta_5d": 0.1856,
@@ -372,8 +372,8 @@
       "name": "Raphinha",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 67.8,
-      "xpts": 7.89,
+      "ep_score": 67.9,
+      "xpts": 7.92,
       "price": 20494000.0,
       "status": "keep",
       "delta_5d": 0.0064,
@@ -406,8 +406,8 @@
       "name": "L. Yamal",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 70.6,
-      "xpts": 7.43,
+      "ep_score": 70.7,
+      "xpts": 7.46,
       "price": 23636000.0,
       "status": "keep",
       "delta_5d": 0.0041,
@@ -427,7 +427,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "7.4 xPts · 23,636,000 € · keep · starter",
+      "why": "7.5 xPts · 23,636,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -475,7 +475,7 @@
       "team": "Alavés",
       "team_id": "48",
       "ep_score": 44.8,
-      "xpts": 4.85,
+      "xpts": 4.83,
       "price": 8729000.0,
       "status": "keep",
       "delta_5d": 0.0678,
@@ -615,7 +615,7 @@
       "team": "Barcelona",
       "team_id": "3",
       "ep_score": 61.8,
-      "xpts": 4.92,
+      "xpts": 4.95,
       "price": 3591000.0,
       "status": "keep",
       "delta_5d": 0.2087,
@@ -635,7 +635,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.9 xPts · 3,591,000 € · keep · starter",
+      "why": "5.0 xPts · 3,591,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -717,7 +717,7 @@
       "team": "Levante",
       "team_id": "12",
       "ep_score": 48.6,
-      "xpts": 6.87,
+      "xpts": 6.89,
       "price": 1571000.0,
       "status": "keep",
       "delta_5d": 0.1938,
@@ -750,8 +750,8 @@
       "name": "Pedri",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 44.2,
-      "xpts": 4.55,
+      "ep_score": 44.3,
+      "xpts": 4.58,
       "price": 21796000.0,
       "status": "keep",
       "delta_5d": -0.0027,
@@ -771,7 +771,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.5 xPts · 21,796,000 € · keep · starter",
+      "why": "4.6 xPts · 21,796,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -785,7 +785,7 @@
       "team": "Athletic",
       "team_id": "1",
       "ep_score": 44.2,
-      "xpts": 4.53,
+      "xpts": 4.54,
       "price": 2734000.0,
       "status": "keep",
       "delta_5d": 0.1856,
@@ -818,8 +818,8 @@
       "name": "Raphinha",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 67.8,
-      "xpts": 7.89,
+      "ep_score": 67.9,
+      "xpts": 7.92,
       "price": 20494000.0,
       "status": "keep",
       "delta_5d": 0.0064,
@@ -852,8 +852,8 @@
       "name": "L. Yamal",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 70.6,
-      "xpts": 7.43,
+      "ep_score": 70.7,
+      "xpts": 7.46,
       "price": 23636000.0,
       "status": "keep",
       "delta_5d": 0.0041,
@@ -873,7 +873,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "7.4 xPts · 23,636,000 € · keep · starter",
+      "why": "7.5 xPts · 23,636,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -921,7 +921,7 @@
       "team": "Alavés",
       "team_id": "48",
       "ep_score": 44.8,
-      "xpts": 4.85,
+      "xpts": 4.83,
       "price": 8729000.0,
       "status": "keep",
       "delta_5d": 0.0678,
@@ -1025,7 +1025,7 @@
       "name": "M. Sierra",
       "position": "MF",
       "amount": 3387000.0,
-      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
+      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
     },
     {
       "kind": "list",
@@ -1034,7 +1034,7 @@
       "name": "N. Pérez",
       "position": "DF",
       "amount": 1417000.0,
-      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
+      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
     },
     {
       "kind": "list",
@@ -1043,37 +1043,28 @@
       "name": "G. Kochorashvili",
       "position": "MF",
       "amount": 1548000.0,
-      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
-    },
-    {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "55439",
-      "name": "H. González",
-      "position": "MF",
-      "amount": 818000.0,
-      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
+      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
     }
   ],
   "constraints": {
-    "cycles_left": 0,
+    "cycles_left": 1,
     "cash_lag_hours": 12.0,
-    "settle_before_ko": false,
+    "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 4,
-    "max_debt": 30359079.0,
-    "bid_cap": 30359079.0,
+    "sale_remaining": 5,
+    "max_debt": 30988939.0,
+    "bid_cap": 30988939.0,
     "max_squad": 25,
-    "n_free": 205,
+    "n_free": 220,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 3.8558932894444444
+    "hours_to_jornada": 14.195819278611111
   },
   "finance": {
     "ok": true,
     "cost": 0,
-    "proceeds": 7170000.0,
-    "peak": 0.0,
+    "proceeds": 6352000.0,
+    "peak": -153189.0,
     "covers_with_sales": true,
     "reason": ""
   },
@@ -1122,7 +1113,7 @@
         "team": "Barcelona",
         "team_id": "3",
         "ep_score": 61.8,
-        "xpts": 4.92,
+        "xpts": 4.95,
         "price": 3591000.0,
         "status": "keep",
         "delta_5d": 0.2087,
@@ -1142,7 +1133,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.9 xPts · 3,591,000 € · keep · starter",
+        "why": "5.0 xPts · 3,591,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1224,7 +1215,7 @@
         "team": "Levante",
         "team_id": "12",
         "ep_score": 48.6,
-        "xpts": 6.87,
+        "xpts": 6.89,
         "price": 1571000.0,
         "status": "keep",
         "delta_5d": 0.1938,
@@ -1257,8 +1248,8 @@
         "name": "Pedri",
         "team": "Barcelona",
         "team_id": "3",
-        "ep_score": 44.2,
-        "xpts": 4.55,
+        "ep_score": 44.3,
+        "xpts": 4.58,
         "price": 21796000.0,
         "status": "keep",
         "delta_5d": -0.0027,
@@ -1278,7 +1269,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.5 xPts · 21,796,000 € · keep · starter",
+        "why": "4.6 xPts · 21,796,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1292,7 +1283,7 @@
         "team": "Athletic",
         "team_id": "1",
         "ep_score": 44.2,
-        "xpts": 4.53,
+        "xpts": 4.54,
         "price": 2734000.0,
         "status": "keep",
         "delta_5d": 0.1856,
@@ -1325,8 +1316,8 @@
         "name": "Raphinha",
         "team": "Barcelona",
         "team_id": "3",
-        "ep_score": 67.8,
-        "xpts": 7.89,
+        "ep_score": 67.9,
+        "xpts": 7.92,
         "price": 20494000.0,
         "status": "keep",
         "delta_5d": 0.0064,
@@ -1359,8 +1350,8 @@
         "name": "L. Yamal",
         "team": "Barcelona",
         "team_id": "3",
-        "ep_score": 70.6,
-        "xpts": 7.43,
+        "ep_score": 70.7,
+        "xpts": 7.46,
         "price": 23636000.0,
         "status": "keep",
         "delta_5d": 0.0041,
@@ -1380,7 +1371,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "7.4 xPts · 23,636,000 € · keep · starter",
+        "why": "7.5 xPts · 23,636,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1428,7 +1419,7 @@
         "team": "Alavés",
         "team_id": "48",
         "ep_score": 44.8,
-        "xpts": 4.85,
+        "xpts": 4.83,
         "price": 8729000.0,
         "status": "keep",
         "delta_5d": 0.0678,
@@ -1559,23 +1550,6 @@
         "cash_lag_hours": 24.0
       },
       {
-        "player_id": "55439",
-        "name": "H. González",
-        "position": "MF",
-        "ep_score": 34.8,
-        "xpts": 3.4,
-        "price": 818000.0,
-        "delta_5d": 0.2375,
-        "value_note": "rising",
-        "why": "Fuera del 15 al KO · lista a ~818,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 818000.0,
-        "expected_proceeds": 818000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
-      },
-      {
         "player_id": "71640",
         "name": "M. Sierra",
         "position": "MF",
@@ -1595,18 +1569,18 @@
     ]
   },
   "totals": {
-    "ep_sum": 63.26,
-    "ep_sum_starters": 58.51,
-    "xpts_starters": 58.51,
-    "xpts_total": 63.26,
-    "xpts_ceiling": 76.69,
-    "xpts_yours": 58.51,
+    "ep_sum": 63.39,
+    "ep_sum_starters": 58.64,
+    "xpts_starters": 58.64,
+    "xpts_total": 63.39,
+    "xpts_ceiling": 77.19,
+    "xpts_yours": 58.64,
     "cost_sum": 116814000.0,
     "net_buys": 0.0,
     "slots_filled": 13,
     "slots_target": 15,
     "flex": 0,
-    "sell_to_fund": 7170000.0,
+    "sell_to_fund": 6352000.0,
     "funded": true,
     "formation": "3-3-4",
     "ideal_buy_cost": 0.0,
@@ -1622,7 +1596,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 0.0,
+  "residual_after_reserve": 6505189.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1640,17 +1614,17 @@
     "incomplete": false,
     "keep": 13,
     "buy": 0,
-    "sell": 4,
+    "sell": 3,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 63.26,
-    "ep_sum_starters": 58.51,
+    "ep_sum": 63.39,
+    "ep_sum_starters": 58.64,
     "mode": "ko",
     "formation": "3-3-4",
     "xi_rule": "formación 3-3-4 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 0
+    "cycles_left": 1
   },
   "summary_aspirational": {
     "mode": "aspirational",
