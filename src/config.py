@@ -53,6 +53,8 @@ COMPETITION_MAP: dict[int, dict] = {
 # de metadatos: slug, season_start, default, market_mode forzado, etc.).
 # Solo se aplican a comunidades que Mister sigue listando; no reintroducen
 # una liga abandonada cuando discovery devolvió un catálogo no vacío.
+# Tras ascensos/descensos en macroligas, Mister asigna un id_community nuevo:
+# hay que actualizar estas claves (no reutilizar IDs de temporada anterior).
 LEAGUE_OVERRIDES: dict[str, dict] = {
     "2500716": {
         "slug": "laliga-patio",
@@ -63,10 +65,16 @@ LEAGUE_OVERRIDES: dict[str, dict] = {
         "sorteo_date": "2026-07-24",
         "start_mode": "random_minus_vm",
     },
-    "906674": {
-        "slug": "premier",
-        "name": "PREMIER LEAGUE",
-        "season_start": "2026-08-21",
+    "2550556": {
+        "slug": "premier-league-d3g10-0556",
+        "name": "Premier League © - D3G10",
+        "id_competition": 3,
+        "default": False,
+    },
+    "2550628": {
+        "slug": "serie-a-d2g3-0628",
+        "name": "Serie A © - D2G3",
+        "id_competition": 10,
         "default": False,
     },
 }
@@ -99,6 +107,43 @@ def competition_meta(id_competition: int | None) -> dict:
         return {}
 
 
+def previous_leagues_as_discovered() -> list[dict]:
+    """
+    Lee el índice publicado (leagues.json) como filas tipo discovery.
+    Sirve de salvavidas si discover_leagues() vuelve vacío (auth/HTML)
+    para no reescribir el catálogo con overrides obsoletos tras un reset.
+    """
+    import json
+
+    path = LEAGUES_INDEX_PATH
+    if not path.is_file():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:  # noqa: BLE001
+        return []
+    out: list[dict] = []
+    for e in data.get("leagues") or []:
+        if not isinstance(e, dict):
+            continue
+        cid = str(e.get("id_community") or "").strip()
+        if not cid:
+            continue
+        row: dict = {
+            "id_community": cid,
+            "name": e.get("name"),
+            "id_competition": e.get("id_competition"),
+            "competition": e.get("competition"),
+            "market_mode": e.get("market_mode"),
+            "max_squad": e.get("max_squad"),
+            "slug": e.get("slug"),
+            "season_start": e.get("season_start"),
+            "default": bool(e.get("default")),
+        }
+        out.append(row)
+    return out
+
+
 def _fallback_leagues_from_overrides() -> list[dict]:
     """Catálogo offline: overrides + COMPETITION_MAP (sin discovery Mister)."""
     out: list[dict] = []
@@ -110,11 +155,14 @@ def _fallback_leagues_from_overrides() -> list[dict]:
             cid_i = int(row.get("id_competition") or 0) or None
         except (TypeError, ValueError):
             cid_i = None
-        # Inferir competición conocida por override histórico
+        # Inferir competición conocida por override / slug
         if cid_i is None:
-            if str(row.get("slug") or "").startswith("premier") or cid == "906674":
+            slug = str(row.get("slug") or "").lower()
+            if slug.startswith("premier") or "premier" in slug:
                 cid_i = 3
-            elif cid == "2500716":
+            elif slug.startswith("serie") or "serie-a" in slug:
+                cid_i = 10
+            elif cid == "2500716" or slug.startswith("laliga"):
                 cid_i = 1
         meta = competition_meta(cid_i)
         row.setdefault("id_competition", cid_i)
@@ -170,7 +218,14 @@ def resolve_leagues(discovered: list[dict] | None = None) -> list[dict]:
             id_comp = None
         meta = competition_meta(id_comp)
         name = str(ov.get("name") or raw.get("name") or f"Liga {cid}")
-        slug = str(ov.get("slug") or "").strip() or _slugify_league(name, cid)
+        # Override > discovery (p.ej. leagues.json previo) > slugify
+        slug = (
+            str(ov.get("slug") or "").strip()
+            or str(raw.get("slug") or "").strip()
+            or _slugify_league(name, cid)
+        )
+        season_start = ov.get("season_start") if "season_start" in ov else raw.get("season_start")
+        default_flag = bool(ov["default"]) if "default" in ov else bool(raw.get("default", False))
         row: dict = {
             "slug": slug,
             "name": name,
@@ -178,8 +233,8 @@ def resolve_leagues(discovered: list[dict] | None = None) -> list[dict]:
             "id_competition": id_comp,
             "competition": ov.get("competition") or raw.get("competition") or meta.get("competition"),
             "external": ov.get("external") or meta.get("external"),
-            "season_start": ov.get("season_start"),
-            "default": bool(ov.get("default", False)),
+            "season_start": season_start,
+            "default": default_flag,
             "mode": raw.get("mode"),
             "type": raw.get("type"),
             "code": raw.get("code"),

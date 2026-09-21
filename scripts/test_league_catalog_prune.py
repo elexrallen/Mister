@@ -3,6 +3,7 @@ Regresión: catálogo multi-liga al abandonar comunidades en Mister.
 
 - Con discovery no vacío, no se reinyectan LEAGUE_OVERRIDES ausentes.
 - Sync --league all poda carpetas huérfanas bajo public/data/leagues/.
+- Discovery vacío reutiliza leagues.json previo (no pisa con overrides viejos).
 """
 
 from __future__ import annotations
@@ -36,8 +37,9 @@ def test_resolve_drops_abandoned_override() -> None:
     cids = {str(L["id_community"]) for L in resolved}
     assert "2500716" in cids
     assert "9999999" in cids
-    # premier (906674) está en LEAGUE_OVERRIDES pero no en discovery → no debe volver
-    assert "906674" not in cids, f"override reinyectado: {resolved}"
+    # Overrides de Premier/Serie A no deben reinyectarse si no salen en discovery
+    assert "2550556" not in cids, f"override reinyectado: {resolved}"
+    assert "2550628" not in cids, f"override reinyectado: {resolved}"
     patio = next(L for L in resolved if L["id_community"] == "2500716")
     assert patio["slug"] == "laliga-patio"
 
@@ -46,7 +48,60 @@ def test_resolve_empty_uses_overrides() -> None:
     resolved = config.resolve_leagues([])
     cids = {str(L["id_community"]) for L in resolved}
     assert "2500716" in cids
-    assert "906674" in cids
+    assert "2550556" in cids
+    assert "2550628" in cids
+    # ID de Premier anterior (pre-ascenso) no debe volver
+    assert "906674" not in cids
+
+
+def test_previous_leagues_as_discovered() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        index_path = Path(tmp) / "leagues.json"
+        index_path.write_text(
+            json.dumps(
+                {
+                    "default_slug": "laliga-patio",
+                    "leagues": [
+                        {
+                            "slug": "laliga-patio",
+                            "name": "Liga del patio",
+                            "id_community": "2500716",
+                            "id_competition": 1,
+                            "default": True,
+                        },
+                        {
+                            "slug": "premier-league-d3g10-0556",
+                            "name": "Premier League © - D3G10",
+                            "id_community": "2550556",
+                            "id_competition": 3,
+                            "competition": "Premier League",
+                        },
+                        {
+                            "slug": "serie-a-d2g3-0628",
+                            "name": "Serie A © - D2G3",
+                            "id_community": "2550628",
+                            "id_competition": 10,
+                            "competition": "Serie A",
+                        },
+                    ],
+                }
+            ),
+            encoding="utf-8",
+        )
+        prev = config.LEAGUES_INDEX_PATH
+        try:
+            config.LEAGUES_INDEX_PATH = index_path
+            rows = config.previous_leagues_as_discovered()
+            cids = {str(r["id_community"]) for r in rows}
+            assert cids == {"2500716", "2550556", "2550628"}
+            # Como discovery: resolve conserva las 3 (y slugs del índice)
+            resolved = config.resolve_leagues(rows)
+            by_cid = {str(L["id_community"]): L for L in resolved}
+            assert by_cid["2550556"]["slug"] == "premier-league-d3g10-0556"
+            assert by_cid["2550628"]["slug"] == "serie-a-d2g3-0628"
+            assert by_cid["2550628"]["competition"] == "Serie A"
+        finally:
+            config.LEAGUES_INDEX_PATH = prev
 
 
 def test_prune_orphan_dirs() -> None:
@@ -127,6 +182,7 @@ def test_write_index_all_no_merge_extras() -> None:
 def main() -> int:
     test_resolve_drops_abandoned_override()
     test_resolve_empty_uses_overrides()
+    test_previous_leagues_as_discovered()
     test_prune_orphan_dirs()
     test_write_index_all_no_merge_extras()
     print("OK — league catalog prune")

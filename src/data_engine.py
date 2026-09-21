@@ -4487,17 +4487,31 @@ def main(argv: list[str] | None = None) -> int:
     reset_rate_limits()
 
     discovered: list[dict[str, Any]] = []
+    discovery_source = "none"
     if not config.USE_MISTER_MOCK:
         try:
             discovered = discover_leagues()
+            if discovered:
+                discovery_source = "mister"
         except Exception as exc:  # noqa: BLE001
-            log.warning("discover_leagues falló: %s — uso overrides/fallback", exc)
+            log.warning("discover_leagues falló: %s — uso leagues.json previo / overrides", exc)
             discovered = []
+    # Si Mister no devolvió comunidades (auth/HTML tras reset), no pisar el
+    # catálogo con overrides obsoletos: reutilizar el índice ya publicado.
+    if not discovered:
+        previous = config.previous_leagues_as_discovered()
+        if previous:
+            discovered = previous
+            discovery_source = "leagues.json"
+            log.warning(
+                "discover_leagues vacío — conservo %s ligas de leagues.json",
+                len(previous),
+            )
     resolved = config.resolve_leagues(discovered or None)
     config.set_effective_leagues(resolved)
     log.info(
         "Catálogo ligas (%s): %s",
-        "discovery" if discovered else "overrides/fallback",
+        discovery_source if discovered else "overrides/fallback",
         ", ".join(f"{L['slug']}#{L.get('id_community')}" for L in resolved),
     )
 
