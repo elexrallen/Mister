@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-21T15:55:19.711109+00:00",
+  "generated_at": "2026-09-21T17:12:52.939832+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1142,7 +1142,7 @@
     }
   ],
   "constraints": {
-    "cycles_left": 38,
+    "cycles_left": 37,
     "cash_lag_hours": 12.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1153,7 +1153,7 @@
     "n_free": 183,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 456.58333162083335
+    "hours_to_jornada": 455.2910539227778
   },
   "finance": {
     "ok": true,
@@ -1771,7 +1771,7 @@
     "formation": "3-5-2",
     "xi_rule": "formación 3-5-2 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 38
+    "cycles_left": 37
   },
   "summary_aspirational": {
     "mode": "aspirational",
