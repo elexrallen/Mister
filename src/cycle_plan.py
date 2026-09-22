@@ -702,6 +702,33 @@ def _pick_hoy_clause(
     return best[1]
 
 
+def _positive_market_id(raw: Any) -> int | None:
+    if raw in (None, "", 0, "0", False):
+        return None
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
+def _is_listable_bid(row: dict[str, Any]) -> bool:
+    """
+    /ajax/bid solo se arma con un listado real (id_market > 0).
+
+    El strip diario no siempre trae el id: si el jugador está en el mercado
+    de hoy, el ejecutor lo hidrata con player-community-info. Un libre sin
+    listado no tiene formulario: POST con id_market=0 responde 400.
+    """
+    if _positive_market_id(row.get("id_market")):
+        return True
+    if row.get("on_daily_market") or row.get("seller") == "market":
+        return True
+    own = str(row.get("ownership") or "")
+    reach = str(row.get("reachable") or "")
+    return own == "daily_market" or reach == "daily_market"
+
+
 def _is_target_buy_slot(slot: dict[str, Any]) -> bool:
     """Hueco del once objetivo fichable por mercado o como libre. No cláusula."""
     if not isinstance(slot, dict) or slot.get("near"):
@@ -740,6 +767,30 @@ def _target_buy_seeds(gw_target_xi: dict[str, Any] | None) -> list[dict[str, Any
     return list(by_id.values())
 
 
+def _merge_target_row(
+    seed: dict[str, Any],
+    extra: dict[str, Any],
+    base: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    merged = {**seed, **extra, **(base or {})}
+    if is_rival_market_listing(merged):
+        return None
+    if merged.get("solvency_blocked") or merged.get("budget_fit") == "blocked":
+        return None
+    cost = _money(
+        merged.get("bid")
+        or merged.get("puja_recomendada")
+        or merged.get("price")
+        or merged.get("market_value")
+    )
+    if cost <= 0:
+        return None
+    merged["bid"] = _money(merged.get("bid")) or cost
+    merged["puja_recomendada"] = _money(merged.get("puja_recomendada")) or cost
+    merged["closes_gw_target"] = True
+    return merged
+
+
 def _with_target_buys(
     market: list[dict[str, Any]],
     *,
@@ -747,10 +798,10 @@ def _with_target_buys(
     extras: list[dict[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Mete en la cola de pujas a los libres / mercado del once objetivo.
+    Mete en la cola de pujas a los listados del once objetivo.
 
-    El strip diario no trae a quien nadie ha listado. Sin esto el ciclo
-    persigue parches del mercado y deja fuera a Mina / Bisseck.
+    El strip diario a veces omite a un titular que sí está en el mercado.
+    Los libres sin listado no entran aquí: /ajax/bid exige id_market.
     """
     pool: dict[str, dict[str, Any]] = {}
     for row in market:
@@ -762,29 +813,38 @@ def _with_target_buys(
         pid = _pid(seed)
         if not pid:
             continue
-        extra = extra_by.get(pid) or {}
-        base = pool.get(pid) or {}
-        merged = {**seed, **extra, **base}
-        if is_rival_market_listing(merged):
+        merged = _merge_target_row(seed, extra_by.get(pid) or {}, pool.get(pid))
+        if not merged or not _is_listable_bid(merged):
             continue
-        if merged.get("solvency_blocked") or merged.get("budget_fit") == "blocked":
-            continue
-        cost = _money(
-            merged.get("bid")
-            or merged.get("puja_recomendada")
-            or merged.get("price")
-            or merged.get("market_value")
-        )
-        if cost <= 0:
-            continue
-        merged["bid"] = _money(merged.get("bid")) or cost
-        merged["puja_recomendada"] = _money(merged.get("puja_recomendada")) or cost
-        merged["closes_gw_target"] = True
         if not (merged.get("on_daily_market") or merged.get("seller") == "market"):
-            merged["seller"] = merged.get("seller") or "free"
-            merged["ownership"] = merged.get("ownership") or "free"
+            merged["seller"] = "market"
+            merged["ownership"] = merged.get("ownership") or "daily_market"
         pool[pid] = merged
     return list(pool.values())
+
+
+def _unlisted_target_watch(
+    *,
+    gw_target_xi: dict[str, Any] | None,
+    extras: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Libres del once objetivo sin listado: se persiguen cuando salgan al mercado."""
+    extra_by = {_pid(o): o for o in (extras or []) if isinstance(o, dict) and _pid(o)}
+    watch: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for seed in _target_buy_seeds(gw_target_xi):
+        pid = _pid(seed)
+        if not pid or pid in seen:
+            continue
+        merged = _merge_target_row(seed, extra_by.get(pid) or {})
+        if not merged or _is_listable_bid(merged):
+            continue
+        merged["seller"] = merged.get("seller") or "free"
+        merged["ownership"] = merged.get("ownership") or "free"
+        merged["wait_listing"] = True
+        watch.append(merged)
+        seen.add(pid)
+    return watch
 
 
 def _reachable_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
@@ -842,7 +902,8 @@ def build_cycle_plan(
 
     1) Ofertas: aceptar solo prima/fade o si hace falta caja/plaza para el plan.
        El resto queda en cartera (no es venta). Outlier → no cerrar.
-    2) Pujar/fichar el once objetivo (libres o mercado) si hay plazas.
+       2) Pujar/fichar el once objetivo si hay plazas y el jugador está
+       listado (id_market). Un libre sin listado se vigila, no se POST-ea.
        El techo es maxDebt. Titular real y sin tendencia a la baja.
     3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
        en el margen residual.
@@ -866,6 +927,7 @@ def build_cycle_plan(
     market = _with_target_buys(
         market, gw_target_xi=gw_target_xi, extras=extras
     )
+    watch_free = _unlisted_target_watch(gw_target_xi=gw_target_xi, extras=extras)
     state = sales_state or me.get("sales_state") or {}
     rules = league_rules or {}
     xi_ids = xi_owned_ids(recommended_xi)
@@ -1061,6 +1123,8 @@ def build_cycle_plan(
         if is_rival_market_listing(o):
             # El rival acepta la oferta del sistema al VM; no hay flip.
             continue
+        if not _is_listable_bid(o):
+            continue
         cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
         if cost <= 0:
             continue
@@ -1255,11 +1319,21 @@ def build_cycle_plan(
             moves.append(clause_move)
             spent += cost
 
-    next_targets = [
+    taken_ids = {_pid(b) for b in bids}
+    leftover = [
         o
         for _score, o in bid_cands
-        if _pid(o) not in {_pid(b) for b in bids}
-    ][:3]
+        if _pid(o) not in taken_ids
+    ]
+    next_targets: list[dict[str, Any]] = []
+    for o in watch_free + leftover:
+        pid = _pid(o)
+        if not pid or pid in taken_ids:
+            continue
+        next_targets.append(o)
+        taken_ids.add(pid)
+        if len(next_targets) >= 3:
+            break
 
     shortfall = max(0.0, spent - cash_after_accepts)
     if shortfall > 1 and not settle_new:
@@ -1494,6 +1568,7 @@ def build_cycle_plan(
                 "position": o.get("position"),
                 "delta_5d": o.get("delta_5d"),
                 "price": _price(o),
+                "wait_listing": bool(o.get("wait_listing")),
             }
             for o in next_targets[:3]
         ],
@@ -1577,6 +1652,13 @@ def _compose_narrative(
             f"Cláusula de {names} "
             f"({_fmt_money(clauses[0].get('clause') or clauses[0].get('amount'))}): "
             f"cierra hueco del once objetivo y cabe en el techo de deuda."
+        )
+    waiting = [t for t in next_targets if t.get("wait_listing")]
+    if waiting:
+        names = _join_names([t.get("name") or "" for t in waiting[:3]])
+        parts.append(
+            f"{names} cierran el once objetivo pero no tienen listado: "
+            f"se puja cuando salgan al mercado diario."
         )
     if lists:
         recover = [m for m in lists if m.get("list_reason") == "recover_debt"]

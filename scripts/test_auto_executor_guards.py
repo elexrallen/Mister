@@ -11,6 +11,7 @@ capa de transporte despacha lo que el núcleo decidió.
 
 from __future__ import annotations
 
+import json
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -697,10 +698,30 @@ def test_unverified_endpoint_is_blocked_in_live_mode() -> None:
         "id_bid": "42",
     }
     d = _run([move])
-    client = MisterWriteClient(dry_run=False, transport=lambda p, data: {"status": "ok"})
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
     ax.execute(d, client=client)
-    _assert(d["failed"] == 1, d)
+    _assert(not calls, f"unverified no se POST: {calls}")
+    _assert(d["failed"] == 0, d)
+    _assert(d.get("blocked") == 1, d)
+    _assert(d["operations"][0]["status"] == "blocked", d["operations"][0])
     _assert("sin confirmar" in d["operations"][0]["error"], d["operations"][0])
+
+
+def test_clause_pay_is_blocked_not_failed_in_live_mode() -> None:
+    """El fallo en vivo de Mandas / Maitland-Niles: no POST, no cuenta como error."""
+    d = _run([_clause("1", 2 * M, name="Christos Mandas")])
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
+    ax.execute(d, client=client)
+    _assert(not calls, f"clause-pay no se POST: {calls}")
+    _assert(d["failed"] == 0 and d.get("blocked") == 1, d)
+    _assert(d["operations"][0]["status"] == "blocked", d["operations"][0])
+    _assert("clause-pay" in str(d["operations"][0].get("error")), d["operations"][0])
 
 
 # ---------------------------------------------------------------------------
@@ -756,8 +777,29 @@ def test_bid_without_id_market_is_not_posted() -> None:
     )
     ax.execute(d, client=client)
     _assert(not calls, f"sin id_market no se POST: {calls}")
-    _assert(d["operations"][0]["status"] == "error", d["operations"][0])
+    _assert(d["operations"][0]["status"] == "deferred", d["operations"][0])
+    _assert(d["failed"] == 0 and d.get("deferred") == 1, d)
     _assert("id_market" in str(d["operations"][0].get("error")), d["operations"][0])
+
+
+def test_live_unlisted_targets_are_deferred_not_failed() -> None:
+    """Replay del ciclo: Tavernier / Mina sin listado no tumba el run."""
+    d = _run(
+        [
+            _bid("48972", 3 * M, name="Marcus Tavernier", id_market=None),
+            _bid("55063", M, name="Yerry Mina", id_market=None),
+        ]
+    )
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False,
+        transport=lambda p, data: calls.append((p, data)) or {"status": "ok"},
+    )
+    ax.execute(d, client=client)
+    _assert(not calls, calls)
+    _assert(d["failed"] == 0, d)
+    _assert(d.get("deferred") == 2, d)
+    _assert({o["status"] for o in d["operations"]} == {"deferred"}, d["operations"])
 
 
 def test_execute_hydrates_id_market_from_lookup() -> None:
@@ -791,6 +833,30 @@ def test_already_active_bid_uses_update_action() -> None:
         listing_lookup=lambda pid: {"id_market": 7, "action": "update"},
     )
     _assert(calls[0][1]["action"] == "update", calls[0])
+
+
+def test_live_config_does_not_allow_clause_bid() -> None:
+    raw = json.loads((ROOT / "config" / "automation.json").read_text(encoding="utf-8"))
+    allowed = list((raw.get("defaults") or {}).get("allowed_actions") or [])
+    _assert("clause_bid" not in allowed, allowed)
+    _assert("accept_offer" not in allowed, allowed)
+    d = _run(
+        [_clause("1", 2 * M, name="Ainsley Maitland-Niles")],
+        settings=_settings(allowed_actions=allowed),
+    )
+    _assert(not d["operations"], d["operations"])
+    _assert("clause-pay" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
+def test_deferred_bid_does_not_lock_the_player() -> None:
+    entry = {
+        "at": (NOW - timedelta(hours=1)).isoformat(),
+        "operations": [{"kind": "bid", "player_id": "1", "status": "deferred"}],
+    }
+    locked = ax.transfer_locked_ids(
+        automation_log={"cycles": [entry]}, transfer_wait_hours=24, now=NOW
+    )
+    _assert(not locked, f"una puja aplazada no bloquea nada: {locked}")
 
 
 def test_community_id_from_payload() -> None:
@@ -859,11 +925,15 @@ TESTS = [
     test_execute_in_dry_run_sends_nothing,
     test_execute_survives_a_rejected_operation,
     test_unverified_endpoint_is_blocked_in_live_mode,
+    test_clause_pay_is_blocked_not_failed_in_live_mode,
     test_log_entry_feeds_back_the_transfer_lock,
     test_failed_buy_does_not_lock_the_player,
     test_bid_without_id_market_is_not_posted,
+    test_live_unlisted_targets_are_deferred_not_failed,
     test_execute_hydrates_id_market_from_lookup,
+    test_live_config_does_not_allow_clause_bid,
     test_already_active_bid_uses_update_action,
+    test_deferred_bid_does_not_lock_the_player,
     test_community_id_from_payload,
 ]
 
