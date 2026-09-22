@@ -65,11 +65,76 @@
         "failed": 2,
         "skipped": 1
       }
+    },
+    {
+      "at": "2026-09-22T12:08:29.693938+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 20631750.0,
+        "usable": 27979750.0,
+        "cash_in": 0.0,
+        "spent": 4972000.0,
+        "projected_cash": 15659750.0,
+        "cycle_cap": 16787850.0,
+        "single_cap": 11191900.0,
+        "clause_cap": 8393925.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 12
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": 433.15069936500004,
+        "pending_offers": 0
+      },
+      "operations": [
+        {
+          "kind": "bid",
+          "player_id": "69994",
+          "name": "P. Mendy",
+          "position": "FW",
+          "amount": 666600.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja por P. Mendy (667k €, cubre un hueco de plantilla; revaloriza +2%; sigue al alza)."
+        },
+        {
+          "kind": "bid",
+          "player_id": "48563",
+          "name": "Z. Çelik",
+          "position": "DF",
+          "amount": 4305400.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja por Z. Çelik (4.3M €, cubre un hueco de plantilla; revaloriza +2%; sigue al alza)."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "bid",
+          "player_id": "14920",
+          "name": "E. Caprile",
+          "amount": 12301300.0,
+          "reason": "supera max_single_buy_pct: 12.3M vs 11.2M"
+        }
+      ],
+      "counts": {
+        "planned": 2,
+        "executed": 2,
+        "failed": 0,
+        "skipped": 1
+      }
     }
   ],
-  "updated_at": "2026-09-22T11:51:24.223053+00:00",
+  "updated_at": "2026-09-22T12:08:29.693938+00:00",
   "last_cycle": {
-    "at": "2026-09-22T11:51:24.223053+00:00",
+    "at": "2026-09-22T12:08:29.693938+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
@@ -100,8 +165,8 @@
         "name": "P. Mendy",
         "position": "FW",
         "amount": 666600.0,
-        "status": "error",
-        "error": "/ajax/bid falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/bid",
+        "status": "ok",
+        "error": null,
         "unverified": null,
         "why": "Puja por P. Mendy (667k €, cubre un hueco de plantilla; revaloriza +2%; sigue al alza)."
       },
@@ -111,8 +176,8 @@
         "name": "Z. Çelik",
         "position": "DF",
         "amount": 4305400.0,
-        "status": "error",
-        "error": "/ajax/bid falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/bid",
+        "status": "ok",
+        "error": null,
         "unverified": null,
         "why": "Puja por Z. Çelik (4.3M €, cubre un hueco de plantilla; revaloriza +2%; sigue al alza)."
       }
@@ -128,8 +193,8 @@
     ],
     "counts": {
       "planned": 2,
-      "executed": 0,
-      "failed": 2,
+      "executed": 2,
+      "failed": 0,
       "skipped": 1
     }
   }
