@@ -122,32 +122,97 @@
         "failed": 0,
         "skipped": 2
       }
+    },
+    {
+      "at": "2026-09-22T15:46:27.444439+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 21688160.0,
+        "usable": 26575410.0,
+        "cash_in": 0.0,
+        "spent": 1880250.0,
+        "projected_cash": 19807910.0,
+        "cycle_cap": 15945246.0,
+        "single_cap": 10630164.0,
+        "clause_cap": 7972623.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 13
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "61133"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": 427.7988602191666,
+        "pending_offers": 0
+      },
+      "operations": [
+        {
+          "kind": "bid",
+          "player_id": "61133",
+          "name": "M. Tel",
+          "position": "FW",
+          "amount": 1880250.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja por M. Tel (1.9M €, cubre un hueco de plantilla; revaloriza -4%)."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "clause_bid",
+          "player_id": "64089",
+          "name": "Walter Benítez",
+          "amount": 1000000.0,
+          "reason": "cláusula no ejercitable: cláusula no visible"
+        },
+        {
+          "kind": "bid",
+          "player_id": "1804",
+          "name": "G. Xhaka",
+          "amount": 17605500.0,
+          "reason": "supera max_single_buy_pct: 17.6M vs 10.6M"
+        }
+      ],
+      "counts": {
+        "planned": 1,
+        "executed": 1,
+        "failed": 0,
+        "skipped": 2
+      }
     }
   ],
-  "updated_at": "2026-09-22T12:08:28.189638+00:00",
+  "updated_at": "2026-09-22T15:46:27.444439+00:00",
   "last_cycle": {
-    "at": "2026-09-22T12:08:28.189638+00:00",
+    "at": "2026-09-22T15:46:27.444439+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
       "balance": 21688160.0,
-      "usable": 28455660.0,
+      "usable": 26575410.0,
       "cash_in": 0.0,
       "spent": 1880250.0,
       "projected_cash": 19807910.0,
-      "cycle_cap": 17073396.0,
-      "single_cap": 11382264.0,
-      "clause_cap": 8536698.0,
+      "cycle_cap": 15945246.0,
+      "single_cap": 10630164.0,
+      "clause_cap": 7972623.0,
       "min_cash_floor": 0.0,
       "free_slots_left": 13
     },
     "context": {
       "transfer_wait_hours": 24.0,
-      "transfer_locked": [],
+      "transfer_locked": [
+        "61133"
+      ],
       "stale_offers": [],
       "sale_remaining_after": 5,
-      "hours_to_jornada": 431.70870352583336,
+      "hours_to_jornada": 427.7988602191666,
       "pending_offers": 0
     },
     "operations": [
@@ -176,7 +241,7 @@
         "player_id": "1804",
         "name": "G. Xhaka",
         "amount": 17605500.0,
-        "reason": "supera max_single_buy_pct: 17.6M vs 11.4M"
+        "reason": "supera max_single_buy_pct: 17.6M vs 10.6M"
       }
     ],
     "counts": {
