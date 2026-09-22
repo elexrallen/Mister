@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-22T08:55:54.624601+00:00",
+  "generated_at": "2026-09-22T10:48:27.832425+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -10,7 +10,7 @@
       "id_competition": 1,
       "season_start": "2026-08-15",
       "default": true,
-      "generated_at": "2026-09-22T08:48:04.590199+00:00",
+      "generated_at": "2026-09-22T10:40:50.360524+00:00",
       "path": "leagues/laliga-patio/latest_data.json",
       "balance": 42339,
       "rank": 1,
@@ -51,7 +51,9 @@
           "transfer_wait_off"
         ],
         "source": "fg_user+admin"
-      }
+      },
+      "automated": false,
+      "automation_dry_run": false
     },
     {
       "slug": "premier-league-d3g10-0556",
@@ -61,7 +63,7 @@
       "id_competition": 3,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-09-22T08:51:58.271294+00:00",
+      "generated_at": "2026-09-22T10:44:38.176657+00:00",
       "path": "leagues/premier-league-d3g10-0556/latest_data.json",
       "balance": 21688160,
       "rank": 6,
@@ -106,7 +108,9 @@
           "captain_by_value"
         ],
         "source": "fg_user+admin"
-      }
+      },
+      "automated": false,
+      "automation_dry_run": false
     },
     {
       "slug": "serie-a-d2g3-0628",
@@ -116,7 +120,7 @@
       "id_competition": 10,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-09-22T08:55:54.578530+00:00",
+      "generated_at": "2026-09-22T10:48:27.776018+00:00",
       "path": "leagues/serie-a-d2g3-0628/latest_data.json",
       "balance": 20631750,
       "rank": 2,
@@ -161,7 +165,9 @@
           "captain_by_value"
         ],
         "source": "fg_user+admin"
-      }
+      },
+      "automated": false,
+      "automation_dry_run": false
     }
   ]
 }
