@@ -1,0 +1,48 @@
+<div class="header">
+  <h3>{{ pre.name }}</h3>
+</div>
+{% if user.type == 'comunio' %}
+  <div class="tabs tabs-wrapper">
+    <button class="btn tab btn-popup"
+      data-popup="bid"
+      data-preload="player-community-info"
+      data-id_player="{{ id_player }}"
+    >{{ pre.owner.id == 0 ? trans('Puja') : trans('Oferta') }}</button>
+    <button class="btn tab active" data-popup="clause-pay">{{ trans('Cláusula') }}</button>
+    {% if user.loans %}
+      <button class="btn tab btn-popup"
+        data-popup="loan-request"
+        data-preload="player-community-info"
+        data-id_player="{{ id_player }}"
+      >{{ trans('Cesión') }}</button>
+    {% endif %}
+  </div>
+{% endif %}
+<div class="content">
+  <form>
+    <input type="hidden" name="id_player" value="{{ id_player }}">
+    <input type="hidden" name="id_uc" value="{{ pre.owner.id }}">
+    <input type="hidden" name="id_giphy" value="">
+    <input type="text" class="input-amount" readonly value="{{ pre.clause.value|number_format }}">
+    <p class="description">{{ trans('El jugador se traspasará de forma inmediata sin el impedimento del propietario') }}</p>
+    <div class="clause-gif">
+      <button class="btn btn-giphy">
+        <div class="bg"></div>
+        <div class="text">{{ random([trans('Díselo con un GIF'), trans('Añade un GIF al clausulazo'), trans('¿Quieres risas? Añade un GIF')]) }} {{ random(['🤭', '😂', '😎', '🤑', '🥳']) }}</div>
+      </button>
+      <div class="giphy-content">
+        <div class="search">
+          <input type="text" class="giphy-input" placeholder="Buscar GIF animado">
+          {{ svg('search-off') }}
+          <img class="giphy-attribution" src="{{ static_image('img/giphy.png') }}" loading="lazy">
+        </div>
+        <div id="giphy-results" class="giphy-results thin-scrollbar"></div>
+      </div>
+    </div>
+  </form>
+</div>
+<div class="footer">
+  <div class="buttons">
+    <button type="button" id="btn-send" class="btn btn--primary btn--lg" data-ajax="clause-pay" data-event="pay_clause">{{ trans('Pagar cláusula') }}</button>
+  </div>
+</div>

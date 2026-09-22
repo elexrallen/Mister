@@ -7,18 +7,19 @@ el interruptor de seguridad, el modo simulación y el registro.
 
 Endpoints (confirmados en el JS y las plantillas de Mister):
 
-  ajax/bid         pujar a un libre / ofertar a un rival / actualizar / retirar
-  ajax/sale        listar en el mercado o retirar el listado
-  ajax/sell        vender al sistema al valor de mercado (sale del equipo ya)
-  ajax/clause-set  subir la cláusula de un jugador propio
+    ajax/bid         pujar a un libre / ofertar a un rival / actualizar / retirar
+    ajax/sale        listar en el mercado o retirar el listado
+    ajax/sell        vender al sistema al valor de mercado (sale del equipo ya)
+    ajax/clause-set  subir la cláusula de un jugador propio
+    ajax/clause-pay  pagar la cláusula de rescisión
+                     (views/ajax/clause-pay.twig: id_player, id_uc, id_giphy)
 
 Endpoints que existen (aparecen sus `callback_*` en el JS) pero cuyo payload
-exacto no está en la caché. `scripts/probe_offer_endpoints.py` los lista y el
-ejecutor los deja apagados hasta confirmarlos con DevTools:
+exacto no está confirmado. `scripts/probe_offer_endpoints.py` los lista y el
+ejecutor los deja apagados hasta confirmarlos:
 
-  ajax/offer       aceptar una oferta recibida
-  ajax/resale      rechazar la oferta / volver a listar
-  ajax/clause-pay  pagar la cláusula de rescisión
+    ajax/offer       aceptar una oferta recibida
+    ajax/resale      rechazar la oferta / volver a listar
 """
 
 from __future__ import annotations
@@ -47,7 +48,7 @@ OFFER_DECLINE = "decline"
 # Rutas cuyo payload no está confirmado en la caché del repo. Se pueden simular,
 # pero un POST real necesita `verified_only=False` explícito: si el formato es
 # otro, Mister podría interpretar la petición de una forma que no queremos.
-UNVERIFIED_PATHS = frozenset({"/ajax/offer", "/ajax/resale", "/ajax/clause-pay"})
+UNVERIFIED_PATHS = frozenset({"/ajax/offer", "/ajax/resale"})
 
 
 class ActionError(RuntimeError):
@@ -271,15 +272,21 @@ class MisterWriteClient:
         Paga la cláusula de un jugador de un rival.
 
         Instantánea e irreversible: el jugador cambia de equipo y el dinero se
-        va en el mismo POST. El ejecutor reverifica blindaje e importe antes de
-        llamar aquí.
+        va en el mismo POST. El formulario (`views/ajax/clause-pay.twig`) manda
+        `id_player`, `id_uc` (dueño) e `id_giphy` vacío. El importe no viaja:
+        Mister cobra `pre.clause.value`. El ejecutor reverifica blindaje e
+        importe antes de llamar aquí.
         """
-        data: dict[str, Any] = {"id_player": str(player_id)}
-        if owner_id is not None:
-            data["id_owner"] = str(owner_id)
-        if amount is not None:
-            data["clause"] = int(round(float(amount)))
-        return self._post_action("/ajax/clause-pay", data)
+        if owner_id in (None, "", 0, "0"):
+            raise ActionError(f"cláusula de {player_id}: falta id_uc del dueño")
+        return self._post_action(
+            "/ajax/clause-pay",
+            {
+                "id_player": str(player_id),
+                "id_uc": str(owner_id),
+                "id_giphy": "",
+            },
+        )
 
     def raise_own_clause(self, *, player_id: str | int, steps: int) -> dict[str, Any]:
         """Sube la cláusula de un jugador propio (defensa). Cuesta dinero."""

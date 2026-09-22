@@ -710,18 +710,40 @@ def test_unverified_endpoint_is_blocked_in_live_mode() -> None:
     _assert("sin confirmar" in d["operations"][0]["error"], d["operations"][0])
 
 
-def test_clause_pay_is_blocked_not_failed_in_live_mode() -> None:
-    """El fallo en vivo de Mandas / Maitland-Niles: no POST, no cuenta como error."""
-    d = _run([_clause("1", 2 * M, name="Christos Mandas")])
+def test_clause_pay_posts_id_player_and_id_uc() -> None:
+    """views/ajax/clause-pay.twig: id_player, id_uc, id_giphy. El importe no viaja."""
+    d = _run([_clause("55646", 2 * M, name="Christos Mandas", owner_id="888")])
     calls: list = []
     client = MisterWriteClient(
         dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
     )
     ax.execute(d, client=client)
-    _assert(not calls, f"clause-pay no se POST: {calls}")
-    _assert(d["failed"] == 0 and d.get("blocked") == 1, d)
-    _assert(d["operations"][0]["status"] == "blocked", d["operations"][0])
-    _assert("clause-pay" in str(d["operations"][0].get("error")), d["operations"][0])
+    _assert(len(calls) == 1, calls)
+    _assert(calls[0][0] == "/ajax/clause-pay", calls[0])
+    _assert(calls[0][1]["id_player"] == "55646", calls[0])
+    _assert(calls[0][1]["id_uc"] == "888", calls[0])
+    _assert(calls[0][1].get("id_giphy") == "", calls[0])
+    _assert("clause" not in calls[0][1], calls[0])
+    _assert("id_owner" not in calls[0][1], calls[0])
+    _assert(d["failed"] == 0 and d["executed"] == 1, d)
+    _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
+
+
+def test_clause_pay_hydrates_owner_from_lookup() -> None:
+    d = _run([_clause("4776", 2 * M, name="Ainsley Maitland-Niles", owner_id="1")])
+    # owner_id en el move es placeholder; el lookup trae el id_uc real
+    d["operations"][0]["params"]["owner_id"] = None
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
+    ax.execute(
+        d,
+        client=client,
+        listing_lookup=lambda pid: {"owner_id": "15539496"},
+    )
+    _assert(calls[0][1]["id_uc"] == "15539496", calls[0])
+    _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
 
 
 # ---------------------------------------------------------------------------
@@ -835,17 +857,16 @@ def test_already_active_bid_uses_update_action() -> None:
     _assert(calls[0][1]["action"] == "update", calls[0])
 
 
-def test_live_config_does_not_allow_clause_bid() -> None:
+def test_live_config_allows_clause_bid_not_accept_offer() -> None:
     raw = json.loads((ROOT / "config" / "automation.json").read_text(encoding="utf-8"))
     allowed = list((raw.get("defaults") or {}).get("allowed_actions") or [])
-    _assert("clause_bid" not in allowed, allowed)
+    _assert("clause_bid" in allowed, allowed)
     _assert("accept_offer" not in allowed, allowed)
     d = _run(
         [_clause("1", 2 * M, name="Ainsley Maitland-Niles")],
         settings=_settings(allowed_actions=allowed),
     )
-    _assert(not d["operations"], d["operations"])
-    _assert("clause-pay" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+    _assert(_kinds(d) == ["clause_bid"], d["skipped"])
 
 
 def test_deferred_bid_does_not_lock_the_player() -> None:
@@ -925,13 +946,14 @@ TESTS = [
     test_execute_in_dry_run_sends_nothing,
     test_execute_survives_a_rejected_operation,
     test_unverified_endpoint_is_blocked_in_live_mode,
-    test_clause_pay_is_blocked_not_failed_in_live_mode,
+    test_clause_pay_posts_id_player_and_id_uc,
+    test_clause_pay_hydrates_owner_from_lookup,
     test_log_entry_feeds_back_the_transfer_lock,
     test_failed_buy_does_not_lock_the_player,
     test_bid_without_id_market_is_not_posted,
     test_live_unlisted_targets_are_deferred_not_failed,
     test_execute_hydrates_id_market_from_lookup,
-    test_live_config_does_not_allow_clause_bid,
+    test_live_config_allows_clause_bid_not_accept_offer,
     test_already_active_bid_uses_update_action,
     test_deferred_bid_does_not_lock_the_player,
     test_community_id_from_payload,
