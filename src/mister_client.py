@@ -110,11 +110,17 @@ def ajax_headers() -> dict[str, str]:
 
 
 def _ajax_error_detail(resp: requests.Response) -> str:
-    """Cuerpo de un AJAX fallido: Mister a veces manda JSON con `message`."""
+    """Cuerpo de un AJAX fallido. Las páginas HTML de error no se vuelcan al log."""
+    text = (resp.text or "").strip()
+    head = text[:80].lstrip().lower()
+    if head.startswith("<!doctype") or head.startswith("<html"):
+        title_m = re.search(r"<title>([^<]+)</title>", text, re.I)
+        title = (title_m.group(1).strip() if title_m else "error page")
+        return f"HTML ({title})"
     try:
         body = resp.json()
     except ValueError:
-        return (resp.text or "").strip()[:400]
+        return text[:200]
     if isinstance(body, dict):
         for key in ("message", "error", "msg", "status"):
             val = body.get(key)
@@ -273,34 +279,16 @@ def _listing_id(raw: Any) -> int | None:
 
 def fetch_sw_market() -> list[dict[str, Any]]:
     """
-    POST /ajax/sw/market — intenta el JSON de listados con `id_market`.
+    POST /ajax/sw/market — slideover de evolución, no el mercado diario.
 
-    El HTML de /market pinta las cards pero no el id del listado. El popup de
-    puja usa `player-community-info` (`pre.market.id`); este endpoint es un
-    atajo por lote. El JS manda el objeto filtro, no `{}` — un POST vacío
-    a veces responde 500. Fail-soft: si no hay JSON, el ejecutor resuelve
-    cada jugador por `player-community-info`.
+    Mister suele responder 500; el id de listado lo saca el popup de puja
+    de `player-community-info`. Un intento, fail-soft, sin reintentar.
     """
-    payloads: tuple[dict[str, Any], ...] = (
-        {"position": 0, "price": 0, "owner": -1},
-        {"interval": "today"},
-        {},
-    )
-    raw: Any = None
-    for payload in payloads:
-        try:
-            raw = ajax_post("/ajax/sw/market", payload)
-        except Exception as exc:  # noqa: BLE001
-            log.warning("sw/market %s falló: %s", payload, exc)
-            raw = None
-            continue
-        if isinstance(raw, dict):
-            data_try = raw.get("data") if isinstance(raw.get("data"), dict) else raw
-            players_try = (
-                data_try.get("players") if isinstance(data_try, dict) else None
-            )
-            if isinstance(players_try, list):
-                break
+    try:
+        raw = ajax_post("/ajax/sw/market", {"position": 0, "price": 0, "owner": -1})
+    except Exception as exc:  # noqa: BLE001
+        log.info("sw/market no disponible (%s); id_market se resuelve al pujar", exc)
+        return []
     data = raw.get("data") if isinstance(raw, dict) else None
     players = (data or {}).get("players") if isinstance(data, dict) else None
     if not isinstance(players, list) and isinstance(raw, dict):
@@ -2568,11 +2556,8 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     max_debt = _bal_int("maxDebt")
 
     market = parse_market_players(market_html) if market_html else []
-    if market:
-        try:
-            market = enrich_market_listings(market)
-        except Exception as exc:  # noqa: BLE001
-            log.warning("enrich_market_listings falló: %s", exc)
+    # id_market no viene en el HTML. /ajax/sw/market (evolución) responde 500;
+    # el ejecutor lo resuelve por jugador con player-community-info al pujar.
     squad = parse_team_players(team_html) if team_html else []
 
     # Corregir clubes (mapa CDN cambia por temporada; p.ej. 6 = Deportivo)
