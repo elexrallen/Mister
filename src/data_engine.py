@@ -3966,6 +3966,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         market_mode=market_mode,
         max_squad=config.league_max_squad(league_cfg),
         rival_upgrades=rival_upgrades,
+        free_agents=free_agents,
         hours_to_jornada=hours_j,
         hours_to_solvency_deadline=solvency_for_cycle.get("hours_to_solvency_deadline"),
         solvency_target=solvency_for_cycle.get("solvency_target"),

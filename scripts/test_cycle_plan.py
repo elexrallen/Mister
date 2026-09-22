@@ -223,6 +223,98 @@ def test_does_not_bid_falling_gap_filler() -> None:
     _assert("Rueda" in bid_names, bid_names)
 
 
+def test_does_not_bid_mild_decline_even_if_starter_fills_hole() -> None:
+    """Titular usable + hueco + VM −4% no es puja: el once pide tendencia positiva."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "tel",
+            "name": "M. Tel",
+            "position": "FW",
+            "price": 1_880_000,
+            "bid": 1_880_000,
+            "puja_recomendada": 1_880_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": -0.04,
+            "rising": False,
+            "trend": "down",
+            "lineup_prob": 0.85,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+        },
+        {
+            "id": "hot",
+            "name": "Rueda",
+            "position": "DF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.12,
+            "rising": True,
+            "lineup_prob": 0.8,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("M. Tel" not in bid_names, bid_names)
+    _assert("Rueda" in bid_names, bid_names)
+    rueda = next(m for m in plan["moves"] if m["kind"] == KIND_BID and m["name"] == "Rueda")
+    _assert(rueda.get("is_xi_starter") is True, rueda)
+    _assert(rueda.get("positive_trend") is True, rueda)
+    _assert("titular real" in (rueda.get("why") or ""), rueda)
+    _assert("tendencia positiva" in (rueda.get("why") or ""), rueda)
+
+
+def test_does_not_bid_rising_bench_as_hole_filler() -> None:
+    """Sube de VM pero no es titular: no tapa el once."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "bench",
+            "name": "Suplente",
+            "position": "MF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.15,
+            "rising": True,
+            "lineup_prob": 0.25,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("Suplente" not in bid_names, bid_names)
+
+
 def test_accept_offer_frees_slot_to_bid() -> None:
     squad = [
         {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
@@ -987,6 +1079,87 @@ def test_reachable_target_gets_bid_priority() -> None:
     _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
 
 
+def test_free_target_starter_is_bid_off_market() -> None:
+    """Libre del once objetivo se puja aunque no esté en el strip del día."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 4},
+    ]
+    filler = {
+        "id": "mendy",
+        "name": "P. Mendy",
+        "position": "FW",
+        "price": 666_000,
+        "bid": 666_000,
+        "puja_recomendada": 666_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "delta_5d": 0.02,
+        "rising": True,
+        "lineup_prob": 0.75,
+        "fills_need": True,
+        "budget_fit": "comfortable",
+    }
+    mina = {
+        "id": "mina",
+        "name": "Yerry Mina",
+        "position": "DF",
+        "price": 1_273_320,
+        "bid": 1_273_320,
+        "market_value": 1_179_000,
+        "seller": "free",
+        "on_daily_market": False,
+        "p_play": 0.82,
+        "signal": "start",
+        "xpts": 11.37,
+        "lineup_prob": 0.9,
+        "budget_fit": "comfortable",
+    }
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[filler],
+        free_agents=[mina],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "mina",
+                    "name": "Yerry Mina",
+                    "position": "DF",
+                    "ownership": "free",
+                    "reachable": "free",
+                    "xpts": 11.37,
+                    "p_play": 0.82,
+                    "signal": "start",
+                    "price": 1_273_320,
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": "mina",
+                        "name": "Yerry Mina",
+                        "reachable": "free",
+                        "ownership": "free",
+                        "position": "DF",
+                        "xpts": 11.37,
+                        "price": 1_273_320,
+                    }
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids and bids[0]["name"] == "Yerry Mina", plan["moves"])
+    _assert(bids[0].get("closes_gw_target") is True, bids[0])
+    _assert(bids[0].get("is_xi_starter") is True, bids[0])
+    _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
+    _assert("libre" in (bids[0].get("why") or ""), bids[0])
+
+
 def test_near_slot_is_not_bid_priority() -> None:
     squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
     market = [
@@ -1571,6 +1744,8 @@ if __name__ == "__main__":
     test_full_squad_lists_does_not_bid()
     test_free_slot_bids_same_cycle()
     test_does_not_bid_falling_gap_filler()
+    test_does_not_bid_mild_decline_even_if_starter_fills_hole()
+    test_does_not_bid_rising_bench_as_hole_filler()
     test_accept_offer_frees_slot_to_bid()
     test_outlier_offer_is_declined()
     test_fair_offer_on_xi_is_hold()
@@ -1592,6 +1767,7 @@ if __name__ == "__main__":
     test_rival_listed_on_market_is_not_appreciation()
     test_cycle_plan_bids_only_free_agents_for_appreciation()
     test_reachable_target_gets_bid_priority()
+    test_free_target_starter_is_bid_off_market()
     test_near_slot_is_not_bid_priority()
     test_debt_bid_allowed_when_closes_target()
     test_flip_does_not_use_debt()
