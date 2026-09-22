@@ -41,13 +41,13 @@ CONFIRMED = {
     "sale": "/ajax/sale  ·  id_player, action(sale|remove), price",
     "sell": "/ajax/sell  ·  id_player",
     "clause-set": "/ajax/clause-set  ·  id_player, clause_range, shield",
+    "clause-pay": "/ajax/clause-pay  ·  id_player, id_uc, id_giphy",
 }
 
 # Lo que hay que confirmar en vivo antes de dejar que el ejecutor lo use
 TO_PROBE = {
     "offer": "aceptar oferta recibida (callback_offer dice «Jugador vendido»)",
     "resale": "rechazar / relistar tras oferta (callback_resale)",
-    "clause-pay": "pagar cláusula de rescisión",
     "rescind": "despedir jugador",
 }
 

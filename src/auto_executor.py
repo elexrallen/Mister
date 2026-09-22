@@ -37,7 +37,12 @@ from competitive_actions import (
     resolve_clauses_daily_limit,
     resolve_transfer_wait_hours,
 )
-from mister_actions import BID_PLACE, BID_UPDATE, MisterWriteClient
+from mister_actions import (
+    BID_PLACE,
+    BID_UPDATE,
+    MisterWriteClient,
+    UnverifiedAction,
+)
 from mister_client import listing_context_for_player, switch_community
 
 log = logging.getLogger("auto_executor")
@@ -70,6 +75,11 @@ PHASES = [
     KIND_BID,
     KIND_OFFER,
 ]
+
+# Un POST que no se llegó a mandar no bloquea fichajes ni cuenta como fallo.
+NON_SUCCESS_STATUSES = frozenset(
+    {"error", "blocked", "blocked_unverified", "skipped", "deferred"}
+)
 
 # Método de MisterWriteClient que ejecuta cada tipo
 DISPATCH = {
@@ -233,7 +243,7 @@ def transfer_locked_ids(
         for op in entry.get("operations") or []:
             if op.get("kind") not in (KIND_BID, KIND_CLAUSE, KIND_OFFER):
                 continue
-            if str(op.get("status") or "") in ("blocked", "error", "skipped"):
+            if str(op.get("status") or "") in NON_SUCCESS_STATUSES:
                 continue
             pid = _pid(op)
             if pid:
@@ -263,7 +273,7 @@ def clauses_paid_in_window(
         for op in entry.get("operations") or []:
             if op.get("kind") != KIND_CLAUSE:
                 continue
-            if str(op.get("status") or "") in ("blocked", "error", "skipped"):
+            if str(op.get("status") or "") in NON_SUCCESS_STATUSES:
                 continue
             n += 1
     return n
@@ -455,7 +465,20 @@ def plan_operations(
             amount = _money(move.get("amount") or move.get("bid") or move.get("price"))
 
             if kind not in allowed_set:
-                skip(move, kind, f"acción no permitida en allowed_actions ({kind})")
+                if kind == KIND_CLAUSE:
+                    skip(
+                        move,
+                        kind,
+                        "contrato /ajax/clause-pay sin confirmar; no se manda hasta sondearlo",
+                    )
+                elif kind == KIND_ACCEPT:
+                    skip(
+                        move,
+                        kind,
+                        "contrato /ajax/offer sin confirmar; no se manda hasta sondearlo",
+                    )
+                else:
+                    skip(move, kind, f"acción no permitida en allowed_actions ({kind})")
                 continue
             if len(operations) >= max_ops:
                 skip(move, kind, f"tope de operaciones por ciclo ({max_ops})")
@@ -783,6 +806,33 @@ def live_listing_lookup() -> Callable[[str], dict[str, Any]]:
     return lookup
 
 
+def _hydrate_clause_op(
+    op: dict[str, Any],
+    lookup: Callable[[str], dict[str, Any]] | None,
+) -> str | None:
+    """Rellena id_uc del dueño. Devuelve motivo de error o None si se puede mandar."""
+    params = dict(op.get("params") or {})
+    pid = str(params.get("player_id") or op.get("player_id") or "")
+    extra: dict[str, Any] = {}
+    if lookup and pid:
+        try:
+            extra = lookup(pid) or {}
+        except Exception as exc:  # noqa: BLE001
+            log.warning("clause lookup %s falló: %s", pid, exc)
+    owner = (
+        extra.get("owner_id")
+        or extra.get("offeree_id")
+        or params.get("owner_id")
+        or op.get("owner_id")
+    )
+    if owner in (None, "", 0, "0"):
+        return "sin id_uc del dueño: no se puede pagar la cláusula"
+    params["owner_id"] = str(owner)
+    op["params"] = params
+    log.info("cláusula lista %s id_uc=%s", pid, params["owner_id"])
+    return None
+
+
 def _hydrate_listing_op(
     op: dict[str, Any],
     lookup: Callable[[str], dict[str, Any]] | None,
@@ -846,7 +896,7 @@ def execute(
 
     lookup = listing_lookup
     if lookup is None and not getattr(cl, "_injected", False):
-        if any(op.get("kind") in LISTING_KINDS for op in ops):
+        if any(op.get("kind") in LISTING_KINDS or op.get("kind") == KIND_CLAUSE for op in ops):
             lookup = live_listing_lookup()
 
     for op in ops:
@@ -855,15 +905,28 @@ def execute(
             op["status"] = "error"
             op["error"] = f"acción desconocida: {op.get('action')}"
             continue
+        if op.get("kind") == KIND_CLAUSE:
+            missing = _hydrate_clause_op(op, lookup)
+            if missing:
+                op["status"] = "deferred"
+                op["error"] = missing
+                log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), missing)
+                continue
         if op.get("kind") in LISTING_KINDS:
             missing = _hydrate_listing_op(op, lookup)
             if missing:
-                op["status"] = "error"
+                op["status"] = "deferred"
                 op["error"] = missing
-                log.warning("%s %s falló: %s", op.get("kind"), op.get("name"), missing)
+                log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), missing)
                 continue
         try:
             result = method(**op["params"])
+        except UnverifiedAction as exc:
+            op["status"] = "blocked"
+            op["error"] = str(exc)
+            op["unverified"] = True
+            log.info("%s %s bloqueada: %s", op.get("kind"), op.get("name"), exc)
+            continue
         except Exception as exc:  # noqa: BLE001
             op["status"] = "error"
             op["error"] = str(exc)
@@ -875,6 +938,8 @@ def execute(
 
     decision["executed"] = sum(1 for o in ops if o.get("status") in ("ok", "dry_run"))
     decision["failed"] = sum(1 for o in ops if o.get("status") == "error")
+    decision["deferred"] = sum(1 for o in ops if o.get("status") == "deferred")
+    decision["blocked"] = sum(1 for o in ops if o.get("status") == "blocked")
     return decision
 
 
@@ -974,7 +1039,7 @@ def offers_outstanding(
     for entry in automation_log.get("cycles") or []:
         for op in entry.get("operations") or []:
             pid = _pid(op)
-            if not pid or str(op.get("status") or "") in ("error", "blocked_unverified"):
+            if not pid or str(op.get("status") or "") in NON_SUCCESS_STATUSES:
                 continue
             kind = op.get("kind")
             if kind == KIND_OFFER:
@@ -1133,6 +1198,8 @@ def _summary_line(decision: dict[str, Any]) -> str:
         f"[{decision.get('league')}] {mode}: {detail}; "
         f"ejecutadas={decision.get('executed', 0)} "
         f"fallidas={decision.get('failed', 0)} "
+        f"aplazadas={decision.get('deferred', 0)} "
+        f"bloqueadas={decision.get('blocked', 0)} "
         f"descartadas={len(decision.get('skipped') or [])}"
     )
 
@@ -1150,7 +1217,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument(
         "--allow-unverified",
         action="store_true",
-        help="permite endpoints sin contrato confirmado (offer, resale, clause-pay)",
+        help="permite endpoints sin contrato confirmado (offer, resale)",
     )
     args = ap.parse_args(argv)
 

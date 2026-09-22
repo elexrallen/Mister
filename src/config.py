@@ -353,8 +353,9 @@ AUTOMATION_CONFIG_PATH = CONFIG_DIR / "automation.json"
 AUTOMATION_DEFAULTS: dict = {
     "enabled": False,
     # Tipos de move que el ejecutor puede llegar a mandar. Lo que no esté aquí
-    # se registra como bloqueado. `sell_to_system` y `accept_offer` quedan fuera
-    # de inicio: el primero regala un 20%, el segundo tiene endpoint sin sondear.
+    # se registra como bloqueado. `sell_to_system` y `accept_offer` quedan
+    # fuera de inicio: el primero regala un 20%; el segundo tiene endpoint
+    # sin sondear (`/ajax/offer`). `clause_bid` sí: el POST es id_player + id_uc.
     "allowed_actions": [
         "bid",
         "offer",

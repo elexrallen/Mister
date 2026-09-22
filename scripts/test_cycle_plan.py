@@ -1079,8 +1079,8 @@ def test_reachable_target_gets_bid_priority() -> None:
     _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
 
 
-def test_free_target_starter_is_bid_off_market() -> None:
-    """Libre del once objetivo se puja aunque no esté en el strip del día."""
+def test_free_target_starter_waits_for_listing() -> None:
+    """Libre del once objetivo sin listado: se vigila, no se POST-ea /ajax/bid."""
     squad = [
         {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 4},
     ]
@@ -1153,11 +1153,73 @@ def test_free_target_starter_is_bid_off_market() -> None:
         max_squad=15,
     )
     bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
-    _assert(bids and bids[0]["name"] == "Yerry Mina", plan["moves"])
+    _assert(not any(m.get("name") == "Yerry Mina" for m in bids), plan["moves"])
+    _assert(bids and bids[0]["name"] == "P. Mendy", plan["moves"])
+    watch = plan.get("next_cycle_targets") or []
+    _assert(any(t.get("name") == "Yerry Mina" for t in watch), watch)
+    mina_watch = next(t for t in watch if t.get("name") == "Yerry Mina")
+    _assert(mina_watch.get("wait_listing") is True, mina_watch)
+    _assert("no tienen listado" in (plan.get("narrative") or ""), plan.get("narrative"))
+
+
+def test_listed_target_still_bids_without_id_market() -> None:
+    """Listado de hoy: el ejecutor hidrata id_market; el plan sí puede pujar."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 4},
+    ]
+    listed = {
+        "id": "tavernier",
+        "name": "Marcus Tavernier",
+        "position": "MF",
+        "price": 5_000_000,
+        "bid": 5_000_000,
+        "puja_recomendada": 5_000_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "id_market": None,
+        "p_play": 0.88,
+        "signal": "start",
+        "xpts": 8.2,
+        "lineup_prob": 0.9,
+        "rising": True,
+        "delta_5d": 0.05,
+        "budget_fit": "comfortable",
+    }
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[listed],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "tavernier",
+                    "name": "Marcus Tavernier",
+                    "ownership": "daily_market",
+                    "reachable": "daily_market",
+                    "xpts": 8.2,
+                    "price": 5_000_000,
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": "tavernier",
+                        "name": "Marcus Tavernier",
+                        "reachable": "daily_market",
+                        "ownership": "daily_market",
+                    }
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids and bids[0]["name"] == "Marcus Tavernier", plan["moves"])
     _assert(bids[0].get("closes_gw_target") is True, bids[0])
-    _assert(bids[0].get("is_xi_starter") is True, bids[0])
-    _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
-    _assert("libre" in (bids[0].get("why") or ""), bids[0])
+    _assert(bids[0].get("id_market") in (None, 0, "0"), bids[0])
 
 
 def test_near_slot_is_not_bid_priority() -> None:
@@ -1767,7 +1829,8 @@ if __name__ == "__main__":
     test_rival_listed_on_market_is_not_appreciation()
     test_cycle_plan_bids_only_free_agents_for_appreciation()
     test_reachable_target_gets_bid_priority()
-    test_free_target_starter_is_bid_off_market()
+    test_free_target_starter_waits_for_listing()
+    test_listed_target_still_bids_without_id_market()
     test_near_slot_is_not_bid_priority()
     test_debt_bid_allowed_when_closes_target()
     test_flip_does_not_use_debt()
