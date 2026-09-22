@@ -3593,7 +3593,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             matchday=matchday_early,
             market_reserved=0.0,
             gap_reserve=clause_gap_reserve,
-            league_rules=rules,
+            league_rules=league_rules,
             gameweek_live=bool((matchday_early or {}).get("is_live")),
         )
 
