@@ -198,23 +198,91 @@
         "failed": 0,
         "skipped": 1
       }
+    },
+    {
+      "at": "2026-09-22T20:33:05.976555+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 20631750.0,
+        "usable": 27979750.0,
+        "cash_in": 0.0,
+        "spent": 6597000.0,
+        "projected_cash": 14034750.0,
+        "cycle_cap": 16787850.0,
+        "single_cap": 11191900.0,
+        "clause_cap": 8393925.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 12
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "48563",
+          "69994"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": 424.4571898744444,
+        "pending_offers": 0
+      },
+      "operations": [
+        {
+          "kind": "clause_bid",
+          "player_id": "55646",
+          "name": "Christos Mandas",
+          "position": "GK",
+          "amount": 5418000.0,
+          "status": "error",
+          "error": "/ajax/clause-pay tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+          "unverified": null,
+          "why": "Cláusula de Christos Mandas (5.4M €): cierra un hueco del once objetivo frente a G. Daffara."
+        },
+        {
+          "kind": "bid",
+          "player_id": "55063",
+          "name": "Yerry Mina",
+          "position": "DF",
+          "amount": 1179000.0,
+          "status": "error",
+          "error": "sin id_market: no se puede armar la puja",
+          "unverified": null,
+          "why": "Puja por Yerry Mina (1.2M €, entra en el once objetivo de la jornada; libre, aún sin dueño; titular real; tendencia positiva)."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "bid",
+          "player_id": "48534",
+          "name": "M. Svilar",
+          "amount": 11979000.0,
+          "reason": "supera max_single_buy_pct: 12.0M vs 11.2M"
+        }
+      ],
+      "counts": {
+        "planned": 2,
+        "executed": 0,
+        "failed": 2,
+        "skipped": 1
+      }
     }
   ],
-  "updated_at": "2026-09-22T15:46:28.320649+00:00",
+  "updated_at": "2026-09-22T20:33:05.976555+00:00",
   "last_cycle": {
-    "at": "2026-09-22T15:46:28.320649+00:00",
+    "at": "2026-09-22T20:33:05.976555+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
       "balance": 20631750.0,
-      "usable": 23007750.0,
+      "usable": 27979750.0,
       "cash_in": 0.0,
-      "spent": 4972000.0,
-      "projected_cash": 15659750.0,
-      "cycle_cap": 13804650.0,
-      "single_cap": 9203100.0,
-      "clause_cap": 6902325.0,
+      "spent": 6597000.0,
+      "projected_cash": 14034750.0,
+      "cycle_cap": 16787850.0,
+      "single_cap": 11191900.0,
+      "clause_cap": 8393925.0,
       "min_cash_floor": 0.0,
       "free_slots_left": 12
     },
@@ -226,46 +294,46 @@
       ],
       "stale_offers": [],
       "sale_remaining_after": 5,
-      "hours_to_jornada": 429.23409857972223,
+      "hours_to_jornada": 424.4571898744444,
       "pending_offers": 0
     },
     "operations": [
       {
-        "kind": "bid",
-        "player_id": "69994",
-        "name": "P. Mendy",
-        "position": "FW",
-        "amount": 666600.0,
-        "status": "ok",
-        "error": null,
+        "kind": "clause_bid",
+        "player_id": "55646",
+        "name": "Christos Mandas",
+        "position": "GK",
+        "amount": 5418000.0,
+        "status": "error",
+        "error": "/ajax/clause-pay tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
         "unverified": null,
-        "why": "Puja por P. Mendy (667k €, cubre un hueco de plantilla; revaloriza +2%; sigue al alza)."
+        "why": "Cláusula de Christos Mandas (5.4M €): cierra un hueco del once objetivo frente a G. Daffara."
       },
       {
         "kind": "bid",
-        "player_id": "48563",
-        "name": "Z. Çelik",
+        "player_id": "55063",
+        "name": "Yerry Mina",
         "position": "DF",
-        "amount": 4305400.0,
-        "status": "ok",
-        "error": null,
+        "amount": 1179000.0,
+        "status": "error",
+        "error": "sin id_market: no se puede armar la puja",
         "unverified": null,
-        "why": "Puja por Z. Çelik (4.3M €, cubre un hueco de plantilla; revaloriza +2%; sigue al alza)."
+        "why": "Puja por Yerry Mina (1.2M €, entra en el once objetivo de la jornada; libre, aún sin dueño; titular real; tendencia positiva)."
       }
     ],
     "skipped": [
       {
         "kind": "bid",
-        "player_id": "14920",
-        "name": "E. Caprile",
-        "amount": 12301300.0,
-        "reason": "supera max_single_buy_pct: 12.3M vs 9.2M"
+        "player_id": "48534",
+        "name": "M. Svilar",
+        "amount": 11979000.0,
+        "reason": "supera max_single_buy_pct: 12.0M vs 11.2M"
       }
     ],
     "counts": {
       "planned": 2,
-      "executed": 2,
-      "failed": 0,
+      "executed": 0,
+      "failed": 2,
       "skipped": 1
     }
   }

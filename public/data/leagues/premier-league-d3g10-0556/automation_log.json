@@ -185,25 +185,95 @@
         "failed": 0,
         "skipped": 2
       }
+    },
+    {
+      "at": "2026-09-22T20:33:04.370058+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 19807910.0,
+        "usable": 27006660.0,
+        "cash_in": 0.0,
+        "spent": 15336250.0,
+        "projected_cash": 4471660.0,
+        "cycle_cap": 16203996.0,
+        "single_cap": 10802664.0,
+        "clause_cap": 8101998.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 11
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "61133"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 4,
+        "hours_to_jornada": 423.02845379333337,
+        "pending_offers": 0
+      },
+      "operations": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "64099",
+          "name": "H. Diarra",
+          "position": "MF",
+          "amount": 160000.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Pon en venta a H. Diarra: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 160k €) y el dinero llega al instante."
+        },
+        {
+          "kind": "clause_bid",
+          "player_id": "4776",
+          "name": "Ainsley Maitland-Niles",
+          "position": "DF",
+          "amount": 6149250.0,
+          "status": "error",
+          "error": "/ajax/clause-pay tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+          "unverified": null,
+          "why": "Cláusula de Ainsley Maitland-Niles (6.1M €): cierra un hueco del once objetivo frente a O. Adarabioyo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "Marcus Tavernier",
+          "position": "MF",
+          "amount": 9187000.0,
+          "status": "error",
+          "error": "sin id_market: no se puede armar la puja",
+          "unverified": null,
+          "why": "Puja por Marcus Tavernier (9.2M €, entra en el once objetivo de la jornada; libre, aún sin dueño; titular real; tendencia positiva)."
+        }
+      ],
+      "skipped": [],
+      "counts": {
+        "planned": 3,
+        "executed": 1,
+        "failed": 2,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-09-22T15:46:27.444439+00:00",
+  "updated_at": "2026-09-22T20:33:04.370058+00:00",
   "last_cycle": {
-    "at": "2026-09-22T15:46:27.444439+00:00",
+    "at": "2026-09-22T20:33:04.370058+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
-      "balance": 21688160.0,
-      "usable": 26575410.0,
+      "balance": 19807910.0,
+      "usable": 27006660.0,
       "cash_in": 0.0,
-      "spent": 1880250.0,
-      "projected_cash": 19807910.0,
-      "cycle_cap": 15945246.0,
-      "single_cap": 10630164.0,
-      "clause_cap": 7972623.0,
+      "spent": 15336250.0,
+      "projected_cash": 4471660.0,
+      "cycle_cap": 16203996.0,
+      "single_cap": 10802664.0,
+      "clause_cap": 8101998.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 13
+      "free_slots_left": 11
     },
     "context": {
       "transfer_wait_hours": 24.0,
@@ -211,44 +281,51 @@
         "61133"
       ],
       "stale_offers": [],
-      "sale_remaining_after": 5,
-      "hours_to_jornada": 427.7988602191666,
+      "sale_remaining_after": 4,
+      "hours_to_jornada": 423.02845379333337,
       "pending_offers": 0
     },
     "operations": [
       {
-        "kind": "bid",
-        "player_id": "61133",
-        "name": "M. Tel",
-        "position": "FW",
-        "amount": 1880250.0,
+        "kind": "list_for_sale",
+        "player_id": "64099",
+        "name": "H. Diarra",
+        "position": "MF",
+        "amount": 160000.0,
         "status": "ok",
         "error": null,
         "unverified": null,
-        "why": "Puja por M. Tel (1.9M €, cubre un hueco de plantilla; revaloriza -4%)."
-      }
-    ],
-    "skipped": [
+        "why": "Pon en venta a H. Diarra: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 160k €) y el dinero llega al instante."
+      },
       {
         "kind": "clause_bid",
-        "player_id": "64089",
-        "name": "Walter Benítez",
-        "amount": 1000000.0,
-        "reason": "cláusula no ejercitable: cláusula no visible"
+        "player_id": "4776",
+        "name": "Ainsley Maitland-Niles",
+        "position": "DF",
+        "amount": 6149250.0,
+        "status": "error",
+        "error": "/ajax/clause-pay tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+        "unverified": null,
+        "why": "Cláusula de Ainsley Maitland-Niles (6.1M €): cierra un hueco del once objetivo frente a O. Adarabioyo."
       },
       {
         "kind": "bid",
-        "player_id": "1804",
-        "name": "G. Xhaka",
-        "amount": 17605500.0,
-        "reason": "supera max_single_buy_pct: 17.6M vs 10.6M"
+        "player_id": "48972",
+        "name": "Marcus Tavernier",
+        "position": "MF",
+        "amount": 9187000.0,
+        "status": "error",
+        "error": "sin id_market: no se puede armar la puja",
+        "unverified": null,
+        "why": "Puja por Marcus Tavernier (9.2M €, entra en el once objetivo de la jornada; libre, aún sin dueño; titular real; tendencia positiva)."
       }
     ],
+    "skipped": [],
     "counts": {
-      "planned": 1,
+      "planned": 3,
       "executed": 1,
-      "failed": 0,
-      "skipped": 2
+      "failed": 2,
+      "skipped": 0
     }
   }
 }
