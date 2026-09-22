@@ -685,7 +685,12 @@ def test_log_entry_feeds_back_the_transfer_lock() -> None:
     fichaje recién hecho sin enterarse.
     """
     bought = _run([_bid("1", 2 * M)])
-    ax.execute(bought, client=MisterWriteClient(dry_run=True))
+    ax.execute(
+        bought,
+        client=MisterWriteClient(
+            dry_run=True, transport=lambda *a, **k: {"status": "ok"}
+        ),
+    )
     entry = ax.log_entry(bought)
     _assert(entry["operations"][0]["status"] == "dry_run", entry)
     _assert(entry["counts"]["planned"] == 1, entry["counts"])
@@ -708,6 +713,66 @@ def test_failed_buy_does_not_lock_the_player() -> None:
         automation_log={"cycles": [entry]}, transfer_wait_hours=24, now=NOW
     )
     _assert(not locked, f"una puja fallida no bloquea nada: {locked}")
+
+
+def test_bid_without_id_market_is_not_posted() -> None:
+    """id_market=0 es lo que mandó el ejecutor y Mister respondió 400."""
+    d = _run([_bid("1", M, id_market=None)])
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False,
+        transport=lambda p, data: calls.append((p, data)) or {"status": "ok"},
+    )
+    ax.execute(d, client=client)
+    _assert(not calls, f"sin id_market no se POST: {calls}")
+    _assert(d["operations"][0]["status"] == "error", d["operations"][0])
+    _assert("id_market" in str(d["operations"][0].get("error")), d["operations"][0])
+
+
+def test_execute_hydrates_id_market_from_lookup() -> None:
+    d = _run([_bid("1", M, id_market=None)])
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False,
+        transport=lambda p, data: calls.append((p, data)) or {"status": "ok"},
+    )
+    ax.execute(
+        d,
+        client=client,
+        listing_lookup=lambda pid: {"id_market": 4242, "action": "bid"},
+    )
+    _assert(len(calls) == 1, calls)
+    _assert(calls[0][1]["id_market"] == 4242, calls[0])
+    _assert(calls[0][1]["id_player"] == "1", calls[0])
+    _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
+
+
+def test_already_active_bid_uses_update_action() -> None:
+    d = _run([_bid("1", M, id_market=None)])
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False,
+        transport=lambda p, data: calls.append((p, data)) or {"status": "ok"},
+    )
+    ax.execute(
+        d,
+        client=client,
+        listing_lookup=lambda pid: {"id_market": 7, "action": "update"},
+    )
+    _assert(calls[0][1]["action"] == "update", calls[0])
+
+
+def test_community_id_from_payload() -> None:
+    _assert(
+        ax.community_id_from_payload({"sources": {"id_community": "2550556"}})
+        == "2550556",
+        "sources",
+    )
+    _assert(
+        ax.community_id_from_payload({"league": {"id": "2550628"}}) == "2550628",
+        "league.id",
+    )
+    _assert(ax.community_id_from_payload({}) == "", "vacío")
 
 
 TESTS = [
@@ -762,6 +827,10 @@ TESTS = [
     test_unverified_endpoint_is_blocked_in_live_mode,
     test_log_entry_feeds_back_the_transfer_lock,
     test_failed_buy_does_not_lock_the_player,
+    test_bid_without_id_market_is_not_posted,
+    test_execute_hydrates_id_market_from_lookup,
+    test_already_active_bid_uses_update_action,
+    test_community_id_from_payload,
 ]
 
 

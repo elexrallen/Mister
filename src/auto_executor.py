@@ -24,7 +24,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Callable
 
 import config
 from competitive_actions import (
@@ -34,7 +34,8 @@ from competitive_actions import (
     resolve_clauses_daily_limit,
     resolve_transfer_wait_hours,
 )
-from mister_actions import MisterWriteClient
+from mister_actions import BID_PLACE, BID_UPDATE, MisterWriteClient
+from mister_client import listing_context_for_player, switch_community
 
 log = logging.getLogger("auto_executor")
 
@@ -50,6 +51,9 @@ KIND_HOLD = "hold_offer"
 KIND_OFFER = "offer"
 KIND_WITHDRAW = "withdraw_offer"
 KIND_RESCIND = "sell_to_system"
+
+# Operaciones de /ajax/bid: sin id_market el formulario no se puede armar.
+LISTING_KINDS = frozenset({KIND_BID, KIND_OFFER, KIND_WITHDRAW})
 
 # Orden de ejecución. Primero lo que ingresa o libera, al final lo que
 # solo compromete.
@@ -694,11 +698,110 @@ def _op(
     }
 
 
+def _positive_id(raw: Any) -> int | None:
+    if raw in (None, "", 0, "0", False):
+        return None
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
+def community_id_from_payload(payload: dict[str, Any] | None) -> str:
+    """id_community de la liga del payload publicado."""
+    if not isinstance(payload, dict):
+        return ""
+    sources = payload.get("sources") if isinstance(payload.get("sources"), dict) else {}
+    league = payload.get("league") if isinstance(payload.get("league"), dict) else {}
+    for raw in (
+        sources.get("id_community"),
+        league.get("id_community"),
+        league.get("id"),
+        payload.get("id_community"),
+    ):
+        cid = str(raw or "").strip()
+        if cid and cid != "0":
+            return cid
+    return ""
+
+
+def ensure_league_session(id_community: str) -> bool:
+    """Activa la comunidad y renueva x-auth. Sin esto el POST cae en otra liga."""
+    cid = str(id_community or "").strip()
+    if not cid:
+        return False
+    fg = switch_community(cid)
+    got = str((fg or {}).get("id_community") or "")
+    if got != cid:
+        log.error("sesión no está en comunidad %s (quedó %s)", cid, got or "vacía")
+        return False
+    return True
+
+
+def live_listing_lookup() -> Callable[[str], dict[str, Any]]:
+    """
+    Resuelve id_market como el popup de puja: player-community-info.
+
+    sw/market es un atajo por lote (data_engine); aquí hay 1-6 pujas y el
+    preload del formulario es la fuente que Mister usa de verdad.
+    """
+    cache: dict[str, dict[str, Any]] = {}
+
+    def lookup(player_id: str) -> dict[str, Any]:
+        pid = str(player_id or "").strip()
+        if pid in cache:
+            return cache[pid]
+        extra = listing_context_for_player(pid)
+        cache[pid] = extra
+        return extra
+
+    return lookup
+
+
+def _hydrate_listing_op(
+    op: dict[str, Any],
+    lookup: Callable[[str], dict[str, Any]] | None,
+) -> str | None:
+    """Rellena id_market/action. Devuelve motivo de error o None si se puede mandar."""
+    params = dict(op.get("params") or {})
+    pid = str(params.get("player_id") or op.get("player_id") or "")
+    extra: dict[str, Any] = {}
+    if lookup and pid:
+        try:
+            extra = lookup(pid) or {}
+        except Exception as exc:  # noqa: BLE001
+            log.warning("listing lookup %s falló: %s", pid, exc)
+    mid = _positive_id(extra.get("id_market")) or _positive_id(params.get("id_market"))
+    if not mid:
+        return "sin id_market: no se puede armar la puja"
+    params["id_market"] = mid
+    action = extra.get("action") or params.get("action")
+    if action in (BID_PLACE, BID_UPDATE, "remove"):
+        params["action"] = action
+    if op.get("kind") == KIND_OFFER:
+        offeree = extra.get("offeree_id") or extra.get("owner_id") or params.get("offeree_id")
+        if offeree not in (None, "", 0, "0"):
+            params["offeree_id"] = offeree
+    elif op.get("kind") == KIND_BID:
+        params["offeree_id"] = 0
+    op["params"] = params
+    log.info(
+        "puja lista %s id_market=%s action=%s offeree=%s",
+        pid,
+        mid,
+        params.get("action") or BID_PLACE,
+        params.get("offeree_id", 0),
+    )
+    return None
+
+
 def execute(
     decision: dict[str, Any],
     *,
     client: MisterWriteClient | None = None,
     dry_run: bool | None = None,
+    listing_lookup: Callable[[str], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Manda las operaciones que decidió el núcleo puro.
@@ -706,6 +809,9 @@ def execute(
     Un fallo no corta el ciclo: se registra y se sigue con la siguiente. Media
     tanda ejecutada es peor que ninguna, pero peor aún es que un rechazo de
     Mister deje sin ejecutar la venta que financia el resto.
+
+    `listing_lookup` inyecta el id_market en tests. En producción, con
+    transporte real, se resuelve contra Mister después de `switch_community`.
     """
     ops = list(decision.get("operations") or [])
     if not decision.get("enabled") or not ops:
@@ -714,12 +820,24 @@ def execute(
     run_dry = decision.get("dry_run") if dry_run is None else dry_run
     cl = client or MisterWriteClient(dry_run=bool(run_dry))
 
+    lookup = listing_lookup
+    if lookup is None and not getattr(cl, "_injected", False):
+        if any(op.get("kind") in LISTING_KINDS for op in ops):
+            lookup = live_listing_lookup()
+
     for op in ops:
         method = getattr(cl, str(op.get("action") or ""), None)
         if method is None:
             op["status"] = "error"
             op["error"] = f"acción desconocida: {op.get('action')}"
             continue
+        if op.get("kind") in LISTING_KINDS:
+            missing = _hydrate_listing_op(op, lookup)
+            if missing:
+                op["status"] = "error"
+                op["error"] = missing
+                log.warning("%s %s falló: %s", op.get("kind"), op.get("name"), missing)
+                continue
         try:
             result = method(**op["params"])
         except Exception as exc:  # noqa: BLE001
@@ -943,6 +1061,32 @@ def run_league(
     payload = json.loads(path.read_text(encoding="utf-8"))
     settings = config.automation_for_league(slug)
     dry = settings.get("dry_run") if dry_run is None else dry_run
+    cid = community_id_from_payload(payload)
+    session_ok = True
+    if cid:
+        session_ok = ensure_league_session(cid)
+    else:
+        session_ok = False
+        log.error("[%s] payload sin id_community: no se puede seleccionar la liga", slug)
+
+    if not session_ok and not dry:
+        decision = plan_operations(
+            cycle_plan=payload.get("cycle_plan"),
+            settings=settings,
+            state=state_from_payload(payload, slug=slug),
+            league_rules=rules_from_payload(payload),
+        )
+        for op in decision.get("operations") or []:
+            op["status"] = "error"
+            op["error"] = f"comunidad {cid or '?'} no activa; no se ha enviado nada"
+        decision["executed"] = 0
+        decision["failed"] = len(decision.get("operations") or [])
+        try:
+            write_log(slug, decision)
+        except OSError as exc:
+            log.warning("[%s] no se pudo escribir automation_log: %s", slug, exc)
+        return decision
+
     return run_cycle(
         slug=slug,
         cycle_plan=payload.get("cycle_plan"),

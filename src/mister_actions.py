@@ -149,11 +149,19 @@ class MisterWriteClient:
         amount_int = int(round(float(amount)))
         if amount_int <= 0 and action != BID_REMOVE:
             raise ActionError(f"puja inválida para {player_id}: {amount}")
+        try:
+            mid = int(id_market) if id_market not in (None, "", 0, "0") else 0
+        except (TypeError, ValueError):
+            mid = 0
+        if mid <= 0:
+            raise ActionError(
+                f"id_market ausente para {player_id}: sin listado la puja no se puede armar"
+            )
         return self._post_action(
             "/ajax/bid",
             {
                 "offeree_id": int(offeree_id or 0),
-                "id_market": int(id_market or 0),
+                "id_market": mid,
                 "id_player": str(player_id),
                 "action": action,
                 "bid": amount_int,

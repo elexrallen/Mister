@@ -1,0 +1,131 @@
+# Lanza el ejecutor de mercado (pujas, ofertas, listados) sin regenerar
+# el dataset completo. Pensado para dispararlo a mano desde Actions.
+#
+# Solo actúa en las ligas de config/automation.json con el kill switch
+# global en true. MISTER_AUTOMATION_OFF=1 lo apaga sin tocar el fichero.
+#
+# Si escribe en Mister, regenera el payload de esas ligas, commitea el
+# automation_log y publica Pages para que la PWA no quede desfasada.
+
+name: Auto executor
+
+on:
+  workflow_dispatch:
+    inputs:
+      league:
+        description: "Liga (all, o slug p.ej. premier-league-d3g10-0556)"
+        required: true
+        default: all
+        type: string
+      dry_run:
+        description: "Simular: no escribe en Mister ni commitea"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: auto-executor
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run auto executor
+        id: automation
+        env:
+          MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
+          MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
+          MISTER_PHPSESSID: ${{ secrets.MISTER_PHPSESSID }}
+          MISTER_REFRESH_TOKEN: ${{ secrets.MISTER_REFRESH_TOKEN }}
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+          MISTER_LEAGUE_ID: ${{ secrets.MISTER_LEAGUE_ID }}
+          MISTER_TEAM_ID: ${{ secrets.MISTER_TEAM_ID }}
+          MISTER_AUTOMATION_OFF: ${{ vars.MISTER_AUTOMATION_OFF }}
+        run: |
+          EXTRA=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            EXTRA="--dry-run"
+            echo "Modo simulación: no se escribe en Mister."
+          fi
+          python src/auto_executor.py --league "${{ github.event.inputs.league }}" $EXTRA
+
+      - name: Refresh payload of leagues that acted
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.automation.outputs.acted != '' }}
+        env:
+          MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
+          MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
+          MISTER_PHPSESSID: ${{ secrets.MISTER_PHPSESSID }}
+          MISTER_REFRESH_TOKEN: ${{ secrets.MISTER_REFRESH_TOKEN }}
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+        run: |
+          IFS=',' read -ra SLUGS <<< "${{ steps.automation.outputs.acted }}"
+          for slug in "${SLUGS[@]}"; do
+            [ -z "$slug" ] && continue
+            echo "Regenerando $slug tras las operaciones del ciclo"
+            python src/data_engine.py --league "$slug"
+          done
+
+      - name: Persist automation log and snapshot
+        if: ${{ github.event.inputs.dry_run != 'true' }}
+        id: persist
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/latest_data.json public/data/leagues.json public/data/leagues/ || true
+          git add cache/rival_finances/ || true
+          if git diff --staged --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Sin cambios que commitear."
+          else
+            git commit -m "chore: auto executor cycle"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            for i in 1 2 3; do
+              git pull --rebase --autostash origin main
+              if git push; then
+                echo "Push OK"
+                exit 0
+              fi
+              echo "Push rechazado (intento $i); reintento tras rebase..."
+              sleep 3
+            done
+            echo "::error::No se pudo pushear el ciclo tras 3 intentos"
+            exit 1
+          fi
+
+      - name: Configure Pages
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.persist.outputs.changed == 'true' }}
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.persist.outputs.changed == 'true' }}
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+      - name: Deploy to GitHub Pages
+        if: ${{ github.event.inputs.dry_run != 'true' && steps.persist.outputs.changed == 'true' }}
+        id: deployment
+        uses: actions/deploy-pages@v4

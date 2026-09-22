@@ -109,6 +109,21 @@ def ajax_headers() -> dict[str, str]:
     return h
 
 
+def _ajax_error_detail(resp: requests.Response) -> str:
+    """Cuerpo de un AJAX fallido: Mister a veces manda JSON con `message`."""
+    try:
+        body = resp.json()
+    except ValueError:
+        return (resp.text or "").strip()[:400]
+    if isinstance(body, dict):
+        for key in ("message", "error", "msg", "status"):
+            val = body.get(key)
+            if val not in (None, "", "error"):
+                return str(val)[:300]
+        return str(body)[:300]
+    return str(body)[:300]
+
+
 def ajax_post(path: str, data: dict[str, Any] | None = None, timeout: int = 25) -> Any:
     url = f"{config.MISTER_API_BASE}{path}"
     resp = requests.post(url, headers=ajax_headers(), data=data or {}, timeout=timeout)
@@ -123,7 +138,14 @@ def ajax_post(path: str, data: dict[str, Any] | None = None, timeout: int = 25) 
                 )
         except Exception as exc:  # noqa: BLE001
             log.warning("Renovación x-auth falló: %s", exc)
-    resp.raise_for_status()
+    if resp.status_code >= 400:
+        detail = _ajax_error_detail(resp)
+        log.warning("ajax %s → %s %s", path, resp.status_code, detail)
+        raise requests.HTTPError(
+            f"{resp.status_code} Client Error: {resp.reason} for url: {url}"
+            + (f" — {detail}" if detail else ""),
+            response=resp,
+        )
     if not resp.content:
         return {}
     return resp.json()
@@ -251,19 +273,38 @@ def _listing_id(raw: Any) -> int | None:
 
 def fetch_sw_market() -> list[dict[str, Any]]:
     """
-    POST /ajax/sw/market — listados del día con `id_market` real.
+    POST /ajax/sw/market — intenta el JSON de listados con `id_market`.
 
-    El HTML de /market pinta las cards pero no el id del listado; el popup de
-    puja lo saca de aquí (`pre.market.id`). Sin él una oferta a un rival no
-    se puede armar. Fail-soft: si Mister no responde, el mercado HTML sigue.
+    El HTML de /market pinta las cards pero no el id del listado. El popup de
+    puja usa `player-community-info` (`pre.market.id`); este endpoint es un
+    atajo por lote. El JS manda el objeto filtro, no `{}` — un POST vacío
+    a veces responde 500. Fail-soft: si no hay JSON, el ejecutor resuelve
+    cada jugador por `player-community-info`.
     """
-    try:
-        raw = ajax_post("/ajax/sw/market", {})
-    except Exception as exc:  # noqa: BLE001
-        log.warning("sw/market falló: %s", exc)
-        return []
+    payloads: tuple[dict[str, Any], ...] = (
+        {"position": 0, "price": 0, "owner": -1},
+        {"interval": "today"},
+        {},
+    )
+    raw: Any = None
+    for payload in payloads:
+        try:
+            raw = ajax_post("/ajax/sw/market", payload)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("sw/market %s falló: %s", payload, exc)
+            raw = None
+            continue
+        if isinstance(raw, dict):
+            data_try = raw.get("data") if isinstance(raw.get("data"), dict) else raw
+            players_try = (
+                data_try.get("players") if isinstance(data_try, dict) else None
+            )
+            if isinstance(players_try, list):
+                break
     data = raw.get("data") if isinstance(raw, dict) else None
     players = (data or {}).get("players") if isinstance(data, dict) else None
+    if not isinstance(players, list) and isinstance(raw, dict):
+        players = raw.get("players")
     if not isinstance(players, list):
         return []
     out: list[dict[str, Any]] = []
@@ -439,6 +480,30 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
             except (TypeError, ValueError):
                 pass
     return out
+
+
+def listing_context_for_player(player_id: str | int) -> dict[str, Any]:
+    """
+    Lo que el popup de puja carga con `data-preload=player-community-info`.
+
+    De ahí salen `pre.market.id` (id_market), `pre.owner.id` (offeree) y si
+    ya hay puja viva (`pre.bid.isActive` → action=update, no bid).
+    """
+    info = fetch_player_community_info(player_id) or {}
+    fields = clause_fields_from_community(info)
+    bid = info.get("bid") if isinstance(info.get("bid"), dict) else {}
+    active = bid.get("isActive") in (1, True, "1")
+    action = "update" if active else "bid"
+    owner = fields.get("owner_id")
+    offeree = None
+    if owner not in (None, "", 0, "0"):
+        offeree = str(owner)
+    return {
+        "id_market": fields.get("id_market"),
+        "offeree_id": offeree,
+        "action": action,
+        "owner_id": offeree,
+    }
 
 
 def refresh_team_labels(
