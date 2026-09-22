@@ -5316,6 +5316,28 @@ def clause_roi_gate(
 # Admin `clauses_signs`: 0=off, 1=24h, 2=72h, 3=7 días. Códigos de Mister.
 CLAUSE_SIGNS_HOURS: dict[int, float] = {0: 0.0, 1: 24.0, 2: 72.0, 3: 168.0}
 
+# Admin `clauses_daily`: N cláusulas por ventana. En Mister lo habitual es 1/24h.
+CLAUSE_DAILY_WINDOW_HOURS = 24.0
+
+
+def resolve_clauses_daily_limit(raw: Any, *, default: int | None = None) -> int | None:
+    """
+    Tope de cláusulas por ventana de 24 h.
+
+    None = no publicado. 0 = ilimitado. N = N en 24 horas.
+    El ejecutor pasa default=1 porque casi todas las ligas van a 1/24h.
+    """
+    if raw is None:
+        return default
+    if raw is False:
+        return 0
+    if raw is True:
+        return 1
+    try:
+        return max(0, int(float(raw)))
+    except (TypeError, ValueError):
+        return default
+
 
 def resolve_clauses_signs_hours(raw: Any) -> float | None:
     """Horas de protección al recién fichado. None = la liga no publica el dato."""
@@ -5459,10 +5481,14 @@ def clause_executable(
             pass
 
     daily = _rule("daily_limit", "clauses_daily")
-    if daily is not None and clauses_paid_today is not None:
+    daily_n = resolve_clauses_daily_limit(daily)
+    if daily_n is not None and daily_n > 0 and clauses_paid_today is not None:
         try:
-            if int(daily) > 0 and int(clauses_paid_today) >= int(daily):
-                return False, f"tope diario de cláusulas alcanzado ({daily})"
+            if int(clauses_paid_today) >= daily_n:
+                window = int(CLAUSE_DAILY_WINDOW_HOURS)
+                return False, (
+                    f"tope de {daily_n} cláusula(s) cada {window} h"
+                )
         except (TypeError, ValueError):
             pass
 

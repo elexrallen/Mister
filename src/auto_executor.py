@@ -28,8 +28,10 @@ from typing import Any
 
 import config
 from competitive_actions import (
+    CLAUSE_DAILY_WINDOW_HOURS,
     clause_executable,
     mister_bid_cap,
+    resolve_clauses_daily_limit,
     resolve_transfer_wait_hours,
 )
 from mister_actions import MisterWriteClient
@@ -232,6 +234,34 @@ def transfer_locked_ids(
     return locked
 
 
+def clauses_paid_in_window(
+    automation_log: dict[str, Any] | None,
+    *,
+    now: datetime | None = None,
+    hours: float | None = None,
+) -> int:
+    """Cláusulas propias cobradas en la ventana (por defecto 24 h)."""
+    window = float(hours if hours is not None else CLAUSE_DAILY_WINDOW_HOURS)
+    if window <= 0 or not isinstance(automation_log, dict):
+        return 0
+    ref = now or datetime.now(timezone.utc)
+    n = 0
+    for entry in automation_log.get("cycles") or []:
+        ts = _parse_ts(entry.get("at"))
+        if ts is None:
+            continue
+        elapsed = (ref - ts).total_seconds() / 3600.0
+        if elapsed < 0 or elapsed >= window:
+            continue
+        for op in entry.get("operations") or []:
+            if op.get("kind") != KIND_CLAUSE:
+                continue
+            if str(op.get("status") or "") in ("blocked", "error", "skipped"):
+                continue
+            n += 1
+    return n
+
+
 def stale_offer_ids(
     *,
     automation_log: dict[str, Any] | None,
@@ -370,6 +400,19 @@ def plan_operations(
     wait_h = resolve_transfer_wait_hours(rules.get("transfer_wait"))
     locked = transfer_locked_ids(
         automation_log=automation_log, transfer_wait_hours=wait_h, now=ref_now
+    )
+    clause_cfg = rules.get("clause_rules") if isinstance(rules.get("clause_rules"), dict) else {}
+    clause_daily_cap = resolve_clauses_daily_limit(
+        clause_cfg.get("daily_limit", rules.get("clauses_daily")),
+        default=1,
+    )
+    paid_raw = _f(st.get("clauses_paid_today"))
+    clauses_paid_window = (
+        int(paid_raw)
+        if paid_raw is not None
+        else clauses_paid_in_window(
+            automation_log, now=ref_now, hours=CLAUSE_DAILY_WINDOW_HOURS
+        )
     )
     pending_sent = st.get("offers_sent") or []
     live_offers = len(pending_sent)
@@ -511,13 +554,25 @@ def plan_operations(
                 if clauses_done >= max_clauses:
                     skip(move, kind, f"tope de cláusulas por ciclo ({max_clauses})")
                     continue
+                if (
+                    clause_daily_cap
+                    and clause_daily_cap > 0
+                    and (clauses_paid_window + clauses_done) >= clause_daily_cap
+                ):
+                    skip(
+                        move,
+                        kind,
+                        f"tope de {clause_daily_cap} cláusula(s) cada "
+                        f"{int(CLAUSE_DAILY_WINDOW_HOURS)} h",
+                    )
+                    continue
                 ok, why = clause_executable(
                     move,
                     league_rules=rules,
                     gameweek_live=gameweek_live,
                     hours_to_jornada=hours_to_jornada,
                     inbound_clauses=_f(st.get("inbound_clauses")),
-                    clauses_paid_today=_f(st.get("clauses_paid_today")),
+                    clauses_paid_today=clauses_paid_window + clauses_done,
                 )
                 if not ok:
                     skip(move, kind, f"cláusula no ejercitable: {why}")

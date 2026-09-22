@@ -201,7 +201,7 @@ def test_daily_clause_limit() -> None:
     _assert(ok_first, "la primera del día cabe")
     ok_second, why = clause_executable(_target(), league_rules=rules, clauses_paid_today=1)
     _assert(not ok_second, "la segunda no")
-    _assert("diario" in (why or ""), why)
+    _assert("24" in (why or "") or "tope" in (why or ""), why)
 
 
 def test_daily_limit_zero_means_unlimited() -> None:

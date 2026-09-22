@@ -250,6 +250,7 @@ def test_two_clauses_when_config_allows() -> None:
     d = _run(
         [_clause("1", 2 * M), _clause("2", 2 * M)],
         settings=_settings(max_clauses_per_cycle=2),
+        rules={"clauses": True, "transfer_wait": 1, "clause_rules": {"daily_limit": 0}},
     )
     _assert(len(d["operations"]) == 2, f"con el tope a 2 pasan las dos: {d['skipped']}")
 
@@ -277,6 +278,66 @@ def test_clause_open_far_from_kickoff() -> None:
     rules = {"clauses": True, "clause_rules": {"enabled": True, "gameweek": 1}}
     d = _run([_clause("1", 2 * M)], rules=rules, hours_to_jornada=40)
     _assert(_kinds(d) == ["clause_bid"], f"40 h antes sí se puede: {_kinds(d)}")
+
+
+def test_second_clause_inside_24h_is_blocked() -> None:
+    """Lo habitual en Mister: 1 cláusula cada 24 h, no cada ciclo de 8 h."""
+    log = {
+        "cycles": [
+            {
+                "at": (NOW - timedelta(hours=3)).isoformat(),
+                "operations": [
+                    {
+                        "kind": "clause_bid",
+                        "player_id": "9",
+                        "status": "ok",
+                    }
+                ],
+            }
+        ]
+    }
+    d = _run(
+        [_clause("1", 2 * M)],
+        state={"automation_log": log},
+        rules={"clauses": True, "clause_rules": {"enabled": True, "daily_limit": 1}},
+    )
+    _assert(not d["operations"], "a las 3 h aún no ha pasado la ventana")
+    _assert("24" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
+def test_clause_allowed_after_24h_window() -> None:
+    log = {
+        "cycles": [
+            {
+                "at": (NOW - timedelta(hours=25)).isoformat(),
+                "operations": [
+                    {"kind": "clause_bid", "player_id": "9", "status": "ok"}
+                ],
+            }
+        ]
+    }
+    d = _run(
+        [_clause("1", 2 * M)],
+        state={"automation_log": log},
+        rules={"clauses": True, "clause_rules": {"enabled": True, "daily_limit": 1}},
+    )
+    _assert(_kinds(d) == ["clause_bid"], f"a las 25 h ya cabe: {_kinds(d)}")
+
+
+def test_unpublished_daily_limit_defaults_to_one_per_24h() -> None:
+    log = {
+        "cycles": [
+            {
+                "at": (NOW - timedelta(hours=1)).isoformat(),
+                "operations": [
+                    {"kind": "clause_bid", "player_id": "9", "status": "ok"}
+                ],
+            }
+        ]
+    }
+    d = _run([_clause("1", 2 * M)], state={"automation_log": log})
+    _assert(not d["operations"], "sin dato de admin se asume 1/24h")
+    _assert("24" in _skip_reason(d, "1"), _skip_reason(d, "1"))
 
 
 # ---------------------------------------------------------------------------
@@ -668,6 +729,9 @@ TESTS = [
     test_clause_without_owner_is_skipped,
     test_clause_blocked_in_gameweek_window,
     test_clause_open_far_from_kickoff,
+    test_second_clause_inside_24h_is_blocked,
+    test_clause_allowed_after_24h_window,
+    test_unpublished_daily_limit_defaults_to_one_per_24h,
     test_rival_listing_becomes_an_offer_not_a_bid,
     test_free_agent_bid_has_no_offeree,
     test_offers_do_not_consume_cycle_spend,
