@@ -702,6 +702,91 @@ def _pick_hoy_clause(
     return best[1]
 
 
+def _is_target_buy_slot(slot: dict[str, Any]) -> bool:
+    """Hueco del once objetivo fichable por mercado o como libre. No cláusula."""
+    if not isinstance(slot, dict) or slot.get("near"):
+        return False
+    if str(slot.get("ownership") or "") == "owned":
+        return False
+    reach = str(slot.get("reachable") or "")
+    own = str(slot.get("ownership") or "")
+    if reach == "clause":
+        return False
+    if own == "rival" and reach != "daily_market":
+        return False
+    return reach in ("daily_market", "free") or own in ("daily_market", "free")
+
+
+def _target_buy_seeds(gw_target_xi: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Filas del once objetivo que este ciclo puede fichar (libre o mercado)."""
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    near_ids = {
+        _pid(s)
+        for s in (coverage.get("near_slots") or [])
+        if isinstance(s, dict) and _pid(s)
+    }
+    by_id: dict[str, dict[str, Any]] = {}
+    sources: list[Any] = []
+    sources.extend(coverage.get("missing_slots") or [])
+    sources.extend((gw_target_xi or {}).get("xi") or [])
+    for slot in sources:
+        if not _is_target_buy_slot(slot):
+            continue
+        pid = _pid(slot)
+        if not pid or pid in near_ids:
+            continue
+        prev = by_id.get(pid) or {}
+        by_id[pid] = {**prev, **slot}
+    return list(by_id.values())
+
+
+def _with_target_buys(
+    market: list[dict[str, Any]],
+    *,
+    gw_target_xi: dict[str, Any] | None,
+    extras: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Mete en la cola de pujas a los libres / mercado del once objetivo.
+
+    El strip diario no trae a quien nadie ha listado. Sin esto el ciclo
+    persigue parches del mercado y deja fuera a Mina / Bisseck.
+    """
+    pool: dict[str, dict[str, Any]] = {}
+    for row in market:
+        pid = _pid(row)
+        if pid:
+            pool[pid] = dict(row)
+    extra_by = {_pid(o): o for o in (extras or []) if isinstance(o, dict) and _pid(o)}
+    for seed in _target_buy_seeds(gw_target_xi):
+        pid = _pid(seed)
+        if not pid:
+            continue
+        extra = extra_by.get(pid) or {}
+        base = pool.get(pid) or {}
+        merged = {**seed, **extra, **base}
+        if is_rival_market_listing(merged):
+            continue
+        if merged.get("solvency_blocked") or merged.get("budget_fit") == "blocked":
+            continue
+        cost = _money(
+            merged.get("bid")
+            or merged.get("puja_recomendada")
+            or merged.get("price")
+            or merged.get("market_value")
+        )
+        if cost <= 0:
+            continue
+        merged["bid"] = _money(merged.get("bid")) or cost
+        merged["puja_recomendada"] = _money(merged.get("puja_recomendada")) or cost
+        merged["closes_gw_target"] = True
+        if not (merged.get("on_daily_market") or merged.get("seller") == "market"):
+            merged["seller"] = merged.get("seller") or "free"
+            merged["ownership"] = merged.get("ownership") or "free"
+        pool[pid] = merged
+    return list(pool.values())
+
+
 def _reachable_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
     """Huecos del once objetivo que este ciclo puede cerrar. Casi cubiertos, no."""
     ids: set[str] = set()
@@ -747,6 +832,7 @@ def build_cycle_plan(
     market_mode: str = "auction",
     max_squad: int | None = None,
     rival_upgrades: list[dict[str, Any]] | None = None,
+    free_agents: list[dict[str, Any]] | None = None,
     hours_to_jornada: float | None = None,
     hours_to_solvency_deadline: float | None = None,
     solvency_target: str | None = None,
@@ -756,7 +842,8 @@ def build_cycle_plan(
 
     1) Ofertas: aceptar solo prima/fade o si hace falta caja/plaza para el plan.
        El resto queda en cartera (no es venta). Outlier → no cerrar.
-    2) Pujar/fichar si hay plazas libres (tras aceptar). El techo es maxDebt.
+    2) Pujar/fichar el once objetivo (libres o mercado) si hay plazas.
+       El techo es maxDebt. Titular real y sin tendencia a la baja.
     3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
        en el margen residual.
        4) Si el gasto deja negativo: ventas que cobren antes del deadline de
@@ -766,11 +853,19 @@ def build_cycle_plan(
     """
     me = me or {}
     squad = list(squad or me.get("squad") or [])
+    extras = [
+        o
+        for o in list(opportunities or []) + list(free_agents or [])
+        if isinstance(o, dict)
+    ]
     market = [
         o
-        for o in (opportunities or [])
-        if isinstance(o, dict) and (o.get("on_daily_market") or o.get("seller") == "market")
+        for o in extras
+        if o.get("on_daily_market") or o.get("seller") == "market"
     ]
+    market = _with_target_buys(
+        market, gw_target_xi=gw_target_xi, extras=extras
+    )
     state = sales_state or me.get("sales_state") or {}
     rules = league_rules or {}
     xi_ids = xi_owned_ids(recommended_xi)
@@ -1007,7 +1102,7 @@ def build_cycle_plan(
         if score < 12 and not closes_target:
             continue
         bid_cands.append((score, o))
-    bid_cands.sort(key=lambda x: -x[0])
+    bid_cands.sort(key=lambda x: (-int(bool(x[1].get("closes_gw_target"))), -x[0]))
 
     def _take_hold(row: dict[str, Any], reason: str, why: str) -> None:
         nonlocal cash_from_accepts, slots_from_accepts, free_slots, cash_after_accepts
@@ -1059,6 +1154,8 @@ def build_cycle_plan(
             why_bits = []
             if o.get("closes_gw_target"):
                 why_bits.append("entra en el once objetivo de la jornada")
+                if str(o.get("seller") or o.get("ownership") or "") == "free":
+                    why_bits.append("libre, aún sin dueño")
             if is_xi_quality_starter(o):
                 why_bits.append("titular real")
             if has_positive_trend(o):

@@ -1079,6 +1079,87 @@ def test_reachable_target_gets_bid_priority() -> None:
     _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
 
 
+def test_free_target_starter_is_bid_off_market() -> None:
+    """Libre del once objetivo se puja aunque no esté en el strip del día."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 4},
+    ]
+    filler = {
+        "id": "mendy",
+        "name": "P. Mendy",
+        "position": "FW",
+        "price": 666_000,
+        "bid": 666_000,
+        "puja_recomendada": 666_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "delta_5d": 0.02,
+        "rising": True,
+        "lineup_prob": 0.75,
+        "fills_need": True,
+        "budget_fit": "comfortable",
+    }
+    mina = {
+        "id": "mina",
+        "name": "Yerry Mina",
+        "position": "DF",
+        "price": 1_273_320,
+        "bid": 1_273_320,
+        "market_value": 1_179_000,
+        "seller": "free",
+        "on_daily_market": False,
+        "p_play": 0.82,
+        "signal": "start",
+        "xpts": 11.37,
+        "lineup_prob": 0.9,
+        "budget_fit": "comfortable",
+    }
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[filler],
+        free_agents=[mina],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "mina",
+                    "name": "Yerry Mina",
+                    "position": "DF",
+                    "ownership": "free",
+                    "reachable": "free",
+                    "xpts": 11.37,
+                    "p_play": 0.82,
+                    "signal": "start",
+                    "price": 1_273_320,
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": "mina",
+                        "name": "Yerry Mina",
+                        "reachable": "free",
+                        "ownership": "free",
+                        "position": "DF",
+                        "xpts": 11.37,
+                        "price": 1_273_320,
+                    }
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids and bids[0]["name"] == "Yerry Mina", plan["moves"])
+    _assert(bids[0].get("closes_gw_target") is True, bids[0])
+    _assert(bids[0].get("is_xi_starter") is True, bids[0])
+    _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
+    _assert("libre" in (bids[0].get("why") or ""), bids[0])
+
+
 def test_near_slot_is_not_bid_priority() -> None:
     squad = [{"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9}]
     market = [
@@ -1686,6 +1767,7 @@ if __name__ == "__main__":
     test_rival_listed_on_market_is_not_appreciation()
     test_cycle_plan_bids_only_free_agents_for_appreciation()
     test_reachable_target_gets_bid_priority()
+    test_free_target_starter_is_bid_off_market()
     test_near_slot_is_not_bid_priority()
     test_debt_bid_allowed_when_closes_target()
     test_flip_does_not_use_debt()
