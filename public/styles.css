@@ -3247,6 +3247,85 @@ body[data-view="today"] #today-opportunities-panel {
   font-size: 0.8rem;
 }
 
+/* Registro de automatización: lo ejecutado y lo descartado del último ciclo */
+.automation-log {
+  padding: 0 1rem 1rem;
+  font-size: 0.78rem;
+}
+
+.automation-meta {
+  color: #82909f;
+  font-size: 0.72rem;
+  margin: 0 0 0.6rem;
+}
+
+.automation-empty {
+  color: #6f7d8a;
+  margin: 0;
+}
+
+.automation-ops {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.automation-op,
+.automation-skip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 0.5rem;
+  background: rgba(36, 48, 61, 0.55);
+}
+
+.automation-op-kind {
+  font-weight: 600;
+  color: #cbd5e1;
+}
+
+.automation-op-name {
+  flex: 1 1 8rem;
+  color: #94a3b8;
+}
+
+.automation-op-status,
+.automation-op-reason {
+  font-size: 0.7rem;
+  color: #82909f;
+}
+
+.automation-op-ok .automation-op-status {
+  color: #4ade80;
+}
+
+.automation-op-error .automation-op-status,
+.automation-error {
+  color: #f87171;
+}
+
+.automation-skipped {
+  margin-top: 0.7rem;
+}
+
+.automation-skipped summary {
+  cursor: pointer;
+  color: #82909f;
+  font-size: 0.72rem;
+}
+
+.automation-skipped ul {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
 #install-banner {
   position: fixed;
   right: 0.75rem;

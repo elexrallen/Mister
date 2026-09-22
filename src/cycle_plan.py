@@ -267,9 +267,39 @@ def _player_ref(row: dict[str, Any], *, kind: str, why: str, extra: dict[str, An
         "why": why,
         "on_daily_market": bool(row.get("on_daily_market")),
     }
+    ref.update(_exec_fields(row))
     if extra:
         ref.update(extra)
     return ref
+
+
+def _exec_fields(row: dict[str, Any]) -> dict[str, Any]:
+    """
+    Identificadores que necesita el ejecutor para mandar el POST.
+
+    El move viaja del motor al ejecutor sin volver a consultar Mister, así que
+    si `id_market` u `owner_id` no llegan aquí la operación no se puede armar y
+    el ejecutor la descarta en vez de adivinar.
+    """
+    owner = (
+        row.get("owner_id")
+        or row.get("listed_by_owner_id")
+        or row.get("id_owner")
+        or row.get("owner")
+    )
+    shield = row.get("shield")
+    if shield is None and isinstance(row.get("external"), dict):
+        shield = row["external"].get("shield")
+    return {
+        "owner_id": str(owner) if owner not in (None, "", 0, "0") else None,
+        "id_market": row.get("id_market"),
+        "id_bid": row.get("id_bid") or row.get("offer_id"),
+        "shield": shield,
+        "shielded": bool(row.get("shielded") or (_f(shield) or 0) > 0),
+        "clause_known": bool(row.get("clause_known")),
+        "listed_by_rival": bool(row.get("listed_by_rival")),
+        "on_sale": bool(row.get("on_sale") or row.get("listed_for_sale")),
+    }
 
 
 def _production(p: dict[str, Any]) -> float:

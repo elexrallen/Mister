@@ -3319,11 +3319,18 @@
     }
     sel.innerHTML = leagues
       .map((L) => {
-        const label = `${L.name || L.slug}${L.competition ? ` · ${L.competition}` : ""}`;
+        // Un <option> no admite marcado, así que el distintivo va en el texto
+        const auto = L.automated ? (L.automation_dry_run ? " · auto (sim)" : " · auto") : "";
+        const label = `${L.name || L.slug}${L.competition ? ` · ${L.competition}` : ""}${auto}`;
         const selAttr = L.slug === selectedSlug ? " selected" : "";
         return `<option value="${escapeHtml(L.slug)}"${selAttr}>${escapeHtml(label)}</option>`;
       })
       .join("");
+  }
+
+  function leagueIndexEntry(slug) {
+    const leagues = (LEAGUES_INDEX && LEAGUES_INDEX.leagues) || [];
+    return leagues.find((L) => L.slug === slug) || null;
   }
 
   function updateLeagueChrome(data) {
@@ -3350,6 +3357,10 @@
       if (rules.clauses === false) bits.push("sin cláusulas");
       else if (rules.clauses === true) bits.push("cláusulas");
       if (rules.loans === true) bits.push("cesiones");
+      const entry = leagueIndexEntry(currentLeagueSlug);
+      if (entry && entry.automated) {
+        bits.push(entry.automation_dry_run ? "automatizada (simulación)" : "automatizada");
+      }
       if (bits.length) {
         rulesEl.textContent = bits.join(" · ");
         rulesEl.hidden = false;
@@ -3358,6 +3369,117 @@
         rulesEl.textContent = "";
         rulesEl.hidden = true;
       }
+    }
+  }
+
+  const AUTOMATION_KIND_LABEL = {
+    bid: "Puja",
+    offer: "Oferta a rival",
+    withdraw_offer: "Oferta retirada",
+    clause_bid: "Cláusula",
+    list_for_sale: "Puesto en venta",
+    accept_offer: "Oferta aceptada",
+    decline_offer: "Oferta rechazada",
+    sell_to_system: "Rescisión",
+  };
+
+  const AUTOMATION_STATUS_LABEL = {
+    ok: "ejecutada",
+    dry_run: "simulada",
+    error: "falló",
+    blocked_unverified: "bloqueada",
+    planned: "planificada",
+  };
+
+  function automationCycleHtml(cycle) {
+    const ops = cycle.operations || [];
+    const skipped = cycle.skipped || [];
+    const when = cycle.at ? new Date(cycle.at) : null;
+    const stamp = when && !Number.isNaN(when.getTime())
+      ? when.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+      : "sin fecha";
+    const mode = cycle.dry_run ? "simulación" : "en vivo";
+
+    if (!cycle.enabled) {
+      return `<p class="automation-empty">${escapeHtml(stamp)} — sin actuar: ${escapeHtml(
+        cycle.reason || "automatización inactiva"
+      )}.</p>`;
+    }
+
+    const opRows = ops
+      .map((op) => {
+        const label = AUTOMATION_KIND_LABEL[op.kind] || op.kind || "Operación";
+        const status = AUTOMATION_STATUS_LABEL[op.status] || op.status || "—";
+        const amount = op.amount ? ` · ${formatMoney(op.amount)}` : "";
+        const err = op.error ? ` <span class="automation-error">${escapeHtml(op.error)}</span>` : "";
+        return `<li class="automation-op automation-op-${escapeHtml(op.status || "planned")}">
+          <span class="automation-op-kind">${escapeHtml(label)}</span>
+          <span class="automation-op-name">${escapeHtml(op.name || op.player_id || "")}${escapeHtml(amount)}</span>
+          <span class="automation-op-status">${escapeHtml(status)}</span>${err}
+        </li>`;
+      })
+      .join("");
+
+    const skipRows = skipped
+      .map((sk) => {
+        const label = AUTOMATION_KIND_LABEL[sk.kind] || sk.kind || "Operación";
+        return `<li class="automation-skip">
+          <span class="automation-op-kind">${escapeHtml(label)}</span>
+          <span class="automation-op-name">${escapeHtml(sk.name || sk.player_id || "")}</span>
+          <span class="automation-op-reason">${escapeHtml(sk.reason || "")}</span>
+        </li>`;
+      })
+      .join("");
+
+    const budget = cycle.budget || {};
+    const spent = budget.spent ? formatMoney(budget.spent) : formatMoney(0);
+    const left = budget.projected_cash != null ? formatMoney(budget.projected_cash) : "—";
+
+    return `
+      <p class="automation-meta">${escapeHtml(stamp)} · ${escapeHtml(mode)} · gastado ${escapeHtml(
+        spent
+      )} · caja tras el ciclo ${escapeHtml(left)}</p>
+      ${
+        opRows
+          ? `<ul class="automation-ops">${opRows}</ul>`
+          : `<p class="automation-empty">No se ejecutó nada este ciclo.</p>`
+      }
+      ${
+        skipRows
+          ? `<details class="automation-skipped"><summary>${skipped.length} descartada${
+              skipped.length === 1 ? "" : "s"
+            } y por qué</summary><ul>${skipRows}</ul></details>`
+          : ""
+      }
+    `;
+  }
+
+  async function renderAutomationLog(slug) {
+    const panel = document.getElementById("automation-panel");
+    const body = document.getElementById("automation-log");
+    if (!panel || !body) return;
+    const entry = leagueIndexEntry(slug);
+    if (!entry || !entry.automated) {
+      panel.hidden = true;
+      return;
+    }
+    panel.hidden = false;
+    try {
+      const res = await fetch(
+        `./data/leagues/${encodeURIComponent(slug)}/automation_log.json`,
+        { cache: "no-store" }
+      );
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const log = await res.json();
+      const cycles = log.cycles || [];
+      const last = log.last_cycle || cycles[cycles.length - 1];
+      if (!last) {
+        body.innerHTML = `<p class="automation-empty">Aún no hay ciclos registrados.</p>`;
+        return;
+      }
+      body.innerHTML = automationCycleHtml(last);
+    } catch {
+      body.innerHTML = `<p class="automation-empty">Sin registro todavía: se escribe al cerrar el primer ciclo automatizado.</p>`;
     }
   }
 
@@ -3403,6 +3525,7 @@
       updateLeagueChrome(DATA);
       errEl.classList.add("hidden");
       renderAll();
+      renderAutomationLog(slug);
       return DATA;
     } catch (err) {
       console.error(err);

@@ -1,0 +1,33 @@
+{
+  "$comment": "Ligas automatizadas: Premier y Serie A. La Liga del patio (laliga-patio) no se da de alta a propósito. 'enabled' de arriba es el kill switch global: mientras vaya a false no se ejecuta nada. Una liga que no aparezca en 'leagues' nunca se automatiza. MISTER_AUTOMATION_OFF=1 apaga todo sin tocar este fichero. 'accept_offer' y 'sell_to_system' no vienen en allowed_actions a propósito: el primero tiene el endpoint sin sondear, el segundo regala un 20% del valor.",
+  "enabled": false,
+  "dry_run": true,
+  "defaults": {
+    "allowed_actions": [
+      "bid",
+      "offer",
+      "clause_bid",
+      "list_for_sale",
+      "decline_offer",
+      "withdraw_offer"
+    ],
+    "max_spend_per_cycle_pct": 0.6,
+    "max_single_buy_pct": 0.4,
+    "max_clause_pct": 0.3,
+    "max_clauses_per_cycle": 1,
+    "max_ops_per_cycle": 6,
+    "max_pending_offers": 2,
+    "offer_stale_cycles": 2,
+    "min_cash_floor": 0,
+    "never_sell_xi_starters": true,
+    "allow_rescind": false
+  },
+  "leagues": {
+    "premier-league-d3g10-0556": {
+      "enabled": true
+    },
+    "serie-a-d2g3-0628": {
+      "enabled": true
+    }
+  }
+}

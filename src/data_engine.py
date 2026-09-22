@@ -71,7 +71,10 @@ from competitive_actions import (
     is_key_market_candidate,
     liquidity_balance,
     mister_bid_cap,
+    gap_reserve_cost,
+    is_rival_market_listing,
     other_gaps_min_cost,
+    xi_gap_slots,
     promote_funded_swaps,
     promote_appreciation_plays,
     promote_cpu_spread_harvest,
@@ -900,9 +903,17 @@ def classify_market_opportunities(
 
         struct_bonus, fills_structural, struct_label = structural_market_boost(p, needs)
 
+        # Listado de rival: no se puja, se envía una oferta que el dueño puede
+        # no aceptar (y el sistema ya le paga el VM). No cuenta como cobertura.
+        conditional_offer = is_rival_market_listing(p)
+        if conditional_offer:
+            fills_coverage_gap = False
+            fills_structural = False
+            struct_bonus = 0
+
         # Línea needy solo si el jugador cubre gap real / need estructural
         # (overstock o GK con titular: no inflar a toda la posición)
-        position_needy = p["position"] in needy
+        position_needy = p["position"] in needy and not conditional_offer
         if position_needy and not fills_coverage_gap and not fills_structural:
             if overstocked:
                 position_needy = False
@@ -1242,6 +1253,7 @@ def classify_market_opportunities(
             "overstocked": overstocked,
             "position_coverage": cov.get("position_coverage"),
             "on_daily_market": on_daily,
+            "conditional_offer": conditional_offer,
             "signal_basis": "mister_live" if not allow_synthetic else "mixed",
             "market_mode": "fixed" if fixed else "auction",
         })
@@ -1493,6 +1505,13 @@ def find_clauses_ranking(
             clause_known = raw.get("clause_known")
         if clause_known is None:
             clause_known = clause is not None
+        shield = extra.get("shield")
+        if shield is None:
+            shield = raw.get("shield")
+        try:
+            shield = max(0, int(float(shield))) if shield is not None else 0
+        except (TypeError, ValueError):
+            shield = 0
 
         row: dict[str, Any] = {
             "id": pid,
@@ -1507,6 +1526,8 @@ def find_clauses_ranking(
             "market_value": raw.get("market_value") or raw.get("price"),
             "clause": clause,
             "clause_known": bool(clause_known),
+            "shield": shield,
+            "shielded": bool(shield),
             "clause_rank": rank,
             "owner_kind": kind,
             "owner_id": oid or None,
@@ -1945,13 +1966,21 @@ def build_action_plan(
         ceiling_txt = float(fin.get("bid_cap") or max_debt or 0)
 
         pos = o.get("position")
-        other_min = other_gaps_min_cost(
-            funding,
+        other_min = gap_reserve_cost(
             exclude_position=pos,
             diagnosis=cov_diag,
             structural_needs=structural_needs,
             opportunities=opportunities,
+            balance=balance,
         )
+        if other_min <= 0:
+            other_min = other_gaps_min_cost(
+                funding,
+                exclude_position=pos,
+                diagnosis=cov_diag,
+                structural_needs=structural_needs,
+                opportunities=opportunities,
+            )
         residual = balance - cost if cost <= balance else -1.0
         crowds_out = residual >= 0 and other_min > 0 and residual < other_min
         leaves_budget = residual >= 0 and other_min > 0 and residual >= other_min
@@ -2423,6 +2452,8 @@ def build_action_plan(
             "listed_by_rival": bool(o.get("listed_by_rival")),
             "listed_by_name": o.get("listed_by_name"),
             "listed_by_owner_id": o.get("listed_by_owner_id"),
+            "owner_id": o.get("owner_id") or o.get("listed_by_owner_id"),
+            "id_market": o.get("id_market"),
             "clause_reference": o.get("clause_reference"),
             "ff_apps": o.get("ff_apps"),
             "sample_thin": bool(o.get("sample_thin")),
@@ -2750,6 +2781,10 @@ def build_action_plan(
     # Evitar contradicciones: avoid gana sobre buy/swap del mismo jugador
     plan = reconcile_avoid_conflicts(plan)
 
+    xi_gap_total = sum(xi_gap_slots(diagnostico_plantilla, structural_needs).values())
+    if isinstance(funding, dict):
+        funding["xi_gap_count"] = xi_gap_total
+
     finalized = finalize_action_plan(
         plan,
         balance=balance,
@@ -2759,6 +2794,7 @@ def build_action_plan(
         squad_size=len(me.get("squad") or []),
         max_squad=max_squad,
         bootstrap=bootstrap if bootstrap.get("active") else None,
+        xi_gap_count=xi_gap_total,
     )
     action_plan, daily_package = finalized
 
@@ -3505,6 +3541,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         hours_to_jornada=hours_j,
         market_cycle=market_cycle,
         competition_phase=competition_phase,
+        xi_slot_gaps=diagnostico_plantilla.get("xi_slot_gaps")
+        if isinstance(diagnostico_plantilla.get("xi_slot_gaps"), dict)
+        else None,
     )
     diagnostico_plantilla["bootstrap_xi"] = bootstrap_xi
     if bootstrap_xi.get("active"):
@@ -3533,6 +3572,14 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
     )
     rival_upgrades: list[dict[str, Any]] = []
     if not fixed_market:
+        # Pujas y cláusulas comparten presupuesto: la caja de las carencias del
+        # once también bloquea una cláusula.
+        clause_gap_reserve = gap_reserve_cost(
+            diagnosis=diagnostico_plantilla,
+            structural_needs=diagnostico_plantilla.get("structural_needs"),
+            opportunities=opportunities,
+            balance=float(me.get("balance") or 0),
+        )
         rival_upgrades = build_rival_upgrade_targets(
             me,
             diagnosis,
@@ -3545,6 +3592,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             days_to_kickoff=comp.get("days_to_kickoff"),
             matchday=matchday_early,
             market_reserved=0.0,
+            gap_reserve=clause_gap_reserve,
+            league_rules=rules,
+            gameweek_live=bool((matchday_early or {}).get("is_live")),
         )
 
     owned = set(league.get("owned_across_league") or [])
@@ -3626,6 +3676,12 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
                 "puja_techo",
                 "seller",
                 "on_daily_market",
+                "id_market",
+                "shield",
+                "shielded",
+                "listed_by_rival",
+                "listed_by_owner_id",
+                "listed_by_name",
             ):
                 if raw.get(k) is not None:
                     base[k] = raw[k]
@@ -4235,6 +4291,9 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "cash_tight": funding_info.get("cash_tight"),
             "cash_reserved": funding_info.get("cash_reserved"),
             "gaps": funding_info.get("gap_costs") or [],
+            # Huecos de titularidad pendientes: lo que la auditoría cruza con la
+            # caja para detectar ciclos gastando mal con el once roto.
+            "xi_gap_count": funding_info.get("xi_gap_count"),
             "positions": funding_info.get("positions") or [],
             "primary_targets": funding_info.get("primary_targets") or [],
             "from_target_board": bool(funding_info.get("from_target_board")),
@@ -4457,6 +4516,16 @@ def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -
         for slug, e in by_slug.items():
             if slug not in seen:
                 ordered.append(e)
+    # Distintivo de liga automatizada: el frontend no puede leer
+    # config/automation.json, que vive fuera de public/.
+    for entry in ordered:
+        slug = str(entry.get("slug") or "")
+        if not slug:
+            continue
+        auto = config.automation_for_league(slug)
+        entry["automated"] = bool(auto.get("enabled"))
+        entry["automation_dry_run"] = bool(auto.get("enabled") and auto.get("dry_run"))
+
     index = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "default_slug": config.DEFAULT_LEAGUE_SLUG,

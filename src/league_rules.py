@@ -475,6 +475,38 @@ def normalize_rules(
         market_mode = forced_mode
 
     clauses = _truthy(_pick("clauses", default=1))
+
+    def _clause_int(key: str) -> int | None:
+        raw = _pick(key, default=None)
+        if raw is None or raw == "":
+            return None
+        try:
+            return int(float(raw))
+        except (TypeError, ValueError):
+            return None
+
+    def _clause_flag(key: str) -> bool | None:
+        raw = _pick(key, default=None)
+        if raw is None or raw == "":
+            return None
+        return _truthy(raw)
+
+    # Reglas finas de cláusula. Solo llegan completas si somos admin de la liga;
+    # None = no publicado, y el ejecutor lo reverifica en vivo antes de pagar.
+    #
+    # signs / gameweek NO son booleanos: el admin de Mister guarda un entero.
+    #   clauses_signs:    0=off, 1=24h, 2=72h, 3=7d de protección al recién fichado
+    #   clauses_gameweek: 0=off, N=horas previas al pitido en las que no se clausula
+    clause_rules = {
+        "enabled": clauses,
+        "block": _clause_flag("clauses_block"),
+        "signs": _clause_int("clauses_signs"),
+        "gameweek": _clause_int("clauses_gameweek"),
+        "daily_limit": _clause_int("clauses_daily"),
+        "max_inbound": _clause_int("max_inbound_clauses"),
+        "shields": _clause_flag("purchase_shields"),
+    }
+
     loans = _truthy(_pick("loans", default=0))
     try:
         loans_floor = int(_pick("loans_floor", default=0) or 0)
@@ -523,6 +555,12 @@ def normalize_rules(
         "max_squad": max_squad,
         "market_mode": market_mode,
         "clauses": clauses,
+        "clause_rules": clause_rules,
+        "clauses_block": clause_rules["block"],
+        "clauses_signs": clause_rules["signs"],
+        "clauses_gameweek": clause_rules["gameweek"],
+        "clauses_daily": clause_rules["daily_limit"],
+        "max_inbound_clauses": clause_rules["max_inbound"],
         "loans": loans,
         "loans_floor": loans_floor,
         "market_speed": market_speed,

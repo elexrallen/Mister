@@ -239,6 +239,98 @@ def fetch_player_community_info(player_id: str | int) -> dict[str, Any] | None:
         return None
 
 
+def _listing_id(raw: Any) -> int | None:
+    if raw in (None, "", 0, "0", False):
+        return None
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
+def fetch_sw_market() -> list[dict[str, Any]]:
+    """
+    POST /ajax/sw/market — listados del día con `id_market` real.
+
+    El HTML de /market pinta las cards pero no el id del listado; el popup de
+    puja lo saca de aquí (`pre.market.id`). Sin él una oferta a un rival no
+    se puede armar. Fail-soft: si Mister no responde, el mercado HTML sigue.
+    """
+    try:
+        raw = ajax_post("/ajax/sw/market", {})
+    except Exception as exc:  # noqa: BLE001
+        log.warning("sw/market falló: %s", exc)
+        return []
+    data = raw.get("data") if isinstance(raw, dict) else None
+    players = (data or {}).get("players") if isinstance(data, dict) else None
+    if not isinstance(players, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in players:
+        if not isinstance(item, dict):
+            continue
+        pid = str(item.get("id") or item.get("id_player") or "").strip()
+        if not pid:
+            continue
+        market = item.get("market") if isinstance(item.get("market"), dict) else {}
+        mid = _listing_id(item.get("id_market") or market.get("id"))
+        owner = item.get("id_uc") or item.get("owner_id") or item.get("id_owner")
+        if isinstance(item.get("owner"), dict):
+            owner = owner or item["owner"].get("id")
+        row: dict[str, Any] = {"id": pid}
+        if mid:
+            row["id_market"] = mid
+        if owner not in (None, "", 0, "0"):
+            row["owner_id"] = str(owner)
+        out.append(row)
+    log.info(
+        "ajax/sw/market → %s listados (%s con id_market)",
+        len(out),
+        sum(1 for r in out if r.get("id_market")),
+    )
+    return out
+
+
+def enrich_market_listings(market: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Fusiona id_market (y owner si faltaba) del JSON de listados sobre el HTML."""
+    if not market:
+        return market
+    listings = fetch_sw_market()
+    if not listings:
+        return market
+    by_id = {str(r["id"]): r for r in listings if r.get("id")}
+    filled = 0
+    for row in market:
+        extra = by_id.get(str(row.get("id") or ""))
+        if not extra:
+            continue
+        if extra.get("id_market") and not row.get("id_market"):
+            row["id_market"] = extra["id_market"]
+            filled += 1
+        if extra.get("owner_id") and not row.get("owner_id"):
+            row["owner_id"] = extra["owner_id"]
+            if str(extra["owner_id"]) not in ("", "0"):
+                row["listed_by_rival"] = True
+    log.info("mercado enriquecido con id_market en %s/%s", filled, len(market))
+    return market
+
+
+def _shield_value(raw: Any) -> int:
+    """
+    Blindaje temporal del jugador (0 = sin blindar).
+
+    Mister lo expone como un contador de expiración: mientras sea > 0 el jugador
+    no se puede clausular, aunque la cláusula esté a la vista.
+    """
+    if raw in (None, "", False):
+        return 0
+    try:
+        return max(0, int(float(raw)))
+    except (TypeError, ValueError):
+        return 0
+
+
 def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
     """Normaliza cláusula/owner/valor/puntos desde player-community-info."""
     out: dict[str, Any] = {
@@ -255,9 +347,23 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
         "prior_avg": None,
         "team_id": None,
         "team_name": None,
+        "shield": None,
+        "shielded": False,
+        "id_market": None,
     }
     if not info:
         return out
+    shield_raw = info.get("shield")
+    if shield_raw is None and isinstance(info.get("clause"), dict):
+        shield_raw = info["clause"].get("shield")
+    out["shield"] = _shield_value(shield_raw)
+    out["shielded"] = bool(out["shield"])
+    market = info.get("market") if isinstance(info.get("market"), dict) else {}
+    mid = market.get("id") or info.get("id_market")
+    try:
+        out["id_market"] = int(mid) if mid not in (None, "", 0, "0") else None
+    except (TypeError, ValueError):
+        out["id_market"] = None
     clause = info.get("clause") if isinstance(info.get("clause"), dict) else {}
     raw_val = clause.get("value")
     try:
@@ -427,6 +533,11 @@ def enrich_players_with_clauses(
             new_p["prior_points"] = fields["prior_points"]
         if fields.get("prior_avg") is not None:
             new_p["prior_avg"] = fields["prior_avg"]
+        if fields.get("id_market"):
+            new_p["id_market"] = fields["id_market"]
+        if fields.get("shield") is not None:
+            new_p["shield"] = fields["shield"]
+            new_p["shielded"] = bool(fields.get("shielded"))
         # HTML fallback en chunk si AJAX no dio valor
         if not new_p["clause_known"]:
             html_clause, html_known = parse_clause_from_html(str(new_p.get("_html_chunk") or ""))
@@ -1385,6 +1496,7 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         clause = int(clause_raw) if clause_raw is not None else None
     except (TypeError, ValueError):
         clause = None
+    shield = _shield_value(raw.get("shield"))
     is_free = owner_id is None
     photo_url = str(raw.get("photoUrl") or raw.get("photo_url") or "").strip()
     team_logo_url = str(raw.get("teamLogoUrl") or raw.get("team_logo_url") or "").strip()
@@ -1440,6 +1552,8 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         "owner_name": (str(raw.get("uc_name")).strip() if raw.get("uc_name") else None),
         "clause": clause,
         "clause_known": clause is not None,
+        "shield": shield,
+        "shielded": bool(shield),
         "is_mine": flag_is_true(raw.get("is_mine")),
         "id_market": raw.get("id_market"),
         "min_bid": value if is_free else None,
@@ -2389,6 +2503,11 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     max_debt = _bal_int("maxDebt")
 
     market = parse_market_players(market_html) if market_html else []
+    if market:
+        try:
+            market = enrich_market_listings(market)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("enrich_market_listings falló: %s", exc)
     squad = parse_team_players(team_html) if team_html else []
 
     # Corregir clubes (mapa CDN cambia por temporada; p.ej. 6 = Deportivo)

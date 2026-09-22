@@ -337,6 +337,142 @@ def league_history_dir(slug: str) -> Path:
     return LEAGUES_DIR / slug / "history"
 
 
+def league_automation_log_path(slug: str) -> Path:
+    return LEAGUES_DIR / slug / "automation_log.json"
+
+
+# ---------------------------------------------------------------------------
+# Automatización por liga
+# ---------------------------------------------------------------------------
+
+CONFIG_DIR = ROOT_DIR / "config"
+AUTOMATION_CONFIG_PATH = CONFIG_DIR / "automation.json"
+
+# Guardarraíles del ejecutor. El plan los define como topes duros: un ciclo mal
+# leído no debe poder vaciar la caja ni deshacer el once.
+AUTOMATION_DEFAULTS: dict = {
+    "enabled": False,
+    # Tipos de move que el ejecutor puede llegar a mandar. Lo que no esté aquí
+    # se registra como bloqueado. `sell_to_system` y `accept_offer` quedan fuera
+    # de inicio: el primero regala un 20%, el segundo tiene endpoint sin sondear.
+    "allowed_actions": [
+        "bid",
+        "offer",
+        "clause_bid",
+        "list_for_sale",
+        "decline_offer",
+        "withdraw_offer",
+    ],
+    # Fracción máxima del saldo usable comprometida en todo el ciclo
+    "max_spend_per_cycle_pct": 0.60,
+    # Fracción máxima del saldo usable en una sola compra
+    "max_single_buy_pct": 0.40,
+    # Fracción máxima en una sola cláusula, aparte por ser irreversible
+    "max_clause_pct": 0.30,
+    "max_clauses_per_cycle": 1,
+    "max_ops_per_cycle": 6,
+    # Ofertas a rivales vivas a la vez: no son gasto, pero comprometen margen
+    "max_pending_offers": 2,
+    # Ciclos que puede vivir una oferta a un rival sin respuesta antes de retirarla
+    "offer_stale_cycles": 2,
+    # Caja mínima que queda libre tras actuar
+    "min_cash_floor": 0,
+    "never_sell_xi_starters": True,
+    # Rescindir da caja al 80%: solo con deuda y activado a mano
+    "allow_rescind": False,
+}
+
+_automation_cache: dict | None = None
+
+
+def _coerce_automation(raw: object) -> dict:
+    """Normaliza automation.json: kill switch global + overrides por liga."""
+    data = raw if isinstance(raw, dict) else {}
+    leagues_raw = data.get("leagues")
+    leagues: dict[str, dict] = {}
+    if isinstance(leagues_raw, dict):
+        for slug, cfg in leagues_raw.items():
+            if isinstance(cfg, dict):
+                leagues[str(slug)] = cfg
+            else:
+                leagues[str(slug)] = {"enabled": bool(cfg)}
+    elif isinstance(leagues_raw, list):
+        # Forma corta: ["slug-a", "slug-b"]
+        for slug in leagues_raw:
+            leagues[str(slug)] = {"enabled": True}
+
+    defaults = dict(AUTOMATION_DEFAULTS)
+    overrides = data.get("defaults")
+    if isinstance(overrides, dict):
+        defaults.update(overrides)
+
+    return {
+        # Kill switch: si va a False, ninguna liga ejecuta nada
+        "enabled": bool(data.get("enabled", False)),
+        "dry_run": bool(data.get("dry_run", False)),
+        "defaults": defaults,
+        "leagues": leagues,
+    }
+
+
+def load_automation_config(*, refresh: bool = False) -> dict:
+    """Lee config/automation.json. Ausente o ilegible = automatización apagada."""
+    import json
+
+    global _automation_cache
+    if _automation_cache is not None and not refresh:
+        return _automation_cache
+    raw: object = {}
+    if AUTOMATION_CONFIG_PATH.is_file():
+        try:
+            raw = json.loads(AUTOMATION_CONFIG_PATH.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            raw = {}
+    _automation_cache = _coerce_automation(raw)
+    return _automation_cache
+
+
+def automation_for_league(slug: str, *, refresh: bool = False) -> dict:
+    """
+    Ajustes efectivos de automatización de una liga.
+
+    Requiere el kill switch global y el alta explícita de la liga. Una liga que
+    no aparece en el fichero nunca se automatiza sola.
+    """
+    cfg = load_automation_config(refresh=refresh)
+    league_cfg = cfg["leagues"].get(str(slug))
+    settings = dict(cfg["defaults"])
+    if isinstance(league_cfg, dict):
+        settings.update(league_cfg)
+
+    env_kill = str(os.environ.get("MISTER_AUTOMATION_OFF", "")).strip().lower()
+    killed = env_kill in ("1", "true", "yes", "on")
+
+    enabled = bool(
+        cfg["enabled"]
+        and league_cfg is not None
+        and settings.get("enabled")
+        and not killed
+    )
+    settings["enabled"] = enabled
+    settings["dry_run"] = bool(cfg["dry_run"] or settings.get("dry_run"))
+    settings["slug"] = str(slug)
+    settings["kill_switch_off"] = not cfg["enabled"] or killed
+    settings["league_registered"] = league_cfg is not None
+    return settings
+
+
+def automated_league_slugs(*, refresh: bool = False) -> list[str]:
+    cfg = load_automation_config(refresh=refresh)
+    if not cfg["enabled"]:
+        return []
+    return sorted(
+        slug
+        for slug in cfg["leagues"]
+        if automation_for_league(slug).get("enabled")
+    )
+
+
 # Catálogo inicial (mock / hasta discovery en runtime)
 LEAGUES: list[dict] = _fallback_leagues_from_overrides()
 
@@ -439,6 +575,26 @@ IDEAL_STARTER_HIST_MIN = 35.0
 # (media pts/partido y pts totales/temporada). Premier RPG se escala × avg_scale/8.
 MISTER_HIST_AVG_FLOOR = {"GK": 4.5, "DF": 5.0, "MF": 6.0, "FW": 6.5}
 MISTER_HIST_PTS_FLOOR = {"GK": 160, "DF": 180, "MF": 220, "FW": 230}
+# Reserva por carencia: umbrales para que un candidato cuente como tapa-hueco
+GAP_STARTER_LINEUP_MIN = 70.0
+GAP_STARTER_PROD_MIN = 45.0
+# Coste de reposición por línea cuando hoy no hay ningún candidato en el mercado.
+# Sin esto la reserva se anularía justo con el mercado seco.
+GAP_REPLACEMENT_FLOOR = {
+    "GK": 1_000_000,
+    "DF": 1_500_000,
+    "MF": 1_500_000,
+    "FW": 2_000_000,
+}
+# Tope de la reserva por carencia como fracción del saldo. Con la plantilla muy
+# rota el coste ideal de tapar todos los huecos supera la caja; sin tope la
+# reserva bloquearía cualquier compra en vez de repartir el presupuesto.
+GAP_RESERVE_MAX_SHARE = 0.60
+# Multi-carencia: ninguna compra suelta puede llevarse más de esta fracción
+# del saldo usable mientras queden huecos de titularidad sin tapar.
+SPEND_SHARE_CAP_MULTI_GAP = 0.40
+# Nº de huecos de titularidad a partir del cual se aplica el tope anterior
+SPEND_SHARE_CAP_MIN_GAPS = 3
 # Titulares reales mínimos por línea para diagnóstico de profundidad
 STARTERS_TARGET = {"GK": 1, "DF": 3, "MF": 3, "FW": 2}
 LINEUP_PROB_TITULAR = 0.70

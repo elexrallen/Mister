@@ -47,6 +47,16 @@ DEFAULT_GATES = {
     "max_titular_mae": 3.5,
     "max_titular_optimistic_bias": 2.5,
     "max_xi_gap_pct": 15.0,
+    # Reparto de caja. Con varios huecos de titularidad ninguna operación puede
+    # llevarse más de esta fracción del saldo usable: es el fallo que dejó un
+    # once con ocho huecos tras gastar 20,1M de 21,7M en un solo defensa.
+    "max_spend_concentration": 0.45,
+    # Ciclos seguidos que se tolera con el once roto teniendo caja para taparlo
+    "max_gap_cycles": 6,
+    # Huecos de titularidad desde los que se considera que el once está roto
+    "allocation_min_gaps": 3,
+    # Ciclos recientes que mira la métrica de reparto
+    "allocation_window": 24,
 }
 
 
@@ -146,6 +156,47 @@ def slim_decisions(payload: dict[str, Any]) -> dict[str, Any]:
         "current_rank": current.get("rank"),
         "squad_ids": squad_ids,
         "actions": actions,
+        "allocation": slim_allocation(payload),
+    }
+
+
+def slim_allocation(payload: dict[str, Any]) -> dict[str, Any]:
+    """
+    Reparto de caja del ciclo, para poder auditarlo a posteriori.
+
+    Sin esto el histórico no permite ver el fallo que originó los cambios de
+    presupuesto: una compra de 20,1M con 21,7M de caja y ocho huecos de
+    titularidad quedaba registrada solo como un `buy_now` más.
+    """
+    plan = payload.get("cycle_plan") if isinstance(payload.get("cycle_plan"), dict) else {}
+    constraints = plan.get("constraints") if isinstance(plan.get("constraints"), dict) else {}
+    funding = payload.get("funding_plan") if isinstance(payload.get("funding_plan"), dict) else {}
+    me = payload.get("me") if isinstance(payload.get("me"), dict) else {}
+
+    balance = _num(constraints.get("balance"))
+    if balance is None:
+        balance = _num(me.get("balance"))
+    usable = _num(constraints.get("spendable")) or balance
+
+    costs: list[float] = []
+    for move in plan.get("moves") or []:
+        if not isinstance(move, dict) or move.get("kind") not in ("bid", "clause_bid"):
+            continue
+        amount = _num(move.get("amount") or move.get("bid") or move.get("clause"))
+        if amount and amount > 0:
+            costs.append(amount)
+
+    planned = sum(costs)
+    top = max(costs) if costs else 0.0
+    share = (top / usable) if usable and usable > 0 else None
+    return {
+        "balance": round(balance, 0) if balance is not None else None,
+        "usable": round(usable, 0) if usable is not None else None,
+        "planned_spend": round(planned, 0),
+        "max_op_cost": round(top, 0),
+        "top_share": round(share, 4) if share is not None else None,
+        "ops": len(costs),
+        "xi_gap_count": funding.get("xi_gap_count"),
     }
 
 
@@ -605,6 +656,100 @@ def evaluate_market(
     }
 
 
+def evaluate_allocation(
+    snapshots: list[dict[str, Any]],
+    *,
+    gates: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    ¿Se está repartiendo la caja o se concentra teniendo el once roto?
+
+    Mide dos cosas sobre los últimos ciclos:
+
+    - **Concentración**: la mayor operación individual como fracción del saldo
+      usable, contada solo en los ciclos con varios huecos de titularidad. Con
+      el once completo concentrar es legítimo; con ocho huecos, no.
+    - **Huecos que no se tapan**: ciclos seguidos con huecos de titularidad y
+      caja de sobra para cubrirlos. Si se acumulan, el motor está mirando otra
+      cosa mientras el once sigue roto.
+    """
+    g = {**DEFAULT_GATES, **(gates or {})}
+    min_gaps = int(g["allocation_min_gaps"])
+    window = int(g["allocation_window"])
+
+    rows: list[dict[str, Any]] = []
+    for snap in snapshots[-window:]:
+        decisions = snap.get("decisions") if isinstance(snap.get("decisions"), dict) else {}
+        alloc = decisions.get("allocation") if isinstance(decisions.get("allocation"), dict) else None
+        if not alloc:
+            continue
+        gaps = alloc.get("xi_gap_count")
+        rows.append(
+            {
+                "at": snap.get("captured_at") or snap.get("date"),
+                "gaps": int(gaps) if isinstance(gaps, (int, float)) else None,
+                "top_share": _num(alloc.get("top_share")),
+                "max_op_cost": _num(alloc.get("max_op_cost")),
+                "usable": _num(alloc.get("usable")),
+                "planned_spend": _num(alloc.get("planned_spend")),
+            }
+        )
+
+    if not rows:
+        return {
+            "status": "empty",
+            "sample": 0,
+            "reading": "Sin bloque de reparto en el histórico: snapshots previos al cambio.",
+        }
+
+    multi = [r for r in rows if (r["gaps"] or 0) >= min_gaps and r["top_share"] is not None]
+    worst = max(multi, key=lambda r: r["top_share"]) if multi else None
+
+    # Ciclos seguidos con el once roto teniendo con qué taparlo
+    streak = 0
+    for row in reversed(rows):
+        if (row["gaps"] or 0) < min_gaps:
+            break
+        if (row["usable"] or 0) <= 0:
+            break
+        streak += 1
+
+    status = "ok"
+    bits: list[str] = []
+    if worst is None:
+        status = "thin"
+        bits.append(
+            f"ningún ciclo reciente con {min_gaps}+ huecos de titularidad: "
+            "nada que medir"
+        )
+    else:
+        bits.append(
+            f"peor concentración con {worst['gaps']} huecos: "
+            f"{worst['top_share'] * 100:.0f}% del saldo usable en una sola operación"
+        )
+        if worst["top_share"] > float(g["max_spend_concentration"]):
+            status = "fail"
+    if streak > 0:
+        bits.append(
+            f"{streak} ciclo{'s' if streak != 1 else ''} seguido"
+            f"{'s' if streak != 1 else ''} con huecos y caja para taparlos"
+        )
+        if streak > int(g["max_gap_cycles"]):
+            status = "fail"
+
+    return {
+        "status": status,
+        "sample": len(rows),
+        "multi_gap_cycles": len(multi),
+        "worst_top_share": round(worst["top_share"], 4) if worst else None,
+        "worst_at": worst["at"] if worst else None,
+        "worst_max_op_cost": worst["max_op_cost"] if worst else None,
+        "worst_gaps": worst["gaps"] if worst else None,
+        "gap_streak": streak,
+        "reading": "Reparto de caja: " + "; ".join(bits) + ".",
+    }
+
+
 def evaluate_pipeline(latest: dict[str, Any] | None) -> dict[str, Any]:
     if not latest:
         return {
@@ -663,6 +808,7 @@ def apply_gates(
     xi = report.get("xi") or {}
     market = report.get("market") or {}
     pipeline = report.get("pipeline") or {}
+    allocation = report.get("allocation") or {}
     sample = int(ranking.get("sample") or calibration.get("sample") or 0)
     thin = sample < int(g["min_sample"])
 
@@ -716,6 +862,22 @@ def apply_gates(
             (market.get("status") or "ok") != "fail",
             market.get("reading") or "sin mercado",
             skip=market.get("status") in ("empty", "thin", None),
+        ),
+        _gate(
+            "spend_concentration",
+            (_num(allocation.get("worst_top_share")) or 0.0)
+            <= float(g["max_spend_concentration"]),
+            f"máxima concentración con {allocation.get('worst_gaps')} huecos: "
+            f"{allocation.get('worst_top_share')} (máx {g['max_spend_concentration']})",
+            skip=allocation.get("status") in ("empty", "thin", None)
+            or allocation.get("worst_top_share") is None,
+        ),
+        _gate(
+            "xi_gaps_pending",
+            int(allocation.get("gap_streak") or 0) <= int(g["max_gap_cycles"]),
+            f"{allocation.get('gap_streak')} ciclos con huecos de titularidad y caja "
+            f"(máx {g['max_gap_cycles']})",
+            skip=allocation.get("status") in ("empty", None),
         ),
         _gate(
             "pipeline",
@@ -781,6 +943,7 @@ def audit_league(
     ranking = ranking_quality(rows)
     xi = evaluate_xi(snapshots, current_jornada=current_jornada)
     market = evaluate_market(snapshots, current_jornada=current_jornada)
+    allocation = evaluate_allocation(snapshots, gates=gates)
     pipeline = evaluate_pipeline(latest)
     report = {
         "slug": slug,
@@ -788,6 +951,7 @@ def audit_league(
         "ranking": ranking,
         "xi": xi,
         "market": market,
+        "allocation": allocation,
         "pipeline": pipeline,
     }
     gate_rows = apply_gates(report, gates)
@@ -797,6 +961,7 @@ def audit_league(
             calibration.get("status") or "empty",
             xi.get("status") or "empty",
             market.get("status") or "empty",
+            allocation.get("status") or "empty",
             pipeline.get("status") or "empty",
         ],
         gate_rows,
@@ -829,6 +994,7 @@ def slim_report(report: dict[str, Any]) -> dict[str, Any]:
         "ranking": report.get("ranking"),
         "xi": xi,
         "market": report.get("market"),
+        "allocation": report.get("allocation"),
         "pipeline": report.get("pipeline"),
     }
 
@@ -881,7 +1047,9 @@ def format_markdown(bundle: dict[str, Any]) -> str:
         rank = report.get("ranking") or {}
         xi = report.get("xi") or {}
         market = report.get("market") or {}
+        alloc = report.get("allocation") or {}
         pipe = report.get("pipeline") or {}
+        top_share = alloc.get("worst_top_share")
         lines += [
             "| Capa | Estado | Detalle |",
             "|------|--------|---------|",
@@ -889,6 +1057,10 @@ def format_markdown(bundle: dict[str, Any]) -> str:
             f"| Ranking | {rank.get('status')} | Spearman={rank.get('spearman') if rank.get('spearman') is not None else '—'} lift={rank.get('lift') if rank.get('lift') is not None else '—'} |",
             f"| Once | {xi.get('status')} | rec={xi.get('recommended_pts') if xi.get('recommended_pts') is not None else '—'} vs XI={xi.get('current_pts') if xi.get('current_pts') is not None else '—'} naive={xi.get('naive_price_pts') if xi.get('naive_price_pts') is not None else '—'} |",
             f"| Mercado | {market.get('status')} | buy_now={market.get('buy_now_pts') if market.get('buy_now_pts') is not None else '—'} avoid={market.get('avoid_pts') if market.get('avoid_pts') is not None else '—'} |",
+            f"| Reparto de caja | {alloc.get('status')} | "
+            f"concentración máx={f'{top_share * 100:.0f}%' if top_share is not None else '—'} "
+            f"con {alloc.get('worst_gaps') if alloc.get('worst_gaps') is not None else '—'} huecos; "
+            f"racha={alloc.get('gap_streak') if alloc.get('gap_streak') is not None else '—'} |",
             f"| Pipeline | {pipe.get('status')} | {pipe.get('reading')} |",
             "",
         ]
