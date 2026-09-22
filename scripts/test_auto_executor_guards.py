@@ -729,6 +729,58 @@ def test_clause_pay_posts_id_player_and_id_uc() -> None:
     _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
 
 
+def test_recent_signing_is_skipped_at_plan_when_hours_known() -> None:
+    d = _run(
+        [_clause("4776", 2 * M, name="Ainsley Maitland-Niles", owner_signed_hours=5)],
+        rules={"clauses": True, "clause_rules": {"enabled": True, "signs": 1}},
+    )
+    _assert(not d["operations"], d["operations"])
+    _assert("reciente" in _skip_reason(d, "4776") or "protección" in _skip_reason(d, "4776"), _skip_reason(d, "4776"))
+
+
+def test_recent_signing_is_deferred_after_hydrate() -> None:
+    """AMN: signs=1 y ficha de hace 5 h → no se POST-ea."""
+    d = _run(
+        [_clause("4776", 2 * M, name="Ainsley Maitland-Niles")],
+        rules={"clauses": True, "clause_rules": {"enabled": True, "signs": 1}},
+    )
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
+    ax.execute(
+        d,
+        client=client,
+        listing_lookup=lambda pid: {"owner_id": "15540649", "owner_signed_hours": 5},
+    )
+    _assert(not calls, calls)
+    _assert(d["failed"] == 0 and d.get("deferred") == 1, d)
+    _assert(d["operations"][0]["status"] == "deferred", d["operations"][0])
+    _assert(
+        "reciente" in str(d["operations"][0].get("error"))
+        or "protección" in str(d["operations"][0].get("error")),
+        d["operations"][0],
+    )
+
+
+def test_mister_400_recent_signing_is_deferred() -> None:
+    d = _run([_clause("4776", 2 * M, name="Ainsley Maitland-Niles")])
+
+    def transport(path, data):
+        raise RuntimeError(
+            "400 Client Error: Bad Request for url: "
+            "https://mister.mundodeportivo.com/ajax/clause-pay — "
+            "Las compras por cláusulas a recién fichados están deshabilitadas "
+            "en tu comunidad las primeras 24 horas"
+        )
+
+    client = MisterWriteClient(dry_run=False, transport=transport)
+    ax.execute(d, client=client)
+    _assert(d["failed"] == 0 and d.get("deferred") == 1, d)
+    _assert(d["operations"][0]["status"] == "deferred", d["operations"][0])
+    _assert(ax.is_recent_signing_clause_error(d["operations"][0]["error"]), d["operations"][0])
+
+
 def test_clause_pay_hydrates_owner_from_lookup() -> None:
     d = _run([_clause("4776", 2 * M, name="Ainsley Maitland-Niles", owner_id="1")])
     # owner_id en el move es placeholder; el lookup trae el id_uc real
@@ -947,6 +999,9 @@ TESTS = [
     test_execute_survives_a_rejected_operation,
     test_unverified_endpoint_is_blocked_in_live_mode,
     test_clause_pay_posts_id_player_and_id_uc,
+    test_recent_signing_is_skipped_at_plan_when_hours_known,
+    test_recent_signing_is_deferred_after_hydrate,
+    test_mister_400_recent_signing_is_deferred,
     test_clause_pay_hydrates_owner_from_lookup,
     test_log_entry_feeds_back_the_transfer_lock,
     test_failed_buy_does_not_lock_the_player,
