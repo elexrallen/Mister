@@ -266,11 +266,68 @@
         "failed": 2,
         "skipped": 1
       }
+    },
+    {
+      "at": "2026-09-22T21:08:34.788162+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 20631750.0,
+        "usable": 27979750.0,
+        "cash_in": 0.0,
+        "spent": 5418000.0,
+        "projected_cash": 15213750.0,
+        "cycle_cap": 16787850.0,
+        "single_cap": 11191900.0,
+        "clause_cap": 8393925.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 13
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "48563",
+          "69994"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": 423.8646507427778,
+        "pending_offers": 0
+      },
+      "operations": [
+        {
+          "kind": "clause_bid",
+          "player_id": "55646",
+          "name": "Christos Mandas",
+          "position": "GK",
+          "amount": 5418000.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Cláusula de Christos Mandas (5.4M €): cierra un hueco del once objetivo frente a G. Daffara."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "bid",
+          "player_id": "48534",
+          "name": "M. Svilar",
+          "amount": 11979000.0,
+          "reason": "supera max_single_buy_pct: 12.0M vs 11.2M"
+        }
+      ],
+      "counts": {
+        "planned": 1,
+        "executed": 1,
+        "failed": 0,
+        "skipped": 1
+      }
     }
   ],
-  "updated_at": "2026-09-22T20:33:05.976555+00:00",
+  "updated_at": "2026-09-22T21:08:34.788162+00:00",
   "last_cycle": {
-    "at": "2026-09-22T20:33:05.976555+00:00",
+    "at": "2026-09-22T21:08:34.788162+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
@@ -278,13 +335,13 @@
       "balance": 20631750.0,
       "usable": 27979750.0,
       "cash_in": 0.0,
-      "spent": 6597000.0,
-      "projected_cash": 14034750.0,
+      "spent": 5418000.0,
+      "projected_cash": 15213750.0,
       "cycle_cap": 16787850.0,
       "single_cap": 11191900.0,
       "clause_cap": 8393925.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 12
+      "free_slots_left": 13
     },
     "context": {
       "transfer_wait_hours": 24.0,
@@ -294,7 +351,7 @@
       ],
       "stale_offers": [],
       "sale_remaining_after": 5,
-      "hours_to_jornada": 424.4571898744444,
+      "hours_to_jornada": 423.8646507427778,
       "pending_offers": 0
     },
     "operations": [
@@ -304,21 +361,10 @@
         "name": "Christos Mandas",
         "position": "GK",
         "amount": 5418000.0,
-        "status": "error",
-        "error": "/ajax/clause-pay tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+        "status": "ok",
+        "error": null,
         "unverified": null,
         "why": "Cláusula de Christos Mandas (5.4M €): cierra un hueco del once objetivo frente a G. Daffara."
-      },
-      {
-        "kind": "bid",
-        "player_id": "55063",
-        "name": "Yerry Mina",
-        "position": "DF",
-        "amount": 1179000.0,
-        "status": "error",
-        "error": "sin id_market: no se puede armar la puja",
-        "unverified": null,
-        "why": "Puja por Yerry Mina (1.2M €, entra en el once objetivo de la jornada; libre, aún sin dueño; titular real; tendencia positiva)."
       }
     ],
     "skipped": [
@@ -331,9 +377,9 @@
       }
     ],
     "counts": {
-      "planned": 2,
-      "executed": 0,
-      "failed": 2,
+      "planned": 1,
+      "executed": 1,
+      "failed": 0,
       "skipped": 1
     }
   }

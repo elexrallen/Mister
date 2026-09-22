@@ -255,11 +255,59 @@
         "failed": 2,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-09-22T21:08:32.989869+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 19807910.0,
+        "usable": 27006660.0,
+        "cash_in": 0.0,
+        "spent": 6149250.0,
+        "projected_cash": 13658660.0,
+        "cycle_cap": 16203996.0,
+        "single_cap": 10802664.0,
+        "clause_cap": 8101998.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 12
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "61133"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 4,
+        "hours_to_jornada": 422.4109109713889,
+        "pending_offers": 0
+      },
+      "operations": [
+        {
+          "kind": "clause_bid",
+          "player_id": "4776",
+          "name": "Ainsley Maitland-Niles",
+          "position": "DF",
+          "amount": 6149250.0,
+          "status": "error",
+          "error": "/ajax/clause-pay falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/clause-pay — Las compras por cláusulas a recién fichados están deshabilitadas en tu comunidad las primeras 24 horas",
+          "unverified": null,
+          "why": "Cláusula de Ainsley Maitland-Niles (6.1M €): cierra un hueco del once objetivo frente a O. Adarabioyo."
+        }
+      ],
+      "skipped": [],
+      "counts": {
+        "planned": 1,
+        "executed": 0,
+        "failed": 1,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-09-22T20:33:04.370058+00:00",
+  "updated_at": "2026-09-22T21:08:32.989869+00:00",
   "last_cycle": {
-    "at": "2026-09-22T20:33:04.370058+00:00",
+    "at": "2026-09-22T21:08:32.989869+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
@@ -267,13 +315,13 @@
       "balance": 19807910.0,
       "usable": 27006660.0,
       "cash_in": 0.0,
-      "spent": 15336250.0,
-      "projected_cash": 4471660.0,
+      "spent": 6149250.0,
+      "projected_cash": 13658660.0,
       "cycle_cap": 16203996.0,
       "single_cap": 10802664.0,
       "clause_cap": 8101998.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 11
+      "free_slots_left": 12
     },
     "context": {
       "transfer_wait_hours": 24.0,
@@ -282,21 +330,10 @@
       ],
       "stale_offers": [],
       "sale_remaining_after": 4,
-      "hours_to_jornada": 423.02845379333337,
+      "hours_to_jornada": 422.4109109713889,
       "pending_offers": 0
     },
     "operations": [
-      {
-        "kind": "list_for_sale",
-        "player_id": "64099",
-        "name": "H. Diarra",
-        "position": "MF",
-        "amount": 160000.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Pon en venta a H. Diarra: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 160k €) y el dinero llega al instante."
-      },
       {
         "kind": "clause_bid",
         "player_id": "4776",
@@ -304,27 +341,16 @@
         "position": "DF",
         "amount": 6149250.0,
         "status": "error",
-        "error": "/ajax/clause-pay tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+        "error": "/ajax/clause-pay falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/clause-pay — Las compras por cláusulas a recién fichados están deshabilitadas en tu comunidad las primeras 24 horas",
         "unverified": null,
         "why": "Cláusula de Ainsley Maitland-Niles (6.1M €): cierra un hueco del once objetivo frente a O. Adarabioyo."
-      },
-      {
-        "kind": "bid",
-        "player_id": "48972",
-        "name": "Marcus Tavernier",
-        "position": "MF",
-        "amount": 9187000.0,
-        "status": "error",
-        "error": "sin id_market: no se puede armar la puja",
-        "unverified": null,
-        "why": "Puja por Marcus Tavernier (9.2M €, entra en el once objetivo de la jornada; libre, aún sin dueño; titular real; tendencia positiva)."
       }
     ],
     "skipped": [],
     "counts": {
-      "planned": 3,
-      "executed": 1,
-      "failed": 2,
+      "planned": 1,
+      "executed": 0,
+      "failed": 1,
       "skipped": 0
     }
   }
