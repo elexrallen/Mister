@@ -818,6 +818,117 @@ def _is_reliable_starter(p: dict[str, Any]) -> bool:
     return lineup is not None and lineup >= 70
 
 
+def _as_play_frac(raw: Any) -> float | None:
+    """Normaliza 0–1 o 0–100 a fracción 0–1."""
+    try:
+        if raw is None or raw == "":
+            return None
+        v = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if v > 1.0:
+        v = v / 100.0
+    return max(0.0, min(1.0, v))
+
+
+def is_xi_quality_starter(p: dict[str, Any] | None) -> bool:
+    """
+    Titular que puede puntuar en el once: no lesionado/out/blank y
+    señal de alineación ≥70% (jornada, ficha o xPts).
+    """
+    if not p:
+        return False
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
+        return False
+    if p.get("gw_out") or ext.get("gw_out") or p.get("gw_blank") or ext.get("gw_blank"):
+        return False
+    if p.get("gw_starter") or ext.get("gw_starter"):
+        return True
+    gw = _as_play_frac(
+        p.get("gw_lineup_prob") if p.get("gw_lineup_prob") is not None else ext.get("gw_lineup_prob")
+    )
+    if gw is not None and gw >= 0.70:
+        return True
+    p_play = _as_play_frac(
+        p.get("xpts_p_play") if p.get("xpts_p_play") is not None else p.get("p_play")
+    )
+    if p_play is not None and p_play >= 0.70:
+        return True
+    if str(p.get("signal") or "") == "start":
+        return True
+    return _is_starter(p)
+
+
+def _has_starter_signal(p: dict[str, Any] | None) -> bool:
+    """Hay dato suficiente para decidir si es titular (no adivinar)."""
+    if not p:
+        return False
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    if str(p.get("signal") or "") in ("start", "sit", "doubt", "out", "blank"):
+        return True
+    return any(
+        v is not None
+        for v in (
+            p.get("gw_starter"),
+            ext.get("gw_starter"),
+            p.get("gw_lineup_prob"),
+            ext.get("gw_lineup_prob"),
+            p.get("xpts_p_play"),
+            p.get("p_play"),
+            p.get("lineup_prob"),
+            ext.get("lineup_prob_ext"),
+        )
+    )
+
+
+def has_negative_trend(p: dict[str, Any] | None) -> bool:
+    """VM, flecha Mister o racha de puntos claramente a la baja."""
+    if not p:
+        return False
+    if str(p.get("points_trend") or "") == "down":
+        return True
+    if str(p.get("trend") or "") == "down":
+        return True
+    try:
+        d5 = float(p["delta_5d"]) if p.get("delta_5d") is not None else None
+    except (TypeError, ValueError):
+        d5 = None
+    if d5 is not None and d5 < -1e-9:
+        return True
+    if p.get("rising") is False and d5 is not None and d5 <= 0:
+        return True
+    return False
+
+
+def has_positive_trend(p: dict[str, Any] | None) -> bool:
+    """Sube de verdad: racha de puntos, flecha o Δ5d en positivo."""
+    if not p or has_negative_trend(p):
+        return False
+    if p.get("rising") is True:
+        return True
+    if str(p.get("points_trend") or "") == "up":
+        return True
+    if str(p.get("trend") or "") == "up":
+        return True
+    try:
+        d5 = float(p["delta_5d"]) if p.get("delta_5d") is not None else None
+    except (TypeError, ValueError):
+        d5 = None
+    return d5 is not None and d5 > 1e-9
+
+
+def xi_pick_tier(p: dict[str, Any] | None) -> int:
+    """0 titular al alza … 3 banquillo. Desempate del once, no recorte."""
+    if is_xi_quality_starter(p):
+        if has_positive_trend(p):
+            return 0
+        if has_negative_trend(p):
+            return 2
+        return 1
+    return 3
+
+
 def _in_mister_xi(p: dict[str, Any], xi_ids: set[str] | None = None) -> bool:
     """True si está en el once Mister (flag o XI recomendado)."""
     if p.get("in_lineup") is True:
@@ -1334,10 +1445,12 @@ def build_recommended_gw_xi(
     for row in scored:
         by_pos[row["position"]].append(row)
     for pos in by_pos:
-        # A xPts iguales, rival blando y local delante
+        # Titulares delante del banquillo; a xPts iguales, tendencia + rival blando
         by_pos[pos].sort(
             key=lambda x: (
+                0 if is_xi_quality_starter(x["player"]) else 1,
                 -x["score"],
+                xi_pick_tier(x["player"]),
                 -float(x["player"].get("fdr_multiplier") or 1.0),
                 -float(x["gw"] or x["lp"] or 0),
             )

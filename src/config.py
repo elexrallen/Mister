@@ -378,6 +378,10 @@ AUTOMATION_DEFAULTS: dict = {
     # Caja mínima que queda libre tras actuar
     "min_cash_floor": 0,
     "never_sell_xi_starters": True,
+    # Compras: solo titulares reales (alineación ≥70% / gw_starter)
+    "require_xi_starters": True,
+    # Compras: no fichar a quien baja de VM, flecha o racha de puntos
+    "require_positive_trend": True,
     # Rescindir da caja al 80%: solo con deuda y activado a mano
     "allow_rescind": False,
 }

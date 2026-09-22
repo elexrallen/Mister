@@ -12,13 +12,17 @@ from typing import Any
 import config
 from competitive_actions import (
     _has_play_minutes,
+    _has_starter_signal,
     _is_floor_vm,
     _lineup_pct,
     _money,
     appreciation_play_score,
     clause_roi_gate,
     cpu_spread_min_solvency_hours,
+    has_negative_trend,
+    has_positive_trend,
     is_rival_market_listing,
+    is_xi_quality_starter,
     mister_bid_cap,
     resolve_transfer_wait_hours,
     sells_settle_before_deadline,
@@ -299,6 +303,11 @@ def _exec_fields(row: dict[str, Any]) -> dict[str, Any]:
         "clause_known": bool(row.get("clause_known")),
         "listed_by_rival": bool(row.get("listed_by_rival")),
         "on_sale": bool(row.get("on_sale") or row.get("listed_for_sale")),
+        "is_xi_starter": bool(row.get("is_xi_starter", is_xi_quality_starter(row))),
+        "positive_trend": bool(row.get("positive_trend", has_positive_trend(row))),
+        "points_trend": row.get("points_trend"),
+        "rising": row.get("rising"),
+        "trend": row.get("trend"),
     }
 
 
@@ -527,6 +536,10 @@ def _bid_score(p: dict[str, Any]) -> float:
         score += 28.0
     elif _starter_coverage_hole(p) and not _is_floor_vm(p) and not p.get("decelerating"):
         score += 12.0
+    if is_xi_quality_starter(p) and has_positive_trend(p):
+        score += 10.0
+    elif has_negative_trend(p):
+        score -= 20.0
     if p.get("is_upgrade") or p.get("upgrade_worth_buy"):
         score += 14.0
     if not p.get("on_daily_market") and p.get("seller") != "market":
@@ -608,6 +621,11 @@ def _pick_hoy_clause(
         for r in (rival_upgrades or [])
         if isinstance(r, dict) and _pid(r)
     }
+    xi_rows = {
+        _pid(r): r
+        for r in (gw_target_xi or {}).get("xi") or []
+        if isinstance(r, dict) and _pid(r)
+    }
     xi_ids = xi_ids or set()
     best: tuple[float, dict[str, Any]] | None = None
     for slot in _clause_target_rows(gw_target_xi):
@@ -615,6 +633,7 @@ def _pick_hoy_clause(
         if not pid or pid in accept_ids:
             continue
         rival = by_upgrade.get(pid) or {}
+        xi_row = xi_rows.get(pid) or {}
         cost = _money(
             rival.get("clause")
             or rival.get("bid")
@@ -649,6 +668,11 @@ def _pick_hoy_clause(
             your_name = slot.get("your_name")
         if not _clause_upgrade_is_material(target_x, your_xpts):
             continue
+        merged_probe = {**xi_row, **slot, **rival}
+        if has_negative_trend(merged_probe):
+            continue
+        if _has_starter_signal(merged_probe) and not is_xi_quality_starter(merged_probe):
+            continue
         upgrade = _f(rival.get("upgrade_score"))
         if upgrade is None:
             gap = target_x - (your_xpts or 0.0)
@@ -662,7 +686,7 @@ def _pick_hoy_clause(
         if not roi_ok:
             continue
         score = float(rival.get("clause_roi") or 0) * 10.0 + upgrade
-        row = {**slot, **rival}
+        row = {**xi_row, **slot, **rival}
         row["clause"] = cost
         row["market_value"] = vm or row.get("market_value")
         row["upgrade_score"] = upgrade
@@ -949,6 +973,12 @@ def build_cycle_plan(
         strong = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
         if d5 is not None and d5 <= -strong and not _starter_coverage_hole(o):
             continue
+        if has_negative_trend(o) and not o.get("cpu_spread_play"):
+            continue
+        if not o.get("cpu_spread_play"):
+            known_bench = _has_starter_signal(o) and not is_xi_quality_starter(o)
+            if known_bench or (not is_xi_quality_starter(o) and pid not in target_ids):
+                continue
         score = _bid_score(o)
         closes_target = pid in target_ids
         fills_hole = bool(
@@ -968,6 +998,8 @@ def build_cycle_plan(
             score += 36.0
             o = dict(o)
             o["closes_gw_target"] = True
+            if is_xi_quality_starter(o) and has_positive_trend(o):
+                score += 12.0
         if o.get("cpu_spread_play"):
             score = max(score, 14.0)
             o = dict(o)
@@ -1027,6 +1059,10 @@ def build_cycle_plan(
             why_bits = []
             if o.get("closes_gw_target"):
                 why_bits.append("entra en el once objetivo de la jornada")
+            if is_xi_quality_starter(o):
+                why_bits.append("titular real")
+            if has_positive_trend(o):
+                why_bits.append("tendencia positiva")
             if o.get("fills_coverage_gap") or o.get("fills_structural") or o.get("fills_need"):
                 why_bits.append("cubre un hueco de plantilla")
             if d5 is not None:
@@ -1050,6 +1086,8 @@ def build_cycle_plan(
                 "bid": cost,
                 "amount": cost,
                 "closes_gw_target": bool(o.get("closes_gw_target")),
+                "is_xi_starter": is_xi_quality_starter(o),
+                "positive_trend": has_positive_trend(o),
                 "cpu_spread_play": bool(o.get("cpu_spread_play")),
                 "cpu_spread_list_now": bool(o.get("cpu_spread_play")) and transfer_wait_h <= 0,
                 "appreciation_play": bool(
@@ -1111,6 +1149,8 @@ def build_cycle_plan(
                 "amount": cost,
                 "clause": cost,
                 "closes_gw_target": True,
+                "is_xi_starter": is_xi_quality_starter(picked),
+                "positive_trend": has_positive_trend(picked),
                 "owner_name": picked.get("owner_name") or picked.get("owner_team"),
             }
             clause_move = _player_ref(picked, kind=KIND_CLAUSE, why=why, extra=extra)

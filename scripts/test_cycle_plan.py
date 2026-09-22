@@ -223,6 +223,98 @@ def test_does_not_bid_falling_gap_filler() -> None:
     _assert("Rueda" in bid_names, bid_names)
 
 
+def test_does_not_bid_mild_decline_even_if_starter_fills_hole() -> None:
+    """Titular usable + hueco + VM −4% no es puja: el once pide tendencia positiva."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "tel",
+            "name": "M. Tel",
+            "position": "FW",
+            "price": 1_880_000,
+            "bid": 1_880_000,
+            "puja_recomendada": 1_880_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": -0.04,
+            "rising": False,
+            "trend": "down",
+            "lineup_prob": 0.85,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+        },
+        {
+            "id": "hot",
+            "name": "Rueda",
+            "position": "DF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.12,
+            "rising": True,
+            "lineup_prob": 0.8,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("M. Tel" not in bid_names, bid_names)
+    _assert("Rueda" in bid_names, bid_names)
+    rueda = next(m for m in plan["moves"] if m["kind"] == KIND_BID and m["name"] == "Rueda")
+    _assert(rueda.get("is_xi_starter") is True, rueda)
+    _assert(rueda.get("positive_trend") is True, rueda)
+    _assert("titular real" in (rueda.get("why") or ""), rueda)
+    _assert("tendencia positiva" in (rueda.get("why") or ""), rueda)
+
+
+def test_does_not_bid_rising_bench_as_hole_filler() -> None:
+    """Sube de VM pero no es titular: no tapa el once."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "bench",
+            "name": "Suplente",
+            "position": "MF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.15,
+            "rising": True,
+            "lineup_prob": 0.25,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("Suplente" not in bid_names, bid_names)
+
+
 def test_accept_offer_frees_slot_to_bid() -> None:
     squad = [
         {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
@@ -1571,6 +1663,8 @@ if __name__ == "__main__":
     test_full_squad_lists_does_not_bid()
     test_free_slot_bids_same_cycle()
     test_does_not_bid_falling_gap_filler()
+    test_does_not_bid_mild_decline_even_if_starter_fills_hole()
+    test_does_not_bid_rising_bench_as_hole_filler()
     test_accept_offer_frees_slot_to_bid()
     test_outlier_offer_is_declined()
     test_fair_offer_on_xi_is_hold()

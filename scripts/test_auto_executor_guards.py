@@ -55,6 +55,8 @@ def _settings(**over) -> dict:
         "offer_stale_cycles": 2,
         "min_cash_floor": 0,
         "never_sell_xi_starters": True,
+        "require_xi_starters": True,
+        "require_positive_trend": True,
         "allow_rescind": False,
     }
     s.update(over)
@@ -480,6 +482,35 @@ def test_transfer_wait_off_ignores_the_log() -> None:
     _assert(_ids(d) == ["1"], "con transfer_wait a 0 se puede listar al instante")
 
 
+def test_negative_trend_buy_is_skipped() -> None:
+    d = _run([_bid("1", 2 * M, delta_5d=-0.04, rising=False, lineup_prob=0.9)])
+    _assert(not d["operations"], d["operations"])
+    _assert("tendencia negativa" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
+def test_known_bench_buy_is_skipped() -> None:
+    d = _run([_bid("1", 2 * M, lineup_prob=0.2, rising=True, delta_5d=0.12)])
+    _assert(not d["operations"], d["operations"])
+    _assert("titular real" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
+def test_starter_with_positive_trend_still_buys() -> None:
+    d = _run(
+        [
+            _bid(
+                "1",
+                2 * M,
+                lineup_prob=0.85,
+                rising=True,
+                delta_5d=0.08,
+                is_xi_starter=True,
+                positive_trend=True,
+            )
+        ]
+    )
+    _assert(_ids(d) == ["1"], d["skipped"])
+
+
 def test_never_sell_xi_starters_triggers() -> None:
     d = _run([_listing("1", M)], state={"xi_ids": ["1"]})
     _assert(not d["operations"], "no se lista un titular del once")
@@ -809,6 +840,9 @@ TESTS = [
     test_transfer_wait_blocks_listing_a_fresh_signing,
     test_transfer_wait_expired_allows_listing,
     test_transfer_wait_off_ignores_the_log,
+    test_negative_trend_buy_is_skipped,
+    test_known_bench_buy_is_skipped,
+    test_starter_with_positive_trend_still_buys,
     test_never_sell_xi_starters_triggers,
     test_starter_can_be_listed_when_protection_is_off,
     test_rescind_is_off_by_default,

@@ -29,7 +29,10 @@ from typing import Any, Callable
 import config
 from competitive_actions import (
     CLAUSE_DAILY_WINDOW_HOURS,
+    _has_starter_signal,
     clause_executable,
+    has_negative_trend,
+    is_xi_quality_starter,
     mister_bid_cap,
     resolve_clauses_daily_limit,
     resolve_transfer_wait_hours,
@@ -393,6 +396,8 @@ def plan_operations(
     max_offers = _int(settings, "max_pending_offers", 2)
     protect_xi = bool(settings.get("never_sell_xi_starters", True))
     allow_rescind = bool(settings.get("allow_rescind"))
+    require_starters = bool(settings.get("require_xi_starters", True))
+    require_trend = bool(settings.get("require_positive_trend", True))
 
     sale_remaining = int(_f(constraints.get("sale_remaining")) or 0)
     debt_shortfall = _money(constraints.get("debt_shortfall"))
@@ -553,6 +558,25 @@ def plan_operations(
                 budget.commit_sale(amount)
                 debt_shortfall -= amount
                 continue
+
+            if kind in (KIND_CLAUSE, KIND_BID, KIND_OFFER) and not move.get(
+                "cpu_spread_play"
+            ):
+                if require_trend and has_negative_trend(move):
+                    skip(
+                        move,
+                        kind,
+                        "tendencia negativa: no entra en el once objetivo",
+                    )
+                    continue
+                if require_starters:
+                    flagged = move.get("is_xi_starter")
+                    known_bench = _has_starter_signal(move) and not is_xi_quality_starter(
+                        move
+                    )
+                    if flagged is False or (flagged is None and known_bench):
+                        skip(move, kind, "solo se ficha un titular real para el once")
+                        continue
 
             if kind == KIND_CLAUSE:
                 if clauses_done >= max_clauses:
