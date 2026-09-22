@@ -17,6 +17,7 @@ from competitive_actions import (
     _lineup_pct,
     _money,
     appreciation_play_score,
+    clause_executable,
     clause_roi_gate,
     cpu_spread_min_solvency_hours,
     has_negative_trend,
@@ -308,6 +309,8 @@ def _exec_fields(row: dict[str, Any]) -> dict[str, Any]:
         "points_trend": row.get("points_trend"),
         "rising": row.get("rising"),
         "trend": row.get("trend"),
+        "owner_signed_hours": row.get("owner_signed_hours"),
+        "owner_signed_recently": bool(row.get("owner_signed_recently")),
     }
 
 
@@ -614,6 +617,7 @@ def _pick_hoy_clause(
     recommended_xi: dict[str, Any] | None = None,
     squad: list[dict[str, Any]] | None = None,
     xi_ids: set[str] | None = None,
+    league_rules: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Como mucho 1 cláusula de Hoy: upgrade material vs quien sale, ROI OK, cabe."""
     by_upgrade = {
@@ -684,6 +688,11 @@ def _pick_hoy_clause(
             fills=True,
         )
         if not roi_ok:
+            continue
+        merged_probe["clause"] = cost
+        merged_probe["clause_known"] = True
+        ok_now, _why = clause_executable(merged_probe, league_rules=league_rules)
+        if not ok_now:
             continue
         score = float(rival.get("clause_roi") or 0) * 10.0 + upgrade
         row = {**xi_row, **slot, **rival}
@@ -1282,6 +1291,7 @@ def build_cycle_plan(
                 recommended_xi=recommended_xi,
                 squad=squad,
                 xi_ids=xi_ids,
+                league_rules=rules,
             )
             if not cand:
                 break

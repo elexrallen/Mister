@@ -379,6 +379,8 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
         "shield": None,
         "shielded": False,
         "id_market": None,
+        "transfer_date": None,
+        "owner_signed_hours": None,
     }
     if not info:
         return out
@@ -422,6 +424,18 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
     owner = info.get("owner") if isinstance(info.get("owner"), dict) else {}
     out["owner_id"] = owner.get("id")
     out["owner_name"] = owner.get("name")
+    transfer = info.get("transfer") if isinstance(info.get("transfer"), dict) else {}
+    signed_raw = (
+        transfer.get("date")
+        or owner.get("since")
+        or owner.get("date")
+        or info.get("signed_at")
+    )
+    owners = info.get("owners") if isinstance(info.get("owners"), list) else []
+    if signed_raw is None and owners and isinstance(owners[0], dict):
+        signed_raw = owners[0].get("date")
+    if signed_raw is not None:
+        out["transfer_date"] = signed_raw
     team = info.get("team") if isinstance(info.get("team"), dict) else {}
     if team.get("id") is not None:
         out["team_id"] = str(team.get("id"))
@@ -491,6 +505,11 @@ def listing_context_for_player(player_id: str | int) -> dict[str, Any]:
         "offeree_id": offeree,
         "action": action,
         "owner_id": offeree,
+        "shield": fields.get("shield"),
+        "shielded": fields.get("shielded"),
+        "clause": fields.get("clause"),
+        "owner_signed_hours": fields.get("owner_signed_hours"),
+        "transfer_date": fields.get("transfer_date"),
     }
 
 

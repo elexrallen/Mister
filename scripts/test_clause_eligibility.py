@@ -8,12 +8,17 @@ Cualquier regla verificable que la impida tiene que bloquearla antes del POST.
 from __future__ import annotations
 
 import sys
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from competitive_actions import clause_executable  # noqa: E402
+from competitive_actions import (  # noqa: E402
+    clause_executable,
+    hours_since_acquired,
+    owner_signed_hours_from_profile,
+)
 from league_rules import normalize_rules  # noqa: E402
 from mister_client import clause_fields_from_community, normalize_sw_player  # noqa: E402
 
@@ -155,6 +160,30 @@ def test_gameweek_live_without_clock_is_conservative() -> None:
     _assert("previas" in (why or "") or "jornada" in (why or ""), why)
 
 
+def test_hours_since_acquired_date_only_is_conservative() -> None:
+    now = datetime(2026, 9, 22, 21, 0, tzinfo=timezone.utc)
+    today = hours_since_acquired(date(2026, 9, 22), now=now)
+    _assert(today is not None and today < 1, today)
+    yesterday = hours_since_acquired(date(2026, 9, 21), now=now)
+    _assert(yesterday is not None and yesterday < 24, yesterday)
+    old = hours_since_acquired(date(2026, 9, 19), now=now)
+    _assert(old is not None and old > 48, old)
+
+
+def test_owner_signed_hours_from_profile_uses_latest_owner() -> None:
+    now = datetime(2026, 9, 22, 21, 0, tzinfo=timezone.utc)
+    hours = owner_signed_hours_from_profile(
+        {
+            "owner_id": "15540649",
+            "owners": [{"to_uc": "15540649", "date": date(2026, 9, 22)}],
+            "transfer_date": date(2026, 8, 1),
+        },
+        owner_id="15540649",
+        now=now,
+    )
+    _assert(hours is not None and hours < 1, hours)
+
+
 def test_recent_signing_protection() -> None:
     rules = {**ALL_ON, "clause_rules": {**ALL_ON["clause_rules"], "signs": 1}}
     ok_old, _ = clause_executable(_target(), league_rules=rules)
@@ -285,6 +314,8 @@ TESTS = [
     test_gameweek_rule_closes_in_the_pre_kickoff_window,
     test_gameweek_zero_stays_open,
     test_gameweek_live_without_clock_is_conservative,
+    test_hours_since_acquired_date_only_is_conservative,
+    test_owner_signed_hours_from_profile_uses_latest_owner,
     test_recent_signing_protection,
     test_signs_hours_codes,
     test_max_inbound_clauses_cap,

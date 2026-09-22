@@ -5488,6 +5488,76 @@ def resolve_clauses_gameweek_hours(raw: Any) -> float | None:
     return max(0.0, v)
 
 
+def hours_since_acquired(raw: Any, *, now: datetime | None = None) -> float | None:
+    """
+    Horas desde que el dueño actual fichó al jugador.
+
+    Si Mister solo da fecha (sin hora), se trata como fichado a las 23:59 de
+    ese día: bloquea de más un ciclo antes que POST-ear dentro de las 24 h.
+    """
+    if raw is None or raw == "":
+        return None
+    ref = now or datetime.now(timezone.utc)
+    if ref.tzinfo is None:
+        ref = ref.replace(tzinfo=timezone.utc)
+    else:
+        ref = ref.astimezone(timezone.utc)
+    if isinstance(raw, datetime):
+        dt = raw if raw.tzinfo else raw.replace(tzinfo=timezone.utc)
+        return max(0.0, (ref - dt.astimezone(timezone.utc)).total_seconds() / 3600.0)
+    if isinstance(raw, date) and not isinstance(raw, datetime):
+        end = datetime(raw.year, raw.month, raw.day, 23, 59, tzinfo=timezone.utc)
+        return max(0.0, (ref - end).total_seconds() / 3600.0)
+    txt = str(raw).strip()
+    if not txt:
+        return None
+    try:
+        dt = datetime.fromisoformat(txt.replace("Z", "+00:00"))
+    except ValueError:
+        dt = None
+    if dt is not None:
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        if dt.hour == 0 and dt.minute == 0 and dt.second == 0 and "T" not in txt:
+            end = datetime(dt.year, dt.month, dt.day, 23, 59, tzinfo=timezone.utc)
+            return max(0.0, (ref - end).total_seconds() / 3600.0)
+        return max(0.0, (ref - dt.astimezone(timezone.utc)).total_seconds() / 3600.0)
+    try:
+        from rival_finances import parse_es_date
+    except ImportError:
+        parse_es_date = None  # type: ignore[assignment]
+    if parse_es_date is not None:
+        d = parse_es_date(txt)
+        if d is not None:
+            end = datetime(d.year, d.month, d.day, 23, 59, tzinfo=timezone.utc)
+            return max(0.0, (ref - end).total_seconds() / 3600.0)
+    return None
+
+
+def owner_signed_hours_from_profile(
+    profile: dict[str, Any] | None,
+    *,
+    owner_id: str | int | None = None,
+    now: datetime | None = None,
+) -> float | None:
+    """Horas desde el último cambio de dueño (owners[0] o transfer.date)."""
+    if not isinstance(profile, dict):
+        return None
+    want = str(owner_id or profile.get("owner_id") or "").strip()
+    owners = profile.get("owners") if isinstance(profile.get("owners"), list) else []
+    if owners and isinstance(owners[0], dict):
+        latest = owners[0]
+        to_uc = str(latest.get("to_uc") or latest.get("id_uc_to") or latest.get("id") or "")
+        if not want or not to_uc or to_uc == want:
+            hours = hours_since_acquired(latest.get("date"), now=now)
+            if hours is not None:
+                return hours
+    return hours_since_acquired(
+        profile.get("transfer_date") or profile.get("signed_at"),
+        now=now,
+    )
+
+
 def _owner_signed_hours(item: dict[str, Any]) -> float | None:
     for key in (
         "owner_signed_hours",
@@ -5502,7 +5572,7 @@ def _owner_signed_hours(item: dict[str, Any]) -> float | None:
             return max(0.0, float(raw))
         except (TypeError, ValueError):
             continue
-    return None
+    return owner_signed_hours_from_profile(item, owner_id=item.get("owner_id"))
 
 
 def clause_executable(

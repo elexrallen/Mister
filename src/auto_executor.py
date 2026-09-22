@@ -32,8 +32,10 @@ from competitive_actions import (
     _has_starter_signal,
     clause_executable,
     has_negative_trend,
+    hours_since_acquired,
     is_xi_quality_starter,
     mister_bid_cap,
+    owner_signed_hours_from_profile,
     resolve_clauses_daily_limit,
     resolve_transfer_wait_hours,
 )
@@ -43,7 +45,11 @@ from mister_actions import (
     MisterWriteClient,
     UnverifiedAction,
 )
-from mister_client import listing_context_for_player, switch_community
+from mister_client import (
+    fetch_player_sw_profile,
+    listing_context_for_player,
+    switch_community,
+)
 
 log = logging.getLogger("auto_executor")
 
@@ -722,6 +728,8 @@ def plan_operations(
             "sale_remaining_after": sale_remaining,
             "hours_to_jornada": hours_to_jornada,
             "pending_offers": live_offers,
+            "gameweek_live": gameweek_live,
+            "league_rules": rules,
         },
     }
 
@@ -786,12 +794,13 @@ def ensure_league_session(id_community: str) -> bool:
     return True
 
 
-def live_listing_lookup() -> Callable[[str], dict[str, Any]]:
+def live_listing_lookup(*, enrich_clause: bool = False) -> Callable[[str], dict[str, Any]]:
     """
     Resuelve id_market como el popup de puja: player-community-info.
 
     sw/market es un atajo por lote (data_engine); aquí hay 1-6 pujas y el
     preload del formulario es la fuente que Mister usa de verdad.
+    Con `enrich_clause` añade horas desde el fichaje (sw/players).
     """
     cache: dict[str, dict[str, Any]] = {}
 
@@ -799,7 +808,11 @@ def live_listing_lookup() -> Callable[[str], dict[str, Any]]:
         pid = str(player_id or "").strip()
         if pid in cache:
             return cache[pid]
-        extra = listing_context_for_player(pid)
+        extra = dict(listing_context_for_player(pid) or {})
+        if enrich_clause and extra.get("owner_signed_hours") is None:
+            extra["owner_signed_hours"] = _signed_hours_from_sw_profile(
+                pid, owner_id=str(extra.get("owner_id") or "") or None
+            )
         cache[pid] = extra
         return extra
 
@@ -810,7 +823,7 @@ def _hydrate_clause_op(
     op: dict[str, Any],
     lookup: Callable[[str], dict[str, Any]] | None,
 ) -> str | None:
-    """Rellena id_uc del dueño. Devuelve motivo de error o None si se puede mandar."""
+    """Rellena id_uc del dueño y horas desde el fichaje."""
     params = dict(op.get("params") or {})
     pid = str(params.get("player_id") or op.get("player_id") or "")
     extra: dict[str, Any] = {}
@@ -828,9 +841,74 @@ def _hydrate_clause_op(
     if owner in (None, "", 0, "0"):
         return "sin id_uc del dueño: no se puede pagar la cláusula"
     params["owner_id"] = str(owner)
+    if extra.get("shield") is not None:
+        op["shield"] = extra.get("shield")
+        op["shielded"] = bool(extra.get("shielded") or extra.get("shield"))
+    hours = extra.get("owner_signed_hours")
+    if hours is None:
+        hours = hours_since_acquired(extra.get("transfer_date"))
+    if hours is not None:
+        op["owner_signed_hours"] = hours
+    if extra.get("owner_signed_recently"):
+        op["owner_signed_recently"] = True
     op["params"] = params
-    log.info("cláusula lista %s id_uc=%s", pid, params["owner_id"])
+    log.info(
+        "cláusula lista %s id_uc=%s signed_h=%s",
+        pid,
+        params["owner_id"],
+        op.get("owner_signed_hours"),
+    )
     return None
+
+
+def _signed_hours_from_sw_profile(
+    player_id: str,
+    *,
+    owner_id: str | None = None,
+) -> float | None:
+    """Una ficha sw/players por cláusula: owners[0].date / transfer.date."""
+    try:
+        raw = fetch_player_sw_profile(player_id)
+    except Exception as exc:  # noqa: BLE001
+        log.warning("ficha cláusula %s falló: %s", player_id, exc)
+        return None
+    if not raw:
+        return None
+    try:
+        from rival_finances import parse_player_profile
+    except ImportError:
+        return hours_since_acquired((raw.get("player") or {}).get("transfer", {}).get("date") if isinstance(raw.get("player"), dict) else None)
+    prof = parse_player_profile(raw)
+    return owner_signed_hours_from_profile(prof, owner_id=owner_id)
+
+
+def _clause_blocked_after_hydrate(op: dict[str, Any], decision: dict[str, Any]) -> str | None:
+    ctx = decision.get("context") if isinstance(decision.get("context"), dict) else {}
+    item = {
+        "clause": op.get("amount"),
+        "clause_known": True,
+        "shield": op.get("shield"),
+        "shielded": op.get("shielded"),
+        "owner_id": (op.get("params") or {}).get("owner_id") or op.get("owner_id"),
+        "owner_signed_hours": op.get("owner_signed_hours"),
+        "owner_signed_recently": op.get("owner_signed_recently"),
+    }
+    ok, why = clause_executable(
+        item,
+        league_rules=ctx.get("league_rules"),
+        gameweek_live=ctx.get("gameweek_live"),
+        hours_to_jornada=ctx.get("hours_to_jornada"),
+    )
+    return None if ok else why
+
+
+def is_recent_signing_clause_error(exc: BaseException | str) -> bool:
+    txt = str(exc).lower()
+    return (
+        "recién fichad" in txt
+        or "recien fichad" in txt
+        or "primeras 24 hora" in txt
+    )
 
 
 def _hydrate_listing_op(
@@ -897,7 +975,9 @@ def execute(
     lookup = listing_lookup
     if lookup is None and not getattr(cl, "_injected", False):
         if any(op.get("kind") in LISTING_KINDS or op.get("kind") == KIND_CLAUSE for op in ops):
-            lookup = live_listing_lookup()
+            lookup = live_listing_lookup(
+                enrich_clause=any(op.get("kind") == KIND_CLAUSE for op in ops)
+            )
 
     for op in ops:
         method = getattr(cl, str(op.get("action") or ""), None)
@@ -911,6 +991,12 @@ def execute(
                 op["status"] = "deferred"
                 op["error"] = missing
                 log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), missing)
+                continue
+            blocked = _clause_blocked_after_hydrate(op, decision)
+            if blocked:
+                op["status"] = "deferred"
+                op["error"] = blocked
+                log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), blocked)
                 continue
         if op.get("kind") in LISTING_KINDS:
             missing = _hydrate_listing_op(op, lookup)
@@ -928,6 +1014,11 @@ def execute(
             log.info("%s %s bloqueada: %s", op.get("kind"), op.get("name"), exc)
             continue
         except Exception as exc:  # noqa: BLE001
+            if op.get("kind") == KIND_CLAUSE and is_recent_signing_clause_error(exc):
+                op["status"] = "deferred"
+                op["error"] = str(exc)
+                log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), exc)
+                continue
             op["status"] = "error"
             op["error"] = str(exc)
             log.warning("%s %s falló: %s", op.get("kind"), op.get("name"), exc)
