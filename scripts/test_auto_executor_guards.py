@@ -518,6 +518,20 @@ def test_never_sell_xi_starters_triggers() -> None:
     _assert("titular" in _skip_reason(d, "1"), _skip_reason(d, "1"))
 
 
+def test_bench_in_recommended_xi_can_be_listed() -> None:
+    """Banquillo colado en el once recomendado: el plan marca is_xi_starter=False."""
+    d = _run(
+        [_listing("1", M, is_xi_starter=False)],
+        state={"xi_ids": ["1"]},
+    )
+    _assert(_ids(d) == ["1"], f"el banquillo se lista: {_ids(d)}")
+
+
+def test_multiple_listings_all_go_through() -> None:
+    d = _run([_listing("1", M), _listing("2", M), _listing("3", M)], sale_remaining=5)
+    _assert(_ids(d) == ["1", "2", "3"], f"tres ventas en el mismo ciclo: {_ids(d)}")
+
+
 def test_starter_can_be_listed_when_protection_is_off() -> None:
     d = _run(
         [_listing("1", M)],
@@ -1011,6 +1025,8 @@ TESTS = [
     test_known_bench_buy_is_skipped,
     test_starter_with_positive_trend_still_buys,
     test_never_sell_xi_starters_triggers,
+    test_bench_in_recommended_xi_can_be_listed,
+    test_multiple_listings_all_go_through,
     test_starter_can_be_listed_when_protection_is_off,
     test_rescind_is_off_by_default,
     test_rescind_needs_real_debt_even_when_allowed,

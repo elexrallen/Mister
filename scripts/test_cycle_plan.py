@@ -726,6 +726,116 @@ def test_lists_fading_bench_with_free_slots() -> None:
     _assert(listed[0].get("list_reason") == "fade", listed[0])
 
 
+def test_multiple_fading_benches_all_listed() -> None:
+    """Varios banquillos viables: se listan todos, no uno."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {
+            "id": "dead1",
+            "name": "Parche A",
+            "position": "MF",
+            "price": 2_000_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.5,
+            "delta_5d": -0.04,
+        },
+        {
+            "id": "dead2",
+            "name": "Parche B",
+            "position": "MF",
+            "price": 1_800_000,
+            "lineup_prob": 0.10,
+            "xpts": 1.2,
+            "delta_5d": -0.08,
+        },
+        {
+            "id": "dead3",
+            "name": "Parche C",
+            "position": "DF",
+            "price": 1_500_000,
+            "lineup_prob": 0.20,
+            "xpts": 1.0,
+            "delta_5d": -0.12,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Parche A" in listed, listed)
+    _assert("Parche B" in listed, listed)
+    _assert("Parche C" in listed, listed)
+    _assert("Titular" not in listed, listed)
+    _assert(len(listed) == 3, listed)
+
+
+def test_lists_fade_even_if_stuffed_in_recommended_xi() -> None:
+    """El once recomendado a veces mete al banquillo: eso no lo blinda."""
+    bench = {
+        "id": "dead",
+        "name": "Colado",
+        "position": "MF",
+        "price": 2_000_000,
+        "lineup_prob": 0.15,
+        "xpts": 1.5,
+        "delta_5d": -0.10,
+    }
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        bench,
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1", "dead"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert(len(listed) == 1 and listed[0]["name"] == "Colado", listed)
+
+
+def test_multiple_swaps_when_squad_full() -> None:
+    """Plantilla llena: varios swaps, no 1:1 con una sola puja del mercado."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {"id": "xi2", "name": "Titular2", "position": "MF", "price": 7_000_000, "lineup_prob": 0.85, "xpts": 7},
+        _bench_riser(0.10, "Ciss"),
+        {
+            "id": "bench2",
+            "name": "Otro",
+            "position": "DF",
+            "price": 1_400_000,
+            "lineup_prob": 0.2,
+            "xpts": 2.0,
+            "delta_5d": 0.10,
+            "accel": -0.04,
+            "decelerating": True,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[_hot_market(0.25, "Hot")],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1", "xi2"),
+        league_rules={"max_squad": 4, "sale_limit": 5},
+        max_squad=4,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Ciss" in listed, listed)
+    _assert("Otro" in listed, listed)
+    _assert(len(listed) == 2, listed)
+
+
 def test_history_snapshot_stems() -> None:
     from datetime import datetime, timezone
 
@@ -1927,6 +2037,9 @@ if __name__ == "__main__":
     test_lists_riser_only_when_full_and_market_hotter()
     test_does_not_list_riser_when_full_but_market_not_hotter()
     test_lists_fading_bench_with_free_slots()
+    test_multiple_fading_benches_all_listed()
+    test_lists_fade_even_if_stuffed_in_recommended_xi()
+    test_multiple_swaps_when_squad_full()
     test_history_snapshot_stems()
     test_cycle_plan_does_not_list_sold_players()
     test_spike_without_minutes_is_not_a_bid()

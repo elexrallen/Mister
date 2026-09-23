@@ -371,8 +371,8 @@ AUTOMATION_DEFAULTS: dict = {
     # Fracción máxima en una sola cláusula, aparte por ser irreversible
     "max_clause_pct": 0.30,
     "max_clauses_per_cycle": 1,
-    # 5 pujas del once + cláusula + listados del mismo ciclo
-    "max_ops_per_cycle": 8,
+    # 5 pujas + 5 listados + cláusula + ofertas del mismo ciclo
+    "max_ops_per_cycle": 12,
     # Ofertas a rivales vivas a la vez: no son gasto, pero comprometen margen
     "max_pending_offers": 2,
     # Ciclos que puede vivir una oferta a un rival sin respuesta antes de retirarla

@@ -139,6 +139,21 @@ def _is_offer_to_rival(move: dict[str, Any]) -> bool:
     return bool(owner) and str(owner) not in ("", "0")
 
 
+def _xi_starter_sale_blocked(move: dict[str, Any], pid: str, xi_ids: set[str]) -> bool:
+    """
+    never_sell_xi_starters solo cubre un titular real.
+
+    El once recomendado a veces mete banquillo: si el plan marca
+    is_xi_starter=False, se puede listar. Sin el flag (plan viejo / test)
+    se sigue protegiendo a quien está en xi_ids.
+    """
+    if move.get("xi_impact") == "risk":
+        return True
+    if "is_xi_starter" in move:
+        return bool(move.get("is_xi_starter") or move.get("is_xi_quality_starter"))
+    return bool(pid and pid in xi_ids)
+
+
 class _Budget:
     """
     Contabilidad del ciclo.
@@ -571,7 +586,7 @@ def plan_operations(
                         f"espera compra→venta: faltan {locked[pid]:.1f}h de {wait_h:.0f}h",
                     )
                     continue
-                if protect_xi and (pid in xi_ids or move.get("xi_impact") == "risk"):
+                if protect_xi and _xi_starter_sale_blocked(move, pid, xi_ids):
                     skip(move, kind, "titular del once y never_sell_xi_starters activo")
                     continue
                 price = _money(move.get("price") or move.get("amount"))
@@ -591,7 +606,7 @@ def plan_operations(
                 if debt_shortfall <= 1:
                     skip(move, kind, "sin deuda que cubrir: no se rescinde por gusto")
                     continue
-                if protect_xi and pid in xi_ids:
+                if protect_xi and _xi_starter_sale_blocked(move, pid, xi_ids):
                     skip(move, kind, "titular del once y never_sell_xi_starters activo")
                     continue
                 operations.append(
