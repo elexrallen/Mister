@@ -567,11 +567,151 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-09-23T15:45:08.831268+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 19969510.0,
+        "usable": 27188260.0,
+        "cash_in": 0.0,
+        "spent": 6149250.0,
+        "projected_cash": 13820260.0,
+        "cycle_cap": 16312956.0,
+        "single_cap": 10875304.0,
+        "clause_cap": 8156478.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 13
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "61133"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": 403.83968868194444,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mr",
+          "provider_label": "SofaScore",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 3,
+          "market_stay": 2,
+          "transfer_wait": 1,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 25000,
+            "goals": 100000,
+            "best_xi": 250000
+          },
+          "custom_rules": "📣 Compite contra miles de usuarios en distintas divisiones, con ascensos y descensos al final de cada tramo ⚽ ¡En total, 7 tramos diferentes! ⭐\r\n\r\n✅ Todos los usuarios empiezan en la misma división con 15 jugadores aleatorios y millones para fichar, en igualdad de condiciones 🛒​\r\n\r\n🏆 El vencedor final de la Macroliga Oficial de Premier League en Mister Fantasy, que será el primer clasificado de la 1ª División al término de la jornada 38 de LaLiga, gana una camiseta del equipo que quiera de regalo 💝 \r\n\r\n⚡​ Criterios de desempate para ganar el premio a final de temporada:\r\n1. Usuario que haya ganado + jornadas en el último tramo (Jornadas 31 a 38).\r\n2. En caso de empate, usuario que haya quedado por delante de su rival en más ocasiones (las jornadas con empate a puntos se anulan).\r\n3. En caso de que continúe el empate: usuario que haya hecho más puntos en la última jornada (38).\r\n4. En caso de que aún continúe el empate: usuario que haya hecho más puntos en la primera jornada del último tramo (31).",
+          "type": "comunio",
+          "mode": "macro_league",
+          "external": "premier",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": true,
+            "known": true,
+            "mode": "by_market_value",
+            "multiplier": null,
+            "source": "admin",
+            "multiplier_source": "by_market_value"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 375000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "points": 25000.0,
+              "goals": 100000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 375000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_sofascore",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_1",
+            "custom_rules_text",
+            "captain_by_value"
+          ],
+          "market_urgency": 1.5
+        }
+      },
+      "operations": [
+        {
+          "kind": "clause_bid",
+          "player_id": "4776",
+          "name": "Ainsley Maitland-Niles",
+          "position": "DF",
+          "amount": 6149250.0,
+          "status": "deferred",
+          "error": "fichaje reciente del rival (16 h < 24 h de protección)",
+          "unverified": null,
+          "why": "Cláusula de Ainsley Maitland-Niles (6.1M €): cierra un hueco del once objetivo frente a O. Adarabioyo."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 10286100.0,
+          "reason": "supera max_spend_per_cycle_pct: 16.4M vs 16.3M"
+        }
+      ],
+      "counts": {
+        "planned": 1,
+        "executed": 0,
+        "failed": 0,
+        "skipped": 1
+      }
     }
   ],
-  "updated_at": "2026-09-23T08:58:04.228647+00:00",
+  "updated_at": "2026-09-23T15:45:08.831268+00:00",
   "last_cycle": {
-    "at": "2026-09-23T08:58:04.228647+00:00",
+    "at": "2026-09-23T15:45:08.831268+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
@@ -594,7 +734,7 @@
       ],
       "stale_offers": [],
       "sale_remaining_after": 5,
-      "hours_to_jornada": 410.61018111500005,
+      "hours_to_jornada": 403.83968868194444,
       "pending_offers": 0,
       "gameweek_live": false,
       "league_rules": {
@@ -689,17 +829,25 @@
         "position": "DF",
         "amount": 6149250.0,
         "status": "deferred",
-        "error": "fichaje reciente del rival (9 h < 24 h de protección)",
+        "error": "fichaje reciente del rival (16 h < 24 h de protección)",
         "unverified": null,
         "why": "Cláusula de Ainsley Maitland-Niles (6.1M €): cierra un hueco del once objetivo frente a O. Adarabioyo."
       }
     ],
-    "skipped": [],
+    "skipped": [
+      {
+        "kind": "bid",
+        "player_id": "48972",
+        "name": "M. Tavernier",
+        "amount": 10286100.0,
+        "reason": "supera max_spend_per_cycle_pct: 16.4M vs 16.3M"
+      }
+    ],
     "counts": {
       "planned": 1,
       "executed": 0,
       "failed": 0,
-      "skipped": 0
+      "skipped": 1
     }
   }
 }
