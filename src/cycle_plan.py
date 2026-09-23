@@ -349,15 +349,22 @@ def _market_much_hotter(owned_delta: float | None, market_row: dict[str, Any] | 
 
 
 def _is_usable_starter(p: dict[str, Any], xi_ids: set[str]) -> bool:
-    if _pid(p) in xi_ids:
+    """Titular real. Estar en el once recomendado no basta: a veces mete banquillo."""
+    if is_xi_quality_starter(p):
         return True
     lp = _lineup_pct(p)
     return lp is not None and lp >= 70
 
 
-def _offer_quality_reason(player: dict[str, Any], xi_ids: set[str], pct: float | None) -> str | None:
-    """Prima sobre VM o fade real. XI / titular / keep-riding no se cierran solos."""
-    if _is_usable_starter(player, xi_ids) or _keep_riding(player):
+def _offer_quality_reason(
+    player: dict[str, Any],
+    xi_ids: set[str],
+    pct: float | None,
+    *,
+    target_owned: set[str] | None = None,
+) -> str | None:
+    """Prima sobre VM o fade real. Titular real / once objetivo / keep-riding no se cierran solos."""
+    if _hold_from_sale(player, target_owned=target_owned or set()) or _keep_riding(player):
         return None
     premium = float(getattr(config, "CYCLE_OFFER_PREMIUM_PCT", 1.0) or 1.0)
     if pct is not None and pct > premium + 1e-9:
@@ -367,15 +374,40 @@ def _offer_quality_reason(player: dict[str, Any], xi_ids: set[str], pct: float |
     return None
 
 
-def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
-    """Banquillo vendible para tapar deuda: no XI, no titular, no pieza que aún sube."""
+def _owned_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
+    """Fichas propias que ya están en el once objetivo: no se venden."""
+    ids: set[str] = set()
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    for raw in coverage.get("owned_ids") or []:
+        if raw:
+            ids.add(str(raw))
+    for row in (gw_target_xi or {}).get("xi") or []:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("ownership") or "") != "owned":
+            continue
+        pid = _pid(row)
+        if pid:
+            ids.add(pid)
+    return ids
+
+
+def _hold_from_sale(p: dict[str, Any], *, target_owned: set[str]) -> bool:
+    """Once objetivo propio o titular real: no listar ni cerrar oferta."""
     pid = _pid(p)
-    if not pid or pid in xi_ids:
+    if pid and pid in target_owned:
+        return True
+    return _is_usable_starter(p, set())
+
+
+def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
+    """Banquillo vendible para tapar deuda: no titular real, no pieza que aún sube."""
+    pid = _pid(p)
+    if not pid:
+        return False
+    if _hold_from_sale(p, target_owned=set()):
         return False
     if _keep_riding(p):
-        return False
-    lp = _lineup_pct(p)
-    if lp is not None and lp >= 70:
         return False
     return True
 
@@ -919,7 +951,9 @@ def build_cycle_plan(
        4) Si el gasto deja negativo: ventas que cobren antes del deadline de
        scoring (esta jornada si no ha empezado; la siguiente si ya está en curso).
        Aceptar oferta = ya; listar = siguiente ciclo.
-    5) Listar banquillo cuyo VM ya no tira, o mantener listados como colchón.
+       5) Listar todos los banquillos viables (VM que ya no tira), no uno.
+          Estar en el once recomendado no blinda: solo el once objetivo propio
+          y los titulares reales. El sale_limit de la liga es el techo.
     """
     me = me or {}
     squad = list(squad or me.get("squad") or [])
@@ -941,6 +975,7 @@ def build_cycle_plan(
     rules = league_rules or {}
     xi_ids = xi_owned_ids(recommended_xi)
     target_ids = _reachable_target_ids(gw_target_xi)
+    target_owned = _owned_target_ids(gw_target_xi)
     listed_ids = {str(x) for x in (state.get("listed_ids") or []) if x}
     for p in squad:
         pid = _pid(p)
@@ -1020,7 +1055,7 @@ def build_cycle_plan(
             "pct": pct,
             "extra": extra,
         }
-        reason = _offer_quality_reason(player, xi_ids, pct)
+        reason = _offer_quality_reason(player, xi_ids, pct, target_owned=target_owned)
         if reason == "premium":
             why = (
                 f"El sistema paga {_fmt_money(amount)} vs {_fmt_money(vm)} de VM: "
@@ -1189,9 +1224,16 @@ def build_cycle_plan(
         free_slots = max(0, cap - squad_n + slots_from_accepts)
         cash_after_accepts = balance + cash_from_accepts
 
-    wanted_bids = min(max_bids, len(bid_cands))
-    if free_slots < wanted_bids:
-        need_n = wanted_bids - free_slots
+    target_cands = [o for _s, o in bid_cands if o.get("closes_gw_target")]
+    filler_cands = [o for _s, o in bid_cands if not o.get("closes_gw_target")]
+    # Una plaza basta para ganar un ticket del once; el resto se sobresuscribe
+    # porque los rivales pujan. Los fillers sí ocupan plaza física.
+    wanted_slots = (1 if target_cands else 0) + min(
+        len(filler_cands), max(0, max_bids - (1 if target_cands else 0))
+    )
+    wanted_slots = min(max_bids, wanted_slots)
+    if free_slots < wanted_slots:
+        need_n = wanted_slots - free_slots
         pool = [
             r
             for r in hold_rows
@@ -1213,16 +1255,25 @@ def build_cycle_plan(
     used_pos: set[str] = set()
     if free_slots > 0:
         for score, o in bid_cands:
-            if len(bids) >= min(max_bids, free_slots):
+            if len(bids) >= max_bids:
                 break
             cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
             if spent + cost > spendable + 1:
                 continue
             if not _covers_shortfall(spent + cost):
                 continue
+            is_target = bool(o.get("closes_gw_target"))
             pos = str(o.get("position") or "")
-            if pos and pos in used_pos and len(bids) >= 1:
-                continue
+            # Objetivos del once: misma línea y más tickets que plazas.
+            # Fillers: una por línea y sin pasarse de cupo físico.
+            if not is_target:
+                n_targets = sum(1 for b in bids if b.get("closes_gw_target"))
+                n_fillers = sum(1 for b in bids if not b.get("closes_gw_target"))
+                slots_used = min(n_targets, 1) + n_fillers
+                if slots_used >= free_slots:
+                    continue
+                if pos and pos in used_pos:
+                    continue
             d5 = _f(o.get("delta_5d"))
             why_bits = []
             if o.get("closes_gw_target"):
@@ -1420,7 +1471,7 @@ def build_cycle_plan(
         pid = _pid(p)
         if not pid or pid in listed_ids or pid in accept_ids or pid in recover_ids:
             continue
-        if pid in xi_ids:
+        if _hold_from_sale(p, target_owned=target_owned):
             continue
         d5 = _f(p.get("delta_5d"))
         if _keep_riding(p):
@@ -1441,7 +1492,8 @@ def build_cycle_plan(
     fade_cands.sort(key=lambda x: -x[0])
 
     lists: list[dict[str, Any]] = list(recover_lists)
-    swap_cap = min(max_lists, min(max_bids, len(bid_cands)))
+    # Varios swaps si hay varios candidatos: no 1:1 con las pujas de hoy.
+    swap_cap = max_lists
     for _rank, p, beater in swap_cands:
         if len(lists) >= swap_cap:
             break
@@ -1648,6 +1700,12 @@ def _compose_narrative(
             if d:
                 label = f"{label} ({d})"
             bits.append(label)
+        target_n = sum(1 for m in bids if m.get("closes_gw_target"))
+        extra = (
+            " Varios tickets del once objetivo: los rivales pujan y conviene llevarse al menos uno."
+            if target_n >= 2
+            else ""
+        )
         parts.append(
             f"{'Ficha' if fixed else 'Puja por'} {_join_names(bits)}"
             + (
@@ -1655,6 +1713,7 @@ def _compose_narrative(
                 if constraints.get("free_slots_after_accepts")
                 else "."
             )
+            + extra
         )
     if clauses:
         names = _join_names([m.get("name") or "" for m in clauses])

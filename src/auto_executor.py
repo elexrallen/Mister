@@ -139,6 +139,21 @@ def _is_offer_to_rival(move: dict[str, Any]) -> bool:
     return bool(owner) and str(owner) not in ("", "0")
 
 
+def _xi_starter_sale_blocked(move: dict[str, Any], pid: str, xi_ids: set[str]) -> bool:
+    """
+    never_sell_xi_starters solo cubre un titular real.
+
+    El once recomendado a veces mete banquillo: si el plan marca
+    is_xi_starter=False, se puede listar. Sin el flag (plan viejo / test)
+    se sigue protegiendo a quien está en xi_ids.
+    """
+    if move.get("xi_impact") == "risk":
+        return True
+    if "is_xi_starter" in move:
+        return bool(move.get("is_xi_starter") or move.get("is_xi_quality_starter"))
+    return bool(pid and pid in xi_ids)
+
+
 class _Budget:
     """
     Contabilidad del ciclo.
@@ -161,6 +176,9 @@ class _Budget:
         self.cash_in = 0.0
         self.spent = 0.0
         self.free_slots = max(0, int(free_slots))
+        # Una plaza de salida permite sobresuscribir pujas del once objetivo:
+        # los rivales pujan y no ganaremos todos los tickets.
+        self.slot_available_this_cycle = self.free_slots > 0
         self.floor = _money(settings.get("min_cash_floor"))
         self.cycle_cap = self.usable * _pct(settings, "max_spend_per_cycle_pct", 0.60)
         self.single_cap = self.usable * _pct(settings, "max_single_buy_pct", 0.40)
@@ -170,9 +188,17 @@ class _Budget:
     def cash(self) -> float:
         return self.balance + self.cash_in - self.spent
 
-    def check_buy(self, cost: float, *, is_clause: bool) -> str | None:
+    def check_buy(
+        self,
+        cost: float,
+        *,
+        is_clause: bool,
+        oversubscribe_slot: bool = False,
+    ) -> str | None:
         cost = _money(cost)
-        if self.free_slots <= 0:
+        if self.free_slots <= 0 and not (
+            oversubscribe_slot and self.slot_available_this_cycle
+        ):
             return "plantilla a cupo, no queda plaza"
         if cost > self.single_cap + 1:
             return (
@@ -198,12 +224,14 @@ class _Budget:
 
     def commit_buy(self, cost: float) -> None:
         self.spent += _money(cost)
-        self.free_slots -= 1
+        if self.free_slots > 0:
+            self.free_slots -= 1
 
     def commit_sale(self, amount: float, *, frees_slot: bool = True) -> None:
         self.cash_in += _money(amount)
         if frees_slot:
             self.free_slots += 1
+            self.slot_available_this_cycle = True
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -558,7 +586,7 @@ def plan_operations(
                         f"espera compra→venta: faltan {locked[pid]:.1f}h de {wait_h:.0f}h",
                     )
                     continue
-                if protect_xi and (pid in xi_ids or move.get("xi_impact") == "risk"):
+                if protect_xi and _xi_starter_sale_blocked(move, pid, xi_ids):
                     skip(move, kind, "titular del once y never_sell_xi_starters activo")
                     continue
                 price = _money(move.get("price") or move.get("amount"))
@@ -578,7 +606,7 @@ def plan_operations(
                 if debt_shortfall <= 1:
                     skip(move, kind, "sin deuda que cubrir: no se rescinde por gusto")
                     continue
-                if protect_xi and pid in xi_ids:
+                if protect_xi and _xi_starter_sale_blocked(move, pid, xi_ids):
                     skip(move, kind, "titular del once y never_sell_xi_starters activo")
                     continue
                 operations.append(
@@ -658,7 +686,11 @@ def plan_operations(
                 continue
 
             if kind == KIND_BID:
-                blocked = budget.check_buy(amount, is_clause=False)
+                blocked = budget.check_buy(
+                    amount,
+                    is_clause=False,
+                    oversubscribe_slot=bool(move.get("closes_gw_target")),
+                )
                 if blocked:
                     skip(move, kind, blocked)
                     continue

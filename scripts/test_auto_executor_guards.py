@@ -518,6 +518,20 @@ def test_never_sell_xi_starters_triggers() -> None:
     _assert("titular" in _skip_reason(d, "1"), _skip_reason(d, "1"))
 
 
+def test_bench_in_recommended_xi_can_be_listed() -> None:
+    """Banquillo colado en el once recomendado: el plan marca is_xi_starter=False."""
+    d = _run(
+        [_listing("1", M, is_xi_starter=False)],
+        state={"xi_ids": ["1"]},
+    )
+    _assert(_ids(d) == ["1"], f"el banquillo se lista: {_ids(d)}")
+
+
+def test_multiple_listings_all_go_through() -> None:
+    d = _run([_listing("1", M), _listing("2", M), _listing("3", M)], sale_remaining=5)
+    _assert(_ids(d) == ["1", "2", "3"], f"tres ventas en el mismo ciclo: {_ids(d)}")
+
+
 def test_starter_can_be_listed_when_protection_is_off() -> None:
     d = _run(
         [_listing("1", M)],
@@ -595,6 +609,34 @@ def test_squad_cap_blocks_buys() -> None:
     d = _run([_bid("1", M), _bid("2", M)], free_slots_after_accepts=1)
     _assert(_ids(d) == ["1"], f"solo queda una plaza: {_ids(d)}")
     _assert("cupo" in _skip_reason(d, "2"), _skip_reason(d, "2"))
+
+
+def test_target_xi_bids_oversubscribe_one_slot() -> None:
+    """Varios tickets del once objetivo caben con una sola plaza: los rivales pujan."""
+    d = _run(
+        [
+            _bid("1", M, closes_gw_target=True),
+            _bid("2", M, closes_gw_target=True),
+            _bid("3", M, closes_gw_target=True),
+        ],
+        free_slots_after_accepts=1,
+    )
+    _assert(_ids(d) == ["1", "2", "3"], f"tres objetivos con una plaza: {_ids(d)}")
+
+
+def test_filler_bid_still_needs_a_slot() -> None:
+    d = _run(
+        [_bid("1", M, closes_gw_target=True), _bid("2", M)],
+        free_slots_after_accepts=1,
+    )
+    _assert(_ids(d) == ["1"], f"el filler no sobresuscribe: {_ids(d)}")
+    _assert("cupo" in _skip_reason(d, "2"), _skip_reason(d, "2"))
+
+
+def test_target_bid_still_needs_an_opening_slot() -> None:
+    d = _run([_bid("1", M, closes_gw_target=True)], free_slots_after_accepts=0)
+    _assert(not d["operations"], "sin plaza de salida no se puja")
+    _assert("cupo" in _skip_reason(d, "1"), _skip_reason(d, "1"))
 
 
 def test_accept_frees_a_slot_for_a_buy() -> None:
@@ -983,6 +1025,8 @@ TESTS = [
     test_known_bench_buy_is_skipped,
     test_starter_with_positive_trend_still_buys,
     test_never_sell_xi_starters_triggers,
+    test_bench_in_recommended_xi_can_be_listed,
+    test_multiple_listings_all_go_through,
     test_starter_can_be_listed_when_protection_is_off,
     test_rescind_is_off_by_default,
     test_rescind_needs_real_debt_even_when_allowed,
@@ -990,6 +1034,9 @@ TESTS = [
     test_accept_offer_stays_off_unless_allowed,
     test_accepted_cash_does_not_widen_the_caps,
     test_squad_cap_blocks_buys,
+    test_target_xi_bids_oversubscribe_one_slot,
+    test_filler_bid_still_needs_a_slot,
+    test_target_bid_still_needs_an_opening_slot,
     test_accept_frees_a_slot_for_a_buy,
     test_max_ops_per_cycle_triggers,
     test_hold_offer_moves_are_ignored,
