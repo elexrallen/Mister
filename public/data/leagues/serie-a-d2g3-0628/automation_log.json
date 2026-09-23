@@ -465,23 +465,165 @@
         "failed": 0,
         "skipped": 1
       }
+    },
+    {
+      "at": "2026-09-23T08:58:05.398946+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 15397890.0,
+        "usable": 23630890.0,
+        "cash_in": 0.0,
+        "spent": 210100.0,
+        "projected_cash": 15187790.0,
+        "cycle_cap": 14178534.0,
+        "single_cap": 9452356.0,
+        "clause_cap": 7089267.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 13
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "48563",
+          "55646",
+          "69994"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": 412.0408968911111,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mr",
+          "provider_label": "SofaScore",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 3,
+          "market_stay": 2,
+          "transfer_wait": 1,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 25000,
+            "goals": 100000,
+            "best_xi": 250000
+          },
+          "custom_rules": "📣 Compite contra miles de usuarios en distintas divisiones, con ascensos y descensos al final de cada tramo ⚽ ¡En total, 7 tramos diferentes! ⭐\r\n\r\n✅ Todos los usuarios empiezan en la misma división con 15 jugadores aleatorios y millones para fichar, en igualdad de condiciones 🛒​\r\n\r\n🏆 El vencedor final de la Macroliga Oficial de Serie A en Mister Fantasy, que será el primer clasificado de la 1ª División al término de la jornada 38 de la liga italiana, gana una camiseta del equipo que quiera de regalo 💝 \r\n\r\n⚡​ Criterios de desempate para ganar el premio a final de temporada:\r\n1. Usuario que haya ganado + jornadas en el último tramo (Jornadas 34 a 38).\r\n2. En caso de empate, usuario que haya quedado por delante de su rival en más ocasiones (las jornadas con empate a puntos se anulan).\r\n3. En caso de que continúe el empate: usuario que haya hecho más puntos en la última jornada (38).\r\n4. En caso de que aún continúe el empate: usuario que haya hecho más puntos en la primera jornada del último tramo (34).",
+          "type": "comunio",
+          "mode": "macro_league",
+          "external": "seriea",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": true,
+            "known": true,
+            "mode": "by_market_value",
+            "multiplier": null,
+            "source": "admin",
+            "multiplier_source": "by_market_value"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 375000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "points": 25000.0,
+              "goals": 100000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 375000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_sofascore",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_1",
+            "custom_rules_text",
+            "captain_by_value"
+          ],
+          "market_urgency": 1.5
+        }
+      },
+      "operations": [
+        {
+          "kind": "bid",
+          "player_id": "70703",
+          "name": "L. Lucchesi",
+          "position": "DF",
+          "amount": 210100.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja por L. Lucchesi (210k €, titular real; tendencia positiva; cubre un hueco de plantilla; revaloriza +10%; sigue al alza)."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "clause_bid",
+          "player_id": "30492",
+          "name": "Lassana Coulibaly",
+          "amount": 8262000.0,
+          "reason": "tope de 1 cláusula(s) cada 24 h"
+        }
+      ],
+      "counts": {
+        "planned": 1,
+        "executed": 1,
+        "failed": 0,
+        "skipped": 1
+      }
     }
   ],
-  "updated_at": "2026-09-22T22:33:14.673309+00:00",
+  "updated_at": "2026-09-23T08:58:05.398946+00:00",
   "last_cycle": {
-    "at": "2026-09-22T22:33:14.673309+00:00",
+    "at": "2026-09-23T08:58:05.398946+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
-      "balance": 15213750.0,
-      "usable": 23464750.0,
+      "balance": 15397890.0,
+      "usable": 23630890.0,
       "cash_in": 0.0,
-      "spent": 0.0,
-      "projected_cash": 15213750.0,
-      "cycle_cap": 14078850.0,
-      "single_cap": 9385900.0,
-      "clause_cap": 7039425.0,
+      "spent": 210100.0,
+      "projected_cash": 15187790.0,
+      "cycle_cap": 14178534.0,
+      "single_cap": 9452356.0,
+      "clause_cap": 7089267.0,
       "min_cash_floor": 0.0,
       "free_slots_left": 13
     },
@@ -493,8 +635,8 @@
         "69994"
       ],
       "stale_offers": [],
-      "sale_remaining_after": 4,
-      "hours_to_jornada": 422.4544916219445,
+      "sale_remaining_after": 5,
+      "hours_to_jornada": 412.0408968911111,
       "pending_offers": 0,
       "gameweek_live": false,
       "league_rules": {
@@ -583,15 +725,15 @@
     },
     "operations": [
       {
-        "kind": "list_for_sale",
-        "player_id": "17604",
-        "name": "A. Ghion",
-        "position": "MF",
-        "amount": 186000.0,
+        "kind": "bid",
+        "player_id": "70703",
+        "name": "L. Lucchesi",
+        "position": "DF",
+        "amount": 210100.0,
         "status": "ok",
         "error": null,
         "unverified": null,
-        "why": "Pon en venta a A. Ghion: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 186k €) y el dinero llega al instante."
+        "why": "Puja por L. Lucchesi (210k €, titular real; tendencia positiva; cubre un hueco de plantilla; revaloriza +10%; sigue al alza)."
       }
     ],
     "skipped": [
@@ -599,7 +741,7 @@
         "kind": "clause_bid",
         "player_id": "30492",
         "name": "Lassana Coulibaly",
-        "amount": 8211000.0,
+        "amount": 8262000.0,
         "reason": "tope de 1 cláusula(s) cada 24 h"
       }
     ],
