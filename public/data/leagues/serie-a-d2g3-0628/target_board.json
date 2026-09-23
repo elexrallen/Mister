@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-23T15:47:26.724410+00:00",
+  "generated_at": "2026-09-23T17:51:25.483477+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,10 +19,10 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 54.15,
+      "xpts_starters": 50.81,
       "complete": false,
       "flex": 0,
-      "cost": 19761950.0
+      "cost": 18761950.0
     },
     {
       "formation": "4-4-2",
@@ -45,10 +45,10 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 57.44,
+      "xpts_starters": 49.33,
       "complete": false,
       "flex": 0,
-      "cost": 16287950.0
+      "cost": 15374950.0
     },
     {
       "formation": "3-5-2",
@@ -71,10 +71,10 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 60.2,
+      "xpts_starters": 60.56,
       "complete": false,
       "flex": 0,
-      "cost": 18681950.0
+      "cost": 17772950.0
     },
     {
       "formation": "3-3-4",
@@ -84,10 +84,10 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 54.15,
+      "xpts_starters": 50.81,
       "complete": false,
       "flex": 0,
-      "cost": 19761950.0
+      "cost": 18761950.0
     },
     {
       "formation": "5-3-2",
@@ -1123,14 +1123,14 @@
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 4,
+    "sale_remaining": 0,
     "max_debt": 20126740.0,
     "bid_cap": 20126740.0,
     "max_squad": 25,
     "n_free": 272,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 405.2157056516667
+    "hours_to_jornada": 403.14896944805554
   },
   "finance": {
     "ok": true,
