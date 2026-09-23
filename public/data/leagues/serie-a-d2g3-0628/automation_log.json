@@ -954,11 +954,160 @@
         "failed": 0,
         "skipped": 2
       }
+    },
+    {
+      "at": "2026-09-23T17:58:29.749021+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 15187790.0,
+        "usable": 20126740.0,
+        "cash_in": 0.0,
+        "spent": 3341800.0,
+        "projected_cash": 11845990.0,
+        "cycle_cap": 12076044.0,
+        "single_cap": 8050696.0,
+        "clause_cap": 6038022.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 12
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "55646",
+          "64414",
+          "70703"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 0,
+        "hours_to_jornada": 403.14896944805554,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mr",
+          "provider_label": "SofaScore",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 3,
+          "market_stay": 2,
+          "transfer_wait": 1,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 25000,
+            "goals": 100000,
+            "best_xi": 250000
+          },
+          "custom_rules": "📣 Compite contra miles de usuarios en distintas divisiones, con ascensos y descensos al final de cada tramo ⚽ ¡En total, 7 tramos diferentes! ⭐\r\n\r\n✅ Todos los usuarios empiezan en la misma división con 15 jugadores aleatorios y millones para fichar, en igualdad de condiciones 🛒​\r\n\r\n🏆 El vencedor final de la Macroliga Oficial de Serie A en Mister Fantasy, que será el primer clasificado de la 1ª División al término de la jornada 38 de la liga italiana, gana una camiseta del equipo que quiera de regalo 💝 \r\n\r\n⚡​ Criterios de desempate para ganar el premio a final de temporada:\r\n1. Usuario que haya ganado + jornadas en el último tramo (Jornadas 34 a 38).\r\n2. En caso de empate, usuario que haya quedado por delante de su rival en más ocasiones (las jornadas con empate a puntos se anulan).\r\n3. En caso de que continúe el empate: usuario que haya hecho más puntos en la última jornada (38).\r\n4. En caso de que aún continúe el empate: usuario que haya hecho más puntos en la primera jornada del último tramo (34).",
+          "type": "comunio",
+          "mode": "macro_league",
+          "external": "seriea",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": true,
+            "known": true,
+            "mode": "by_market_value",
+            "multiplier": null,
+            "source": "admin",
+            "multiplier_source": "by_market_value"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 375000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "points": 25000.0,
+              "goals": 100000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 375000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_sofascore",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_1",
+            "custom_rules_text",
+            "captain_by_value"
+          ],
+          "market_urgency": 1.5
+        }
+      },
+      "operations": [
+        {
+          "kind": "bid",
+          "player_id": "64414",
+          "name": "N. Lang",
+          "position": "FW",
+          "amount": 3341800.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja por N. Lang (3.3M €, titular real; tendencia positiva; cubre un hueco de plantilla; revaloriza +0%; sigue al alza)."
+        }
+      ],
+      "skipped": [
+        {
+          "kind": "clause_bid",
+          "player_id": "59425",
+          "name": "Nuno Tavares",
+          "amount": 4875000.0,
+          "reason": "tope de 1 cláusula(s) cada 24 h"
+        },
+        {
+          "kind": "bid",
+          "player_id": "59866",
+          "name": "M. Hermoso",
+          "amount": 11825000.0,
+          "reason": "supera max_single_buy_pct: 11.8M vs 8.1M"
+        }
+      ],
+      "counts": {
+        "planned": 1,
+        "executed": 1,
+        "failed": 0,
+        "skipped": 2
+      }
     }
   ],
-  "updated_at": "2026-09-23T17:46:44.791633+00:00",
+  "updated_at": "2026-09-23T17:58:29.749021+00:00",
   "last_cycle": {
-    "at": "2026-09-23T17:46:44.791633+00:00",
+    "at": "2026-09-23T17:58:29.749021+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
@@ -983,7 +1132,7 @@
       ],
       "stale_offers": [],
       "sale_remaining_after": 0,
-      "hours_to_jornada": 403.23084204416665,
+      "hours_to_jornada": 403.14896944805554,
       "pending_offers": 0,
       "gameweek_live": false,
       "league_rules": {
@@ -1072,50 +1221,6 @@
     },
     "operations": [
       {
-        "kind": "list_for_sale",
-        "player_id": "64140",
-        "name": "C. Ordoñez",
-        "position": "MF",
-        "amount": 3052000.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Pon en venta a C. Ordoñez (≈ 3.1M €): el siguiente ciclo aceptas y el dinero llega al instante, antes de la jornada."
-      },
-      {
-        "kind": "list_for_sale",
-        "player_id": "71116",
-        "name": "G. Daffara",
-        "position": "GK",
-        "amount": 160000.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Pon en venta a G. Daffara (≈ 160k €): el siguiente ciclo aceptas y el dinero llega al instante, antes de la jornada."
-      },
-      {
-        "kind": "list_for_sale",
-        "player_id": "8538",
-        "name": "P. Gollini",
-        "position": "GK",
-        "amount": 160000.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Pon en venta a P. Gollini (≈ 160k €): el siguiente ciclo aceptas y el dinero llega al instante, antes de la jornada."
-      },
-      {
-        "kind": "list_for_sale",
-        "player_id": "8391",
-        "name": "K. Baldé",
-        "position": "FW",
-        "amount": 185000.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Pon en venta a K. Baldé: el VM ya no sube. El siguiente ciclo aceptas (≈ 185k €) y el dinero llega al instante."
-      },
-      {
         "kind": "bid",
         "player_id": "64414",
         "name": "N. Lang",
@@ -1124,7 +1229,7 @@
         "status": "ok",
         "error": null,
         "unverified": null,
-        "why": "Puja por N. Lang (3.3M €, titular real; tendencia positiva; cubre un hueco de plantilla; revaloriza +0%; sigue al alza); lista a C. Ordoñez, G. Daffara y P. Gollini: el siguiente ciclo aceptas y recuperas el negativo antes de la jornada."
+        "why": "Puja por N. Lang (3.3M €, titular real; tendencia positiva; cubre un hueco de plantilla; revaloriza +0%; sigue al alza)."
       }
     ],
     "skipped": [
@@ -1144,8 +1249,8 @@
       }
     ],
     "counts": {
-      "planned": 5,
-      "executed": 5,
+      "planned": 1,
+      "executed": 1,
       "failed": 0,
       "skipped": 2
     }
