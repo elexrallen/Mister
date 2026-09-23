@@ -323,6 +323,38 @@ def xi_gap_positions(
     return need
 
 
+def usable_starter_count(squad: list[dict[str, Any]] | None) -> int:
+    """
+    Titulares reales que pueden jugar esta jornada.
+
+    15 fichas no son un once: si la mayoría son suplentes, blanks o lesionados,
+    la plantilla sigue rota y el modo bootstrap debe seguir activo.
+
+    Solo descuenta con evidencia. Sin dato de alineación el jugador cuenta, para
+    que un hueco de datos no active el modo urgente por su cuenta.
+    """
+    try:
+        from squad_analyzer import (
+            LINEUP_STARTER,
+            _is_blank_gw,
+            _is_unavailable,
+            _lineup_frac,
+        )
+    except ImportError:  # pragma: no cover
+        return len(squad or [])
+    n = 0
+    for p in squad or []:
+        if not isinstance(p, dict):
+            continue
+        if _is_unavailable(p) or _is_blank_gw(p):
+            continue
+        lp = _lineup_frac(p)
+        if lp is not None and lp < LINEUP_STARTER:
+            continue
+        n += 1
+    return n
+
+
 def resolve_bootstrap_xi(
     *,
     squad: list[dict[str, Any]] | None,
@@ -330,6 +362,7 @@ def resolve_bootstrap_xi(
     hours_to_jornada: float | None,
     market_cycle: dict[str, Any] | None,
     competition_phase: str | None = None,
+    xi_slot_gaps: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
     Modo urgente: completar once antes que plantilla ideal.
@@ -339,8 +372,16 @@ def resolve_bootstrap_xi(
     xi_count = int(summary.get("xi_count") or 0)
     xi_target = int(summary.get("xi_target") or 11)
     squad_n = len(squad or [])
+    starters_n = usable_starter_count(squad)
     gaps = xi_gap_positions(squad, xi_summary=summary)
     slots_short = max(0, xi_target - xi_count) if xi_target else max(0, 11 - squad_n)
+    # Huecos del once real de la jornada: manda sobre el conteo de fichas
+    if isinstance(xi_slot_gaps, dict):
+        try:
+            slots_short = max(slots_short, int(xi_slot_gaps.get("slots_short") or 0))
+        except (TypeError, ValueError):
+            pass
+    slots_short = max(slots_short, max(0, 11 - starters_n))
 
     max_hours = float(getattr(config, "BOOTSTRAP_XI_MAX_HOURS", 240) or 240)
     urgent_cycle_h = float(getattr(config, "BOOTSTRAP_CYCLE_END_URGENT_HOURS", 3) or 3)
@@ -352,13 +393,13 @@ def resolve_bootstrap_xi(
 
     within_window = hours is not None and hours <= max_hours
     phase = (competition_phase or "").strip().lower()
-    needs_xi = not complete or squad_n < 11 or slots_short > 0
+    needs_xi = not complete or starters_n < 11 or slots_short > 0
 
     active = bool(
         needs_xi
         and (
             within_window
-            or (phase in ("active", "ramp") and squad_n < 11)
+            or (phase in ("active", "ramp") and starters_n < 11)
         )
     )
 
@@ -395,6 +436,7 @@ def resolve_bootstrap_xi(
         "xi_target": xi_target,
         "slots_short": slots_short,
         "squad_size": squad_n,
+        "usable_starters": starters_n,
         "position_gaps": gaps,
         "posture": posture,
         "cycle_urgent": cycle_urgent,

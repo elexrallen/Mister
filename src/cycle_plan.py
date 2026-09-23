@@ -12,13 +12,19 @@ from typing import Any
 import config
 from competitive_actions import (
     _has_play_minutes,
+    _has_starter_signal,
     _is_floor_vm,
     _lineup_pct,
     _money,
+    _recent_minutes,
     appreciation_play_score,
+    clause_executable,
     clause_roi_gate,
     cpu_spread_min_solvency_hours,
+    has_negative_trend,
+    has_positive_trend,
     is_rival_market_listing,
+    is_xi_quality_starter,
     mister_bid_cap,
     resolve_transfer_wait_hours,
     sells_settle_before_deadline,
@@ -38,6 +44,13 @@ FORBIDDEN_ACTIONS = {"wait", "scout", "avoid"}
 # Cláusula Hoy: el salto vs el titular que saldría tiene que ser claro.
 CLAUSE_MIN_XPTS_GAP = 2.5
 CLAUSE_MIN_XPTS_RATIO = 0.25
+# No liquidar a quien rota de verdad: minutos recientes + producción.
+# Mister a veces marca "sit" a un suplente que juega 60' y puntúa.
+SALE_KEEP_MINUTES_L5 = 180.0
+SALE_KEEP_PPG = 4.5
+SALE_KEEP_POINTS = 20.0
+SALE_KEEP_TOP_RATIO = 0.70
+SALE_KEEP_TOP_MIN = 12.0
 
 
 def _f(v: Any) -> float | None:
@@ -268,9 +281,46 @@ def _player_ref(row: dict[str, Any], *, kind: str, why: str, extra: dict[str, An
         "why": why,
         "on_daily_market": bool(row.get("on_daily_market")),
     }
+    ref.update(_exec_fields(row))
     if extra:
         ref.update(extra)
     return ref
+
+
+def _exec_fields(row: dict[str, Any]) -> dict[str, Any]:
+    """
+    Identificadores que necesita el ejecutor para mandar el POST.
+
+    El move viaja del motor al ejecutor sin volver a consultar Mister, así que
+    si `id_market` u `owner_id` no llegan aquí la operación no se puede armar y
+    el ejecutor la descarta en vez de adivinar.
+    """
+    owner = (
+        row.get("owner_id")
+        or row.get("listed_by_owner_id")
+        or row.get("id_owner")
+        or row.get("owner")
+    )
+    shield = row.get("shield")
+    if shield is None and isinstance(row.get("external"), dict):
+        shield = row["external"].get("shield")
+    return {
+        "owner_id": str(owner) if owner not in (None, "", 0, "0") else None,
+        "id_market": row.get("id_market"),
+        "id_bid": row.get("id_bid") or row.get("offer_id"),
+        "shield": shield,
+        "shielded": bool(row.get("shielded") or (_f(shield) or 0) > 0),
+        "clause_known": bool(row.get("clause_known")),
+        "listed_by_rival": bool(row.get("listed_by_rival")),
+        "on_sale": bool(row.get("on_sale") or row.get("listed_for_sale")),
+        "is_xi_starter": bool(row.get("is_xi_starter", is_xi_quality_starter(row))),
+        "positive_trend": bool(row.get("positive_trend", has_positive_trend(row))),
+        "points_trend": row.get("points_trend"),
+        "rising": row.get("rising"),
+        "trend": row.get("trend"),
+        "owner_signed_hours": row.get("owner_signed_hours"),
+        "owner_signed_recently": bool(row.get("owner_signed_recently")),
+    }
 
 
 def _production(p: dict[str, Any]) -> float:
@@ -308,15 +358,81 @@ def _market_much_hotter(owned_delta: float | None, market_row: dict[str, Any] | 
 
 
 def _is_usable_starter(p: dict[str, Any], xi_ids: set[str]) -> bool:
-    if _pid(p) in xi_ids:
+    """Titular real. Estar en el once recomendado no basta: a veces mete banquillo."""
+    if is_xi_quality_starter(p):
         return True
     lp = _lineup_pct(p)
     return lp is not None and lp >= 70
 
 
-def _offer_quality_reason(player: dict[str, Any], xi_ids: set[str], pct: float | None) -> str | None:
-    """Prima sobre VM o fade real. XI / titular / keep-riding no se cierran solos."""
-    if _is_usable_starter(player, xi_ids) or _keep_riding(player):
+def _sale_recent_minutes(p: dict[str, Any]) -> float | None:
+    mins = _recent_minutes(p)
+    if mins is not None:
+        return mins
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    fm = ext.get("fotmob_stats") if isinstance(ext.get("fotmob_stats"), dict) else {}
+    raw = fm.get("minutos_ultimos_5")
+    try:
+        return float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _ppg(p: dict[str, Any]) -> float | None:
+    for key in ("avg_ppg", "ff_mister_avg", "mister_avg", "form"):
+        v = _f(p.get(key))
+        if v is not None:
+            return v
+    return None
+
+
+def _points_total(p: dict[str, Any]) -> float | None:
+    return _f(p.get("points") if p.get("points") is not None else p.get("points_total"))
+
+
+def _is_rotation_regular(p: dict[str, Any]) -> bool:
+    """Suplente que juega minutos de verdad y puntúa: no es un parche."""
+    mins = _sale_recent_minutes(p)
+    if mins is None or mins < SALE_KEEP_MINUTES_L5:
+        return False
+    ppg = _ppg(p)
+    if ppg is not None and ppg >= SALE_KEEP_PPG:
+        return True
+    pts = _points_total(p)
+    return pts is not None and pts >= SALE_KEEP_POINTS
+
+
+def _squad_scoring_keepers(squad: list[dict[str, Any]] | None) -> set[str]:
+    """Los que más puntúan de la plantilla: no venderlos por un 'sit' de Mister."""
+    scored: list[tuple[str, float]] = []
+    for p in squad or []:
+        pts = _points_total(p)
+        pid = _pid(p)
+        if not pid or pts is None or pts < SALE_KEEP_TOP_MIN:
+            continue
+        scored.append((pid, pts))
+    if not scored:
+        return set()
+    best = max(pts for _pid, pts in scored)
+    floor = max(SALE_KEEP_TOP_MIN, best * SALE_KEEP_TOP_RATIO)
+    return {pid for pid, pts in scored if pts + 1e-9 >= floor}
+
+
+def _offer_quality_reason(
+    player: dict[str, Any],
+    xi_ids: set[str],
+    pct: float | None,
+    *,
+    target_owned: set[str] | None = None,
+    keeper_ids: set[str] | None = None,
+) -> str | None:
+    """Prima sobre VM o fade real. Titular / rotación que puntúa / keep-riding no se cierran solos."""
+    if (
+        _hold_from_sale(
+            player, target_owned=target_owned or set(), keeper_ids=keeper_ids
+        )
+        or _keep_riding(player)
+    ):
         return None
     premium = float(getattr(config, "CYCLE_OFFER_PREMIUM_PCT", 1.0) or 1.0)
     if pct is not None and pct > premium + 1e-9:
@@ -326,15 +442,54 @@ def _offer_quality_reason(player: dict[str, Any], xi_ids: set[str], pct: float |
     return None
 
 
-def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
-    """Banquillo vendible para tapar deuda: no XI, no titular, no pieza que aún sube."""
+def _owned_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
+    """Fichas propias que ya están en el once objetivo: no se venden."""
+    ids: set[str] = set()
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    for raw in coverage.get("owned_ids") or []:
+        if raw:
+            ids.add(str(raw))
+    for row in (gw_target_xi or {}).get("xi") or []:
+        if not isinstance(row, dict):
+            continue
+        if str(row.get("ownership") or "") != "owned":
+            continue
+        pid = _pid(row)
+        if pid:
+            ids.add(pid)
+    return ids
+
+
+def _hold_from_sale(
+    p: dict[str, Any],
+    *,
+    target_owned: set[str],
+    keeper_ids: set[str] | None = None,
+) -> bool:
+    """No listar: once objetivo, titular real, o rotación que juega y puntúa."""
     pid = _pid(p)
-    if not pid or pid in xi_ids:
+    if pid and pid in target_owned:
+        return True
+    if _is_usable_starter(p, set()):
+        return True
+    if _is_rotation_regular(p):
+        return True
+    return bool(pid and keeper_ids and pid in keeper_ids)
+
+
+def _is_recover_sale(
+    p: dict[str, Any],
+    xi_ids: set[str],
+    *,
+    keeper_ids: set[str] | None = None,
+) -> bool:
+    """Banquillo vendible para tapar deuda: no titular, no rotación que puntúa, no flecha."""
+    pid = _pid(p)
+    if not pid:
+        return False
+    if _hold_from_sale(p, target_owned=set(), keeper_ids=keeper_ids):
         return False
     if _keep_riding(p):
-        return False
-    lp = _lineup_pct(p)
-    if lp is not None and lp >= 70:
         return False
     return True
 
@@ -411,11 +566,14 @@ def _recover_pool(
     *,
     xi_ids: set[str],
     skip_ids: set[str],
+    keeper_ids: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     rows = [
         p
         for p in squad
-        if _pid(p) and _pid(p) not in skip_ids and _is_recover_sale(p, xi_ids)
+        if _pid(p)
+        and _pid(p) not in skip_ids
+        and _is_recover_sale(p, xi_ids, keeper_ids=keeper_ids)
     ]
     rows.sort(key=lambda p: (-_list_score(p), -_price(p)))
     return rows
@@ -450,11 +608,17 @@ def _list_score(p: dict[str, Any]) -> float:
     if acc is not None and acc < 0:
         score += 12.0
     lp = _lineup_pct(p)
-    if lp is not None and lp < 45:
-        score += 24.0
-    elif lp is not None and lp < 60:
-        score += 8.0
-    prod = _production(p)
+    mins = _sale_recent_minutes(p)
+    plays_regular = mins is not None and mins >= SALE_KEEP_MINUTES_L5
+    # Mister marca "sit" a suplentes que juegan 60': no sumar "juega poco".
+    if not plays_regular:
+        if lp is not None and lp < 45:
+            score += 24.0
+        elif lp is not None and lp < 60:
+            score += 8.0
+    prod = _ppg(p)
+    if prod is None:
+        prod = _production(p)
     if prod < 3.5:
         score += 16.0
     elif prod < 5.0:
@@ -498,6 +662,10 @@ def _bid_score(p: dict[str, Any]) -> float:
         score += 28.0
     elif _starter_coverage_hole(p) and not _is_floor_vm(p) and not p.get("decelerating"):
         score += 12.0
+    if is_xi_quality_starter(p) and has_positive_trend(p):
+        score += 10.0
+    elif has_negative_trend(p):
+        score -= 20.0
     if p.get("is_upgrade") or p.get("upgrade_worth_buy"):
         score += 14.0
     if not p.get("on_daily_market") and p.get("seller") != "market":
@@ -572,11 +740,17 @@ def _pick_hoy_clause(
     recommended_xi: dict[str, Any] | None = None,
     squad: list[dict[str, Any]] | None = None,
     xi_ids: set[str] | None = None,
+    league_rules: dict[str, Any] | None = None,
 ) -> dict[str, Any] | None:
     """Como mucho 1 cláusula de Hoy: upgrade material vs quien sale, ROI OK, cabe."""
     by_upgrade = {
         _pid(r): r
         for r in (rival_upgrades or [])
+        if isinstance(r, dict) and _pid(r)
+    }
+    xi_rows = {
+        _pid(r): r
+        for r in (gw_target_xi or {}).get("xi") or []
         if isinstance(r, dict) and _pid(r)
     }
     xi_ids = xi_ids or set()
@@ -586,6 +760,7 @@ def _pick_hoy_clause(
         if not pid or pid in accept_ids:
             continue
         rival = by_upgrade.get(pid) or {}
+        xi_row = xi_rows.get(pid) or {}
         cost = _money(
             rival.get("clause")
             or rival.get("bid")
@@ -620,6 +795,11 @@ def _pick_hoy_clause(
             your_name = slot.get("your_name")
         if not _clause_upgrade_is_material(target_x, your_xpts):
             continue
+        merged_probe = {**xi_row, **slot, **rival}
+        if has_negative_trend(merged_probe):
+            continue
+        if _has_starter_signal(merged_probe) and not is_xi_quality_starter(merged_probe):
+            continue
         upgrade = _f(rival.get("upgrade_score"))
         if upgrade is None:
             gap = target_x - (your_xpts or 0.0)
@@ -632,8 +812,13 @@ def _pick_hoy_clause(
         )
         if not roi_ok:
             continue
+        merged_probe["clause"] = cost
+        merged_probe["clause_known"] = True
+        ok_now, _why = clause_executable(merged_probe, league_rules=league_rules)
+        if not ok_now:
+            continue
         score = float(rival.get("clause_roi") or 0) * 10.0 + upgrade
-        row = {**slot, **rival}
+        row = {**xi_row, **slot, **rival}
         row["clause"] = cost
         row["market_value"] = vm or row.get("market_value")
         row["upgrade_score"] = upgrade
@@ -647,6 +832,151 @@ def _pick_hoy_clause(
     if best is None:
         return None
     return best[1]
+
+
+def _positive_market_id(raw: Any) -> int | None:
+    if raw in (None, "", 0, "0", False):
+        return None
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
+def _is_listable_bid(row: dict[str, Any]) -> bool:
+    """
+    /ajax/bid solo se arma con un listado real (id_market > 0).
+
+    El strip diario no siempre trae el id: si el jugador está en el mercado
+    de hoy, el ejecutor lo hidrata con player-community-info. Un libre sin
+    listado no tiene formulario: POST con id_market=0 responde 400.
+    """
+    if _positive_market_id(row.get("id_market")):
+        return True
+    if row.get("on_daily_market") or row.get("seller") == "market":
+        return True
+    own = str(row.get("ownership") or "")
+    reach = str(row.get("reachable") or "")
+    return own == "daily_market" or reach == "daily_market"
+
+
+def _is_target_buy_slot(slot: dict[str, Any]) -> bool:
+    """Hueco del once objetivo fichable por mercado o como libre. No cláusula."""
+    if not isinstance(slot, dict) or slot.get("near"):
+        return False
+    if str(slot.get("ownership") or "") == "owned":
+        return False
+    reach = str(slot.get("reachable") or "")
+    own = str(slot.get("ownership") or "")
+    if reach == "clause":
+        return False
+    if own == "rival" and reach != "daily_market":
+        return False
+    return reach in ("daily_market", "free") or own in ("daily_market", "free")
+
+
+def _target_buy_seeds(gw_target_xi: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Filas del once objetivo que este ciclo puede fichar (libre o mercado)."""
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    near_ids = {
+        _pid(s)
+        for s in (coverage.get("near_slots") or [])
+        if isinstance(s, dict) and _pid(s)
+    }
+    by_id: dict[str, dict[str, Any]] = {}
+    sources: list[Any] = []
+    sources.extend(coverage.get("missing_slots") or [])
+    sources.extend((gw_target_xi or {}).get("xi") or [])
+    for slot in sources:
+        if not _is_target_buy_slot(slot):
+            continue
+        pid = _pid(slot)
+        if not pid or pid in near_ids:
+            continue
+        prev = by_id.get(pid) or {}
+        by_id[pid] = {**prev, **slot}
+    return list(by_id.values())
+
+
+def _merge_target_row(
+    seed: dict[str, Any],
+    extra: dict[str, Any],
+    base: dict[str, Any] | None = None,
+) -> dict[str, Any] | None:
+    merged = {**seed, **extra, **(base or {})}
+    if is_rival_market_listing(merged):
+        return None
+    if merged.get("solvency_blocked") or merged.get("budget_fit") == "blocked":
+        return None
+    cost = _money(
+        merged.get("bid")
+        or merged.get("puja_recomendada")
+        or merged.get("price")
+        or merged.get("market_value")
+    )
+    if cost <= 0:
+        return None
+    merged["bid"] = _money(merged.get("bid")) or cost
+    merged["puja_recomendada"] = _money(merged.get("puja_recomendada")) or cost
+    merged["closes_gw_target"] = True
+    return merged
+
+
+def _with_target_buys(
+    market: list[dict[str, Any]],
+    *,
+    gw_target_xi: dict[str, Any] | None,
+    extras: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Mete en la cola de pujas a los listados del once objetivo.
+
+    El strip diario a veces omite a un titular que sí está en el mercado.
+    Los libres sin listado no entran aquí: /ajax/bid exige id_market.
+    """
+    pool: dict[str, dict[str, Any]] = {}
+    for row in market:
+        pid = _pid(row)
+        if pid:
+            pool[pid] = dict(row)
+    extra_by = {_pid(o): o for o in (extras or []) if isinstance(o, dict) and _pid(o)}
+    for seed in _target_buy_seeds(gw_target_xi):
+        pid = _pid(seed)
+        if not pid:
+            continue
+        merged = _merge_target_row(seed, extra_by.get(pid) or {}, pool.get(pid))
+        if not merged or not _is_listable_bid(merged):
+            continue
+        if not (merged.get("on_daily_market") or merged.get("seller") == "market"):
+            merged["seller"] = "market"
+            merged["ownership"] = merged.get("ownership") or "daily_market"
+        pool[pid] = merged
+    return list(pool.values())
+
+
+def _unlisted_target_watch(
+    *,
+    gw_target_xi: dict[str, Any] | None,
+    extras: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """Libres del once objetivo sin listado: se persiguen cuando salgan al mercado."""
+    extra_by = {_pid(o): o for o in (extras or []) if isinstance(o, dict) and _pid(o)}
+    watch: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for seed in _target_buy_seeds(gw_target_xi):
+        pid = _pid(seed)
+        if not pid or pid in seen:
+            continue
+        merged = _merge_target_row(seed, extra_by.get(pid) or {})
+        if not merged or _is_listable_bid(merged):
+            continue
+        merged["seller"] = merged.get("seller") or "free"
+        merged["ownership"] = merged.get("ownership") or "free"
+        merged["wait_listing"] = True
+        watch.append(merged)
+        seen.add(pid)
+    return watch
 
 
 def _reachable_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
@@ -694,6 +1024,7 @@ def build_cycle_plan(
     market_mode: str = "auction",
     max_squad: int | None = None,
     rival_upgrades: list[dict[str, Any]] | None = None,
+    free_agents: list[dict[str, Any]] | None = None,
     hours_to_jornada: float | None = None,
     hours_to_solvency_deadline: float | None = None,
     solvency_target: str | None = None,
@@ -703,25 +1034,41 @@ def build_cycle_plan(
 
     1) Ofertas: aceptar solo prima/fade o si hace falta caja/plaza para el plan.
        El resto queda en cartera (no es venta). Outlier → no cerrar.
-    2) Pujar/fichar si hay plazas libres (tras aceptar). El techo es maxDebt.
+       2) Pujar/fichar el once objetivo si hay plazas y el jugador está
+       listado (id_market). Un libre sin listado se vigila, no se POST-ea.
+       El techo es maxDebt. Titular real y sin tendencia a la baja.
     3) Como mucho 1 cláusula si cierra un hueco no-near del XI, ROI OK y cabe
        en el margen residual.
        4) Si el gasto deja negativo: ventas que cobren antes del deadline de
        scoring (esta jornada si no ha empezado; la siguiente si ya está en curso).
        Aceptar oferta = ya; listar = siguiente ciclo.
-    5) Listar banquillo cuyo VM ya no tira, o mantener listados como colchón.
+       5) Listar todos los banquillos viables (VM que ya no tira), no uno.
+          Estar en el once recomendado no blinda: se conservan el once objetivo
+          propio, titulares reales y rotación que juega minutos y puntúa
+          (Mister a veces marca "sit" a quien entra 60'). El sale_limit es el techo.
     """
     me = me or {}
     squad = list(squad or me.get("squad") or [])
+    extras = [
+        o
+        for o in list(opportunities or []) + list(free_agents or [])
+        if isinstance(o, dict)
+    ]
     market = [
         o
-        for o in (opportunities or [])
-        if isinstance(o, dict) and (o.get("on_daily_market") or o.get("seller") == "market")
+        for o in extras
+        if o.get("on_daily_market") or o.get("seller") == "market"
     ]
+    market = _with_target_buys(
+        market, gw_target_xi=gw_target_xi, extras=extras
+    )
+    watch_free = _unlisted_target_watch(gw_target_xi=gw_target_xi, extras=extras)
     state = sales_state or me.get("sales_state") or {}
     rules = league_rules or {}
     xi_ids = xi_owned_ids(recommended_xi)
     target_ids = _reachable_target_ids(gw_target_xi)
+    target_owned = _owned_target_ids(gw_target_xi)
+    keeper_ids = _squad_scoring_keepers(squad)
     listed_ids = {str(x) for x in (state.get("listed_ids") or []) if x}
     for p in squad:
         pid = _pid(p)
@@ -801,7 +1148,9 @@ def build_cycle_plan(
             "pct": pct,
             "extra": extra,
         }
-        reason = _offer_quality_reason(player, xi_ids, pct)
+        reason = _offer_quality_reason(
+            player, xi_ids, pct, target_owned=target_owned, keeper_ids=keeper_ids
+        )
         if reason == "premium":
             why = (
                 f"El sistema paga {_fmt_money(amount)} vs {_fmt_money(vm)} de VM: "
@@ -884,10 +1233,15 @@ def build_cycle_plan(
     ):
         for p in squad:
             pid = _pid(p)
-            if pid and pid in listed_ids and pid not in accept_ids and _is_recover_sale(p, xi_ids):
+            if (
+                pid
+                and pid in listed_ids
+                and pid not in accept_ids
+                and _is_recover_sale(p, xi_ids, keeper_ids=keeper_ids)
+            ):
                 listed_timely += _price(p)
     recover_base = _recover_pool(
-        squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids
+        squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids, keeper_ids=keeper_ids
     )
     recover_cap = _recovery_capacity(
         recover_base if settle_new else [],
@@ -913,6 +1267,8 @@ def build_cycle_plan(
         if is_rival_market_listing(o):
             # El rival acepta la oferta del sistema al VM; no hay flip.
             continue
+        if not _is_listable_bid(o):
+            continue
         cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
         if cost <= 0:
             continue
@@ -920,6 +1276,12 @@ def build_cycle_plan(
         strong = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
         if d5 is not None and d5 <= -strong and not _starter_coverage_hole(o):
             continue
+        if has_negative_trend(o) and not o.get("cpu_spread_play"):
+            continue
+        if not o.get("cpu_spread_play"):
+            known_bench = _has_starter_signal(o) and not is_xi_quality_starter(o)
+            if known_bench or (not is_xi_quality_starter(o) and pid not in target_ids):
+                continue
         score = _bid_score(o)
         closes_target = pid in target_ids
         fills_hole = bool(
@@ -939,6 +1301,8 @@ def build_cycle_plan(
             score += 36.0
             o = dict(o)
             o["closes_gw_target"] = True
+            if is_xi_quality_starter(o) and has_positive_trend(o):
+                score += 12.0
         if o.get("cpu_spread_play"):
             score = max(score, 14.0)
             o = dict(o)
@@ -946,7 +1310,7 @@ def build_cycle_plan(
         if score < 12 and not closes_target:
             continue
         bid_cands.append((score, o))
-    bid_cands.sort(key=lambda x: -x[0])
+    bid_cands.sort(key=lambda x: (-int(bool(x[1].get("closes_gw_target"))), -x[0]))
 
     def _take_hold(row: dict[str, Any], reason: str, why: str) -> None:
         nonlocal cash_from_accepts, slots_from_accepts, free_slots, cash_after_accepts
@@ -960,9 +1324,16 @@ def build_cycle_plan(
         free_slots = max(0, cap - squad_n + slots_from_accepts)
         cash_after_accepts = balance + cash_from_accepts
 
-    wanted_bids = min(max_bids, len(bid_cands))
-    if free_slots < wanted_bids:
-        need_n = wanted_bids - free_slots
+    target_cands = [o for _s, o in bid_cands if o.get("closes_gw_target")]
+    filler_cands = [o for _s, o in bid_cands if not o.get("closes_gw_target")]
+    # Una plaza basta para ganar un ticket del once; el resto se sobresuscribe
+    # porque los rivales pujan. Los fillers sí ocupan plaza física.
+    wanted_slots = (1 if target_cands else 0) + min(
+        len(filler_cands), max(0, max_bids - (1 if target_cands else 0))
+    )
+    wanted_slots = min(max_bids, wanted_slots)
+    if free_slots < wanted_slots:
+        need_n = wanted_slots - free_slots
         pool = [
             r
             for r in hold_rows
@@ -985,16 +1356,25 @@ def build_cycle_plan(
     closed_gap_ids: set[str] = set()
     if free_slots > 0:
         for score, o in bid_cands:
-            if len(bids) >= min(max_bids, free_slots):
+            if len(bids) >= max_bids:
                 break
             cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
             if spent + cost > spendable + 1:
                 continue
             if not _covers_shortfall(spent + cost):
                 continue
+            is_target = bool(o.get("closes_gw_target"))
             pos = str(o.get("position") or "")
-            if pos and pos in used_pos and len(bids) >= 1:
-                continue
+            # Objetivos del once: misma línea y más tickets que plazas.
+            # Fillers: una por línea y sin pasarse de cupo físico.
+            if not is_target:
+                n_targets = sum(1 for b in bids if b.get("closes_gw_target"))
+                n_fillers = sum(1 for b in bids if not b.get("closes_gw_target"))
+                slots_used = min(n_targets, 1) + n_fillers
+                if slots_used >= free_slots:
+                    continue
+                if pos and pos in used_pos:
+                    continue
             remaining_budget = max(0.0, spendable - spent)
             reserve_info = xi_gap_reserve(
                 gw_target_xi,
@@ -1011,6 +1391,12 @@ def build_cycle_plan(
             why_bits = []
             if o.get("closes_gw_target"):
                 why_bits.append("entra en el once objetivo de la jornada")
+                if str(o.get("seller") or o.get("ownership") or "") == "free":
+                    why_bits.append("libre, aún sin dueño")
+            if is_xi_quality_starter(o):
+                why_bits.append("titular real")
+            if has_positive_trend(o):
+                why_bits.append("tendencia positiva")
             if o.get("fills_coverage_gap") or o.get("fills_structural") or o.get("fills_need"):
                 why_bits.append("cubre un hueco de plantilla")
             if d5 is not None:
@@ -1039,6 +1425,8 @@ def build_cycle_plan(
                 "bid": cost,
                 "amount": cost,
                 "closes_gw_target": bool(o.get("closes_gw_target")),
+                "is_xi_starter": is_xi_quality_starter(o),
+                "positive_trend": has_positive_trend(o),
                 "cpu_spread_play": bool(o.get("cpu_spread_play")),
                 "cpu_spread_list_now": bool(o.get("cpu_spread_play")) and transfer_wait_h <= 0,
                 "appreciation_play": bool(
@@ -1075,6 +1463,7 @@ def build_cycle_plan(
                 recommended_xi=recommended_xi,
                 squad=squad,
                 xi_ids=xi_ids,
+                league_rules=rules,
             )
             if not cand:
                 break
@@ -1127,6 +1516,8 @@ def build_cycle_plan(
                 "amount": cost,
                 "clause": cost,
                 "closes_gw_target": True,
+                "is_xi_starter": is_xi_quality_starter(picked),
+                "positive_trend": has_positive_trend(picked),
                 "owner_name": picked.get("owner_name") or picked.get("owner_team"),
                 "spend_cap": round(techo, 0),
                 "gap_reserve": round(reserve, 0),
@@ -1137,11 +1528,21 @@ def build_cycle_plan(
             spent += cost
             closed_gap_ids.add(_pid(picked))
 
-    next_targets = [
+    taken_ids = {_pid(b) for b in bids}
+    leftover = [
         o
         for _score, o in bid_cands
-        if _pid(o) not in {_pid(b) for b in bids}
-    ][:3]
+        if _pid(o) not in taken_ids
+    ]
+    next_targets: list[dict[str, Any]] = []
+    for o in watch_free + leftover:
+        pid = _pid(o)
+        if not pid or pid in taken_ids:
+            continue
+        next_targets.append(o)
+        taken_ids.add(pid)
+        if len(next_targets) >= 3:
+            break
 
     shortfall = max(0.0, spent - cash_after_accepts)
     if shortfall > 1 and not settle_new:
@@ -1218,7 +1619,7 @@ def build_cycle_plan(
         pid = _pid(p)
         if not pid or pid in listed_ids or pid in accept_ids or pid in recover_ids:
             continue
-        if pid in xi_ids:
+        if _hold_from_sale(p, target_owned=target_owned, keeper_ids=keeper_ids):
             continue
         d5 = _f(p.get("delta_5d"))
         if _keep_riding(p):
@@ -1239,7 +1640,8 @@ def build_cycle_plan(
     fade_cands.sort(key=lambda x: -x[0])
 
     lists: list[dict[str, Any]] = list(recover_lists)
-    swap_cap = min(max_lists, min(max_bids, len(bid_cands)))
+    # Varios swaps si hay varios candidatos: no 1:1 con las pujas de hoy.
+    swap_cap = max_lists
     for _rank, p, beater in swap_cands:
         if len(lists) >= swap_cap:
             break
@@ -1376,6 +1778,7 @@ def build_cycle_plan(
                 "position": o.get("position"),
                 "delta_5d": o.get("delta_5d"),
                 "price": _price(o),
+                "wait_listing": bool(o.get("wait_listing")),
             }
             for o in next_targets[:3]
         ],
@@ -1445,6 +1848,12 @@ def _compose_narrative(
             if d:
                 label = f"{label} ({d})"
             bits.append(label)
+        target_n = sum(1 for m in bids if m.get("closes_gw_target"))
+        extra = (
+            " Varios tickets del once objetivo: los rivales pujan y conviene llevarse al menos uno."
+            if target_n >= 2
+            else ""
+        )
         parts.append(
             f"{'Ficha' if fixed else 'Puja por'} {_join_names(bits)}"
             + (
@@ -1452,6 +1861,7 @@ def _compose_narrative(
                 if constraints.get("free_slots_after_accepts")
                 else "."
             )
+            + extra
         )
     if clauses:
         names = _join_names([m.get("name") or "" for m in clauses])
@@ -1459,6 +1869,13 @@ def _compose_narrative(
             f"Cláusula de {names} "
             f"({_fmt_money(clauses[0].get('clause') or clauses[0].get('amount'))}): "
             f"cierra hueco del once objetivo y cabe en el techo de deuda."
+        )
+    waiting = [t for t in next_targets if t.get("wait_listing")]
+    if waiting:
+        names = _join_names([t.get("name") or "" for t in waiting[:3]])
+        parts.append(
+            f"{names} cierran el once objetivo pero no tienen listado: "
+            f"se puja cuando salgan al mercado diario."
         )
     if lists:
         recover = [m for m in lists if m.get("list_reason") == "recover_debt"]

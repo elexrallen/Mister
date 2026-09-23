@@ -109,6 +109,27 @@ def ajax_headers() -> dict[str, str]:
     return h
 
 
+def _ajax_error_detail(resp: requests.Response) -> str:
+    """Cuerpo de un AJAX fallido. Las páginas HTML de error no se vuelcan al log."""
+    text = (resp.text or "").strip()
+    head = text[:80].lstrip().lower()
+    if head.startswith("<!doctype") or head.startswith("<html"):
+        title_m = re.search(r"<title>([^<]+)</title>", text, re.I)
+        title = (title_m.group(1).strip() if title_m else "error page")
+        return f"HTML ({title})"
+    try:
+        body = resp.json()
+    except ValueError:
+        return text[:200]
+    if isinstance(body, dict):
+        for key in ("message", "error", "msg", "status"):
+            val = body.get(key)
+            if val not in (None, "", "error"):
+                return str(val)[:300]
+        return str(body)[:300]
+    return str(body)[:300]
+
+
 def ajax_post(path: str, data: dict[str, Any] | None = None, timeout: int = 25) -> Any:
     url = f"{config.MISTER_API_BASE}{path}"
     resp = requests.post(url, headers=ajax_headers(), data=data or {}, timeout=timeout)
@@ -123,7 +144,14 @@ def ajax_post(path: str, data: dict[str, Any] | None = None, timeout: int = 25) 
                 )
         except Exception as exc:  # noqa: BLE001
             log.warning("Renovación x-auth falló: %s", exc)
-    resp.raise_for_status()
+    if resp.status_code >= 400:
+        detail = _ajax_error_detail(resp)
+        log.warning("ajax %s → %s %s", path, resp.status_code, detail)
+        raise requests.HTTPError(
+            f"{resp.status_code} Client Error: {resp.reason} for url: {url}"
+            + (f" — {detail}" if detail else ""),
+            response=resp,
+        )
     if not resp.content:
         return {}
     return resp.json()
@@ -239,6 +267,99 @@ def fetch_player_community_info(player_id: str | int) -> dict[str, Any] | None:
         return None
 
 
+def _listing_id(raw: Any) -> int | None:
+    if raw in (None, "", 0, "0", False):
+        return None
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+
+def fetch_sw_market() -> list[dict[str, Any]]:
+    """
+    POST /ajax/sw/market — slideover de evolución, no el mercado diario.
+
+    Mister suele responder 500; el id de listado lo saca el popup de puja
+    de `player-community-info`. Un intento, fail-soft, sin reintentar.
+    """
+    try:
+        raw = ajax_post("/ajax/sw/market", {"position": 0, "price": 0, "owner": -1})
+    except Exception as exc:  # noqa: BLE001
+        log.info("sw/market no disponible (%s); id_market se resuelve al pujar", exc)
+        return []
+    data = raw.get("data") if isinstance(raw, dict) else None
+    players = (data or {}).get("players") if isinstance(data, dict) else None
+    if not isinstance(players, list) and isinstance(raw, dict):
+        players = raw.get("players")
+    if not isinstance(players, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in players:
+        if not isinstance(item, dict):
+            continue
+        pid = str(item.get("id") or item.get("id_player") or "").strip()
+        if not pid:
+            continue
+        market = item.get("market") if isinstance(item.get("market"), dict) else {}
+        mid = _listing_id(item.get("id_market") or market.get("id"))
+        owner = item.get("id_uc") or item.get("owner_id") or item.get("id_owner")
+        if isinstance(item.get("owner"), dict):
+            owner = owner or item["owner"].get("id")
+        row: dict[str, Any] = {"id": pid}
+        if mid:
+            row["id_market"] = mid
+        if owner not in (None, "", 0, "0"):
+            row["owner_id"] = str(owner)
+        out.append(row)
+    log.info(
+        "ajax/sw/market → %s listados (%s con id_market)",
+        len(out),
+        sum(1 for r in out if r.get("id_market")),
+    )
+    return out
+
+
+def enrich_market_listings(market: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Fusiona id_market (y owner si faltaba) del JSON de listados sobre el HTML."""
+    if not market:
+        return market
+    listings = fetch_sw_market()
+    if not listings:
+        return market
+    by_id = {str(r["id"]): r for r in listings if r.get("id")}
+    filled = 0
+    for row in market:
+        extra = by_id.get(str(row.get("id") or ""))
+        if not extra:
+            continue
+        if extra.get("id_market") and not row.get("id_market"):
+            row["id_market"] = extra["id_market"]
+            filled += 1
+        if extra.get("owner_id") and not row.get("owner_id"):
+            row["owner_id"] = extra["owner_id"]
+            if str(extra["owner_id"]) not in ("", "0"):
+                row["listed_by_rival"] = True
+    log.info("mercado enriquecido con id_market en %s/%s", filled, len(market))
+    return market
+
+
+def _shield_value(raw: Any) -> int:
+    """
+    Blindaje temporal del jugador (0 = sin blindar).
+
+    Mister lo expone como un contador de expiración: mientras sea > 0 el jugador
+    no se puede clausular, aunque la cláusula esté a la vista.
+    """
+    if raw in (None, "", False):
+        return 0
+    try:
+        return max(0, int(float(raw)))
+    except (TypeError, ValueError):
+        return 0
+
+
 def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
     """Normaliza cláusula/owner/valor/puntos desde player-community-info."""
     out: dict[str, Any] = {
@@ -255,9 +376,25 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
         "prior_avg": None,
         "team_id": None,
         "team_name": None,
+        "shield": None,
+        "shielded": False,
+        "id_market": None,
+        "transfer_date": None,
+        "owner_signed_hours": None,
     }
     if not info:
         return out
+    shield_raw = info.get("shield")
+    if shield_raw is None and isinstance(info.get("clause"), dict):
+        shield_raw = info["clause"].get("shield")
+    out["shield"] = _shield_value(shield_raw)
+    out["shielded"] = bool(out["shield"])
+    market = info.get("market") if isinstance(info.get("market"), dict) else {}
+    mid = market.get("id") or info.get("id_market")
+    try:
+        out["id_market"] = int(mid) if mid not in (None, "", 0, "0") else None
+    except (TypeError, ValueError):
+        out["id_market"] = None
     clause = info.get("clause") if isinstance(info.get("clause"), dict) else {}
     raw_val = clause.get("value")
     try:
@@ -287,6 +424,18 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
     owner = info.get("owner") if isinstance(info.get("owner"), dict) else {}
     out["owner_id"] = owner.get("id")
     out["owner_name"] = owner.get("name")
+    transfer = info.get("transfer") if isinstance(info.get("transfer"), dict) else {}
+    signed_raw = (
+        transfer.get("date")
+        or owner.get("since")
+        or owner.get("date")
+        or info.get("signed_at")
+    )
+    owners = info.get("owners") if isinstance(info.get("owners"), list) else []
+    if signed_raw is None and owners and isinstance(owners[0], dict):
+        signed_raw = owners[0].get("date")
+    if signed_raw is not None:
+        out["transfer_date"] = signed_raw
     team = info.get("team") if isinstance(info.get("team"), dict) else {}
     if team.get("id") is not None:
         out["team_id"] = str(team.get("id"))
@@ -333,6 +482,35 @@ def clause_fields_from_community(info: dict[str, Any] | None) -> dict[str, Any]:
             except (TypeError, ValueError):
                 pass
     return out
+
+
+def listing_context_for_player(player_id: str | int) -> dict[str, Any]:
+    """
+    Lo que el popup de puja carga con `data-preload=player-community-info`.
+
+    De ahí salen `pre.market.id` (id_market), `pre.owner.id` (offeree) y si
+    ya hay puja viva (`pre.bid.isActive` → action=update, no bid).
+    """
+    info = fetch_player_community_info(player_id) or {}
+    fields = clause_fields_from_community(info)
+    bid = info.get("bid") if isinstance(info.get("bid"), dict) else {}
+    active = bid.get("isActive") in (1, True, "1")
+    action = "update" if active else "bid"
+    owner = fields.get("owner_id")
+    offeree = None
+    if owner not in (None, "", 0, "0"):
+        offeree = str(owner)
+    return {
+        "id_market": fields.get("id_market"),
+        "offeree_id": offeree,
+        "action": action,
+        "owner_id": offeree,
+        "shield": fields.get("shield"),
+        "shielded": fields.get("shielded"),
+        "clause": fields.get("clause"),
+        "owner_signed_hours": fields.get("owner_signed_hours"),
+        "transfer_date": fields.get("transfer_date"),
+    }
 
 
 def refresh_team_labels(
@@ -427,6 +605,11 @@ def enrich_players_with_clauses(
             new_p["prior_points"] = fields["prior_points"]
         if fields.get("prior_avg") is not None:
             new_p["prior_avg"] = fields["prior_avg"]
+        if fields.get("id_market"):
+            new_p["id_market"] = fields["id_market"]
+        if fields.get("shield") is not None:
+            new_p["shield"] = fields["shield"]
+            new_p["shielded"] = bool(fields.get("shielded"))
         # HTML fallback en chunk si AJAX no dio valor
         if not new_p["clause_known"]:
             html_clause, html_known = parse_clause_from_html(str(new_p.get("_html_chunk") or ""))
@@ -1385,6 +1568,7 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         clause = int(clause_raw) if clause_raw is not None else None
     except (TypeError, ValueError):
         clause = None
+    shield = _shield_value(raw.get("shield"))
     is_free = owner_id is None
     photo_url = str(raw.get("photoUrl") or raw.get("photo_url") or "").strip()
     team_logo_url = str(raw.get("teamLogoUrl") or raw.get("team_logo_url") or "").strip()
@@ -1440,6 +1624,8 @@ def normalize_sw_player(raw: dict[str, Any]) -> dict[str, Any] | None:
         "owner_name": (str(raw.get("uc_name")).strip() if raw.get("uc_name") else None),
         "clause": clause,
         "clause_known": clause is not None,
+        "shield": shield,
+        "shielded": bool(shield),
         "is_mine": flag_is_true(raw.get("is_mine")),
         "id_market": raw.get("id_market"),
         "min_bid": value if is_free else None,
@@ -2389,6 +2575,8 @@ def fetch_live_league(community_id: str | int | None = None) -> dict[str, Any] |
     max_debt = _bal_int("maxDebt")
 
     market = parse_market_players(market_html) if market_html else []
+    # id_market no viene en el HTML. /ajax/sw/market (evolución) responde 500;
+    # el ejecutor lo resuelve por jugador con player-community-info al pujar.
     squad = parse_team_players(team_html) if team_html else []
 
     # Corregir clubes (mapa CDN cambia por temporada; p.ej. 6 = Deportivo)

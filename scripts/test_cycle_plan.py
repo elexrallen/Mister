@@ -223,6 +223,98 @@ def test_does_not_bid_falling_gap_filler() -> None:
     _assert("Rueda" in bid_names, bid_names)
 
 
+def test_does_not_bid_mild_decline_even_if_starter_fills_hole() -> None:
+    """Titular usable + hueco + VM −4% no es puja: el once pide tendencia positiva."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "tel",
+            "name": "M. Tel",
+            "position": "FW",
+            "price": 1_880_000,
+            "bid": 1_880_000,
+            "puja_recomendada": 1_880_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": -0.04,
+            "rising": False,
+            "trend": "down",
+            "lineup_prob": 0.85,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+        },
+        {
+            "id": "hot",
+            "name": "Rueda",
+            "position": "DF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.12,
+            "rising": True,
+            "lineup_prob": 0.8,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("M. Tel" not in bid_names, bid_names)
+    _assert("Rueda" in bid_names, bid_names)
+    rueda = next(m for m in plan["moves"] if m["kind"] == KIND_BID and m["name"] == "Rueda")
+    _assert(rueda.get("is_xi_starter") is True, rueda)
+    _assert(rueda.get("positive_trend") is True, rueda)
+    _assert("titular real" in (rueda.get("why") or ""), rueda)
+    _assert("tendencia positiva" in (rueda.get("why") or ""), rueda)
+
+
+def test_does_not_bid_rising_bench_as_hole_filler() -> None:
+    """Sube de VM pero no es titular: no tapa el once."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+    ]
+    market = [
+        {
+            "id": "bench",
+            "name": "Suplente",
+            "position": "MF",
+            "price": 2_000_000,
+            "bid": 2_000_000,
+            "puja_recomendada": 2_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.15,
+            "rising": True,
+            "lineup_prob": 0.25,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("Suplente" not in bid_names, bid_names)
+
+
 def test_accept_offer_frees_slot_to_bid() -> None:
     squad = [
         {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
@@ -634,6 +726,209 @@ def test_lists_fading_bench_with_free_slots() -> None:
     _assert(listed[0].get("list_reason") == "fade", listed[0])
 
 
+def test_rotation_scorer_is_not_listed() -> None:
+    """Suplente con minutos y puntos (caso Yalcouyé): no se lista por un sit de Mister."""
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "FW",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 8,
+            "points": 28,
+            "avg_ppg": 5.6,
+        },
+        {
+            "id": "yalc",
+            "name": "M. Yalcouyé",
+            "position": "MF",
+            "price": 2_917_000,
+            "lineup_prob": 0.0,
+            "p_play": 0.18,
+            "signal": "sit",
+            "gw_starter": False,
+            "xpts": 1.4,
+            "points": 37,
+            "avg_ppg": 7.4,
+            "ff_mister_avg": 7.4,
+            "delta_5d": 0.0362,
+            "rising": True,
+            "fotmob_stats": {"minutos_ultimos_5": 300, "goles_ultimos_5": 2},
+        },
+        {
+            "id": "dead",
+            "name": "Parche",
+            "position": "MF",
+            "price": 2_000_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.5,
+            "points": 4,
+            "delta_5d": -0.04,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("M. Yalcouyé" not in listed, listed)
+    _assert("Parche" in listed, listed)
+
+
+def test_top_squad_scorer_is_not_listed() -> None:
+    """El que más puntúa de la plantilla no se vende aunque Mister lo marque sit."""
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "FW",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 8,
+            "points": 20,
+        },
+        {
+            "id": "star",
+            "name": "Máximo",
+            "position": "MF",
+            "price": 3_000_000,
+            "lineup_prob": 0.0,
+            "signal": "sit",
+            "xpts": 1.1,
+            "points": 37,
+            "avg_ppg": 7.4,
+            "delta_5d": 0.02,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Máximo" not in listed, listed)
+
+
+def test_multiple_fading_benches_all_listed() -> None:
+    """Varios banquillos viables: se listan todos, no uno."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {
+            "id": "dead1",
+            "name": "Parche A",
+            "position": "MF",
+            "price": 2_000_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.5,
+            "delta_5d": -0.04,
+        },
+        {
+            "id": "dead2",
+            "name": "Parche B",
+            "position": "MF",
+            "price": 1_800_000,
+            "lineup_prob": 0.10,
+            "xpts": 1.2,
+            "delta_5d": -0.08,
+        },
+        {
+            "id": "dead3",
+            "name": "Parche C",
+            "position": "DF",
+            "price": 1_500_000,
+            "lineup_prob": 0.20,
+            "xpts": 1.0,
+            "delta_5d": -0.12,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Parche A" in listed, listed)
+    _assert("Parche B" in listed, listed)
+    _assert("Parche C" in listed, listed)
+    _assert("Titular" not in listed, listed)
+    _assert(len(listed) == 3, listed)
+
+
+def test_lists_fade_even_if_stuffed_in_recommended_xi() -> None:
+    """El once recomendado a veces mete al banquillo: eso no lo blinda."""
+    bench = {
+        "id": "dead",
+        "name": "Colado",
+        "position": "MF",
+        "price": 2_000_000,
+        "lineup_prob": 0.15,
+        "xpts": 1.5,
+        "delta_5d": -0.10,
+    }
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        bench,
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1", "dead"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert(len(listed) == 1 and listed[0]["name"] == "Colado", listed)
+
+
+def test_multiple_swaps_when_squad_full() -> None:
+    """Plantilla llena: varios swaps, no 1:1 con una sola puja del mercado."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {"id": "xi2", "name": "Titular2", "position": "MF", "price": 7_000_000, "lineup_prob": 0.85, "xpts": 7},
+        _bench_riser(0.10, "Ciss"),
+        {
+            "id": "bench2",
+            "name": "Otro",
+            "position": "DF",
+            "price": 1_400_000,
+            "lineup_prob": 0.2,
+            "xpts": 2.0,
+            "delta_5d": 0.10,
+            "accel": -0.04,
+            "decelerating": True,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[_hot_market(0.25, "Hot")],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1", "xi2"),
+        league_rules={"max_squad": 4, "sale_limit": 5},
+        max_squad=4,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Ciss" in listed, listed)
+    _assert("Otro" in listed, listed)
+    _assert(len(listed) == 2, listed)
+
+
 def test_history_snapshot_stems() -> None:
     from datetime import datetime, timezone
 
@@ -985,6 +1280,256 @@ def test_reachable_target_gets_bid_priority() -> None:
     _assert(bids and bids[0]["name"] == "Objetivo", plan["moves"])
     _assert(bids[0].get("closes_gw_target") is True, bids[0])
     _assert("once objetivo" in (bids[0].get("why") or ""), bids[0])
+
+
+def test_free_target_starter_waits_for_listing() -> None:
+    """Libre del once objetivo sin listado: se vigila, no se POST-ea /ajax/bid."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 4},
+    ]
+    filler = {
+        "id": "mendy",
+        "name": "P. Mendy",
+        "position": "FW",
+        "price": 666_000,
+        "bid": 666_000,
+        "puja_recomendada": 666_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "delta_5d": 0.02,
+        "rising": True,
+        "lineup_prob": 0.75,
+        "fills_need": True,
+        "budget_fit": "comfortable",
+    }
+    mina = {
+        "id": "mina",
+        "name": "Yerry Mina",
+        "position": "DF",
+        "price": 1_273_320,
+        "bid": 1_273_320,
+        "market_value": 1_179_000,
+        "seller": "free",
+        "on_daily_market": False,
+        "p_play": 0.82,
+        "signal": "start",
+        "xpts": 11.37,
+        "lineup_prob": 0.9,
+        "budget_fit": "comfortable",
+    }
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[filler],
+        free_agents=[mina],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "mina",
+                    "name": "Yerry Mina",
+                    "position": "DF",
+                    "ownership": "free",
+                    "reachable": "free",
+                    "xpts": 11.37,
+                    "p_play": 0.82,
+                    "signal": "start",
+                    "price": 1_273_320,
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": "mina",
+                        "name": "Yerry Mina",
+                        "reachable": "free",
+                        "ownership": "free",
+                        "position": "DF",
+                        "xpts": 11.37,
+                        "price": 1_273_320,
+                    }
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(not any(m.get("name") == "Yerry Mina" for m in bids), plan["moves"])
+    _assert(bids and bids[0]["name"] == "P. Mendy", plan["moves"])
+    watch = plan.get("next_cycle_targets") or []
+    _assert(any(t.get("name") == "Yerry Mina" for t in watch), watch)
+    mina_watch = next(t for t in watch if t.get("name") == "Yerry Mina")
+    _assert(mina_watch.get("wait_listing") is True, mina_watch)
+    _assert("no tienen listado" in (plan.get("narrative") or ""), plan.get("narrative"))
+
+
+def test_multiple_listed_targets_all_get_bids() -> None:
+    """
+    Varios titulares listados del once objetivo: se puja por todos.
+
+    Misma línea incluida y aunque solo quede una plaza: los rivales pujan,
+    así que varios tickets suben la probabilidad de llevarse al menos uno.
+    Un filler de relleno no come ese cupo.
+    """
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "GK",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 4,
+        },
+    ]
+
+    def _tgt(pid: str, name: str, price: float) -> dict:
+        return {
+            "id": pid,
+            "name": name,
+            "position": "FW",
+            "price": price,
+            "bid": price,
+            "puja_recomendada": price,
+            "on_daily_market": True,
+            "seller": "market",
+            "p_play": 0.85,
+            "signal": "start",
+            "xpts": 8.0,
+            "lineup_prob": 0.88,
+            "rising": True,
+            "delta_5d": 0.05,
+            "budget_fit": "comfortable",
+        }
+
+    market = [
+        _tgt("fw-a", "Delantero A", 2_000_000),
+        _tgt("fw-b", "Delantero B", 2_100_000),
+        _tgt("fw-c", "Delantero C", 2_200_000),
+        {
+            "id": "filler",
+            "name": "Filler",
+            "position": "MF",
+            "price": 1_000_000,
+            "bid": 1_000_000,
+            "puja_recomendada": 1_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.12,
+            "rising": True,
+            "lineup_prob": 0.8,
+            "fills_need": True,
+            "budget_fit": "comfortable",
+        },
+    ]
+    xi_rows = [
+        {
+            "player_id": pid,
+            "name": name,
+            "ownership": "daily_market",
+            "reachable": "daily_market",
+            "xpts": 8.0,
+            "price": price,
+        }
+        for pid, name, price in (
+            ("fw-a", "Delantero A", 2_000_000),
+            ("fw-b", "Delantero B", 2_100_000),
+            ("fw-c", "Delantero C", 2_200_000),
+        )
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": xi_rows,
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": row["player_id"],
+                        "name": row["name"],
+                        "reachable": "daily_market",
+                        "ownership": "daily_market",
+                    }
+                    for row in xi_rows
+                ],
+            },
+        },
+        league_rules={"max_squad": 2, "sale_limit": 5},
+        max_squad=2,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    names = [m["name"] for m in bids]
+    _assert("Delantero A" in names, names)
+    _assert("Delantero B" in names, names)
+    _assert("Delantero C" in names, names)
+    _assert("Filler" not in names, names)
+    _assert(len(bids) == 3, names)
+    _assert(all(m.get("closes_gw_target") is True for m in bids), bids)
+    _assert("varios tickets" in (plan.get("narrative") or "").lower(), plan.get("narrative"))
+
+
+def test_listed_target_still_bids_without_id_market() -> None:
+    """Listado de hoy: el ejecutor hidrata id_market; el plan sí puede pujar."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 4},
+    ]
+    listed = {
+        "id": "tavernier",
+        "name": "Marcus Tavernier",
+        "position": "MF",
+        "price": 5_000_000,
+        "bid": 5_000_000,
+        "puja_recomendada": 5_000_000,
+        "on_daily_market": True,
+        "seller": "market",
+        "id_market": None,
+        "p_play": 0.88,
+        "signal": "start",
+        "xpts": 8.2,
+        "lineup_prob": 0.9,
+        "rising": True,
+        "delta_5d": 0.05,
+        "budget_fit": "comfortable",
+    }
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[listed],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "tavernier",
+                    "name": "Marcus Tavernier",
+                    "ownership": "daily_market",
+                    "reachable": "daily_market",
+                    "xpts": 8.2,
+                    "price": 5_000_000,
+                }
+            ],
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": "tavernier",
+                        "name": "Marcus Tavernier",
+                        "reachable": "daily_market",
+                        "ownership": "daily_market",
+                    }
+                ],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(bids and bids[0]["name"] == "Marcus Tavernier", plan["moves"])
+    _assert(bids[0].get("closes_gw_target") is True, bids[0])
+    _assert(bids[0].get("id_market") in (None, 0, "0"), bids[0])
 
 
 def test_near_slot_is_not_bid_priority() -> None:
@@ -1681,6 +2226,8 @@ if __name__ == "__main__":
     test_full_squad_lists_does_not_bid()
     test_free_slot_bids_same_cycle()
     test_does_not_bid_falling_gap_filler()
+    test_does_not_bid_mild_decline_even_if_starter_fills_hole()
+    test_does_not_bid_rising_bench_as_hole_filler()
     test_accept_offer_frees_slot_to_bid()
     test_outlier_offer_is_declined()
     test_fair_offer_on_xi_is_hold()
@@ -1693,6 +2240,11 @@ if __name__ == "__main__":
     test_lists_riser_only_when_full_and_market_hotter()
     test_does_not_list_riser_when_full_but_market_not_hotter()
     test_lists_fading_bench_with_free_slots()
+    test_rotation_scorer_is_not_listed()
+    test_top_squad_scorer_is_not_listed()
+    test_multiple_fading_benches_all_listed()
+    test_lists_fade_even_if_stuffed_in_recommended_xi()
+    test_multiple_swaps_when_squad_full()
     test_history_snapshot_stems()
     test_cycle_plan_does_not_list_sold_players()
     test_spike_without_minutes_is_not_a_bid()
@@ -1702,6 +2254,9 @@ if __name__ == "__main__":
     test_rival_listed_on_market_is_not_appreciation()
     test_cycle_plan_bids_only_free_agents_for_appreciation()
     test_reachable_target_gets_bid_priority()
+    test_free_target_starter_waits_for_listing()
+    test_listed_target_still_bids_without_id_market()
+    test_multiple_listed_targets_all_get_bids()
     test_near_slot_is_not_bid_priority()
     test_debt_bid_allowed_when_closes_target()
     test_flip_does_not_use_debt()

@@ -10,6 +10,7 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from competitive_actions import (  # noqa: E402
     estimate_gap_funding,
+    gap_reserve_cost,
     other_gaps_min_cost,
     spend_cap_for_buy,
     xi_gap_reserve,
@@ -48,6 +49,13 @@ def _opp(
         "lineup_prob": 0.80,
         "budget_fit": "comfortable",
         "categories": ["chollo_economico"],
+        "ff_mister_avg": 5.0,
+        "ff_apps": 10,
+        "ff_display_avg": 5.0,
+        "ff_display_apps": 10,
+        "production_score": 50,
+        "sample_thin": False,
+        "ff_no_history": False,
     }
 
 
@@ -90,9 +98,8 @@ def test_other_min_uses_cheapest_on_market_for_thin_fw() -> None:
 
 
 def test_other_min_sums_all_other_needy_lines() -> None:
-    """Reserva = suma de chollos de todas las otras líneas needy, no solo una."""
-    cost = other_gaps_min_cost(
-        {},
+    """gap_reserve_cost suma chollos de todas las otras líneas needy."""
+    cost = gap_reserve_cost(
         exclude_position="DF",
         diagnosis={
             "by_position": {
@@ -102,14 +109,15 @@ def test_other_min_sums_all_other_needy_lines() -> None:
             }
         },
         structural_needs=[
-            {"position": "FW", "priority": "Alta"},
-            {"position": "MF", "priority": "Alta"},
+            {"position": "FW", "priority": "Alta", "need": "xi_starter", "slots_short": 1},
+            {"position": "MF", "priority": "Alta", "need": "xi_starter", "slots_short": 1},
         ],
         opportunities=[
-            {"id": "fw1", "position": "FW", "on_daily_market": True, "price": 1_000_000},
-            {"id": "mf1", "position": "MF", "on_daily_market": True, "price": 2_000_000},
-            {"id": "df1", "position": "DF", "on_daily_market": True, "price": 9_000_000},
+            {"id": "fw1", "position": "FW", "on_daily_market": True, "price": 1_000_000, "lineup_prob": 0.8},
+            {"id": "mf1", "position": "MF", "on_daily_market": True, "price": 2_000_000, "lineup_prob": 0.8},
+            {"id": "df1", "position": "DF", "on_daily_market": True, "price": 9_000_000, "lineup_prob": 0.8},
         ],
+        balance=100_000_000,
     )
     _assert(cost == 3_000_000, cost)
 
@@ -267,7 +275,8 @@ def test_other_min_zero_when_thin_has_no_listing() -> None:
     _assert(cost_df_only == 0.0, cost_df_only)
 
 
-def test_thin_fw_without_listing_does_not_block_df() -> None:
+def test_thin_fw_without_listing_does_not_block_cheap_df() -> None:
+    """FW thin sin listing reserva reposición, pero un DF barato sigue cabiendo."""
     me = {"balance": 3_000_000, "squad": [], "rank": 8}
     diagnosis = {
         "alerts": [],
@@ -276,7 +285,7 @@ def test_thin_fw_without_listing_does_not_block_df() -> None:
             "FW": {"coverage": "thin"},
         },
     }
-    opps = [_opp("d1", "DF_A", "DF", 2_000_000)]
+    opps = [_opp("d1", "DF_A", "DF", 500_000)]
     plan, _pkg = build_action_plan(
         me,
         diagnosis,
@@ -467,7 +476,7 @@ if __name__ == "__main__":
         test_xi_gap_reserve_sums_other_missing_slots,
         test_action_plan_crowds_out_when_techo_eaten,
         test_other_min_zero_when_thin_has_no_listing,
-        test_thin_fw_without_listing_does_not_block_df,
+        test_thin_fw_without_listing_does_not_block_cheap_df,
         test_patch_policy_does_not_block_daily_buys,
         test_expensive_primary_does_not_kill_chollo_that_fits,
         test_funding_plan_skips_unaffordable_crack,

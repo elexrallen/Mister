@@ -9,7 +9,13 @@ from __future__ import annotations
 from typing import Any
 
 import config
-from competitive_actions import build_recommended_gw_xi, mister_bid_cap, _money
+from competitive_actions import (
+    build_recommended_gw_xi,
+    has_positive_trend,
+    is_xi_quality_starter,
+    mister_bid_cap,
+    _money,
+)
 
 NEAR_XPTS_RATIO = 0.85
 
@@ -52,6 +58,11 @@ _OVERLAY_KEYS = (
     "fotmob_stats",
     "price",
     "market_value",
+    "lineup_prob",
+    "points_trend",
+    "rising",
+    "delta_5d",
+    "trend",
 )
 
 
@@ -146,16 +157,13 @@ def _xi_shape_filled(cand: dict[str, Any]) -> bool:
     return True
 
 
-def pick_best_gw_xi(
+def _best_formation_from_pool(
     pool: list[dict[str, Any]],
     *,
     matchday: dict[str, Any] | None = None,
     captain_rule: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
-    """
-    Once de máximo xPts entre IDEAL_FORMATIONS (completo preferido).
-    No usa la formación bloqueada en Mister. Aplica al pool o a tu plantilla.
-    """
+    """Once de máximo xPts entre IDEAL_FORMATIONS (completo preferido)."""
     best: dict[str, Any] | None = None
     best_score: tuple | None = None
     seen: set[tuple] = set()
@@ -187,6 +195,46 @@ def pick_best_gw_xi(
     return best or build_recommended_gw_xi(
         pool, matchday=matchday, captain_rule=captain_rule
     )
+
+
+def _xi_is_complete(cand: dict[str, Any] | None) -> bool:
+    if not cand:
+        return False
+    summary = cand.get("summary") or {}
+    return bool(summary.get("complete")) and _xi_shape_filled(cand)
+
+
+def pick_best_gw_xi(
+    pool: list[dict[str, Any]],
+    *,
+    matchday: dict[str, Any] | None = None,
+    captain_rule: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """
+    Once de máximo xPts entre IDEAL_FORMATIONS (completo preferido).
+
+    Primero titulares con tendencia positiva; si no hay once completo,
+    todos los titulares; si aún falta, el pool entero.
+    """
+    raw = list(pool or [])
+    starters_up = [p for p in raw if is_xi_quality_starter(p) and has_positive_trend(p)]
+    starters = [p for p in raw if is_xi_quality_starter(p)]
+    for cand_pool, label in (
+        (starters_up, "starters_up"),
+        (starters, "starters"),
+        (raw, "pool"),
+    ):
+        if not cand_pool:
+            continue
+        cand = _best_formation_from_pool(
+            cand_pool, matchday=matchday, captain_rule=captain_rule
+        )
+        cand["pool_filter"] = label
+        if label == "pool" or _xi_is_complete(cand):
+            return cand
+    out = _best_formation_from_pool(raw, matchday=matchday, captain_rule=captain_rule)
+    out["pool_filter"] = "pool"
+    return out
 
 
 def merge_target_universe(

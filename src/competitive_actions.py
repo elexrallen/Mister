@@ -818,6 +818,117 @@ def _is_reliable_starter(p: dict[str, Any]) -> bool:
     return lineup is not None and lineup >= 70
 
 
+def _as_play_frac(raw: Any) -> float | None:
+    """Normaliza 0–1 o 0–100 a fracción 0–1."""
+    try:
+        if raw is None or raw == "":
+            return None
+        v = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if v > 1.0:
+        v = v / 100.0
+    return max(0.0, min(1.0, v))
+
+
+def is_xi_quality_starter(p: dict[str, Any] | None) -> bool:
+    """
+    Titular que puede puntuar en el once: no lesionado/out/blank y
+    señal de alineación ≥70% (jornada, ficha o xPts).
+    """
+    if not p:
+        return False
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
+        return False
+    if p.get("gw_out") or ext.get("gw_out") or p.get("gw_blank") or ext.get("gw_blank"):
+        return False
+    if p.get("gw_starter") or ext.get("gw_starter"):
+        return True
+    gw = _as_play_frac(
+        p.get("gw_lineup_prob") if p.get("gw_lineup_prob") is not None else ext.get("gw_lineup_prob")
+    )
+    if gw is not None and gw >= 0.70:
+        return True
+    p_play = _as_play_frac(
+        p.get("xpts_p_play") if p.get("xpts_p_play") is not None else p.get("p_play")
+    )
+    if p_play is not None and p_play >= 0.70:
+        return True
+    if str(p.get("signal") or "") == "start":
+        return True
+    return _is_starter(p)
+
+
+def _has_starter_signal(p: dict[str, Any] | None) -> bool:
+    """Hay dato suficiente para decidir si es titular (no adivinar)."""
+    if not p:
+        return False
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    if str(p.get("signal") or "") in ("start", "sit", "doubt", "out", "blank"):
+        return True
+    return any(
+        v is not None
+        for v in (
+            p.get("gw_starter"),
+            ext.get("gw_starter"),
+            p.get("gw_lineup_prob"),
+            ext.get("gw_lineup_prob"),
+            p.get("xpts_p_play"),
+            p.get("p_play"),
+            p.get("lineup_prob"),
+            ext.get("lineup_prob_ext"),
+        )
+    )
+
+
+def has_negative_trend(p: dict[str, Any] | None) -> bool:
+    """VM, flecha Mister o racha de puntos claramente a la baja."""
+    if not p:
+        return False
+    if str(p.get("points_trend") or "") == "down":
+        return True
+    if str(p.get("trend") or "") == "down":
+        return True
+    try:
+        d5 = float(p["delta_5d"]) if p.get("delta_5d") is not None else None
+    except (TypeError, ValueError):
+        d5 = None
+    if d5 is not None and d5 < -1e-9:
+        return True
+    if p.get("rising") is False and d5 is not None and d5 <= 0:
+        return True
+    return False
+
+
+def has_positive_trend(p: dict[str, Any] | None) -> bool:
+    """Sube de verdad: racha de puntos, flecha o Δ5d en positivo."""
+    if not p or has_negative_trend(p):
+        return False
+    if p.get("rising") is True:
+        return True
+    if str(p.get("points_trend") or "") == "up":
+        return True
+    if str(p.get("trend") or "") == "up":
+        return True
+    try:
+        d5 = float(p["delta_5d"]) if p.get("delta_5d") is not None else None
+    except (TypeError, ValueError):
+        d5 = None
+    return d5 is not None and d5 > 1e-9
+
+
+def xi_pick_tier(p: dict[str, Any] | None) -> int:
+    """0 titular al alza … 3 banquillo. Desempate del once, no recorte."""
+    if is_xi_quality_starter(p):
+        if has_positive_trend(p):
+            return 0
+        if has_negative_trend(p):
+            return 2
+        return 1
+    return 3
+
+
 def _in_mister_xi(p: dict[str, Any], xi_ids: set[str] | None = None) -> bool:
     """True si está en el once Mister (flag o XI recomendado)."""
     if p.get("in_lineup") is True:
@@ -1334,10 +1445,12 @@ def build_recommended_gw_xi(
     for row in scored:
         by_pos[row["position"]].append(row)
     for pos in by_pos:
-        # A xPts iguales, rival blando y local delante
+        # Titulares delante del banquillo; a xPts iguales, tendencia + rival blando
         by_pos[pos].sort(
             key=lambda x: (
+                0 if is_xi_quality_starter(x["player"]) else 1,
                 -x["score"],
+                xi_pick_tier(x["player"]),
                 -float(x["player"].get("fdr_multiplier") or 1.0),
                 -float(x["gw"] or x["lp"] or 0),
             )
@@ -2050,8 +2163,9 @@ def other_gaps_min_cost(
     closed_player_ids: set[str] | None = None,
 ) -> float:
     """
-    Reserva de caja para otros huecos: suma de chollos mínimos.
-    Con once objetivo usa missing_slots; si no, posiciones needy estructurales.
+    Legacy: chollo on-market de la otra línea needy más urgente.
+    Con `gw_target_xi` delega en `xi_gap_reserve` (suma de huecos del once).
+    Para la reserva multi-hueco estructural usar `gap_reserve_cost`.
     """
     coverage = (gw_target_xi or {}).get("coverage") if isinstance(gw_target_xi, dict) else None
     if isinstance(coverage, dict) and (coverage.get("missing_slots") or []):
@@ -2071,26 +2185,25 @@ def other_gaps_min_cost(
             needy.discard(excl)
         if not needy:
             return 0.0
-        used: set[str] = set()
-        excl_pid = str(exclude_player_id or "").strip()
-        if excl_pid:
-            used.add(excl_pid)
-        total = 0.0
-        # Orden: más urgente primero (critical antes que thin)
-        ordered = sorted(
-            needy,
-            key=lambda p: (
-                _coverage_urgency(p, diagnosis, structural_needs),
-                p,
-            ),
-        )
-        for pos in ordered:
-            cost, _pid = _cheapest_signable_at_pos(
-                opportunities, pos, used_pids=used
+        fills: list[tuple[int, float]] = []
+        market = list(opportunities or [])
+        for pos in needy:
+            costs = [
+                _money(o.get("puja_recomendada") or o.get("price"))
+                for o in market
+                if (o.get("position") or "") == pos
+                and (o.get("on_daily_market") or o.get("seller") == "market")
+            ]
+            costs = [c for c in costs if c > 0]
+            if not costs:
+                continue
+            fills.append(
+                (_coverage_urgency(pos, diagnosis, structural_needs), min(costs))
             )
-            if cost is not None and cost > 0:
-                total += cost
-        return float(total)
+        if not fills:
+            return 0.0
+        best_rank = min(r for r, _ in fills)
+        return float(min(c for r, c in fills if r == best_rank))
 
     info = funding_info or {}
     skip_needs = {"perfect_buy_daily", "perfect_buy"}
@@ -2101,7 +2214,165 @@ def other_gaps_min_cost(
         and g.get("need") not in skip_needs
         and float(g.get("cost") or 0) > 0
     ]
-    return float(sum(others)) if others else 0.0
+    others.sort()
+    return float(others[0]) if others else 0.0
+
+
+def xi_gap_slots(
+    diagnosis: dict[str, Any] | None = None,
+    structural_needs: list[dict[str, Any]] | None = None,
+) -> dict[str, int]:
+    """
+    Huecos de titularidad por posición (cuántos titulares faltan, no qué líneas).
+
+    Prioriza `xi_starter`, que trae `slots_short` del once real de la jornada.
+    Las demás líneas needy cuentan como un hueco.
+    """
+    slots: dict[str, int] = {}
+    for need in structural_needs or []:
+        if not isinstance(need, dict):
+            continue
+        if str(need.get("need") or "") != "xi_starter":
+            continue
+        pos = str(need.get("position") or "")
+        if not pos:
+            continue
+        try:
+            short = int(need.get("slots_short") or 0)
+        except (TypeError, ValueError):
+            short = 0
+        if short > 0:
+            slots[pos] = max(slots.get(pos, 0), short)
+
+    summary = {}
+    if isinstance(diagnosis, dict) and isinstance(diagnosis.get("xi_slot_gaps"), dict):
+        summary = diagnosis["xi_slot_gaps"]
+    for gap in summary.get("gaps") or []:
+        if not isinstance(gap, dict):
+            continue
+        pos = str(gap.get("position") or "")
+        try:
+            short = int(gap.get("slots_short") or 0)
+        except (TypeError, ValueError):
+            short = 0
+        if pos and short > 0:
+            slots[pos] = max(slots.get(pos, 0), short)
+
+    for pos in real_needy_positions(diagnosis, structural_needs):
+        slots.setdefault(str(pos), 1)
+    return slots
+
+
+def _is_gap_worthy(o: dict[str, Any]) -> bool:
+    """¿Este candidato tapa de verdad un hueco del once, o solo ocupa ficha?"""
+    ext = o.get("external") or {}
+    if o.get("gw_out") or ext.get("gw_out"):
+        return False
+    if _ext_avail(o) in ("injured", "suspended"):
+        return False
+    lp = _lineup_pct(o)
+    if lp is not None:
+        return lp >= float(getattr(config, "GAP_STARTER_LINEUP_MIN", 70.0))
+    prod = _production_score(o)
+    if prod is None:
+        return False
+    return prod >= float(getattr(config, "GAP_STARTER_PROD_MIN", 45.0))
+
+
+def _gap_candidate_costs(
+    opportunities: list[dict[str, Any]] | None,
+    pos: str,
+    *,
+    daily_only: bool,
+) -> list[float]:
+    """
+    Costes ordenados de los candidatos que pueden tapar un hueco en `pos`.
+
+    Los listados de rival quedan fuera: ahí no pujas, envías una oferta que el
+    rival puede no aceptar (y el sistema ya le paga el VM). No son oferta real.
+    """
+    costs: list[float] = []
+    for o in opportunities or []:
+        if str(o.get("position") or "") != pos:
+            continue
+        if is_rival_market_listing(o) or _held_by_rival(o):
+            continue
+        on_daily = bool(
+            o.get("on_daily_market") or str(o.get("seller") or "").lower() == "market"
+        )
+        if daily_only and not on_daily:
+            continue
+        if not _is_gap_worthy(o):
+            continue
+        cost = _money(o.get("puja_recomendada") or o.get("price") or o.get("market_value"))
+        if cost > 0:
+            costs.append(cost)
+    costs.sort()
+    return costs
+
+
+def _gap_replacement_cost(
+    pos: str,
+    opportunities: list[dict[str, Any]] | None,
+) -> float:
+    """
+    Coste de tapar el hueco cuando hoy no hay candidato en el mercado.
+
+    Sin esto la reserva se anula justo cuando el mercado está seco, que es
+    cuando más hace falta guardar caja.
+    """
+    pool = _gap_candidate_costs(opportunities, pos, daily_only=False)
+    if pool:
+        return pool[0]
+    floors = getattr(config, "GAP_REPLACEMENT_FLOOR", {}) or {}
+    try:
+        return float(floors.get(pos) or floors.get("DF") or 0)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def gap_reserve_cost(
+    *,
+    exclude_position: str | None = None,
+    diagnosis: dict[str, Any] | None = None,
+    structural_needs: list[dict[str, Any]] | None = None,
+    opportunities: list[dict[str, Any]] | None = None,
+    balance: float | None = None,
+) -> float:
+    """
+    Caja que hay que dejar libre para tapar el resto de huecos del once.
+
+    Suma TODOS los huecos de titularidad pendientes, no el chollo más barato de
+    una sola línea. La compra que se evalúa descuenta un hueco de su posición,
+    no la línea entera.
+
+    El total se acota a una fracción del saldo: con la plantilla muy rota el
+    coste ideal supera de largo la caja, y sin tope la reserva bloquearía
+    cualquier compra en vez de repartir.
+    """
+    slots = xi_gap_slots(diagnosis, structural_needs)
+    excl = str(exclude_position or "")
+    if excl and slots.get(excl):
+        slots[excl] -= 1
+        if slots[excl] <= 0:
+            slots.pop(excl, None)
+    if not slots:
+        return 0.0
+
+    total = 0.0
+    for pos, count in slots.items():
+        costs = _gap_candidate_costs(opportunities, pos, daily_only=True)
+        for i in range(int(count)):
+            if i < len(costs):
+                total += costs[i]
+            else:
+                total += _gap_replacement_cost(pos, opportunities)
+
+    if balance is not None:
+        share = float(getattr(config, "GAP_RESERVE_MAX_SHARE", 0.60) or 0.60)
+        cap = max(0.0, float(balance)) * share
+        total = min(total, cap)
+    return float(total)
 
 
 def rival_demand_for_position(
@@ -2973,6 +3244,10 @@ def is_key_market_candidate(
     Jugador clave del mercado de hoy: objetivo del ideal, o crack/top que cubre hueco.
     """
     if not on_daily or gw_out:
+        return False
+    # Listado de rival: la oferta depende de que el dueño la acepte, así que no
+    # se puede contar como jugador clave asegurado del ciclo.
+    if o.get("conditional_offer") or is_rival_market_listing(o):
         return False
     # Línea sobrada sin gap real: no elevar a clave (salvo upgrade que renta)
     if (
@@ -5334,6 +5609,268 @@ def clause_roi_gate(
     return True, None
 
 
+# Admin `clauses_signs`: 0=off, 1=24h, 2=72h, 3=7 días. Códigos de Mister.
+CLAUSE_SIGNS_HOURS: dict[int, float] = {0: 0.0, 1: 24.0, 2: 72.0, 3: 168.0}
+
+# Admin `clauses_daily`: N cláusulas por ventana. En Mister lo habitual es 1/24h.
+CLAUSE_DAILY_WINDOW_HOURS = 24.0
+
+
+def resolve_clauses_daily_limit(raw: Any, *, default: int | None = None) -> int | None:
+    """
+    Tope de cláusulas por ventana de 24 h.
+
+    None = no publicado. 0 = ilimitado. N = N en 24 horas.
+    El ejecutor pasa default=1 porque casi todas las ligas van a 1/24h.
+    """
+    if raw is None:
+        return default
+    if raw is False:
+        return 0
+    if raw is True:
+        return 1
+    try:
+        return max(0, int(float(raw)))
+    except (TypeError, ValueError):
+        return default
+
+
+def resolve_clauses_signs_hours(raw: Any) -> float | None:
+    """Horas de protección al recién fichado. None = la liga no publica el dato."""
+    if raw is None:
+        return None
+    if raw is False:
+        return 0.0
+    if raw is True:
+        return 24.0
+    try:
+        v = int(float(raw))
+    except (TypeError, ValueError):
+        return None
+    if v <= 0:
+        return 0.0
+    if v in CLAUSE_SIGNS_HOURS:
+        return CLAUSE_SIGNS_HOURS[v]
+    if v >= 6:
+        return float(v)
+    return 24.0
+
+
+def resolve_clauses_gameweek_hours(raw: Any) -> float | None:
+    """Horas previas al pitido en las que las cláusulas están cerradas. None = no publicado."""
+    if raw is None:
+        return None
+    if raw is False:
+        return 0.0
+    if raw is True:
+        return 1.0
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        return None
+    return max(0.0, v)
+
+
+def hours_since_acquired(raw: Any, *, now: datetime | None = None) -> float | None:
+    """
+    Horas desde que el dueño actual fichó al jugador.
+
+    Si Mister solo da fecha (sin hora), se trata como fichado a las 23:59 de
+    ese día: bloquea de más un ciclo antes que POST-ear dentro de las 24 h.
+    """
+    if raw is None or raw == "":
+        return None
+    ref = now or datetime.now(timezone.utc)
+    if ref.tzinfo is None:
+        ref = ref.replace(tzinfo=timezone.utc)
+    else:
+        ref = ref.astimezone(timezone.utc)
+    if isinstance(raw, datetime):
+        dt = raw if raw.tzinfo else raw.replace(tzinfo=timezone.utc)
+        return max(0.0, (ref - dt.astimezone(timezone.utc)).total_seconds() / 3600.0)
+    if isinstance(raw, date) and not isinstance(raw, datetime):
+        end = datetime(raw.year, raw.month, raw.day, 23, 59, tzinfo=timezone.utc)
+        return max(0.0, (ref - end).total_seconds() / 3600.0)
+    txt = str(raw).strip()
+    if not txt:
+        return None
+    try:
+        dt = datetime.fromisoformat(txt.replace("Z", "+00:00"))
+    except ValueError:
+        dt = None
+    if dt is not None:
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        if dt.hour == 0 and dt.minute == 0 and dt.second == 0 and "T" not in txt:
+            end = datetime(dt.year, dt.month, dt.day, 23, 59, tzinfo=timezone.utc)
+            return max(0.0, (ref - end).total_seconds() / 3600.0)
+        return max(0.0, (ref - dt.astimezone(timezone.utc)).total_seconds() / 3600.0)
+    try:
+        from rival_finances import parse_es_date
+    except ImportError:
+        parse_es_date = None  # type: ignore[assignment]
+    if parse_es_date is not None:
+        d = parse_es_date(txt)
+        if d is not None:
+            end = datetime(d.year, d.month, d.day, 23, 59, tzinfo=timezone.utc)
+            return max(0.0, (ref - end).total_seconds() / 3600.0)
+    return None
+
+
+def owner_signed_hours_from_profile(
+    profile: dict[str, Any] | None,
+    *,
+    owner_id: str | int | None = None,
+    now: datetime | None = None,
+) -> float | None:
+    """Horas desde el último cambio de dueño (owners[0] o transfer.date)."""
+    if not isinstance(profile, dict):
+        return None
+    want = str(owner_id or profile.get("owner_id") or "").strip()
+    owners = profile.get("owners") if isinstance(profile.get("owners"), list) else []
+    if owners and isinstance(owners[0], dict):
+        latest = owners[0]
+        to_uc = str(latest.get("to_uc") or latest.get("id_uc_to") or latest.get("id") or "")
+        if not want or not to_uc or to_uc == want:
+            hours = hours_since_acquired(latest.get("date"), now=now)
+            if hours is not None:
+                return hours
+    return hours_since_acquired(
+        profile.get("transfer_date") or profile.get("signed_at"),
+        now=now,
+    )
+
+
+def _owner_signed_hours(item: dict[str, Any]) -> float | None:
+    for key in (
+        "owner_signed_hours",
+        "signed_hours_ago",
+        "hours_since_signed",
+        "hours_owned",
+    ):
+        raw = item.get(key)
+        if raw is None:
+            continue
+        try:
+            return max(0.0, float(raw))
+        except (TypeError, ValueError):
+            continue
+    return owner_signed_hours_from_profile(item, owner_id=item.get("owner_id"))
+
+
+def clause_executable(
+    item: dict[str, Any],
+    *,
+    league_rules: dict[str, Any] | None = None,
+    gameweek_live: bool | None = None,
+    hours_to_jornada: float | None = None,
+    inbound_clauses: int | None = None,
+    clauses_paid_today: int | None = None,
+) -> tuple[bool, str | None]:
+    """
+    ¿Se puede pagar HOY esta cláusula? Devuelve (ok, motivo del bloqueo).
+
+    Pagar una cláusula es instantáneo e irreversible, así que cualquier duda
+    verificable bloquea. Las reglas que la liga no publica quedan en None y solo
+    las confirma el ejecutor releyendo la ficha antes del POST.
+
+    `clauses_signs` y `clauses_gameweek` son enteros de admin, no booleanos:
+    1/2/3 = 24h/72h/7d de protección; N = horas previas al pitido con cláusulas
+    cerradas.
+    """
+    rules = league_rules or {}
+    clause_cfg = rules.get("clause_rules") if isinstance(rules.get("clause_rules"), dict) else {}
+
+    def _rule(key: str, legacy: str) -> Any:
+        if key in clause_cfg:
+            return clause_cfg.get(key)
+        return rules.get(legacy)
+
+    if "clauses" in rules and not _truthy_rule(rules.get("clauses")):
+        return False, "la liga tiene las cláusulas desactivadas"
+    if clause_cfg.get("enabled") is False:
+        return False, "la liga tiene las cláusulas desactivadas"
+
+    if _rule("block", "clauses_block") is True:
+        return False, "el administrador tiene las cláusulas bloqueadas"
+
+    if not item.get("clause_known"):
+        return False, "cláusula no visible"
+    clause = _money(item.get("clause") or item.get("acquisition_cost") or item.get("bid"))
+    if clause <= 0:
+        return False, "cláusula sin importe"
+
+    shield = item.get("shield")
+    if shield is None:
+        shield = (item.get("external") or {}).get("shield")
+    try:
+        shield_n = max(0, int(float(shield))) if shield is not None else 0
+    except (TypeError, ValueError):
+        shield_n = 0
+    if item.get("shielded") or shield_n > 0:
+        return False, "jugador blindado temporalmente"
+
+    gw_hours = resolve_clauses_gameweek_hours(_rule("gameweek", "clauses_gameweek"))
+    if gw_hours and gw_hours > 0:
+        hours = None
+        if hours_to_jornada is not None:
+            try:
+                hours = float(hours_to_jornada)
+            except (TypeError, ValueError):
+                hours = None
+        in_window = hours is not None and 0 <= hours <= gw_hours
+        # Sin reloj, jornada en juego: no arriesgar un POST irreversible.
+        live_unknown = bool(gameweek_live) and hours is None
+        if in_window or live_unknown:
+            return False, (
+                f"cláusulas cerradas en las {gw_hours:.0f} h previas al pitido"
+            )
+
+    signs_h = resolve_clauses_signs_hours(_rule("signs", "clauses_signs"))
+    if signs_h and signs_h > 0:
+        owned_h = _owner_signed_hours(item)
+        recent = bool(item.get("owner_signed_recently"))
+        if owned_h is not None:
+            if owned_h < signs_h:
+                return False, (
+                    f"fichaje reciente del rival ({owned_h:.0f} h < {signs_h:.0f} h de protección)"
+                )
+        elif recent:
+            return False, "fichaje reciente del rival y la liga lo protege"
+
+    max_inbound = _rule("max_inbound", "max_inbound_clauses")
+    if max_inbound is not None and inbound_clauses is not None:
+        try:
+            if int(inbound_clauses) >= int(max_inbound):
+                return False, f"tope de cláusulas recibidas alcanzado ({max_inbound})"
+        except (TypeError, ValueError):
+            pass
+
+    daily = _rule("daily_limit", "clauses_daily")
+    daily_n = resolve_clauses_daily_limit(daily)
+    if daily_n is not None and daily_n > 0 and clauses_paid_today is not None:
+        try:
+            if int(clauses_paid_today) >= daily_n:
+                window = int(CLAUSE_DAILY_WINDOW_HOURS)
+                return False, (
+                    f"tope de {daily_n} cláusula(s) cada {window} h"
+                )
+        except (TypeError, ValueError):
+            pass
+
+    return True, None
+
+
+def _truthy_rule(val: Any) -> bool:
+    if val is None:
+        return True
+    if isinstance(val, bool):
+        return val
+    if isinstance(val, (int, float)):
+        return val != 0
+    return str(val).strip().lower() not in ("", "0", "false", "none", "null", "no")
+
+
 def allocate_clause_bids(
     items: list[dict[str, Any]],
     balance: float,
@@ -5341,14 +5878,19 @@ def allocate_clause_bids(
     market_reserved: float = 0.0,
     cash_reserve: float | None = None,
     max_debt: float | None = None,
+    gap_reserve: float = 0.0,
 ) -> list[dict[str, Any]]:
     """
     Mutual exclusivity: ordena por ROI y asigna contra el margen de deuda.
     Máx. 1 cara (≥40% del techo) + 1 barata si el residual lo permite.
+
+    `gap_reserve` es la caja apartada para tapar los huecos del once: pujas y
+    cláusulas comparten un único presupuesto, así que una cláusula tampoco puede
+    dejar carencias sin cubrir.
     """
     bal = float(balance or 0)
     cap = mister_bid_cap(bal, max_debt)
-    reserved = max(0.0, float(market_reserved or 0))
+    reserved = max(0.0, float(market_reserved or 0), float(gap_reserve or 0))
     sim = max(0.0, cap - reserved)
     expensive_floor = cap * 0.40
     n_exp = 0
@@ -5390,6 +5932,28 @@ def allocate_clause_bids(
             others.append(row)
             continue
 
+        # La caja apartada para las carencias del once no se toca con cláusulas,
+        # cara o barata: si no, se tapa un hueco y se abren otros.
+        if reserved > 0 and (sim - cost) < reserved:
+            row["action"] = "scout"
+            row["bid"] = None
+            row["affordable"] = False
+            row["urgency"] = "low"
+            row["blocked_by_gap_reserve"] = True
+            note = (
+                "upgrade bueno, pero hay que reservar "
+                f"{reserved:,.0f} € para las carencias del once"
+            )
+            if note not in why:
+                row["why"] = f"{why}; {note}" if why else note
+            row["priority_score"] = max(
+                5,
+                priority_score_clause(row) // 2
+                + int(float(row.get("upgrade_score") or 0) // 3),
+            )
+            others.append(row)
+            continue
+
         if is_exp:
             if n_exp >= 1:
                 row["action"] = "scout"
@@ -5413,22 +5977,6 @@ def allocate_clause_bids(
                 row["affordable"] = False
                 row["urgency"] = "low"
                 note = "otra cláusula barata ya priorizada; esta queda en vigilante"
-                if note not in why:
-                    row["why"] = f"{why}; {note}" if why else note
-                row["priority_score"] = max(
-                    5,
-                    priority_score_clause(row) // 2
-                    + int(float(row.get("upgrade_score") or 0) // 3),
-                )
-                others.append(row)
-                continue
-            # Barata: no comerse la caja apartada para fichajes de mercado (el 15)
-            if reserved > 0 and (sim - cost) < reserved:
-                row["action"] = "scout"
-                row["bid"] = None
-                row["affordable"] = False
-                row["urgency"] = "low"
-                note = "upgrade bueno, pero reserva margen para carencias de mercado"
                 if note not in why:
                     row["why"] = f"{why}; {note}" if why else note
                 row["priority_score"] = max(
@@ -5483,6 +6031,9 @@ def build_rival_upgrade_targets(
     days_to_kickoff: float | int | None = None,
     matchday: dict[str, Any] | None = None,
     market_reserved: float | None = None,
+    gap_reserve: float | None = None,
+    league_rules: dict[str, Any] | None = None,
+    gameweek_live: bool | None = None,
 ) -> list[dict[str, Any]]:
     """
     Objetivos en plantillas rivales.
@@ -5564,6 +6115,12 @@ def build_rival_upgrade_targets(
         clause_known = bool(c.get("clause_known"))
         clause = _money(c.get("clause")) if clause_known else None
         acquisition = clause if clause_known else None
+        clause_ok, clause_block_why = clause_executable(
+            c,
+            league_rules=league_rules,
+            gameweek_live=gameweek_live,
+            hours_to_jornada=hours_to_jornada,
+        )
 
         avail = _ext_avail(c)
         if avail in ("injured", "suspended"):
@@ -5642,6 +6199,11 @@ def build_rival_upgrade_targets(
             urgency = "low"
             why_bits.append("prioridad: cubre antes tu carencia crítica")
             risk = "low"
+        elif not clause_ok:
+            action = "scout"
+            urgency = "low"
+            why_bits.append(clause_block_why or "cláusula no ejecutable ahora")
+            risk = "low"
         elif clause_known and bf in ("comfortable", "tight", "stretch") and roi_ok:
             action = "clause_bid"
             urgency = "high" if fills or bf == "comfortable" else "medium"
@@ -5683,7 +6245,12 @@ def build_rival_upgrade_targets(
             "acquisition_cost": acquisition,
             "clause": clause,
             "clause_known": clause_known,
+            "shield": c.get("shield"),
+            "shielded": bool(c.get("shielded") or c.get("shield")),
+            "clause_executable": clause_ok,
+            "clause_block_reason": clause_block_why,
             "market_value": market_value,
+            "owner_id": c.get("owner_id") or c.get("id_uc"),
             "owner_team": c.get("owner_team"),
             "owner_rank": c.get("owner_rank"),
             "improves_owned": True,
@@ -5723,7 +6290,11 @@ def build_rival_upgrade_targets(
     reserved = float(market_reserved) if market_reserved is not None else 0.0
 
     results = allocate_clause_bids(
-        results, bal, market_reserved=reserved, max_debt=max_debt
+        results,
+        bal,
+        market_reserved=reserved,
+        max_debt=max_debt,
+        gap_reserve=max(0.0, float(gap_reserve or 0)),
     )
 
     capped: list[dict[str, Any]] = []
@@ -6009,12 +6580,117 @@ def _intent_eligible(item: dict[str, Any]) -> bool:
     return True
 
 
+def spend_share_cap(bal: float, xi_gap_count: int) -> float | None:
+    """
+    Tope de gasto de una sola compra cuando quedan varios huecos de titularidad.
+
+    Con la plantilla rota, gastar el 90% del saldo en un jugador deja el resto
+    del once sin tapar. None = no aplica.
+    """
+    try:
+        gaps = int(xi_gap_count or 0)
+    except (TypeError, ValueError):
+        return None
+    min_gaps = int(getattr(config, "SPEND_SHARE_CAP_MIN_GAPS", 3) or 3)
+    if gaps < min_gaps:
+        return None
+    usable = max(0.0, float(bal or 0))
+    if usable <= 0:
+        return None
+    share = float(getattr(config, "SPEND_SHARE_CAP_MULTI_GAP", 0.40) or 0.40)
+    return usable * share
+
+
+def _is_critical_gap_fill(item: dict[str, Any]) -> bool:
+    """Hueco de titularidad crítico, no un upgrade ni un gap menor."""
+    if item.get("gap_critical") or item.get("fills_structural"):
+        return True
+    pri = str(item.get("need_priority") or item.get("structural_label") or "").lower()
+    if pri in ("alta", "high", "critical", "crítica", "critica"):
+        return True
+    urg = str(item.get("urgency") or "").lower()
+    return urg in ("high", "critical") and bool(
+        item.get("fills_coverage_gap") or item.get("fills_need")
+    )
+
+
+def _free_viable_in_position(
+    daily_buys: list[dict[str, Any]], pos: str
+) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for item in daily_buys:
+        if str(item.get("position") or "") != pos:
+            continue
+        if not _intent_eligible(item):
+            continue
+        if is_rival_market_listing(item):
+            continue
+        if _item_buy_cost(item) <= 0:
+            continue
+        out.append(item)
+    return out
+
+
+def unique_critical_over_cap(
+    item: dict[str, Any],
+    daily_buys: list[dict[str, Any]],
+    cap: float | None,
+) -> bool:
+    """
+    Excepción de A3: un solo libre viable para un hueco crítico, aunque
+    sobrepase el tope de concentración. Fuera de vísperas se degrada a wait.
+    """
+    if cap is None:
+        return False
+    if _item_buy_cost(item) <= cap:
+        return False
+    if not _is_critical_gap_fill(item):
+        return False
+    if is_rival_market_listing(item):
+        return False
+    pos = str(item.get("position") or "")
+    if not pos:
+        return False
+    free = _free_viable_in_position(daily_buys, pos)
+    if len(free) != 1:
+        return False
+    return str(free[0].get("player_id") or "") == str(item.get("player_id") or "")
+
+
+def _passes_spend_cap(
+    item: dict[str, Any],
+    cap: float | None,
+    daily_buys: list[dict[str, Any]],
+) -> tuple[bool, str | None]:
+    if cap is None:
+        return True, None
+    if _item_buy_cost(item) <= cap:
+        return True, None
+    if unique_critical_over_cap(item, daily_buys, cap):
+        return True, "unique_critical"
+    return False, None
+
+
+def _spend_tier(cost: float, bal: float) -> int:
+    """Tramo de gasto sobre el saldo. Dentro del tramo manda la calidad."""
+    usable = max(0.0, float(bal or 0))
+    if usable <= 0:
+        return 0
+    share = cost / usable
+    if share <= 0.15:
+        return 0
+    if share <= 0.30:
+        return 1
+    return 2
+
+
 def _intent_sort_key(
     item: dict[str, Any],
     *,
     bal: float,
     cash_reserve: float,
     primary_ids: set[str],
+    multi_gap: bool = False,
 ) -> tuple:
     cost = _item_buy_cost(item)
     residual = bal - cost
@@ -6042,6 +6718,25 @@ def _intent_sort_key(
         prod = float(item.get("production_score") or 0)
     except (TypeError, ValueError):
         prod = 0.0
+    if multi_gap:
+        # Multi-carencia: tapar huecos manda sobre "jugador clave", y ninguna
+        # compra puede hipotecar el resto del once. El tramo de gasto va antes
+        # que la calidad para que el presupuesto se reparta.
+        return (
+            0 if overstock_blocks else 1,
+            0 if crowds else 1,
+            1 if fills else 0,
+            1 if leaves else 0,
+            -_spend_tier(cost, bal),
+            1 if is_key else 0,
+            1 if is_prim else 0,
+            1 if is_obj else 0,
+            int(prod),
+            int(item.get("priority_score") or 0),
+            int(asset * 10),
+            int(item.get("_queue_rank") or 0),
+            -cost,
+        )
     return (
         0 if overstock_blocks else 1,
         1 if is_key else 0,
@@ -6081,14 +6776,44 @@ def select_intent_lines(
     primary_ids: set[str],
     secondary_max: float,
     max_intents: int = 8,
+    xi_gap_count: int = 0,
 ) -> list[dict[str, Any]]:
     """Hasta N intents de posiciones distintas (clave → carencia → score/trueque)."""
     if not daily_buys or max_intents <= 0:
         return []
 
+    cap = spend_share_cap(bal, xi_gap_count)
+    multi_gap = cap is not None
+    if cap is not None:
+        # Filtro duro: con varios huecos, nadie se lleva más de su cuota. Si el
+        # mercado solo ofrece caro, mejor guardar caja que dejar el once roto.
+        # Excepción: único libre para un hueco crítico — entra, pero en wait
+        # salvo que el ciclo esté cerrando.
+        filtered: list[dict[str, Any]] = []
+        closing = is_closing_phase()
+        for item in daily_buys:
+            if is_rival_market_listing(item) or item.get("conditional_offer"):
+                continue
+            ok, reason = _passes_spend_cap(item, cap, daily_buys)
+            if not ok:
+                continue
+            row = dict(item)
+            if reason == "unique_critical":
+                row["spend_cap_exception"] = "unique_critical"
+                if not closing:
+                    row["action"] = "wait"
+            filtered.append(row)
+        daily_buys = filtered
+        if not daily_buys:
+            return []
+
     def sort_key(item: dict[str, Any]) -> tuple:
         return _intent_sort_key(
-            item, bal=bal, cash_reserve=cash_reserve, primary_ids=primary_ids
+            item,
+            bal=bal,
+            cash_reserve=cash_reserve,
+            primary_ids=primary_ids,
+            multi_gap=multi_gap,
         )
 
     key_hit = [
@@ -6176,6 +6901,7 @@ def select_hedge_for(
     cash_reserve: float,
     primary_ids: set[str],
     fixed: bool,
+    xi_gap_count: int = 0,
 ) -> dict[str, Any] | None:
     """Mejor alt same-pos en mercado diario si el intent está disputado (solo auction)."""
     if fixed:
@@ -6186,10 +6912,15 @@ def select_hedge_for(
         return None
     pos = intent.get("position")
     intent_id = str(intent.get("player_id") or "")
+    cap = spend_share_cap(bal, xi_gap_count)
 
     def sort_key(item: dict[str, Any]) -> tuple:
         return _intent_sort_key(
-            item, bal=bal, cash_reserve=cash_reserve, primary_ids=primary_ids
+            item,
+            bal=bal,
+            cash_reserve=cash_reserve,
+            primary_ids=primary_ids,
+            multi_gap=cap is not None,
         )
 
     cands = [
@@ -6199,6 +6930,7 @@ def select_hedge_for(
         and str(i.get("player_id") or "") not in exclude_ids
         and str(i.get("player_id") or "") != intent_id
         and _is_daily_market_item(i)
+        and _passes_spend_cap(i, cap, daily_buys)[0]
     ]
     if not cands:
         return None
@@ -6215,6 +6947,7 @@ def finalize_action_plan(
     squad_size: int | None = None,
     max_squad: int | None = None,
     bootstrap: dict[str, Any] | None = None,
+    xi_gap_count: int | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Cola operativa: fichar mientras quepan caja y plazas.
@@ -6222,6 +6955,12 @@ def finalize_action_plan(
     Devuelve (action_plan, daily_package).
     """
     cash_reserve = float(getattr(config, "PACKAGE_CASH_RESERVE", 0) or 0)
+    if xi_gap_count is None and isinstance(funding_info, dict):
+        xi_gap_count = funding_info.get("xi_gap_count")
+    try:
+        gap_n = int(xi_gap_count or 0)
+    except (TypeError, ValueError):
+        gap_n = 0
     # Reserva del paquete = 0 (liquidez = listados). Solo solvencia al pitido.
     bal = float(balance) if balance is not None else 0.0
     bootstrap_ctx = bootstrap
@@ -6411,13 +7150,29 @@ def finalize_action_plan(
         )
     ]
 
+    spend_cap = spend_share_cap(bal, gap_n)
+
     def _rank_buy(item: dict[str, Any]) -> tuple:
         return _intent_sort_key(
-            item, bal=bal, cash_reserve=cash_reserve, primary_ids=primary_ids
+            item,
+            bal=bal,
+            cash_reserve=cash_reserve,
+            primary_ids=primary_ids,
+            multi_gap=spend_cap is not None,
         )
 
     ranked_buys = sorted(
-        [i for i in daily_buys if _intent_eligible(i)],
+        [
+            i
+            for i in daily_buys
+            if _intent_eligible(i)
+            and _passes_spend_cap(i, spend_cap, daily_buys)[0]
+            and (
+                i.get("spend_cap_exception") != "unique_critical"
+                or is_closing_phase()
+                or _item_buy_cost(i) <= (spend_cap or 0)
+            )
+        ],
         key=_rank_buy,
         reverse=True,
     )
@@ -6484,6 +7239,7 @@ def finalize_action_plan(
                 cash_reserve=cash_reserve,
                 primary_ids=primary_ids,
                 fixed=fixed,
+                xi_gap_count=gap_n,
             )
             if not hedge:
                 continue
@@ -6621,6 +7377,24 @@ def finalize_action_plan(
             continue
         pid = str(item.get("player_id") or "")
         item["package_id"] = package_id
+        if (
+            (
+                item.get("spend_cap_exception") == "unique_critical"
+                or unique_critical_over_cap(item, daily_buys, spend_cap)
+            )
+            and not is_closing_phase()
+        ):
+            item["action"] = "wait"
+            item["queue_role"] = "unique_critical_wait"
+            item["spend_cap_exception"] = "unique_critical"
+            item["package_note"] = (
+                "Único libre para un hueco crítico — supera el tope de gasto; "
+                "esperar al cierre del ciclo"
+            )
+            why_prev = (item.get("why") or "").strip()
+            prefix = item["package_note"]
+            item["why"] = f"{prefix}; {why_prev}" if why_prev else prefix
+            continue
         if pid in funded_intent_ids:
             if item.get("cpu_spread_play"):
                 item["queue_role"] = "cpu_spread"

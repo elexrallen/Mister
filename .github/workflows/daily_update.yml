@@ -122,6 +122,45 @@ jobs:
           FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
         run: python src/data_engine.py --league "${{ steps.league.outputs.league }}"
 
+      # Escribe en Mister. Solo actúa en las ligas dadas de alta en
+      # config/automation.json y con el kill switch global en true. Va con
+      # continue-on-error para que un rechazo de Mister no tumbe la publicación
+      # del dataset, que es lo que se consulta aunque no se ejecute nada.
+      - name: Automated cycle (per-league writes)
+        id: automation
+        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
+        continue-on-error: true
+        env:
+          MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
+          MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
+          MISTER_PHPSESSID: ${{ secrets.MISTER_PHPSESSID }}
+          MISTER_REFRESH_TOKEN: ${{ secrets.MISTER_REFRESH_TOKEN }}
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+          # Freno de mano remoto: ponlo a 1 en las variables del repo para
+          # apagar la escritura sin tocar config/automation.json.
+          MISTER_AUTOMATION_OFF: ${{ vars.MISTER_AUTOMATION_OFF }}
+        run: python src/auto_executor.py --league all
+
+      # Tras actuar, la caja y la plantilla son otras: el payload publicado
+      # quedaría describiendo un estado que ya no existe.
+      - name: Refresh payload of leagues that acted
+        if: ${{ steps.automation.outputs.acted != '' }}
+        continue-on-error: true
+        env:
+          MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
+          MISTER_X_AUTH: ${{ secrets.MISTER_X_AUTH }}
+          MISTER_PHPSESSID: ${{ secrets.MISTER_PHPSESSID }}
+          MISTER_REFRESH_TOKEN: ${{ secrets.MISTER_REFRESH_TOKEN }}
+          MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_API_KEY }}
+        run: |
+          IFS=',' read -ra SLUGS <<< "${{ steps.automation.outputs.acted }}"
+          for slug in "${SLUGS[@]}"; do
+            [ -z "$slug" ] && continue
+            echo "Regenerando $slug tras las operaciones del ciclo"
+            python src/data_engine.py --league "$slug"
+          done
+
       - name: Verify live data (not mock fallback)
         if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         run: |
@@ -185,6 +224,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # leagues/ arrastra el automation_log.json de cada liga: el rastro de
+          # lo ejecutado queda auditable en git junto al snapshot del ciclo.
           git add public/data/latest_data.json public/data/leagues.json public/data/leagues/ || true
           git add cache/rival_finances/ || true
           if git diff --staged --quiet; then

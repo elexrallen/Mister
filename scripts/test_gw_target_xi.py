@@ -101,6 +101,46 @@ def test_coverage_eleven_of_eleven() -> None:
     _assert(cov.get("missing_slots") == [], cov)
 
 
+def test_target_xi_prefers_starters_with_positive_trend() -> None:
+    """El once objetivo no ficha a un crack suplente ni a un titular en caída."""
+    pool = _pool_of_eleven()
+    for p in pool:
+        p["rising"] = True
+        p["delta_5d"] = 0.06
+        p["points_trend"] = "up"
+    bench_star = _player(
+        "bench-star",
+        "FW",
+        xpts=20.0,
+        gw_lineup_prob=15,
+        xpts_p_play=0.15,
+        rising=True,
+        delta_5d=0.20,
+        points_trend="up",
+    )
+    falling_starter = _player(
+        "fall",
+        "FW",
+        xpts=18.0,
+        gw_lineup_prob=95,
+        xpts_p_play=0.95,
+        rising=False,
+        delta_5d=-0.08,
+        points_trend="down",
+        trend="down",
+    )
+    out = build_gw_target_xi(
+        pool + [bench_star, falling_starter],
+        squad=[],
+        me={"team_id": "me"},
+    )
+    ids = {str(r.get("player_id")) for r in (out.get("xi") or [])}
+    _assert("bench-star" not in ids, ids)
+    _assert("fall" not in ids, ids)
+    _assert(out.get("pool_filter") == "starters_up", out.get("pool_filter"))
+    _assert(len(out.get("xi") or []) == 11, out.get("xi"))
+
+
 def test_blank_and_injured_stay_out() -> None:
     pool = _pool_of_eleven()
     pool.append(
@@ -401,6 +441,7 @@ def test_ideal_formations_skips_paid_and_noise() -> None:
 if __name__ == "__main__":
     test_assembles_eleven_from_pool_without_ownership()
     test_coverage_eleven_of_eleven()
+    test_target_xi_prefers_starters_with_positive_trend()
     test_blank_and_injured_stay_out()
     test_matchup_does_not_change_xpts()
     test_home_away_split_needs_three_each()
