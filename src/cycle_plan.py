@@ -16,6 +16,7 @@ from competitive_actions import (
     _is_floor_vm,
     _lineup_pct,
     _money,
+    _recent_minutes,
     appreciation_play_score,
     clause_executable,
     clause_roi_gate,
@@ -42,6 +43,13 @@ FORBIDDEN_ACTIONS = {"wait", "scout", "avoid"}
 # Cláusula Hoy: el salto vs el titular que saldría tiene que ser claro.
 CLAUSE_MIN_XPTS_GAP = 2.5
 CLAUSE_MIN_XPTS_RATIO = 0.25
+# No liquidar a quien rota de verdad: minutos recientes + producción.
+# Mister a veces marca "sit" a un suplente que juega 60' y puntúa.
+SALE_KEEP_MINUTES_L5 = 180.0
+SALE_KEEP_PPG = 4.5
+SALE_KEEP_POINTS = 20.0
+SALE_KEEP_TOP_RATIO = 0.70
+SALE_KEEP_TOP_MIN = 12.0
 
 
 def _f(v: Any) -> float | None:
@@ -356,15 +364,74 @@ def _is_usable_starter(p: dict[str, Any], xi_ids: set[str]) -> bool:
     return lp is not None and lp >= 70
 
 
+def _sale_recent_minutes(p: dict[str, Any]) -> float | None:
+    mins = _recent_minutes(p)
+    if mins is not None:
+        return mins
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    fm = ext.get("fotmob_stats") if isinstance(ext.get("fotmob_stats"), dict) else {}
+    raw = fm.get("minutos_ultimos_5")
+    try:
+        return float(raw) if raw is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _ppg(p: dict[str, Any]) -> float | None:
+    for key in ("avg_ppg", "ff_mister_avg", "mister_avg", "form"):
+        v = _f(p.get(key))
+        if v is not None:
+            return v
+    return None
+
+
+def _points_total(p: dict[str, Any]) -> float | None:
+    return _f(p.get("points") if p.get("points") is not None else p.get("points_total"))
+
+
+def _is_rotation_regular(p: dict[str, Any]) -> bool:
+    """Suplente que juega minutos de verdad y puntúa: no es un parche."""
+    mins = _sale_recent_minutes(p)
+    if mins is None or mins < SALE_KEEP_MINUTES_L5:
+        return False
+    ppg = _ppg(p)
+    if ppg is not None and ppg >= SALE_KEEP_PPG:
+        return True
+    pts = _points_total(p)
+    return pts is not None and pts >= SALE_KEEP_POINTS
+
+
+def _squad_scoring_keepers(squad: list[dict[str, Any]] | None) -> set[str]:
+    """Los que más puntúan de la plantilla: no venderlos por un 'sit' de Mister."""
+    scored: list[tuple[str, float]] = []
+    for p in squad or []:
+        pts = _points_total(p)
+        pid = _pid(p)
+        if not pid or pts is None or pts < SALE_KEEP_TOP_MIN:
+            continue
+        scored.append((pid, pts))
+    if not scored:
+        return set()
+    best = max(pts for _pid, pts in scored)
+    floor = max(SALE_KEEP_TOP_MIN, best * SALE_KEEP_TOP_RATIO)
+    return {pid for pid, pts in scored if pts + 1e-9 >= floor}
+
+
 def _offer_quality_reason(
     player: dict[str, Any],
     xi_ids: set[str],
     pct: float | None,
     *,
     target_owned: set[str] | None = None,
+    keeper_ids: set[str] | None = None,
 ) -> str | None:
-    """Prima sobre VM o fade real. Titular real / once objetivo / keep-riding no se cierran solos."""
-    if _hold_from_sale(player, target_owned=target_owned or set()) or _keep_riding(player):
+    """Prima sobre VM o fade real. Titular / rotación que puntúa / keep-riding no se cierran solos."""
+    if (
+        _hold_from_sale(
+            player, target_owned=target_owned or set(), keeper_ids=keeper_ids
+        )
+        or _keep_riding(player)
+    ):
         return None
     premium = float(getattr(config, "CYCLE_OFFER_PREMIUM_PCT", 1.0) or 1.0)
     if pct is not None and pct > premium + 1e-9:
@@ -392,20 +459,34 @@ def _owned_target_ids(gw_target_xi: dict[str, Any] | None) -> set[str]:
     return ids
 
 
-def _hold_from_sale(p: dict[str, Any], *, target_owned: set[str]) -> bool:
-    """Once objetivo propio o titular real: no listar ni cerrar oferta."""
+def _hold_from_sale(
+    p: dict[str, Any],
+    *,
+    target_owned: set[str],
+    keeper_ids: set[str] | None = None,
+) -> bool:
+    """No listar: once objetivo, titular real, o rotación que juega y puntúa."""
     pid = _pid(p)
     if pid and pid in target_owned:
         return True
-    return _is_usable_starter(p, set())
+    if _is_usable_starter(p, set()):
+        return True
+    if _is_rotation_regular(p):
+        return True
+    return bool(pid and keeper_ids and pid in keeper_ids)
 
 
-def _is_recover_sale(p: dict[str, Any], xi_ids: set[str]) -> bool:
-    """Banquillo vendible para tapar deuda: no titular real, no pieza que aún sube."""
+def _is_recover_sale(
+    p: dict[str, Any],
+    xi_ids: set[str],
+    *,
+    keeper_ids: set[str] | None = None,
+) -> bool:
+    """Banquillo vendible para tapar deuda: no titular, no rotación que puntúa, no flecha."""
     pid = _pid(p)
     if not pid:
         return False
-    if _hold_from_sale(p, target_owned=set()):
+    if _hold_from_sale(p, target_owned=set(), keeper_ids=keeper_ids):
         return False
     if _keep_riding(p):
         return False
@@ -484,11 +565,14 @@ def _recover_pool(
     *,
     xi_ids: set[str],
     skip_ids: set[str],
+    keeper_ids: set[str] | None = None,
 ) -> list[dict[str, Any]]:
     rows = [
         p
         for p in squad
-        if _pid(p) and _pid(p) not in skip_ids and _is_recover_sale(p, xi_ids)
+        if _pid(p)
+        and _pid(p) not in skip_ids
+        and _is_recover_sale(p, xi_ids, keeper_ids=keeper_ids)
     ]
     rows.sort(key=lambda p: (-_list_score(p), -_price(p)))
     return rows
@@ -523,11 +607,17 @@ def _list_score(p: dict[str, Any]) -> float:
     if acc is not None and acc < 0:
         score += 12.0
     lp = _lineup_pct(p)
-    if lp is not None and lp < 45:
-        score += 24.0
-    elif lp is not None and lp < 60:
-        score += 8.0
-    prod = _production(p)
+    mins = _sale_recent_minutes(p)
+    plays_regular = mins is not None and mins >= SALE_KEEP_MINUTES_L5
+    # Mister marca "sit" a suplentes que juegan 60': no sumar "juega poco".
+    if not plays_regular:
+        if lp is not None and lp < 45:
+            score += 24.0
+        elif lp is not None and lp < 60:
+            score += 8.0
+    prod = _ppg(p)
+    if prod is None:
+        prod = _production(p)
     if prod < 3.5:
         score += 16.0
     elif prod < 5.0:
@@ -952,8 +1042,9 @@ def build_cycle_plan(
        scoring (esta jornada si no ha empezado; la siguiente si ya está en curso).
        Aceptar oferta = ya; listar = siguiente ciclo.
        5) Listar todos los banquillos viables (VM que ya no tira), no uno.
-          Estar en el once recomendado no blinda: solo el once objetivo propio
-          y los titulares reales. El sale_limit de la liga es el techo.
+          Estar en el once recomendado no blinda: se conservan el once objetivo
+          propio, titulares reales y rotación que juega minutos y puntúa
+          (Mister a veces marca "sit" a quien entra 60'). El sale_limit es el techo.
     """
     me = me or {}
     squad = list(squad or me.get("squad") or [])
@@ -976,6 +1067,7 @@ def build_cycle_plan(
     xi_ids = xi_owned_ids(recommended_xi)
     target_ids = _reachable_target_ids(gw_target_xi)
     target_owned = _owned_target_ids(gw_target_xi)
+    keeper_ids = _squad_scoring_keepers(squad)
     listed_ids = {str(x) for x in (state.get("listed_ids") or []) if x}
     for p in squad:
         pid = _pid(p)
@@ -1055,7 +1147,9 @@ def build_cycle_plan(
             "pct": pct,
             "extra": extra,
         }
-        reason = _offer_quality_reason(player, xi_ids, pct, target_owned=target_owned)
+        reason = _offer_quality_reason(
+            player, xi_ids, pct, target_owned=target_owned, keeper_ids=keeper_ids
+        )
         if reason == "premium":
             why = (
                 f"El sistema paga {_fmt_money(amount)} vs {_fmt_money(vm)} de VM: "
@@ -1138,10 +1232,15 @@ def build_cycle_plan(
     ):
         for p in squad:
             pid = _pid(p)
-            if pid and pid in listed_ids and pid not in accept_ids and _is_recover_sale(p, xi_ids):
+            if (
+                pid
+                and pid in listed_ids
+                and pid not in accept_ids
+                and _is_recover_sale(p, xi_ids, keeper_ids=keeper_ids)
+            ):
                 listed_timely += _price(p)
     recover_base = _recover_pool(
-        squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids
+        squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids, keeper_ids=keeper_ids
     )
     recover_cap = _recovery_capacity(
         recover_base if settle_new else [],
@@ -1471,7 +1570,7 @@ def build_cycle_plan(
         pid = _pid(p)
         if not pid or pid in listed_ids or pid in accept_ids or pid in recover_ids:
             continue
-        if _hold_from_sale(p, target_owned=target_owned):
+        if _hold_from_sale(p, target_owned=target_owned, keeper_ids=keeper_ids):
             continue
         d5 = _f(p.get("delta_5d"))
         if _keep_riding(p):

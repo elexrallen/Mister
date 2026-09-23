@@ -726,6 +726,99 @@ def test_lists_fading_bench_with_free_slots() -> None:
     _assert(listed[0].get("list_reason") == "fade", listed[0])
 
 
+def test_rotation_scorer_is_not_listed() -> None:
+    """Suplente con minutos y puntos (caso Yalcouyé): no se lista por un sit de Mister."""
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "FW",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 8,
+            "points": 28,
+            "avg_ppg": 5.6,
+        },
+        {
+            "id": "yalc",
+            "name": "M. Yalcouyé",
+            "position": "MF",
+            "price": 2_917_000,
+            "lineup_prob": 0.0,
+            "p_play": 0.18,
+            "signal": "sit",
+            "gw_starter": False,
+            "xpts": 1.4,
+            "points": 37,
+            "avg_ppg": 7.4,
+            "ff_mister_avg": 7.4,
+            "delta_5d": 0.0362,
+            "rising": True,
+            "fotmob_stats": {"minutos_ultimos_5": 300, "goles_ultimos_5": 2},
+        },
+        {
+            "id": "dead",
+            "name": "Parche",
+            "position": "MF",
+            "price": 2_000_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.5,
+            "points": 4,
+            "delta_5d": -0.04,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("M. Yalcouyé" not in listed, listed)
+    _assert("Parche" in listed, listed)
+
+
+def test_top_squad_scorer_is_not_listed() -> None:
+    """El que más puntúa de la plantilla no se vende aunque Mister lo marque sit."""
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "FW",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 8,
+            "points": 20,
+        },
+        {
+            "id": "star",
+            "name": "Máximo",
+            "position": "MF",
+            "price": 3_000_000,
+            "lineup_prob": 0.0,
+            "signal": "sit",
+            "xpts": 1.1,
+            "points": 37,
+            "avg_ppg": 7.4,
+            "delta_5d": 0.02,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("Máximo" not in listed, listed)
+
+
 def test_multiple_fading_benches_all_listed() -> None:
     """Varios banquillos viables: se listan todos, no uno."""
     squad = [
@@ -2037,6 +2130,8 @@ if __name__ == "__main__":
     test_lists_riser_only_when_full_and_market_hotter()
     test_does_not_list_riser_when_full_but_market_not_hotter()
     test_lists_fading_bench_with_free_slots()
+    test_rotation_scorer_is_not_listed()
+    test_top_squad_scorer_is_not_listed()
     test_multiple_fading_benches_all_listed()
     test_lists_fade_even_if_stuffed_in_recommended_xi()
     test_multiple_swaps_when_squad_full()
