@@ -1,5 +1,5 @@
 {
-  "$comment": "Ligas automatizadas en vivo: Premier y Serie A. La Liga del patio (laliga-patio) no se da de alta a propósito. 'enabled' de arriba es el kill switch global. Una liga que no aparezca en 'leagues' nunca se automatiza. MISTER_AUTOMATION_OFF=1 apaga todo sin tocar este fichero. clause_bid está habilitado: /ajax/clause-pay manda id_player + id_uc (plantilla views/ajax/clause-pay.twig). 'accept_offer' y 'sell_to_system' no: el primero tiene endpoint sin sondear, el segundo regala un 20%. Un libre del once objetivo sin id_market se vigila, no se puja.",
+  "$comment": "Ligas automatizadas en vivo: Premier y Serie A. La Liga del patio (laliga-patio) no se da de alta a propósito. 'enabled' de arriba es el kill switch global. Una liga que no aparezca en 'leagues' nunca se automatiza. MISTER_AUTOMATION_OFF=1 apaga todo sin tocar este fichero. clause_bid está habilitado: /ajax/clause-pay manda id_player + id_uc (plantilla views/ajax/clause-pay.twig). 'accept_offer' y 'sell_to_system' no: el primero tiene endpoint sin sondear, el segundo regala un 20%. Un libre del once objetivo sin id_market se vigila, no se puja. Si el mercado tiene varios listados compatibles con el once, se puja por todos (misma línea incluida): los rivales pujan y conviene varios tickets.",
   "enabled": true,
   "dry_run": false,
   "defaults": {
@@ -15,7 +15,7 @@
     "max_single_buy_pct": 0.4,
     "max_clause_pct": 0.3,
     "max_clauses_per_cycle": 1,
-    "max_ops_per_cycle": 6,
+    "max_ops_per_cycle": 8,
     "max_pending_offers": 2,
     "offer_stale_cycles": 2,
     "min_cash_floor": 0,

@@ -371,7 +371,8 @@ AUTOMATION_DEFAULTS: dict = {
     # Fracción máxima en una sola cláusula, aparte por ser irreversible
     "max_clause_pct": 0.30,
     "max_clauses_per_cycle": 1,
-    "max_ops_per_cycle": 6,
+    # 5 pujas del once + cláusula + listados del mismo ciclo
+    "max_ops_per_cycle": 8,
     # Ofertas a rivales vivas a la vez: no son gasto, pero comprometen margen
     "max_pending_offers": 2,
     # Ciclos que puede vivir una oferta a un rival sin respuesta antes de retirarla
@@ -727,7 +728,9 @@ CYCLE_OFFER_PREMIUM_PCT = 1.0
 CYCLE_STRONG_RISE = 0.08
 # Para listar a alguien que aún sube fuerte: el mercado debe superarlo por este margen
 CYCLE_LIST_SWAP_MARGIN = 0.08
-CYCLE_MAX_BIDS = 3
+# Cupo de pujas. El once objetivo puede gastar el cupo entero (misma línea
+# incluida): los rivales pujan y varios tickets suben la chance de llevarse uno.
+CYCLE_MAX_BIDS = 5
 CYCLE_MAX_LISTS = 5
 
 # Harvest del spread CPU (±~5% VM): carril terciario bajo appreciation.

@@ -1162,6 +1162,113 @@ def test_free_target_starter_waits_for_listing() -> None:
     _assert("no tienen listado" in (plan.get("narrative") or ""), plan.get("narrative"))
 
 
+def test_multiple_listed_targets_all_get_bids() -> None:
+    """
+    Varios titulares listados del once objetivo: se puja por todos.
+
+    Misma línea incluida y aunque solo quede una plaza: los rivales pujan,
+    así que varios tickets suben la probabilidad de llevarse al menos uno.
+    Un filler de relleno no come ese cupo.
+    """
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "GK",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 4,
+        },
+    ]
+
+    def _tgt(pid: str, name: str, price: float) -> dict:
+        return {
+            "id": pid,
+            "name": name,
+            "position": "FW",
+            "price": price,
+            "bid": price,
+            "puja_recomendada": price,
+            "on_daily_market": True,
+            "seller": "market",
+            "p_play": 0.85,
+            "signal": "start",
+            "xpts": 8.0,
+            "lineup_prob": 0.88,
+            "rising": True,
+            "delta_5d": 0.05,
+            "budget_fit": "comfortable",
+        }
+
+    market = [
+        _tgt("fw-a", "Delantero A", 2_000_000),
+        _tgt("fw-b", "Delantero B", 2_100_000),
+        _tgt("fw-c", "Delantero C", 2_200_000),
+        {
+            "id": "filler",
+            "name": "Filler",
+            "position": "MF",
+            "price": 1_000_000,
+            "bid": 1_000_000,
+            "puja_recomendada": 1_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.12,
+            "rising": True,
+            "lineup_prob": 0.8,
+            "fills_need": True,
+            "budget_fit": "comfortable",
+        },
+    ]
+    xi_rows = [
+        {
+            "player_id": pid,
+            "name": name,
+            "ownership": "daily_market",
+            "reachable": "daily_market",
+            "xpts": 8.0,
+            "price": price,
+        }
+        for pid, name, price in (
+            ("fw-a", "Delantero A", 2_000_000),
+            ("fw-b", "Delantero B", 2_100_000),
+            ("fw-c", "Delantero C", 2_200_000),
+        )
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": xi_rows,
+            "coverage": {
+                "missing_slots": [
+                    {
+                        "player_id": row["player_id"],
+                        "name": row["name"],
+                        "reachable": "daily_market",
+                        "ownership": "daily_market",
+                    }
+                    for row in xi_rows
+                ],
+            },
+        },
+        league_rules={"max_squad": 2, "sale_limit": 5},
+        max_squad=2,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    names = [m["name"] for m in bids]
+    _assert("Delantero A" in names, names)
+    _assert("Delantero B" in names, names)
+    _assert("Delantero C" in names, names)
+    _assert("Filler" not in names, names)
+    _assert(len(bids) == 3, names)
+    _assert(all(m.get("closes_gw_target") is True for m in bids), bids)
+    _assert("varios tickets" in (plan.get("narrative") or "").lower(), plan.get("narrative"))
+
+
 def test_listed_target_still_bids_without_id_market() -> None:
     """Listado de hoy: el ejecutor hidrata id_market; el plan sí puede pujar."""
     squad = [
@@ -1831,6 +1938,7 @@ if __name__ == "__main__":
     test_reachable_target_gets_bid_priority()
     test_free_target_starter_waits_for_listing()
     test_listed_target_still_bids_without_id_market()
+    test_multiple_listed_targets_all_get_bids()
     test_near_slot_is_not_bid_priority()
     test_debt_bid_allowed_when_closes_target()
     test_flip_does_not_use_debt()

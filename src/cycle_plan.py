@@ -1189,9 +1189,16 @@ def build_cycle_plan(
         free_slots = max(0, cap - squad_n + slots_from_accepts)
         cash_after_accepts = balance + cash_from_accepts
 
-    wanted_bids = min(max_bids, len(bid_cands))
-    if free_slots < wanted_bids:
-        need_n = wanted_bids - free_slots
+    target_cands = [o for _s, o in bid_cands if o.get("closes_gw_target")]
+    filler_cands = [o for _s, o in bid_cands if not o.get("closes_gw_target")]
+    # Una plaza basta para ganar un ticket del once; el resto se sobresuscribe
+    # porque los rivales pujan. Los fillers sí ocupan plaza física.
+    wanted_slots = (1 if target_cands else 0) + min(
+        len(filler_cands), max(0, max_bids - (1 if target_cands else 0))
+    )
+    wanted_slots = min(max_bids, wanted_slots)
+    if free_slots < wanted_slots:
+        need_n = wanted_slots - free_slots
         pool = [
             r
             for r in hold_rows
@@ -1213,16 +1220,25 @@ def build_cycle_plan(
     used_pos: set[str] = set()
     if free_slots > 0:
         for score, o in bid_cands:
-            if len(bids) >= min(max_bids, free_slots):
+            if len(bids) >= max_bids:
                 break
             cost = _money(o.get("bid") or o.get("puja_recomendada") or o.get("price"))
             if spent + cost > spendable + 1:
                 continue
             if not _covers_shortfall(spent + cost):
                 continue
+            is_target = bool(o.get("closes_gw_target"))
             pos = str(o.get("position") or "")
-            if pos and pos in used_pos and len(bids) >= 1:
-                continue
+            # Objetivos del once: misma línea y más tickets que plazas.
+            # Fillers: una por línea y sin pasarse de cupo físico.
+            if not is_target:
+                n_targets = sum(1 for b in bids if b.get("closes_gw_target"))
+                n_fillers = sum(1 for b in bids if not b.get("closes_gw_target"))
+                slots_used = min(n_targets, 1) + n_fillers
+                if slots_used >= free_slots:
+                    continue
+                if pos and pos in used_pos:
+                    continue
             d5 = _f(o.get("delta_5d"))
             why_bits = []
             if o.get("closes_gw_target"):
@@ -1648,6 +1664,12 @@ def _compose_narrative(
             if d:
                 label = f"{label} ({d})"
             bits.append(label)
+        target_n = sum(1 for m in bids if m.get("closes_gw_target"))
+        extra = (
+            " Varios tickets del once objetivo: los rivales pujan y conviene llevarse al menos uno."
+            if target_n >= 2
+            else ""
+        )
         parts.append(
             f"{'Ficha' if fixed else 'Puja por'} {_join_names(bits)}"
             + (
@@ -1655,6 +1677,7 @@ def _compose_narrative(
                 if constraints.get("free_slots_after_accepts")
                 else "."
             )
+            + extra
         )
     if clauses:
         names = _join_names([m.get("name") or "" for m in clauses])

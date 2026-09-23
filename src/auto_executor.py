@@ -161,6 +161,9 @@ class _Budget:
         self.cash_in = 0.0
         self.spent = 0.0
         self.free_slots = max(0, int(free_slots))
+        # Una plaza de salida permite sobresuscribir pujas del once objetivo:
+        # los rivales pujan y no ganaremos todos los tickets.
+        self.slot_available_this_cycle = self.free_slots > 0
         self.floor = _money(settings.get("min_cash_floor"))
         self.cycle_cap = self.usable * _pct(settings, "max_spend_per_cycle_pct", 0.60)
         self.single_cap = self.usable * _pct(settings, "max_single_buy_pct", 0.40)
@@ -170,9 +173,17 @@ class _Budget:
     def cash(self) -> float:
         return self.balance + self.cash_in - self.spent
 
-    def check_buy(self, cost: float, *, is_clause: bool) -> str | None:
+    def check_buy(
+        self,
+        cost: float,
+        *,
+        is_clause: bool,
+        oversubscribe_slot: bool = False,
+    ) -> str | None:
         cost = _money(cost)
-        if self.free_slots <= 0:
+        if self.free_slots <= 0 and not (
+            oversubscribe_slot and self.slot_available_this_cycle
+        ):
             return "plantilla a cupo, no queda plaza"
         if cost > self.single_cap + 1:
             return (
@@ -198,12 +209,14 @@ class _Budget:
 
     def commit_buy(self, cost: float) -> None:
         self.spent += _money(cost)
-        self.free_slots -= 1
+        if self.free_slots > 0:
+            self.free_slots -= 1
 
     def commit_sale(self, amount: float, *, frees_slot: bool = True) -> None:
         self.cash_in += _money(amount)
         if frees_slot:
             self.free_slots += 1
+            self.slot_available_this_cycle = True
 
     def snapshot(self) -> dict[str, Any]:
         return {
@@ -658,7 +671,11 @@ def plan_operations(
                 continue
 
             if kind == KIND_BID:
-                blocked = budget.check_buy(amount, is_clause=False)
+                blocked = budget.check_buy(
+                    amount,
+                    is_clause=False,
+                    oversubscribe_slot=bool(move.get("closes_gw_target")),
+                )
                 if blocked:
                     skip(move, kind, blocked)
                     continue
