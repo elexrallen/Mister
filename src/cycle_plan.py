@@ -22,6 +22,7 @@ from competitive_actions import (
     mister_bid_cap,
     resolve_transfer_wait_hours,
     sells_settle_before_deadline,
+    xi_gap_reserve,
     xi_owned_ids,
 )
 
@@ -981,6 +982,7 @@ def build_cycle_plan(
     bids: list[dict[str, Any]] = []
     spent = 0.0
     used_pos: set[str] = set()
+    closed_gap_ids: set[str] = set()
     if free_slots > 0:
         for score, o in bid_cands:
             if len(bids) >= min(max_bids, free_slots):
@@ -992,6 +994,18 @@ def build_cycle_plan(
                 continue
             pos = str(o.get("position") or "")
             if pos and pos in used_pos and len(bids) >= 1:
+                continue
+            remaining_budget = max(0.0, spendable - spent)
+            reserve_info = xi_gap_reserve(
+                gw_target_xi,
+                market,
+                exclude_position=pos or None,
+                exclude_player_id=_pid(o) or None,
+                closed_player_ids=closed_gap_ids,
+            )
+            reserve = float(reserve_info.get("reserve") or 0)
+            techo = max(0.0, remaining_budget - reserve)
+            if reserve > 0 and cost > techo + 1:
                 continue
             d5 = _f(o.get("delta_5d"))
             why_bits = []
@@ -1010,6 +1024,11 @@ def build_cycle_plan(
                     why_bits.append(
                         f"harvest CPU: listar tras {transfer_wait_h:.0f}h de espera"
                     )
+            if reserve > 0:
+                why_bits.append(
+                    f"techo {_fmt_money(techo)} tras reservar {_fmt_money(reserve)} "
+                    f"para {int(reserve_info.get('holes') or 0)} hueco(s)"
+                )
             why = (
                 f"{'Ficha' if fixed else 'Puja por'} {o.get('name')} "
                 f"({_fmt_money(cost)}"
@@ -1031,9 +1050,12 @@ def build_cycle_plan(
                         and appreciation_play_score(o)[0] > 0
                     )
                 ),
+                "spend_cap": round(techo, 0),
+                "gap_reserve": round(reserve, 0),
             }
             bids.append(_player_ref(o, kind=KIND_BID, why=why, extra=extra))
             spent += cost
+            closed_gap_ids.add(_pid(o))
             if pos:
                 used_pos.add(pos)
         moves.extend(bids)
@@ -1057,8 +1079,25 @@ def build_cycle_plan(
             if not cand:
                 break
             cost = _money(cand.get("clause") or cand.get("bid"))
+            reserve_info = xi_gap_reserve(
+                gw_target_xi,
+                market,
+                exclude_position=_pos(cand) or None,
+                exclude_player_id=_pid(cand) or None,
+                closed_player_ids=closed_gap_ids,
+            )
+            reserve = float(reserve_info.get("reserve") or 0)
+            techo = max(0.0, remaining - reserve)
+            if reserve > 0 and cost > techo + 1:
+                pid = _pid(cand)
+                if not pid or pid in skip_clause:
+                    break
+                skip_clause.add(pid)
+                continue
             if _covers_shortfall(spent + cost):
                 picked = cand
+                picked["_gap_reserve"] = reserve
+                picked["_spend_cap"] = techo
                 break
             pid = _pid(cand)
             if not pid or pid in skip_clause:
@@ -1066,12 +1105,19 @@ def build_cycle_plan(
             skip_clause.add(pid)
         if picked:
             cost = _money(picked.get("clause") or picked.get("bid"))
+            reserve = float(picked.get("_gap_reserve") or 0)
+            techo = float(picked.get("_spend_cap") or remaining)
             why = (
                 f"Cláusula de {picked.get('name')} ({_fmt_money(cost)}): "
                 f"cierra un hueco del once objetivo"
                 + (
                     f" frente a {picked.get('your_name')}"
                     if picked.get("your_name")
+                    else ""
+                )
+                + (
+                    f" · techo {_fmt_money(techo)} tras reservar {_fmt_money(reserve)}"
+                    if reserve > 0
                     else ""
                 )
                 + "."
@@ -1082,11 +1128,14 @@ def build_cycle_plan(
                 "clause": cost,
                 "closes_gw_target": True,
                 "owner_name": picked.get("owner_name") or picked.get("owner_team"),
+                "spend_cap": round(techo, 0),
+                "gap_reserve": round(reserve, 0),
             }
             clause_move = _player_ref(picked, kind=KIND_CLAUSE, why=why, extra=extra)
             clauses.append(clause_move)
             moves.append(clause_move)
             spent += cost
+            closed_gap_ids.add(_pid(picked))
 
     next_targets = [
         o

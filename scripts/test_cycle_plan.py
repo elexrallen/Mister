@@ -1562,6 +1562,116 @@ def test_ongoing_gw_deadline_is_next_jornada() -> None:
     _assert(plan["constraints"]["solvency_target"] == "siguiente", plan["constraints"])
 
 
+def test_gap_reserve_blocks_crack_that_starves_other_hole() -> None:
+    """Con caja justa para crack+chollo, no pujar el crack si vacía el otro hueco."""
+    squad = [
+        {
+            "id": "xi1",
+            "name": "Titular",
+            "position": "FW",
+            "price": 8_000_000,
+            "lineup_prob": 0.9,
+            "xpts": 8,
+        }
+    ]
+    market = [
+        {
+            "id": "df_star",
+            "name": "CrackDF",
+            "position": "DF",
+            "price": 3_500_000,
+            "bid": 3_500_000,
+            "puja_recomendada": 3_500_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.05,
+            "rising": True,
+            "lineup_prob": 0.9,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+            "xpts": 8.0,
+        },
+        {
+            "id": "df_cheap",
+            "name": "CholloDF",
+            "position": "DF",
+            "price": 800_000,
+            "bid": 800_000,
+            "puja_recomendada": 800_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.75,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+            "xpts": 4.0,
+        },
+        {
+            "id": "mf1",
+            "name": "CholloMF",
+            "position": "MF",
+            "price": 1_000_000,
+            "bid": 1_000_000,
+            "puja_recomendada": 1_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.06,
+            "rising": True,
+            "lineup_prob": 0.8,
+            "fills_need": True,
+            "fills_coverage_gap": True,
+            "budget_fit": "comfortable",
+            "xpts": 6.0,
+        },
+    ]
+    gw = {
+        "xi": [
+            {
+                "player_id": "df_star",
+                "ownership": "daily_market",
+                "reachable": "daily_market",
+            }
+        ],
+        "coverage": {
+            "missing_slots": [
+                {
+                    "player_id": "df_star",
+                    "position": "DF",
+                    "reachable": "daily_market",
+                    "near": False,
+                    "xpts": 8.0,
+                    "your_xpts": 1.0,
+                },
+                {
+                    "player_id": "mf1",
+                    "position": "MF",
+                    "reachable": "daily_market",
+                    "near": False,
+                    "xpts": 6.0,
+                    "your_xpts": 1.0,
+                },
+            ]
+        },
+    }
+    plan = build_cycle_plan(
+        me={"balance": 4_000_000, "max_debt": 4_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi=gw,
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+    )
+    bid_names = [m["name"] for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert("CrackDF" not in bid_names, bid_names)
+    _assert(bid_names, bid_names)
+    _assert(any(n in bid_names for n in ("CholloDF", "CholloMF")), bid_names)
+
+
 if __name__ == "__main__":
     test_value_trend_deceleration()
     test_consecutive_up_counts_live_legs()
@@ -1602,4 +1712,5 @@ if __name__ == "__main__":
     test_hoy_clause_when_upgrade_beats_weakest_starter()
     test_listed_starter_does_not_fund_clause_debt()
     test_ongoing_gw_deadline_is_next_jornada()
+    test_gap_reserve_blocks_crack_that_starves_other_hole()
     print("test_cycle_plan: OK")

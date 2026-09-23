@@ -1522,6 +1522,22 @@
             : "Caja diferida"
       }</span>`;
     }
+    if ((a.spend_cap != null || a.gap_reserve != null) && a.crowds_out_gaps) {
+      const cap =
+        a.spend_cap != null ? formatMoney(a.spend_cap) : null;
+      const res =
+        a.gap_reserve != null
+          ? formatMoney(a.gap_reserve)
+          : a.other_gaps_min != null
+            ? formatMoney(a.other_gaps_min)
+            : null;
+      const tip = [cap && `techo ${cap}`, res && `reserva ${res}`]
+        .filter(Boolean)
+        .join(" · ");
+      return `<span class="badge badge-duda" title="${escapeHtml(tip || "Aprieta carencias")}">${
+        tip ? `Techo ${cap || "—"}` : "Aprieta carencias"
+      }</span>`;
+    }
     if (a.leaves_gap_budget) {
       return `<span class="badge badge-mint">Deja caja</span>`;
     }

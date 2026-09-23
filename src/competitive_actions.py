@@ -1873,15 +1873,197 @@ def _coverage_urgency(
     return 1
 
 
+_XI_GAP_REACHABLE = frozenset({"daily_market", "free", "clause"})
+
+
+def _slot_pid(slot: dict[str, Any]) -> str:
+    return str(slot.get("player_id") or slot.get("id") or "").strip()
+
+
+def _slot_delta_xpts(slot: dict[str, Any]) -> float:
+    try:
+        xpts = float(slot.get("xpts") or 0)
+    except (TypeError, ValueError):
+        xpts = 0.0
+    raw_y = slot.get("your_xpts")
+    try:
+        your = float(raw_y) if raw_y is not None else 0.0
+    except (TypeError, ValueError):
+        your = 0.0
+    return max(0.0, xpts - your)
+
+
+def _cheapest_signable_at_pos(
+    opportunities: list[dict[str, Any]] | None,
+    position: str | None,
+    *,
+    used_pids: set[str] | None = None,
+) -> tuple[float | None, str | None]:
+    """Chollo on-market o libre en la posición; evita reutilizar el mismo id."""
+    pos = str(position or "")
+    if not pos:
+        return None, None
+    used = used_pids if used_pids is not None else set()
+    cands: list[tuple[float, str]] = []
+    for o in opportunities or []:
+        if not isinstance(o, dict):
+            continue
+        if str(o.get("position") or "") != pos:
+            continue
+        seller = str(o.get("seller") or "")
+        if not (o.get("on_daily_market") or seller in ("market", "free")):
+            continue
+        pid = str(o.get("id") or o.get("player_id") or "").strip()
+        if pid and pid in used:
+            continue
+        cost = _money(o.get("puja_recomendada") or o.get("price") or o.get("clause"))
+        if cost > 0:
+            cands.append((cost, pid))
+    if not cands:
+        return None, None
+    cands.sort(key=lambda x: (x[0], x[1] or ""))
+    cost, pid = cands[0]
+    if pid and used_pids is not None:
+        used_pids.add(pid)
+    return cost, pid or None
+
+
+def xi_gap_holes(gw_target_xi: dict[str, Any] | None) -> list[dict[str, Any]]:
+    """Huecos reales del once: missing no-near alcanzables hoy."""
+    coverage = (gw_target_xi or {}).get("coverage") or {}
+    holes: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for slot in coverage.get("missing_slots") or []:
+        if not isinstance(slot, dict):
+            continue
+        if slot.get("near"):
+            continue
+        reach = str(slot.get("reachable") or "")
+        if reach not in _XI_GAP_REACHABLE:
+            continue
+        pid = _slot_pid(slot)
+        key = pid or f"{slot.get('position')}:{reach}:{slot.get('name')}"
+        if key in seen:
+            continue
+        seen.add(key)
+        holes.append(slot)
+    holes.sort(key=lambda s: (-_slot_delta_xpts(s), _money(s.get("clause") or s.get("price"))))
+    return holes
+
+
+def xi_gap_reserve(
+    gw_target_xi: dict[str, Any] | None,
+    opportunities: list[dict[str, Any]] | None = None,
+    *,
+    exclude_position: str | None = None,
+    exclude_player_id: str | None = None,
+    closed_player_ids: set[str] | None = None,
+) -> dict[str, Any]:
+    """
+    Suma de chollos mínimos de los otros huecos del XI.
+    Al comprar en una posición se excluye un solo hueco de esa línea (el de mayor ΔxPts);
+    el resto de huecos en la misma posición siguen reservando.
+    """
+    holes = xi_gap_holes(gw_target_xi)
+    excl_pid = str(exclude_player_id or "").strip()
+    excl_pos = str(exclude_position or "")
+    closed = {str(x).strip() for x in (closed_player_ids or set()) if str(x).strip()}
+
+    skip: set[str] = set(closed)
+    if excl_pid:
+        skip.add(excl_pid)
+    elif excl_pos:
+        for h in holes:
+            pid = _slot_pid(h)
+            if str(h.get("position") or "") != excl_pos:
+                continue
+            skip.add(pid or f"pos:{excl_pos}:{h.get('name')}")
+            break
+
+    used_pids: set[str] = set(skip)
+    per_hole: list[dict[str, Any]] = []
+    reserve = 0.0
+    for h in holes:
+        pid = _slot_pid(h)
+        pos = str(h.get("position") or "")
+        key = pid or f"pos:{pos}:{h.get('name')}"
+        if key in skip or (pid and pid in skip):
+            continue
+        reach = str(h.get("reachable") or "")
+        cost: float | None = None
+        source = ""
+        if reach in ("daily_market", "free"):
+            cost, _picked = _cheapest_signable_at_pos(
+                opportunities, pos, used_pids=used_pids
+            )
+            source = "market"
+        if cost is None and reach == "clause":
+            cost = _money(h.get("clause") or h.get("acquisition_cost") or h.get("price"))
+            source = "clause"
+            if cost <= 0:
+                cost = None
+        elif cost is None:
+            clause_c = _money(h.get("clause") or h.get("acquisition_cost"))
+            if clause_c > 0:
+                cost = clause_c
+                source = "clause_fallback"
+        if cost is None or cost <= 0:
+            continue
+        reserve += cost
+        per_hole.append(
+            {
+                "player_id": pid or None,
+                "name": h.get("name"),
+                "position": pos or None,
+                "reachable": reach,
+                "cost": round(cost, 0),
+                "delta_xpts": round(_slot_delta_xpts(h), 2),
+                "source": source,
+            }
+        )
+    return {
+        "reserve": round(reserve, 0),
+        "holes": len(per_hole),
+        "per_hole": per_hole,
+    }
+
+
+def spend_cap_for_buy(
+    balance: float,
+    max_debt: float | None,
+    reserve: float,
+) -> float:
+    """Techo de este fichaje: C (bid_cap Mister) menos reserva de otros huecos."""
+    cap = mister_bid_cap(balance, max_debt)
+    return max(0.0, float(cap) - max(0.0, float(reserve or 0)))
+
+
 def other_gaps_min_cost(
     funding_info: dict[str, Any] | None = None,
     *,
     exclude_position: str | None = None,
+    exclude_player_id: str | None = None,
     diagnosis: dict[str, Any] | None = None,
     structural_needs: list[dict[str, Any]] | None = None,
     opportunities: list[dict[str, Any]] | None = None,
+    gw_target_xi: dict[str, Any] | None = None,
+    closed_player_ids: set[str] | None = None,
 ) -> float:
-    """Chollo on-market de la otra línea needy más urgente. 0 si hoy no hay candidato."""
+    """
+    Reserva de caja para otros huecos: suma de chollos mínimos.
+    Con once objetivo usa missing_slots; si no, posiciones needy estructurales.
+    """
+    coverage = (gw_target_xi or {}).get("coverage") if isinstance(gw_target_xi, dict) else None
+    if isinstance(coverage, dict) and (coverage.get("missing_slots") or []):
+        info = xi_gap_reserve(
+            gw_target_xi,
+            opportunities,
+            exclude_position=exclude_position,
+            exclude_player_id=exclude_player_id,
+            closed_player_ids=closed_player_ids,
+        )
+        return float(info.get("reserve") or 0)
+
     excl = str(exclude_position or "")
     if diagnosis is not None or structural_needs:
         needy = real_needy_positions(diagnosis, structural_needs)
@@ -1889,25 +2071,26 @@ def other_gaps_min_cost(
             needy.discard(excl)
         if not needy:
             return 0.0
-        fills: list[tuple[int, float]] = []
-        market = list(opportunities or [])
-        for pos in needy:
-            costs = [
-                _money(o.get("puja_recomendada") or o.get("price"))
-                for o in market
-                if (o.get("position") or "") == pos
-                and (o.get("on_daily_market") or o.get("seller") == "market")
-            ]
-            costs = [c for c in costs if c > 0]
-            if not costs:
-                continue
-            fills.append(
-                (_coverage_urgency(pos, diagnosis, structural_needs), min(costs))
+        used: set[str] = set()
+        excl_pid = str(exclude_player_id or "").strip()
+        if excl_pid:
+            used.add(excl_pid)
+        total = 0.0
+        # Orden: más urgente primero (critical antes que thin)
+        ordered = sorted(
+            needy,
+            key=lambda p: (
+                _coverage_urgency(p, diagnosis, structural_needs),
+                p,
+            ),
+        )
+        for pos in ordered:
+            cost, _pid = _cheapest_signable_at_pos(
+                opportunities, pos, used_pids=used
             )
-        if not fills:
-            return 0.0
-        best_rank = min(r for r, _ in fills)
-        return float(min(c for r, c in fills if r == best_rank))
+            if cost is not None and cost > 0:
+                total += cost
+        return float(total)
 
     info = funding_info or {}
     skip_needs = {"perfect_buy_daily", "perfect_buy"}
@@ -1918,8 +2101,7 @@ def other_gaps_min_cost(
         and g.get("need") not in skip_needs
         and float(g.get("cost") or 0) > 0
     ]
-    others.sort()
-    return float(others[0]) if others else 0.0
+    return float(sum(others)) if others else 0.0
 
 
 def rival_demand_for_position(

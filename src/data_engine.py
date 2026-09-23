@@ -72,6 +72,7 @@ from competitive_actions import (
     liquidity_balance,
     mister_bid_cap,
     other_gaps_min_cost,
+    spend_cap_for_buy,
     promote_funded_swaps,
     promote_appreciation_plays,
     promote_cpu_spread_harvest,
@@ -1756,6 +1757,7 @@ def build_action_plan(
     max_squad: int | None = None,
     league_rules: dict[str, Any] | None = None,
     recommended_xi: dict[str, Any] | None = None,
+    gw_target_xi: dict[str, Any] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Fuente de verdad diaria:
@@ -1945,16 +1947,21 @@ def build_action_plan(
         ceiling_txt = float(fin.get("bid_cap") or max_debt or 0)
 
         pos = o.get("position")
+        cand_pid = str(o.get("id") or o.get("player_id") or "").strip()
         other_min = other_gaps_min_cost(
             funding,
             exclude_position=pos,
+            exclude_player_id=cand_pid or None,
             diagnosis=cov_diag,
             structural_needs=structural_needs,
             opportunities=opportunities,
+            gw_target_xi=gw_target_xi,
         )
+        techo_este = spend_cap_for_buy(balance, max_debt, other_min)
         residual = balance - cost if cost <= balance else -1.0
-        crowds_out = residual >= 0 and other_min > 0 and residual < other_min
-        leaves_budget = residual >= 0 and other_min > 0 and residual >= other_min
+        # Techo duro = bid_cap − reserva de otros huecos (no solo caja ≥ 0).
+        crowds_out = other_min > 0 and cost > techo_este + 1
+        leaves_budget = other_min > 0 and cost <= techo_este + 1
         if crowds_out and bf == "comfortable":
             bf = "tight"
         elif crowds_out and bf == "tight":
@@ -2331,8 +2338,8 @@ def build_action_plan(
                     )
                 elif crowds_out:
                     why_parts.append(
-                        f"tras fichar quedaría poco margen para {gap_pos_labels} "
-                        f"(residual {max(0, residual):,.0f} € vs ~{other_min:,.0f} €)"
+                        f"techo ~{techo_este:,.0f} € "
+                        f"(reservados {other_min:,.0f} € para {gap_pos_labels})"
                     )
                 elif debt_risk:
                     why_parts.append(
@@ -2362,7 +2369,8 @@ def build_action_plan(
             why_parts.append("deja caja para reforzar el resto de carencias")
         elif crowds_out and not buy_now:
             why_parts.append(
-                f"prioriza otras carencias: residual {max(0, residual):,.0f} € < ~{other_min:,.0f} €"
+                f"prioriza otras carencias: techo ~{techo_este:,.0f} € "
+                f"(reservados {other_min:,.0f} €)"
             )
 
         prio = o.get("priority_score")
@@ -2406,6 +2414,8 @@ def build_action_plan(
             "leaves_gap_budget": leaves_budget,
             "residual_budget": residual if residual >= 0 else None,
             "other_gaps_min": other_min,
+            "gap_reserve": other_min,
+            "spend_cap": round(techo_este, 0),
             "funding_target": funding.get("funding_target"),
             "funding_shortfall": funding.get("funding_shortfall"),
             "cost": cost,
@@ -3869,6 +3879,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         max_squad=config.league_max_squad(league_cfg),
         league_rules=league_rules,
         recommended_xi=recommended_xi,
+        gw_target_xi=gw_target_xi,
     )
 
     # Recursos visuales oficiales. El índice del pool completa team_id/escudo

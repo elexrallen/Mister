@@ -11,6 +11,8 @@ sys.path.insert(0, str(ROOT / "src"))
 from competitive_actions import (  # noqa: E402
     estimate_gap_funding,
     other_gaps_min_cost,
+    spend_cap_for_buy,
+    xi_gap_reserve,
 )
 from data_engine import build_action_plan  # noqa: E402
 from target_board import funding_plan_from_board  # noqa: E402
@@ -85,6 +87,166 @@ def test_other_min_uses_cheapest_on_market_for_thin_fw() -> None:
         ],
     )
     _assert(cost == 1_000_000, cost)
+
+
+def test_other_min_sums_all_other_needy_lines() -> None:
+    """Reserva = suma de chollos de todas las otras líneas needy, no solo una."""
+    cost = other_gaps_min_cost(
+        {},
+        exclude_position="DF",
+        diagnosis={
+            "by_position": {
+                "FW": {"coverage": "thin"},
+                "MF": {"coverage": "critical"},
+                "DF": {"coverage": "thin"},
+            }
+        },
+        structural_needs=[
+            {"position": "FW", "priority": "Alta"},
+            {"position": "MF", "priority": "Alta"},
+        ],
+        opportunities=[
+            {"id": "fw1", "position": "FW", "on_daily_market": True, "price": 1_000_000},
+            {"id": "mf1", "position": "MF", "on_daily_market": True, "price": 2_000_000},
+            {"id": "df1", "position": "DF", "on_daily_market": True, "price": 9_000_000},
+        ],
+    )
+    _assert(cost == 3_000_000, cost)
+
+
+def test_xi_gap_reserve_sums_other_missing_slots() -> None:
+    gw = {
+        "coverage": {
+            "missing_slots": [
+                {
+                    "player_id": "df_star",
+                    "name": "Crack DF",
+                    "position": "DF",
+                    "reachable": "daily_market",
+                    "near": False,
+                    "xpts": 8.0,
+                    "your_xpts": 1.0,
+                },
+                {
+                    "player_id": "mf_hole",
+                    "name": "Hueco MF",
+                    "position": "MF",
+                    "reachable": "daily_market",
+                    "near": False,
+                    "xpts": 6.0,
+                    "your_xpts": 2.0,
+                },
+                {
+                    "player_id": "fw_clause",
+                    "name": "FW cláusula",
+                    "position": "FW",
+                    "reachable": "clause",
+                    "near": False,
+                    "xpts": 7.0,
+                    "your_xpts": 1.0,
+                    "clause": 1_500_000,
+                },
+            ]
+        }
+    }
+    opps = [
+        {"id": "df_star", "position": "DF", "on_daily_market": True, "price": 3_500_000},
+        {"id": "df_cheap", "position": "DF", "on_daily_market": True, "price": 800_000},
+        {"id": "mf_hole", "position": "MF", "on_daily_market": True, "price": 1_000_000},
+    ]
+    info = xi_gap_reserve(gw, opps, exclude_player_id="df_star", exclude_position="DF")
+    # Excluye el hueco DF (df_star); reserva MF mercado + FW cláusula
+    _assert(info["reserve"] == 2_500_000, info)
+    _assert(info["holes"] == 2, info)
+    cap = spend_cap_for_buy(4_000_000, 4_000_000, info["reserve"])
+    _assert(cap == 1_500_000, cap)
+    via_wrapper = other_gaps_min_cost(
+        {},
+        exclude_position="DF",
+        exclude_player_id="df_star",
+        opportunities=opps,
+        gw_target_xi=gw,
+    )
+    _assert(via_wrapper == 2_500_000, via_wrapper)
+
+
+def test_action_plan_crowds_out_when_techo_eaten() -> None:
+    """Crack DF que deja sin chollo al otro hueco → no buy_now."""
+    me = {"balance": 4_000_000, "max_debt": 4_000_000, "squad": [], "rank": 8}
+    diagnosis = {
+        "alerts": [],
+        "by_position": {
+            "DF": {"coverage": "thin"},
+            "MF": {"coverage": "thin"},
+        },
+    }
+    opps = [
+        {
+            **_opp("df_star", "CrackDF", "DF", 3_500_000),
+            "priority_score": 200,
+            "lineup_prob": 0.9,
+            "xpts": 8.0,
+        },
+        _opp("mf1", "CholloMF", "MF", 1_000_000),
+    ]
+    gw = {
+        "coverage": {
+            "missing_slots": [
+                {
+                    "player_id": "df_star",
+                    "position": "DF",
+                    "reachable": "daily_market",
+                    "near": False,
+                    "xpts": 8.0,
+                    "your_xpts": 1.0,
+                },
+                {
+                    "player_id": "mf1",
+                    "position": "MF",
+                    "reachable": "daily_market",
+                    "near": False,
+                    "xpts": 6.0,
+                    "your_xpts": 1.0,
+                },
+            ]
+        }
+    }
+    plan, _pkg = build_action_plan(
+        me,
+        diagnosis,
+        opps,
+        [],
+        target_board={
+            "primary_targets": [],
+            "patch_policy": {"allow": False, "max_spend": 2_500_000},
+            "moves": {"buy": []},
+            "cash_reserved": 0,
+        },
+        funding_info={
+            "cash_reserved": 0,
+            "primary_targets": [],
+            "funding_target": 0,
+            "gap_costs": [],
+        },
+        market_mode="fixed",
+        diagnostico_plantilla={
+            "structural_needs": [
+                {"position": "DF", "priority": "Alta"},
+                {"position": "MF", "priority": "Alta"},
+            ],
+            "lineas": diagnosis["by_position"],
+        },
+        gw_target_xi=gw,
+    )
+    by_name = {a.get("name"): a for a in plan}
+    crack = by_name.get("CrackDF") or {}
+    chollo = by_name.get("CholloMF") or {}
+    _assert(crack.get("crowds_out_gaps") is True, crack)
+    _assert(crack.get("action") != "buy_now", crack)
+    _assert("techo" in (crack.get("why") or "").lower(), crack)
+    _assert(chollo.get("action") == "buy_now", chollo)
+    _assert(float(crack.get("spend_cap") or 0) == 3_000_000, crack)
+    _assert(float(crack.get("gap_reserve") or 0) == 1_000_000, crack)
 
 
 def test_other_min_zero_when_thin_has_no_listing() -> None:
@@ -301,6 +463,9 @@ if __name__ == "__main__":
     tests = [
         test_other_min_ignores_primary_shopping_list,
         test_other_min_uses_cheapest_on_market_for_thin_fw,
+        test_other_min_sums_all_other_needy_lines,
+        test_xi_gap_reserve_sums_other_missing_slots,
+        test_action_plan_crowds_out_when_techo_eaten,
         test_other_min_zero_when_thin_has_no_listing,
         test_thin_fw_without_listing_does_not_block_df,
         test_patch_policy_does_not_block_daily_buys,
