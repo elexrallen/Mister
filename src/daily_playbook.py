@@ -598,19 +598,25 @@ def build_daily_playbook(
         )
 
     # --- Estructura de plantilla ---
+    # Tándem / profundidad GK con titular usable no es carencia estructural:
+    # el once ya tiene portero; es optimización, no hueco duro.
+    soft_gk_needs = frozenset({"gk_tandem", "depth_gk", "gk_no_tandem"})
     needs = [
         n
         for n in (diag.get("structural_needs") or [])
-        if isinstance(n, dict) and n.get("need") != "xi_starter"
+        if isinstance(n, dict)
+        and n.get("need") != "xi_starter"
+        and str(n.get("need") or "") not in soft_gk_needs
     ]
-    if needs and phase in ("ventana_compra", "post_jornada", "pretemporada"):
-        first = needs[0] if isinstance(needs[0], dict) else {}
+    alta = [n for n in needs if n.get("priority") == "Alta"]
+    pick = alta[0] if alta else (needs[0] if needs else None)
+    if pick and phase in ("ventana_compra", "post_jornada", "pretemporada"):
         add(
             "carencia",
-            f"Carencia estructural: {first.get('position') or '?'}",
-            f"{first.get('need') or 'refuerzo'} pendiente. Resolverla ahora sale más barato "
+            f"Carencia estructural: {pick.get('position') or '?'}",
+            f"{pick.get('need') or 'refuerzo'} pendiente. Resolverla ahora sale más barato "
             "que hacerlo con la jornada encima.",
-            priority=str(first.get("priority") or "Media"),
+            priority=str(pick.get("priority") or "Media"),
         )
 
     order = {"Alta": 0, "Media": 1, "Baja": 2}

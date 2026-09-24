@@ -2069,6 +2069,8 @@ def build_target_board(
         finance=finance,
         k_future=k_future,
         settle_ok=settle_ok,
+        balance=bal,
+        shape=dest.get("shape") if isinstance(dest.get("shape"), dict) else None,
     )
     bid_cap = mister_bid_cap(bal, max_debt)
     peak = float(finance.get("peak") or 0)

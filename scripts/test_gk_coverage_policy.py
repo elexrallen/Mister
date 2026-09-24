@@ -12,11 +12,12 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from competitive_actions import is_key_market_candidate, resolve_hours_to_jornada  # noqa: E402
+from daily_playbook import build_daily_playbook  # noqa: E402
 from scrapers.ff_matchday import (  # noqa: E402
     _both_clubs_in_league,
     _is_amistoso_context,
 )
-from squad_analyzer import assess_market_coverage  # noqa: E402
+from squad_analyzer import _analyze_gk, assess_market_coverage  # noqa: E402
 
 
 def _diag_with_starter() -> dict:
@@ -204,6 +205,100 @@ def test_league_club_filter() -> None:
     assert not _both_clubs_in_league("arsenal", "fiorentina", "premier")
 
 
+def test_starter_gk_tandem_is_not_alta() -> None:
+    """Con portero titular, el tándem es nice-to-have — no carencia estructural Alta."""
+    players = [
+        {
+            "id": "1",
+            "name": "C. Kelleher",
+            "position": "GK",
+            "team": "Brentford",
+            "team_id": "619",
+            "lineup_prob": 1.0,
+            "price": 10_000_000,
+        },
+        {
+            "id": "2",
+            "name": "M. Zetterer",
+            "position": "GK",
+            "team": "Leeds",
+            "team_id": "502",
+            "lineup_prob": 0.0,
+            "price": 169_000,
+        },
+    ]
+    _line, _tips, needs = _analyze_gk(players)
+    tandem = [n for n in needs if n.get("need") == "gk_tandem"]
+    assert tandem, needs
+    assert tandem[0].get("priority") == "Media", tandem[0]
+
+
+def test_playbook_skips_soft_gk_as_structural() -> None:
+    """Si hay titular, no anunciar 'Carencia estructural: GK' por tándem/profundidad."""
+    pb = build_daily_playbook(
+        hours_to_jornada=200.0,
+        competition_phase="active",
+        action_plan=[],
+        recommended_xi={"summary": {"complete": True, "xi_count": 11, "xi_target": 11}},
+        diagnostico={
+            "bootstrap_xi": {"active": False},
+            "lineas": {
+                "GK": {"starters_real": 1, "coverage": "thin", "status": "warning"}
+            },
+            "structural_needs": [
+                {
+                    "need": "gk_tandem",
+                    "position": "GK",
+                    "priority": "Media",
+                    "reason": "Completar tándem",
+                },
+                {
+                    "need": "depth_gk",
+                    "position": "GK",
+                    "priority": "Media",
+                    "reason": "Profundidad GK",
+                },
+                {
+                    "need": "df_starter",
+                    "position": "DF",
+                    "priority": "Alta",
+                    "reason": "Faltan titulares en defensa",
+                },
+            ],
+        },
+        me={"balance": 5_000_000},
+        league_rules={},
+    )
+    carencia = [c for c in pb["checklist"] if c.get("id") == "carencia"]
+    assert carencia, pb["checklist"]
+    assert "DF" in carencia[0]["title"], carencia[0]
+    assert "GK" not in carencia[0]["title"], carencia[0]
+
+
+def test_playbook_no_structural_when_only_soft_gk() -> None:
+    pb = build_daily_playbook(
+        hours_to_jornada=200.0,
+        competition_phase="active",
+        action_plan=[],
+        recommended_xi={"summary": {"complete": True, "xi_count": 11, "xi_target": 11}},
+        diagnostico={
+            "bootstrap_xi": {"active": False},
+            "structural_needs": [
+                {
+                    "need": "gk_tandem",
+                    "position": "GK",
+                    "priority": "Media",
+                    "reason": "Completar tándem",
+                }
+            ],
+        },
+        me={"balance": 5_000_000},
+        league_rules={},
+    )
+    ids = {c["id"] for c in pb["checklist"]}
+    assert "carencia" not in ids, pb["checklist"]
+
+
 def main() -> None:
     tests = [
         test_roman_not_gap,
@@ -212,6 +307,9 @@ def main() -> None:
         test_no_starter_any_gk_fills,
         test_hours_ignores_friendly_before_season_start,
         test_league_club_filter,
+        test_starter_gk_tandem_is_not_alta,
+        test_playbook_skips_soft_gk_as_structural,
+        test_playbook_no_structural_when_only_soft_gk,
     ]
     failed = 0
     for fn in tests:

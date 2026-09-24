@@ -814,8 +814,8 @@ def _is_reliable_starter(p: dict[str, Any]) -> bool:
     """Titular real (alineación ≥70%). Ignora el once fantasy de Mister."""
     if _ext_avail(p) in ("injured", "suspended") or p.get("injury"):
         return False
-    lineup = _lineup_pct(p)
-    return lineup is not None and lineup >= 70
+    lineup = _canonical_lineup_pct(p)
+    return lineup is not None and lineup >= 70.0 - 1e-9
 
 
 def _as_play_frac(raw: Any) -> float | None:
@@ -831,10 +831,48 @@ def _as_play_frac(raw: Any) -> float | None:
     return max(0.0, min(1.0, v))
 
 
+def _canonical_lineup_pct(p: dict[str, Any] | None) -> float | None:
+    """
+    Alineación en escala 0–100.
+
+    Acepta fracción (0.85), porcentaje (85) o el doble-escalado que deja
+    `_lineup_pct` cuando `lineup_prob` ya venía en 0–100 (8500 → 85).
+    """
+    if not p:
+        return None
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    raw = None
+    if ext.get("lineup_prob_ext") is not None:
+        raw = ext.get("lineup_prob_ext")
+    elif p.get("lineup_prob") is not None:
+        raw = p.get("lineup_prob")
+    if raw is None:
+        return None
+    try:
+        v = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if v < 0:
+        return None
+    # Ya en 0–100
+    if 1.5 < v <= 100.0:
+        return v
+    # Fracción 0–1
+    if v <= 1.5:
+        return v * 100.0
+    # Doble escalado típico: percent * 100 (p.ej. 500 = 5%, 9000 = 90%)
+    if v <= 10_000:
+        return v / 100.0
+    return None
+
+
 def is_xi_quality_starter(p: dict[str, Any] | None) -> bool:
     """
     Titular que puede puntuar en el once: no lesionado/out/blank y
     señal de alineación ≥70% (jornada, ficha o xPts).
+
+    Si la LP conocida es <70%, gana a gw_starter / signal=start (suplente
+    real no se disfraza de titular).
     """
     if not p:
         return False
@@ -843,11 +881,18 @@ def is_xi_quality_starter(p: dict[str, Any] | None) -> bool:
         return False
     if p.get("gw_out") or ext.get("gw_out") or p.get("gw_blank") or ext.get("gw_blank"):
         return False
-    if p.get("gw_starter") or ext.get("gw_starter"):
-        return True
+
+    known_lp = _canonical_lineup_pct(p)
+    if known_lp is not None and known_lp < 70.0 - 1e-9:
+        return False
     gw = _as_play_frac(
         p.get("gw_lineup_prob") if p.get("gw_lineup_prob") is not None else ext.get("gw_lineup_prob")
     )
+    if gw is not None and gw < 0.70 - 1e-9:
+        return False
+
+    if p.get("gw_starter") or ext.get("gw_starter"):
+        return True
     if gw is not None and gw >= 0.70:
         return True
     p_play = _as_play_frac(

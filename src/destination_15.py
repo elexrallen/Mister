@@ -12,6 +12,7 @@ import config
 from competitive_actions import (
     build_recommended_gw_xi,
     clause_premium_ratio,
+    is_xi_quality_starter,
     mister_bid_cap,
     sells_settle_before_deadline,
 )
@@ -272,8 +273,23 @@ def swap_wealth_ok(
     if is_clause:
         if not _clause_upgrade_is_material(week_c, week_i):
             return False
+        # Hueco vacío en el XI: igual rechazar spike/alquiler vs la línea owned.
+        if inc is None:
+            same = [p for p in xi_now if _pos(p) == _pos(cand)]
+            if same:
+                weak = min(same, key=_xpts)
+                if week_c > _xpts(weak) and typical_week_xpts(cand) <= typical_week_xpts(weak) + 1e-9:
+                    return False
+                if typical_week_xpts(cand) + 1e-9 < typical_week_xpts(weak):
+                    return False
     elif displaces_owned and gap + 1e-9 < MARKET_STARTER_MIN_GAP:
         return False
+    elif not is_clause and inc is None:
+        same = [p for p in xi_now if _pos(p) == _pos(cand)]
+        if same:
+            weak = min(same, key=_xpts)
+            if week_c - _xpts(weak) + 1e-9 < MARKET_STARTER_MIN_GAP:
+                return False
 
     if inc is not None and (is_clause or _ask_over_vm(cand)):
         if week_c > _xpts(inc) and typical_week_xpts(cand) <= typical_week_xpts(inc) + 1e-9:
@@ -482,6 +498,127 @@ def _xi_complete(assembled: dict[str, Any], shape: dict[str, int]) -> bool:
     return _xi_positions_fill(assembled.get("xi") or [], shape)
 
 
+def _starter_probe(p: dict[str, Any] | None) -> dict[str, Any]:
+    """Ficha usable por is_xi_quality_starter (raw normalizado o fila de XI)."""
+    if not p:
+        return {}
+    raw = p.get("raw") if isinstance(p.get("raw"), dict) else None
+    if raw:
+        merged = dict(raw)
+        for key in (
+            "lineup_prob",
+            "gw_starter",
+            "gw_lineup_prob",
+            "xpts_p_play",
+            "p_play",
+            "signal",
+            "external",
+            "injury",
+            "gw_out",
+            "gw_blank",
+        ):
+            if p.get(key) is not None and merged.get(key) is None:
+                merged[key] = p.get(key)
+        return merged
+    return p
+
+
+def _is_quality_starter_row(p: dict[str, Any] | None) -> bool:
+    return is_xi_quality_starter(_starter_probe(p))
+
+
+def _xi_starters_filled(xi_rows: list[dict[str, Any]], shape: dict[str, int]) -> int:
+    """Titulares reales contados hasta el cupo de cada línea del once."""
+    filled = {pos: 0 for pos in ("GK", "DF", "MF", "FW")}
+    for row in xi_rows or []:
+        if not _is_quality_starter_row(row):
+            continue
+        pos = _pos(row)
+        cap = int(shape.get(pos) or 0)
+        if filled.get(pos, 0) < cap:
+            filled[pos] = filled.get(pos, 0) + 1
+    return int(sum(filled.values()))
+
+
+def _xi_starters_complete(xi_rows: list[dict[str, Any]], shape: dict[str, int]) -> bool:
+    need = sum(int(shape.get(pos) or 0) for pos in ("GK", "DF", "MF", "FW"))
+    if need <= 0:
+        return False
+    return _xi_starters_filled(xi_rows, shape) >= need
+
+
+def _starter_gaps_by_pos(
+    xi_rows: list[dict[str, Any]], shape: dict[str, int]
+) -> dict[str, int]:
+    filled = {pos: 0 for pos in ("GK", "DF", "MF", "FW")}
+    for row in xi_rows or []:
+        if not _is_quality_starter_row(row):
+            continue
+        pos = _pos(row)
+        cap = int(shape.get(pos) or 0)
+        if filled.get(pos, 0) < cap:
+            filled[pos] = filled.get(pos, 0) + 1
+    return {
+        pos: max(0, int(shape.get(pos) or 0) - filled.get(pos, 0))
+        for pos in ("GK", "DF", "MF", "FW")
+    }
+
+
+def _gap_fill_reserve(
+    xi_rows: list[dict[str, Any]],
+    shape: dict[str, int],
+    *,
+    reachable: list[dict[str, Any]],
+    owned_ids: set[str],
+    fill_cand: dict[str, Any] | None = None,
+) -> float:
+    """
+    Coste de los titulares más baratos que aún hacen falta tras (opcionalmente)
+    fichar fill_cand. Sin candidato alcanzable para un hueco, no bloquea (0).
+    """
+    gaps = _starter_gaps_by_pos(xi_rows, shape)
+    skip_id = _pid(fill_cand) if fill_cand else ""
+    if fill_cand and _is_quality_starter_row(fill_cand):
+        pos = _pos(fill_cand)
+        if gaps.get(pos, 0) > 0:
+            gaps[pos] = gaps[pos] - 1
+    used: set[str] = {skip_id} if skip_id else set()
+    reserve = 0.0
+    for pos, n in gaps.items():
+        if n <= 0:
+            continue
+        cands = sorted(
+            [
+                p
+                for p in reachable
+                if _pid(p)
+                and _pid(p) not in owned_ids
+                and _pid(p) not in used
+                and _pos(p) == pos
+                and p.get("reach") in ("market", "clause")
+                and _is_quality_starter_row(p)
+            ],
+            key=buy_cost,
+        )
+        for i in range(n):
+            if i >= len(cands):
+                break
+            reserve += buy_cost(cands[i])
+            used.add(_pid(cands[i]))
+    return reserve
+
+
+def _finance_leftover(
+    fin: dict[str, Any],
+    *,
+    balance: float,
+    settle_ok: bool,
+) -> float:
+    cost = _money(fin.get("cost"))
+    proceeds = _money(fin.get("proceeds")) if settle_ok else 0.0
+    return float(balance or 0) + proceeds - cost
+
+
 def _xi_xpts_total(assembled: dict[str, Any]) -> float:
     summary = assembled.get("summary") or {}
     raw = _f(summary.get("xpts_total"))
@@ -588,10 +725,15 @@ def _pack_key(
     shape: dict[str, int],
     finance: dict[str, Any],
 ) -> tuple:
-    complete = 1 if _xi_positions_fill(xi_rows, shape) else 0
+    starters_n = _xi_starters_filled(xi_rows, shape)
+    need = sum(int(shape.get(pos) or 0) for pos in ("GK", "DF", "MF", "FW"))
+    starters_complete = 1 if need > 0 and starters_n >= need else 0
+    bodies_complete = 1 if _xi_positions_fill(xi_rows, shape) else 0
     xpts = sum(_xpts(r) for r in xi_rows)
     return (
-        complete,
+        starters_complete,
+        starters_n,
+        bodies_complete,
         round(xpts, 3),
         -len(flex),
         len(bench_rows),
@@ -706,11 +848,22 @@ def assemble_destination(
         pool: list[dict[str, Any]] = [owned_by_id[i] for i in pool_ids if i in owned_by_id]
         complete0 = _xi_complete(assembled0, shape)
         skipped_pos: set[str] = set()
+        fills_gap_by_id: dict[str, bool] = {}
 
         cands = [p for p in reachable if _pid(p) not in owned_ids]
-        cands.sort(key=lambda x: (-_xpts(x), buy_cost(x)))
+        # Huecos de titular primero (barato), luego upgrades por xPts.
+        cands.sort(
+            key=lambda x: (
+                0 if _is_quality_starter_row(x) else 1,
+                -_xpts(x),
+                buy_cost(x),
+            )
+        )
         for cand in cands:
             pos = _pos(cand)
+            if not _is_quality_starter_row(cand):
+                # Solo se ficha titular real al destino; keeps propios no pasan por aquí.
+                continue
             ev = _ev_wait(pos, watch, p_appear, k_future)
             bar = _xpts_bar(pos, gw_target_xi)
             xi_now, _b, ass_now, _sh = assemble_named(
@@ -720,14 +873,16 @@ def assemble_destination(
                 captain_rule=captain_rule,
             )
             complete_now = _xi_complete(ass_now, shape)
+            starters_now = _xi_starters_filled(xi_now, shape)
+            starters_done = _xi_starters_complete(xi_now, shape)
             if _should_skip_market(
                 cand,
-                xi_complete=complete_now,
+                xi_complete=complete_now and starters_done,
                 k_future=k_future,
                 ev_wait=ev,
                 bar=bar,
             ):
-                if complete_now:
+                if complete_now and starters_done:
                     skipped_pos.add(pos)
                 continue
             trial_pool = list(pool) + [cand]
@@ -743,11 +898,24 @@ def assemble_destination(
             fin = _finance(named)
             if not fin.get("ok"):
                 continue
+            starters_new = _xi_starters_filled(t_xi, t_shape)
+            fills_gap = starters_new > starters_now
+            if not starters_done and not fills_gap:
+                # Con huecos de titular, no gastar en upgrade que no tapa.
+                continue
+            gap_res = _gap_fill_reserve(
+                xi_now,
+                shape,
+                reachable=reachable,
+                owned_ids=owned_ids,
+                fill_cand=cand,
+            )
+            leftover = _finance_leftover(fin, balance=balance, settle_ok=settle_ok)
+            if leftover + 1 < gap_res:
+                continue
             old_x = sum(_xpts(r) for r in xi_now)
             new_x = sum(_xpts(r) for r in t_xi)
-            old_c = 1 if complete_now else 0
-            new_c = 1 if _xi_complete(t_ass, t_shape) else 0
-            if (new_c, new_x) <= (old_c, old_x + 0.05):
+            if (starters_new, new_x) <= (starters_now, old_x + 0.05):
                 continue
             if not swap_wealth_ok(
                 cand,
@@ -756,6 +924,8 @@ def assemble_destination(
                 owned_ids=owned_ids,
             ):
                 continue
+            cand["fills_starter_gap"] = bool(fills_gap)
+            fills_gap_by_id[_pid(cand)] = bool(fills_gap)
             pool = named
             skipped_pos.discard(pos)
 
@@ -765,6 +935,11 @@ def assemble_destination(
             matchday=matchday,
             captain_rule=captain_rule,
         )
+        # Reaplicar flags de hueco (assemble_named clona filas).
+        for row in xi_rows + bench_rows:
+            pid = _pid(row)
+            if pid in fills_gap_by_id:
+                row["fills_starter_gap"] = fills_gap_by_id[pid]
         named = xi_rows + bench_rows
         fin = _finance(named)
         if not fin.get("ok"):
@@ -777,14 +952,16 @@ def assemble_destination(
             )
             named = xi_rows + bench_rows
             fin = _finance(named)
+            fills_gap_by_id = {}
 
         flex: list[dict[str, Any]] = []
         ideal = _ideal_for_xi(shape)
         complete = _xi_complete(assembled, shape)
+        starters_ok = _xi_starters_complete(xi_rows, shape)
         counts = {p: 0 for p in ("GK", "DF", "MF", "FW")}
         for r in named:
             counts[_pos(r)] = counts.get(_pos(r), 0) + 1
-        if complete and k_future > 1:
+        if complete and starters_ok and k_future > 1:
             for pos in ("GK", "DF", "MF", "FW"):
                 if pos not in skipped_pos:
                     continue
@@ -812,13 +989,17 @@ def assemble_destination(
 
         xi_ann = _annotate_status(xi_rows, owned_ids)
         bench_ann = _annotate_status(bench_rows, owned_ids)
+        for row in xi_ann + bench_ann:
+            pid = _pid(row)
+            if pid in fills_gap_by_id:
+                row["fills_starter_gap"] = fills_gap_by_id[pid]
         form_label = _aligned_formation(assembled, shape=shape, fallback=display)
         key = _pack_key(xi_ann, bench_ann, flex, shape, fin)
         trial = {
             "formation": form_label,
             "shape": dict(shape),
             "xpts_starters": round(sum(_xpts(r) for r in xi_ann), 2),
-            "complete": bool(complete),
+            "complete": bool(starters_ok),
             "flex": len(flex),
             "cost": fin.get("cost"),
         }
@@ -833,7 +1014,9 @@ def assemble_destination(
                 "flex_slots": flex,
                 "finance": fin,
                 "assembled": assembled,
-                "complete": bool(complete),
+                "complete": bool(starters_ok),
+                "bodies_complete": bool(complete),
+                "starters_filled": _xi_starters_filled(xi_ann, shape),
             }
 
     if not best:
@@ -914,8 +1097,13 @@ def build_path(
     finance: dict[str, Any],
     k_future: int,
     settle_ok: bool,
+    balance: float | None = None,
+    shape: dict[str, int] | None = None,
 ) -> list[dict[str, Any]]:
-    """Lista este ciclo; pujas de mercado ahora; 1 cláusula ahora; el resto después."""
+    """
+    Lista este ciclo; pujas de mercado ahora; cláusulas que tapan hueco primero;
+    upgrades clause solo si el residual cubre el resto de huecos (1/ciclo).
+    """
     path: list[dict[str, Any]] = []
     sells = list(finance.get("sells") or finance.get("new_lists") or [])
     for s in sells:
@@ -935,8 +1123,24 @@ def build_path(
             }
         )
     buys = [p for p in dest_named if _pid(p) and _pid(p) not in owned_ids]
-    market_buys = [p for p in buys if p.get("acquisition") in ("market", "free") or p.get("reach") == "market"]
-    clause_buys = [p for p in buys if p.get("acquisition") == "clause" or p.get("reach") == "clause"]
+    # Nunca path de no titulares.
+    buys = [p for p in buys if _is_quality_starter_row(p)]
+    market_buys = [
+        p
+        for p in buys
+        if p.get("acquisition") in ("market", "free") or p.get("reach") == "market"
+    ]
+    clause_buys = [
+        p
+        for p in buys
+        if p.get("acquisition") == "clause" or p.get("reach") == "clause"
+    ]
+    gap_clauses = [p for p in clause_buys if p.get("fills_starter_gap")]
+    lux_clauses = [p for p in clause_buys if not p.get("fills_starter_gap")]
+    # Huecos primero (barato), luego lujo por xPts.
+    gap_clauses.sort(key=lambda p: (buy_cost(p), -_xpts(p)))
+    lux_clauses.sort(key=lambda p: (-_xpts(p), buy_cost(p)))
+
     for p in market_buys:
         path.append(
             {
@@ -946,11 +1150,50 @@ def build_path(
                 "name": p.get("name"),
                 "position": _pos(p),
                 "amount": buy_cost(p),
-                "why": "En el mercado de hoy · ficha ahora.",
+                "why": (
+                    "En el mercado de hoy · tapa hueco de titular."
+                    if p.get("fills_starter_gap")
+                    else "En el mercado de hoy · ficha ahora."
+                ),
             }
         )
-    for i, p in enumerate(clause_buys):
+
+    bal = float(balance) if balance is not None else 0.0
+    if balance is None:
+        try:
+            bal = max(0.0, _money(finance.get("cost")) - _money(finance.get("peak")))
+        except (TypeError, ValueError):
+            bal = 0.0
+    proceeds = _money(finance.get("proceeds")) if settle_ok else 0.0
+    spent = sum(buy_cost(p) for p in market_buys)
+
+    scheduled_clauses: list[dict[str, Any]] = []
+    for p in gap_clauses:
+        cost = buy_cost(p)
+        rest = sum(
+            buy_cost(c)
+            for c in gap_clauses
+            if _pid(c) != _pid(p) and c not in scheduled_clauses
+        )
+        if bal + proceeds - spent - cost + 1 < rest:
+            continue
+        scheduled_clauses.append(p)
+        spent += cost
+    remaining_gap = sum(
+        buy_cost(c) for c in gap_clauses if c not in scheduled_clauses
+    )
+    for p in lux_clauses:
+        if remaining_gap > 1:
+            break
+        cost = buy_cost(p)
+        if bal + proceeds - spent - cost + 1 < 0:
+            continue
+        scheduled_clauses.append(p)
+        spent += cost
+
+    for i, p in enumerate(scheduled_clauses):
         cycle = 0 if i == 0 else min(i, max(0, int(k_future or 0)))
+        is_gap = bool(p.get("fills_starter_gap"))
         path.append(
             {
                 "kind": "clause",
@@ -960,9 +1203,17 @@ def build_path(
                 "position": _pos(p),
                 "amount": buy_cost(p),
                 "why": (
-                    "Cláusula este ciclo."
+                    (
+                        "Cláusula este ciclo · tapa hueco de titular."
+                        if is_gap
+                        else "Cláusula este ciclo."
+                    )
                     if cycle == 0
-                    else f"Cláusula en el ciclo {cycle + 1} (1 por ciclo)."
+                    else (
+                        f"Cláusula en el ciclo {cycle + 1} (1 por ciclo) · tapa hueco."
+                        if is_gap
+                        else f"Cláusula en el ciclo {cycle + 1} (1 por ciclo)."
+                    )
                 ),
             }
         )

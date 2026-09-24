@@ -397,6 +397,9 @@ def test_build_path_lists_then_bids() -> None:
             "reach": "market",
             "buy_price": 4_000_000,
             "price": 4_000_000,
+            "lineup_prob": 90.0,
+            "gw_starter": True,
+            "xpts_p_play": 0.9,
         }
     ]
     finance = {
@@ -541,6 +544,151 @@ def test_destination_trials_include_334() -> None:
     _assert("3-3-4" in labels, labels)
 
 
+def test_is_xi_quality_starter_lp_beats_signal() -> None:
+    from competitive_actions import is_xi_quality_starter
+
+    _assert(
+        is_xi_quality_starter({"lineup_prob": 0.05, "signal": "start", "gw_starter": True})
+        is False,
+        "LP 5% no es titular",
+    )
+    _assert(
+        is_xi_quality_starter({"lineup_prob": 5.0, "signal": "start"}) is False,
+        "LP 5 (percent) no es titular",
+    )
+    _assert(is_xi_quality_starter({"lineup_prob": 0.85}) is True, "LP 85%")
+    _assert(is_xi_quality_starter({"lineup_prob": 90.0}) is True, "LP 90 percent-scale")
+
+
+def test_clause_low_lp_does_not_enter_destination() -> None:
+    bench = _raw(
+        "bench_clause",
+        "MF",
+        seller="rival",
+        owner_id="77",
+        owner_name="Rival",
+        clause=3_000_000,
+        clause_known=True,
+        xpts=12.0,
+        price=1_500_000,
+        market_value=1_500_000,
+        lineup_prob=0.05,
+        gw_starter=False,
+        gw_lineup_prob=5,
+        xpts_p_play=0.1,
+    )
+    # Quitar señales optimistas del helper
+    bench["gw_starter"] = False
+    bench["gw_lineup_prob"] = 5
+    dest = _assemble(_universe(_owned_15() + [(bench, False)]))
+    _assert("bench_clause" not in _dest_ids(dest), _dest_ids(dest))
+    path = build_path(
+        list(dest.get("xi") or []) + list(dest.get("bench") or []),
+        owned_ids=_owned_ids(),
+        finance=dest.get("finance") or {"ok": True, "sells": []},
+        k_future=3,
+        settle_ok=True,
+        balance=20_000_000,
+        shape=dest.get("shape"),
+    )
+    _assert(
+        not any(m.get("player_id") == "bench_clause" for m in path),
+        path,
+    )
+
+
+def test_budget_prefers_cheap_starters_over_luxury_clause() -> None:
+    """Caja justa: tapa huecos con titulares baratos; no quema todo en una clause cara."""
+    # Plantilla corta: solo GK + 2 DF + 2 MF + 1 FW titulares owned
+    owned: list[tuple[dict, bool]] = [
+        (_raw("gk1", "GK", owned=True, xpts=6.0, price=1_000_000), True),
+        (_raw("d1", "DF", owned=True, xpts=5.5, price=2_000_000), True),
+        (_raw("d2", "DF", owned=True, xpts=5.4, price=2_000_000), True),
+        (_raw("m1", "MF", owned=True, xpts=5.5, price=2_000_000), True),
+        (_raw("m2", "MF", owned=True, xpts=5.4, price=2_000_000), True),
+        (_raw("f1", "FW", owned=True, xpts=5.5, price=2_000_000), True),
+    ]
+    cheap_df = _raw(
+        "cheap_df",
+        "DF",
+        seller="rival",
+        owner_id="1",
+        clause=1_500_000,
+        clause_known=True,
+        xpts=6.2,
+        price=1_200_000,
+        market_value=1_200_000,
+    )
+    cheap_mf = _raw(
+        "cheap_mf",
+        "MF",
+        seller="rival",
+        owner_id="2",
+        clause=1_500_000,
+        clause_known=True,
+        xpts=6.3,
+        price=1_200_000,
+        market_value=1_200_000,
+    )
+    cheap_fw = _raw(
+        "cheap_fw",
+        "FW",
+        seller="market",
+        on_daily_market=True,
+        xpts=6.4,
+        price=1_200_000,
+    )
+    luxury = _raw(
+        "luxury",
+        "MF",
+        seller="rival",
+        owner_id="3",
+        clause=12_000_000,
+        clause_known=True,
+        xpts=9.5,
+        price=8_000_000,
+        market_value=8_000_000,
+    )
+    universe = _universe(
+        owned
+        + [
+            (cheap_df, False),
+            (cheap_mf, False),
+            (cheap_fw, False),
+            (luxury, False),
+        ]
+    )
+    owned_ids = {r[0]["id"] for r in owned}
+    dest = assemble_destination(
+        universe,
+        owned_ids=owned_ids,
+        balance=8_000_000,
+        max_debt=25_000_000,
+        settle_ok=True,
+        sale_remaining=5,
+        listed_ids=set(),
+        k_future=3,
+        clauses_on=True,
+        n_free=10,
+        s_on_board=2,
+    )
+    ids = _dest_ids(dest)
+    _assert("luxury" not in ids, ids)
+    # Debe preferir piezas que cierren el once
+    got_cheap = sum(1 for pid in ("cheap_df", "cheap_mf", "cheap_fw") if pid in ids)
+    _assert(got_cheap >= 2, (ids, dest.get("finance")))
+    path = build_path(
+        list(dest.get("xi") or []) + list(dest.get("bench") or []),
+        owned_ids=owned_ids,
+        finance=dest.get("finance") or {"ok": True, "sells": []},
+        k_future=3,
+        settle_ok=True,
+        balance=8_000_000,
+        shape=dest.get("shape"),
+    )
+    _assert(not any(m.get("player_id") == "luxury" for m in path), path)
+
+
 if __name__ == "__main__":
     test_appear_probability_lottery_not_queue()
     test_classify_reach_ghost_vs_clause_vs_watch()
@@ -556,4 +704,7 @@ if __name__ == "__main__":
     test_rising_starter_not_sold_for_spike()
     test_formation_label_matches_xi_shape()
     test_destination_trials_include_334()
+    test_is_xi_quality_starter_lp_beats_signal()
+    test_clause_low_lp_does_not_enter_destination()
+    test_budget_prefers_cheap_starters_over_luxury_clause()
     print("test_target_board: OK")

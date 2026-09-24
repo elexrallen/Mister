@@ -1398,7 +1398,8 @@ def _analyze_gk(players: list[dict[str, Any]]) -> tuple[dict[str, Any], list[dic
             {
                 "need": "gk_tandem",
                 "position": "GK",
-                "priority": "Alta",
+                # Titular ya cubre la estructura; el tándem es nice-to-have (sanción).
+                "priority": "Media",
                 "same_team_as": starters[0].get("team"),
                 "same_team_id": starters[0].get("team_id"),
                 "max_price": PATCH_MAX_PRICE * 2,
