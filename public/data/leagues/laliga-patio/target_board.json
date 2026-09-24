@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T14:07:29.286728+00:00",
+  "generated_at": "2026-09-24T15:56:51.499085+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1147,13 +1147,13 @@
     "settle_before_ko": true,
     "sale_limit": 5,
     "sale_remaining": 4,
-    "max_debt": 20032288.0,
-    "bid_cap": 20032288.0,
+    "max_debt": 26725899.0,
+    "bid_cap": 26725899.0,
     "max_squad": 25,
-    "n_free": 185,
+    "n_free": 184,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 381.88075488972225
+    "hours_to_jornada": 380.05796242777774
   },
   "finance": {
     "ok": true,

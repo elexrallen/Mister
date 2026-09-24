@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T14:17:31.138041+00:00",
+  "generated_at": "2026-09-24T16:06:24.280993+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -45,10 +45,10 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 40.01,
+      "xpts_starters": 45.01,
       "complete": false,
       "flex": 0,
-      "cost": 11557450.0
+      "cost": 12494500.0
     },
     {
       "formation": "3-5-2",
@@ -84,10 +84,10 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 43.18,
+      "xpts_starters": 47.14,
       "complete": false,
       "flex": 0,
-      "cost": 11109450.0
+      "cost": 12625950.0
     },
     {
       "formation": "5-3-2",
@@ -110,10 +110,10 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 37.69,
+      "xpts_starters": 37.25,
       "complete": false,
       "flex": 0,
-      "cost": 10557450.0
+      "cost": 10499950.0
     }
   ],
   "balance": 15460940.0,
@@ -1008,7 +1008,7 @@
     "n_free": 273,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 382.71592458972225
+    "hours_to_jornada": 380.9014157713889
   },
   "finance": {
     "ok": true,
