@@ -655,6 +655,36 @@ def _sq_player(pid: str, pos: str, *, xpts: float, p_play: float, **extra) -> di
     return p
 
 
+def test_xi_does_not_pad_with_extra_goalkeepers() -> None:
+    """
+    Plantilla corta en DF: el once no inventa titulares metiendo GK2/GK3.
+    En Mister solo cabe 1 portero; el resto va al banquillo y complete=False.
+    """
+    squad = [
+        _sq_player("gk1", "GK", xpts=8.0, p_play=0.9),
+        _sq_player("gk2", "GK", xpts=2.0, p_play=0.2),
+        _sq_player("gk3", "GK", xpts=1.5, p_play=0.2),
+        _sq_player("df1", "DF", xpts=5.0, p_play=0.9),
+        _sq_player("df2", "DF", xpts=4.0, p_play=0.9),
+        _sq_player("mf1", "MF", xpts=6.0, p_play=0.9),
+        _sq_player("mf2", "MF", xpts=5.0, p_play=0.9),
+        _sq_player("mf3", "MF", xpts=4.0, p_play=0.9),
+        _sq_player("fw1", "FW", xpts=7.0, p_play=0.9),
+        _sq_player("fw2", "FW", xpts=6.0, p_play=0.9),
+        _sq_player("fw3", "FW", xpts=5.0, p_play=0.9),
+    ]
+    out = build_recommended_gw_xi(squad, formation="4-3-3")
+    gks = [r for r in out["xi"] if r["position"] == "GK"]
+    assert len(gks) == 1, [r["player_id"] for r in gks]
+    assert gks[0]["player_id"] == "gk1", gks[0]
+    dfs = [r for r in out["xi"] if r["position"] == "DF"]
+    assert len(dfs) == 2, [r["player_id"] for r in dfs]
+    assert out["summary"]["xi_count"] == 9, out["summary"]
+    assert out["summary"]["complete"] is False, out["summary"]
+    bench_ids = {str(r["player_id"]) for r in out["bench"]}
+    assert {"gk2", "gk3"} <= bench_ids, bench_ids
+
+
 def test_xi_declares_risk_instead_of_selling_a_starter() -> None:
     # Un solo portero y con 18% de jugar: el hueco existe pero se avisa
     squad = [_sq_player("gk1", "GK", xpts=1.0, p_play=0.18)]
@@ -915,6 +945,7 @@ def main() -> None:
         test_captain_rule_from_fg_cfg,
         test_captain_rule_admin_and_override,
         test_captain_rule_unknown_defaults_to_off,
+        test_xi_does_not_pad_with_extra_goalkeepers,
         test_xi_declares_risk_instead_of_selling_a_starter,
         test_xi_suggests_formation_that_avoids_the_zero,
         test_xi_without_risk_does_not_suggest_a_switch,

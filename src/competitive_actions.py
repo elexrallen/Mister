@@ -1524,7 +1524,13 @@ def build_recommended_gw_xi(
         }
 
     def _fill(shape_map: dict[str, int]) -> list[tuple[str, dict[str, Any]]]:
-        """Reparte los cupos de una formación: sanos primero, lesionados al final."""
+        """
+        Reparte los cupos de una formación: sanos primero, lesionados al final.
+
+        Solo por posición. Si faltan DF/MF/FW el once queda incompleto: meter
+        un segundo portero (o un MF en hueco de DF) no es alineable en Mister
+        y falsea el diagnóstico de carencias.
+        """
         chosen: list[tuple[str, dict[str, Any]]] = []
         used: set[str] = set()
         for pos in ("GK", "DF", "MF", "FW"):
@@ -1546,25 +1552,6 @@ def build_recommended_gw_xi(
                     continue
                 n += 1
                 used.add(pid)
-                chosen.append((f"{pos}{n}", item))
-        # Plantilla corta en una línea: completar con lo mejor que quede sano
-        target = sum(int(shape_map.get(p, 0)) for p in ("GK", "DF", "MF", "FW"))
-        if len(chosen) < target:
-            leftovers = [
-                x
-                for x in scored
-                if str(x["player"].get("id") or "") not in used and not x["injured"]
-            ]
-            leftovers.sort(key=lambda x: (-x["score"], 0 if x["position"] != "GK" else 1))
-            for item in leftovers:
-                if len(chosen) >= target:
-                    break
-                pid = str(item["player"].get("id") or "")
-                if pid in used:
-                    continue
-                used.add(pid)
-                pos = item["position"]
-                n = sum(1 for slot, _ in chosen if slot.startswith(pos)) + 1
                 chosen.append((f"{pos}{n}", item))
         return chosen
 
