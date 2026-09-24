@@ -905,6 +905,24 @@ def is_xi_quality_starter(p: dict[str, Any] | None) -> bool:
     return _is_starter(p)
 
 
+def is_clause_starter_eligible(p: dict[str, Any] | None) -> bool:
+    """
+    Cláusula solo con alineación conocida ≥70% (LP de ficha o gw_lineup_prob).
+
+    Sin dato de % no se clausula: signal/xPts no bastan (caso Njie/Pobega).
+    """
+    if not p or not is_xi_quality_starter(p):
+        return False
+    lp = _canonical_lineup_pct(p)
+    if lp is not None and lp >= 70.0 - 1e-9:
+        return True
+    ext = p.get("external") if isinstance(p.get("external"), dict) else {}
+    gw = _as_play_frac(
+        p.get("gw_lineup_prob") if p.get("gw_lineup_prob") is not None else ext.get("gw_lineup_prob")
+    )
+    return gw is not None and gw >= 0.70 - 1e-9
+
+
 def _has_starter_signal(p: dict[str, Any] | None) -> bool:
     """Hay dato suficiente para decidir si es titular (no adivinar)."""
     if not p:
@@ -6235,6 +6253,11 @@ def build_rival_upgrade_targets(
             action = "scout"
             urgency = "low"
             why_bits.append(clause_block_why or "cláusula no ejecutable ahora")
+            risk = "low"
+        elif clause_known and not is_clause_starter_eligible(c):
+            action = "scout"
+            urgency = "low"
+            why_bits.append("sin alineación ≥70% conocida — no clausular")
             risk = "low"
         elif clause_known and bf in ("comfortable", "tight", "stretch") and roi_ok:
             action = "clause_bid"

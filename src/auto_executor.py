@@ -33,6 +33,7 @@ from competitive_actions import (
     clause_executable,
     has_negative_trend,
     hours_since_acquired,
+    is_clause_starter_eligible,
     is_xi_quality_starter,
     mister_bid_cap,
     owner_signed_hours_from_profile,
@@ -638,6 +639,13 @@ def plan_operations(
             if kind == KIND_CLAUSE:
                 if clauses_done >= max_clauses:
                     skip(move, kind, f"tope de cláusulas por ciclo ({max_clauses})")
+                    continue
+                if require_starters and not is_clause_starter_eligible(move):
+                    skip(
+                        move,
+                        kind,
+                        "cláusula sin alineación ≥70% conocida",
+                    )
                     continue
                 if (
                     clause_daily_cap

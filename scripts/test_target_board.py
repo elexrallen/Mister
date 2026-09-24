@@ -545,7 +545,7 @@ def test_destination_trials_include_334() -> None:
 
 
 def test_is_xi_quality_starter_lp_beats_signal() -> None:
-    from competitive_actions import is_xi_quality_starter
+    from competitive_actions import is_clause_starter_eligible, is_xi_quality_starter
 
     _assert(
         is_xi_quality_starter({"lineup_prob": 0.05, "signal": "start", "gw_starter": True})
@@ -558,6 +558,52 @@ def test_is_xi_quality_starter_lp_beats_signal() -> None:
     )
     _assert(is_xi_quality_starter({"lineup_prob": 0.85}) is True, "LP 85%")
     _assert(is_xi_quality_starter({"lineup_prob": 90.0}) is True, "LP 90 percent-scale")
+    # Sin LP: xPts/signal pueden pasar calidad, pero no cláusula
+    no_lp = {"signal": "start", "xpts_p_play": 0.9, "gw_starter": True}
+    _assert(is_xi_quality_starter(no_lp) is True, "sin LP aún puede ser quality")
+    _assert(is_clause_starter_eligible(no_lp) is False, "sin LP no clausular")
+    _assert(
+        is_clause_starter_eligible({"lineup_prob": 0.8, "signal": "start"}) is True,
+        "LP 80% sí clausular",
+    )
+    _assert(
+        is_clause_starter_eligible({"gw_lineup_prob": 85, "signal": "start"}) is True,
+        "gw_lp 85% sí clausular",
+    )
+
+
+def test_clause_without_lp_does_not_enter_destination() -> None:
+    """Njie-like: clause con xPts pero sin % de alineación → fuera del 15/path."""
+    ghost_lp = _raw(
+        "no_lp_clause",
+        "FW",
+        seller="rival",
+        owner_id="55",
+        owner_name="Rival",
+        clause=2_000_000,
+        clause_known=True,
+        xpts=8.0,
+        price=1_500_000,
+        market_value=1_500_000,
+        xpts_p_play=0.9,
+    )
+    ghost_lp.pop("lineup_prob", None)
+    ghost_lp.pop("gw_lineup_prob", None)
+    ghost_lp["gw_starter"] = True
+    ghost_lp["lineup_prob"] = None
+    ghost_lp["gw_lineup_prob"] = None
+    dest = _assemble(_universe(_owned_15() + [(ghost_lp, False)]))
+    _assert("no_lp_clause" not in _dest_ids(dest), _dest_ids(dest))
+    path = build_path(
+        list(dest.get("xi") or []) + list(dest.get("bench") or []),
+        owned_ids=_owned_ids(),
+        finance=dest.get("finance") or {"ok": True, "sells": []},
+        k_future=3,
+        settle_ok=True,
+        balance=20_000_000,
+        shape=dest.get("shape"),
+    )
+    _assert(not any(m.get("player_id") == "no_lp_clause" for m in path), path)
 
 
 def test_clause_low_lp_does_not_enter_destination() -> None:
@@ -705,6 +751,7 @@ if __name__ == "__main__":
     test_formation_label_matches_xi_shape()
     test_destination_trials_include_334()
     test_is_xi_quality_starter_lp_beats_signal()
+    test_clause_without_lp_does_not_enter_destination()
     test_clause_low_lp_does_not_enter_destination()
     test_budget_prefers_cheap_starters_over_luxury_clause()
     print("test_target_board: OK")

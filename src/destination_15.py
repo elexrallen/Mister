@@ -12,6 +12,7 @@ import config
 from competitive_actions import (
     build_recommended_gw_xi,
     clause_premium_ratio,
+    is_clause_starter_eligible,
     is_xi_quality_starter,
     mister_bid_cap,
     sells_settle_before_deadline,
@@ -527,6 +528,20 @@ def _is_quality_starter_row(p: dict[str, Any] | None) -> bool:
     return is_xi_quality_starter(_starter_probe(p))
 
 
+def _is_clause_buy_ok(p: dict[str, Any] | None) -> bool:
+    """Cláusula al destino: titular con LP/gw_lp conocida ≥70%."""
+    return is_clause_starter_eligible(_starter_probe(p))
+
+
+def _buy_allowed(p: dict[str, Any] | None) -> bool:
+    """Market/free: titular calidad; clause: además LP conocida."""
+    if not p:
+        return False
+    reach = str(p.get("reach") or p.get("acquisition") or "")
+    if reach == "clause":
+        return _is_clause_buy_ok(p)
+    return _is_quality_starter_row(p)
+
 def _xi_starters_filled(xi_rows: list[dict[str, Any]], shape: dict[str, int]) -> int:
     """Titulares reales contados hasta el cupo de cada línea del once."""
     filled = {pos: 0 for pos in ("GK", "DF", "MF", "FW")}
@@ -596,7 +611,7 @@ def _gap_fill_reserve(
                 and _pid(p) not in used
                 and _pos(p) == pos
                 and p.get("reach") in ("market", "clause")
-                and _is_quality_starter_row(p)
+                and _buy_allowed(p)
             ],
             key=buy_cost,
         )
@@ -854,15 +869,15 @@ def assemble_destination(
         # Huecos de titular primero (barato), luego upgrades por xPts.
         cands.sort(
             key=lambda x: (
-                0 if _is_quality_starter_row(x) else 1,
+                0 if _buy_allowed(x) else 1,
                 -_xpts(x),
                 buy_cost(x),
             )
         )
         for cand in cands:
             pos = _pos(cand)
-            if not _is_quality_starter_row(cand):
-                # Solo se ficha titular real al destino; keeps propios no pasan por aquí.
+            if not _buy_allowed(cand):
+                # Solo se ficha titular real; cláusula exige LP conocida.
                 continue
             ev = _ev_wait(pos, watch, p_appear, k_future)
             bar = _xpts_bar(pos, gw_target_xi)
@@ -1123,8 +1138,8 @@ def build_path(
             }
         )
     buys = [p for p in dest_named if _pid(p) and _pid(p) not in owned_ids]
-    # Nunca path de no titulares.
-    buys = [p for p in buys if _is_quality_starter_row(p)]
+    # Nunca path de no titulares; cláusulas sin LP fuera.
+    buys = [p for p in buys if _buy_allowed(p)]
     market_buys = [
         p
         for p in buys

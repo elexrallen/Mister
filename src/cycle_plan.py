@@ -23,6 +23,7 @@ from competitive_actions import (
     cpu_spread_min_solvency_hours,
     has_negative_trend,
     has_positive_trend,
+    is_clause_starter_eligible,
     is_rival_market_listing,
     is_xi_quality_starter,
     mister_bid_cap,
@@ -797,6 +798,8 @@ def _pick_hoy_clause(
             continue
         merged_probe = {**xi_row, **slot, **rival}
         if has_negative_trend(merged_probe):
+            continue
+        if not is_clause_starter_eligible(merged_probe):
             continue
         if _has_starter_signal(merged_probe) and not is_xi_quality_starter(merged_probe):
             continue

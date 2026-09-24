@@ -1140,7 +1140,7 @@ def test_cycle_plan_bids_only_free_agents_for_appreciation() -> None:
         "on_daily_market": True,
         "seller": "market",
         "listed_by_rival": False,
-        "lineup_prob": 0.5,
+        "lineup_prob": 0.85,
         "fills_need": True,
         "fills_coverage_gap": True,
         "budget_fit": "comfortable",
@@ -1718,6 +1718,8 @@ def test_hoy_one_clause_after_market_bids() -> None:
             "clause_roi": 7.5,
             "action": "clause_bid",
             "budget_fit": "stretch",
+            "lineup_prob": 0.9,
+            "gw_lineup_prob": 90,
         },
         {
             "player_id": "clause-two",
@@ -1730,6 +1732,8 @@ def test_hoy_one_clause_after_market_bids() -> None:
             "clause_roi": 8.0,
             "action": "clause_bid",
             "budget_fit": "stretch",
+            "lineup_prob": 0.85,
+            "gw_lineup_prob": 85,
         },
     ]
     plan = build_cycle_plan(
@@ -1741,8 +1745,22 @@ def test_hoy_one_clause_after_market_bids() -> None:
         gw_target_xi={
             "xi": [
                 {"player_id": "mkt", "ownership": "daily_market", "reachable": "daily_market"},
-                {"player_id": "clause-star", "ownership": "rival", "reachable": "clause", "xpts": 9.0},
-                {"player_id": "clause-two", "ownership": "rival", "reachable": "clause", "xpts": 7.0},
+                {
+                    "player_id": "clause-star",
+                    "ownership": "rival",
+                    "reachable": "clause",
+                    "xpts": 9.0,
+                    "lineup_prob": 0.9,
+                    "gw_lineup_prob": 90,
+                },
+                {
+                    "player_id": "clause-two",
+                    "ownership": "rival",
+                    "reachable": "clause",
+                    "xpts": 7.0,
+                    "lineup_prob": 0.85,
+                    "gw_lineup_prob": 85,
+                },
             ],
             "coverage": {
                 "missing_slots": [
@@ -1754,6 +1772,8 @@ def test_hoy_one_clause_after_market_bids() -> None:
                         "clause": 8_000_000,
                         "xpts": 9.0,
                         "your_xpts": 4.0,
+                        "lineup_prob": 0.9,
+                        "gw_lineup_prob": 90,
                     },
                     {
                         "player_id": "clause-two",
@@ -1762,6 +1782,8 @@ def test_hoy_one_clause_after_market_bids() -> None:
                         "clause": 5_000_000,
                         "xpts": 7.0,
                         "your_xpts": 5.0,
+                        "lineup_prob": 0.85,
+                        "gw_lineup_prob": 85,
                     },
                 ],
             },
@@ -1886,6 +1908,8 @@ def _clause_rival(
         "action": "clause_bid",
         "budget_fit": "stretch",
         "xpts": xpts,
+        "lineup_prob": 0.9,
+        "gw_lineup_prob": 90,
     }
 
 
@@ -1908,6 +1932,8 @@ def _clause_slot(
         "xpts": xpts,
         "your_xpts": your_xpts,
         "your_name": your_name,
+        "lineup_prob": 0.9,
+        "gw_lineup_prob": 90,
     }
 
 

@@ -102,6 +102,9 @@ def _clause(pid: str, amount: float, **over) -> dict:
         "clause_known": True,
         "shield": 0,
         "owner_id": "777",
+        "lineup_prob": 0.85,
+        "gw_lineup_prob": 85,
+        "is_xi_starter": True,
     }
     row.update(over)
     return row
