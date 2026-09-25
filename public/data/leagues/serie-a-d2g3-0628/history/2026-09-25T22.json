@@ -1,6 +1,6 @@
 {
   "date": "2026-09-25",
-  "captured_at": "2026-09-25T22:31:22.680158+00:00",
+  "captured_at": "2026-09-25T22:40:17.596316+00:00",
   "cycle_hour_utc": 22,
   "league_slug": "serie-a-d2g3-0628",
   "jornada": 6,
@@ -5272,10 +5272,10 @@
         "name": "Alex Meret"
       },
       {
-        "player_id": "59425",
+        "player_id": "71589",
         "action": "scout",
-        "price": 3486000.0,
-        "name": "Nuno Tavares"
+        "price": 1618000.0,
+        "name": "Ricardo Mangas"
       }
     ],
     "allocation": {
@@ -5296,6 +5296,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 129.3
+    "pipeline_seconds": 136.8
   }
 }
