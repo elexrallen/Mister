@@ -2033,6 +2033,78 @@ def test_hoy_clause_when_upgrade_beats_weakest_starter() -> None:
     _assert("gvardiol" not in why, clauses[0])
 
 
+def test_hoy_clause_from_destination_when_gw_lacks_lp() -> None:
+    """El path/destino trae LP; el once objetivo la pierde — Hoy igual clausula."""
+    squad = [
+        {
+            "id": "mf-weak",
+            "name": "Reserva MF",
+            "position": "MF",
+            "price": 1_000_000,
+            "lineup_prob": 0.75,
+            "xpts": 1.5,
+        },
+        {"id": "fw1", "name": "Delantero", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+    ]
+    dest = [
+        {
+            "player_id": "janelt",
+            "name": "Janelt",
+            "position": "MF",
+            "reach": "clause",
+            "acquisition": "clause",
+            "clause": 4_000_000,
+            "lineup_prob": 100.0,
+            "xpts": 7.2,
+            "owner_id": "99",
+            "owner_name": "Rival",
+            "price": 3_000_000,
+        }
+    ]
+    path = [
+        {
+            "kind": "clause",
+            "cycle": 0,
+            "player_id": "janelt",
+            "name": "Janelt",
+            "amount": 4_000_000,
+            "why": "Cláusula este ciclo · tapa hueco de titular.",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 10_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi={"xi": [{"player_id": "mf-weak", "position": "MF", "xpts": 1.5}]},
+        gw_target_xi={
+            "xi": [
+                {
+                    "player_id": "janelt",
+                    "ownership": "rival",
+                    "reachable": "clause",
+                    "near": True,
+                    "xpts": 7.2,
+                    "position": "MF",
+                    # sin lineup_prob (como el payload publicado)
+                }
+            ],
+            "coverage": {"missing_slots": [], "near_slots": [{"player_id": "janelt"}]},
+        },
+        league_rules={"max_squad": 25, "sale_limit": 5, "clauses": True},
+        max_squad=25,
+        rival_upgrades=[],
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+        destination_15=dest,
+        path=path,
+    )
+    clauses = [m for m in plan["moves"] if m["kind"] == KIND_CLAUSE]
+    _assert(len(clauses) == 1, plan["moves"])
+    _assert(clauses[0]["name"] == "Janelt", clauses[0])
+    _assert(clauses[0].get("owner_id") == "99" or clauses[0].get("owner_name") == "Rival", clauses[0])
+
+
 def test_listed_starter_does_not_fund_clause_debt() -> None:
     """Titular listado (cualquier puesto) no financia el corto de una cláusula."""
     squad = [
@@ -2291,6 +2363,7 @@ if __name__ == "__main__":
     test_debt_bid_skipped_if_sale_misses_jornada()
     test_hoy_clause_skipped_for_tiny_upgrade_of_performing_starter()
     test_hoy_clause_when_upgrade_beats_weakest_starter()
+    test_hoy_clause_from_destination_when_gw_lacks_lp()
     test_listed_starter_does_not_fund_clause_debt()
     test_ongoing_gw_deadline_is_next_jornada()
     test_gap_reserve_blocks_crack_that_starves_other_hole()

@@ -2160,16 +2160,19 @@ def xi_gap_reserve(
                 opportunities, pos, used_pids=used_pids
             )
             source = "market"
+        # Otras cláusulas no reservan caja este ciclo: solo cabe 1 cláusula/ciclo
+        # y el path ya las reparte. Si se suman, el techo queda a 0 y no se
+        # puja ni clausula nunca (11 huecos × cláusula ≈ decenas de M€).
         if cost is None and reach == "clause":
-            cost = _money(h.get("clause") or h.get("acquisition_cost") or h.get("price"))
-            source = "clause"
-            if cost <= 0:
-                cost = None
+            continue
         elif cost is None:
-            clause_c = _money(h.get("clause") or h.get("acquisition_cost"))
-            if clause_c > 0:
-                cost = clause_c
-                source = "clause_fallback"
+            # Hueco sin reach claro: solo chollo de mercado, no cláusula cara.
+            cost, _picked = _cheapest_signable_at_pos(
+                opportunities, pos, used_pids=used_pids
+            )
+            source = "market_fallback"
+            if cost is None:
+                continue
         if cost is None or cost <= 0:
             continue
         reserve += cost
@@ -6326,6 +6329,14 @@ def build_rival_upgrade_targets(
             "points_phase": phase,
             "prior_avg": _prior_avg(c),
             "rival_demand": 0,
+            # LP/señal: cycle_plan y el gate de cláusula las necesitan publicadas.
+            "lineup_prob": c.get("lineup_prob"),
+            "gw_lineup_prob": c.get("gw_lineup_prob"),
+            "gw_starter": c.get("gw_starter"),
+            "p_play": c.get("p_play") or c.get("xpts_p_play"),
+            "signal": c.get("signal"),
+            "external": c.get("external") if isinstance(c.get("external"), dict) else None,
+            "xpts": c.get("xpts"),
             "why": "; ".join(why_bits),
             "affordable": action == "clause_bid",
         }

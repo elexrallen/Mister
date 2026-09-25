@@ -163,11 +163,11 @@ def test_xi_gap_reserve_sums_other_missing_slots() -> None:
         {"id": "mf_hole", "position": "MF", "on_daily_market": True, "price": 1_000_000},
     ]
     info = xi_gap_reserve(gw, opps, exclude_player_id="df_star", exclude_position="DF")
-    # Excluye el hueco DF (df_star); reserva MF mercado + FW cláusula
-    _assert(info["reserve"] == 2_500_000, info)
-    _assert(info["holes"] == 2, info)
+    # Excluye el hueco DF (df_star); reserva solo MF mercado (cláusula FW no reserva este ciclo)
+    _assert(info["reserve"] == 1_000_000, info)
+    _assert(info["holes"] == 1, info)
     cap = spend_cap_for_buy(4_000_000, 4_000_000, info["reserve"])
-    _assert(cap == 1_500_000, cap)
+    _assert(cap == 3_000_000, cap)
     via_wrapper = other_gaps_min_cost(
         {},
         exclude_position="DF",
@@ -175,7 +175,7 @@ def test_xi_gap_reserve_sums_other_missing_slots() -> None:
         opportunities=opps,
         gw_target_xi=gw,
     )
-    _assert(via_wrapper == 2_500_000, via_wrapper)
+    _assert(via_wrapper == 1_000_000, via_wrapper)
 
 
 def test_action_plan_crowds_out_when_techo_eaten() -> None:

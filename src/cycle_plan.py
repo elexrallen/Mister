@@ -704,6 +704,42 @@ def _offer_pct(offer: dict[str, Any], player: dict[str, Any] | None = None) -> f
     return amount / vm
 
 
+_STARTER_FIELD_KEYS = (
+    "lineup_prob",
+    "gw_lineup_prob",
+    "gw_starter",
+    "xpts_p_play",
+    "p_play",
+    "signal",
+    "external",
+    "injury",
+    "gw_out",
+    "gw_blank",
+    "points_trend",
+    "trend",
+    "delta_5d",
+    "rising",
+)
+
+
+def _merge_starter_fields(
+    base: dict[str, Any],
+    *sources: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """Completa LP/señal desde filas más ricas (destino, pool) sin pisar lo ya conocido."""
+    out = dict(base)
+    for src in sources:
+        if not isinstance(src, dict):
+            continue
+        for key in _STARTER_FIELD_KEYS:
+            if out.get(key) is None and src.get(key) is not None:
+                out[key] = src.get(key)
+        for key in ("owner_id", "owner_name", "owner_team", "clause", "xpts", "price", "market_value"):
+            if out.get(key) is None and src.get(key) is not None:
+                out[key] = src.get(key)
+    return out
+
+
 def _clause_target_rows(gw_target_xi: dict[str, Any] | None) -> list[dict[str, Any]]:
     """Huecos del once objetivo alcanzables solo por cláusula. Casi cubiertos, no."""
     rows: list[dict[str, Any]] = []
@@ -732,6 +768,72 @@ def _clause_target_rows(gw_target_xi: dict[str, Any] | None) -> list[dict[str, A
     return rows
 
 
+def _destination_clause_rows(
+    destination_15: list[dict[str, Any]] | None,
+    path: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Cláusulas ya elegidas por el destino 15 (path ciclo 0 + buys clause).
+
+    El once objetivo a veces marca `near` o publica sin LP; el destino sí trae
+    LP/owner/cláusula y es la fuente que Hoy debe poder ejecutar.
+    """
+    by_id: dict[str, dict[str, Any]] = {}
+    for row in destination_15 or []:
+        if not isinstance(row, dict):
+            continue
+        if row.get("reach") != "clause" and str(row.get("acquisition") or "") != "clause":
+            continue
+        pid = _pid(row)
+        if not pid:
+            continue
+        clause = _money(row.get("clause") or row.get("amount") or row.get("acquisition_cost"))
+        if clause <= 0:
+            continue
+        seed = dict(row)
+        seed["reachable"] = "clause"
+        seed["clause"] = clause
+        seed["clause_known"] = True
+        by_id[pid] = seed
+    # Path ciclo 0 primero: es la cláusula que el plan pluriciclo quiere hoy.
+    ordered: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for step in path or []:
+        if not isinstance(step, dict):
+            continue
+        if str(step.get("kind") or "") != "clause":
+            continue
+        try:
+            cycle = int(step.get("cycle") if step.get("cycle") is not None else 99)
+        except (TypeError, ValueError):
+            cycle = 99
+        if cycle != 0:
+            continue
+        pid = _pid(step)
+        if not pid or pid in seen:
+            continue
+        base = by_id.pop(pid, {})
+        merged = _merge_starter_fields(
+            {
+                **base,
+                **step,
+                "reachable": "clause",
+                "clause": _money(step.get("amount") or step.get("clause") or base.get("clause")),
+                "clause_known": True,
+            },
+            base,
+        )
+        if _money(merged.get("clause")) <= 0:
+            continue
+        seen.add(pid)
+        ordered.append(merged)
+    for pid, row in by_id.items():
+        if pid in seen:
+            continue
+        ordered.append(row)
+    return ordered
+
+
 def _pick_hoy_clause(
     *,
     gw_target_xi: dict[str, Any] | None,
@@ -742,6 +844,9 @@ def _pick_hoy_clause(
     squad: list[dict[str, Any]] | None = None,
     xi_ids: set[str] | None = None,
     league_rules: dict[str, Any] | None = None,
+    destination_15: list[dict[str, Any]] | None = None,
+    path: list[dict[str, Any]] | None = None,
+    player_index: dict[str, dict[str, Any]] | None = None,
 ) -> dict[str, Any] | None:
     """Como mucho 1 cláusula de Hoy: upgrade material vs quien sale, ROI OK, cabe."""
     by_upgrade = {
@@ -754,19 +859,32 @@ def _pick_hoy_clause(
         for r in (gw_target_xi or {}).get("xi") or []
         if isinstance(r, dict) and _pid(r)
     }
+    idx = player_index or {}
     xi_ids = xi_ids or set()
+    seeds: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for slot in _destination_clause_rows(destination_15, path) + _clause_target_rows(
+        gw_target_xi
+    ):
+        pid = _pid(slot)
+        if not pid or pid in seen:
+            continue
+        seen.add(pid)
+        seeds.append(slot)
     best: tuple[float, dict[str, Any]] | None = None
-    for slot in _clause_target_rows(gw_target_xi):
+    for slot in seeds:
         pid = _pid(slot)
         if not pid or pid in accept_ids:
             continue
         rival = by_upgrade.get(pid) or {}
         xi_row = xi_rows.get(pid) or {}
+        rich = idx.get(pid) or {}
         cost = _money(
             rival.get("clause")
             or rival.get("bid")
             or slot.get("clause")
             or slot.get("acquisition_cost")
+            or rich.get("clause")
         )
         if cost <= 0 or cost > remaining + 1:
             continue
@@ -777,10 +895,17 @@ def _pick_hoy_clause(
             or rival.get("price")
             or slot.get("price")
             or slot.get("market_value")
+            or rich.get("price")
+            or rich.get("market_value")
         )
-        target_x = _f(slot.get("xpts")) or _f(rival.get("xpts")) or 0.0
+        target_x = (
+            _f(slot.get("xpts"))
+            or _f(rival.get("xpts"))
+            or _f(rich.get("xpts"))
+            or 0.0
+        )
         incumbent = _worst_usable_starter_at_pos(
-            position=_pos(slot) or _pos(rival),
+            position=_pos(slot) or _pos(rival) or _pos(rich),
             recommended_xi=recommended_xi,
             squad=squad,
             xi_ids=xi_ids,
@@ -796,7 +921,7 @@ def _pick_hoy_clause(
             your_name = slot.get("your_name")
         if not _clause_upgrade_is_material(target_x, your_xpts):
             continue
-        merged_probe = {**xi_row, **slot, **rival}
+        merged_probe = _merge_starter_fields({**xi_row, **slot, **rival}, rich, slot, rival)
         if has_negative_trend(merged_probe):
             continue
         if not is_clause_starter_eligible(merged_probe):
@@ -821,7 +946,10 @@ def _pick_hoy_clause(
         if not ok_now:
             continue
         score = float(rival.get("clause_roi") or 0) * 10.0 + upgrade
-        row = {**xi_row, **slot, **rival}
+        # Preferir la cláusula del path ciclo 0 / destino frente a un scout del XI.
+        if slot.get("acquisition") == "clause" or slot.get("reach") == "clause":
+            score += 40.0
+        row = _merge_starter_fields({**xi_row, **slot, **rival}, rich)
         row["clause"] = cost
         row["market_value"] = vm or row.get("market_value")
         row["upgrade_score"] = upgrade
@@ -830,6 +958,19 @@ def _pick_hoy_clause(
         row["your_xpts"] = your_xpts
         if your_name:
             row["your_name"] = your_name
+        if not row.get("owner_id"):
+            row["owner_id"] = (
+                rival.get("owner_id")
+                or slot.get("owner_id")
+                or rich.get("owner_id")
+            )
+        if not row.get("owner_name") and not row.get("owner_team"):
+            row["owner_name"] = (
+                slot.get("owner_name")
+                or rival.get("owner_team")
+                or rival.get("owner_name")
+                or rich.get("owner_name")
+            )
         if best is None or score > best[0]:
             best = (score, row)
     if best is None:
@@ -1031,6 +1172,8 @@ def build_cycle_plan(
     hours_to_jornada: float | None = None,
     hours_to_solvency_deadline: float | None = None,
     solvency_target: str | None = None,
+    destination_15: list[dict[str, Any]] | None = None,
+    path: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """
     Fuente de verdad de la pestaña Hoy.
@@ -1279,6 +1422,7 @@ def build_cycle_plan(
         strong = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
         if d5 is not None and d5 <= -strong and not _starter_coverage_hole(o):
             continue
+        # Tendencia a la baja: no pujar (salvo harvest CPU).
         if has_negative_trend(o) and not o.get("cpu_spread_play"):
             continue
         if not o.get("cpu_spread_play"):
@@ -1467,6 +1611,13 @@ def build_cycle_plan(
                 squad=squad,
                 xi_ids=xi_ids,
                 league_rules=rules,
+                destination_15=destination_15,
+                path=path,
+                player_index={
+                    _pid(o): o
+                    for o in extras
+                    if isinstance(o, dict) and _pid(o)
+                },
             )
             if not cand:
                 break

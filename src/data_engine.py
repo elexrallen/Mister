@@ -3981,6 +3981,11 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         hours_to_jornada=hours_j,
         hours_to_solvency_deadline=solvency_for_cycle.get("hours_to_solvency_deadline"),
         solvency_target=solvency_for_cycle.get("solvency_target"),
+        destination_15=(
+            (target_board.get("destination_15") if isinstance(target_board, dict) else None)
+            or None
+        ),
+        path=(target_board.get("path") if isinstance(target_board, dict) else None) or None,
     )
     attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
     squad_vm = squad_value_summary(squad)
