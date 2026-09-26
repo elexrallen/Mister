@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-26T15:31:15.409864+00:00",
+  "generated_at": "2026-09-26T22:05:27.273089+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -117,13 +117,13 @@
     }
   ],
   "balance": 0.0,
-  "squad_value": 175707000.0,
+  "squad_value": 166562000.0,
   "wealth": {
     "balance": 0.0,
-    "squad_value": 175707000.0,
-    "total": 175707000.0,
+    "squad_value": 166562000.0,
+    "total": 166562000.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 175707000.0
+    "budget_cap": 166562000.0
   },
   "perfect_squad": [
     {
@@ -1087,23 +1087,23 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 26,
+    "cycles_left": 25,
     "cash_lag_hours": 12.0,
     "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 0,
-    "max_debt": 5465439.0,
-    "bid_cap": 5465439.0,
+    "sale_remaining": 1,
+    "max_debt": 6420709.0,
+    "bid_cap": 6420709.0,
     "max_squad": 25,
-    "n_free": 178,
+    "n_free": 179,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 315.48461072944446
+    "hours_to_jornada": 308.9145709191667
   },
   "finance": {
     "ok": false,
     "cost": 0,
-    "proceeds": 26050000.0,
+    "proceeds": 16905000.0,
     "peak": 0.0,
     "covers_with_sales": false,
     "reason": "sale_limit"
@@ -1624,23 +1624,6 @@
         "cash_lag_hours": 24.0
       },
       {
-        "player_id": "70918",
-        "name": "B. Silva",
-        "position": "MF",
-        "ep_score": 31.7,
-        "xpts": 1.8,
-        "price": 9145000.0,
-        "delta_5d": 0.0196,
-        "value_note": "stable",
-        "why": "Fuera del 15 al KO · lista a ~9,145,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 9145000.0,
-        "expected_proceeds": 9145000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
-      },
-      {
         "player_id": "65179",
         "name": "A. Castrín",
         "position": "DF",
@@ -1659,7 +1642,7 @@
       },
       {
         "player_id": "14670",
-        "name": "T. Courtois",
+        "name": "T. Courtois 💥",
         "position": "GK",
         "ep_score": 42.5,
         "xpts": 3.61,
@@ -1688,7 +1671,7 @@
     "slots_filled": 14,
     "slots_target": 15,
     "flex": 0,
-    "sell_to_fund": 26050000.0,
+    "sell_to_fund": 16905000.0,
     "funded": false,
     "formation": "3-3-4",
     "ideal_buy_cost": 0.0,
@@ -1704,7 +1687,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 26050000.0,
+  "residual_after_reserve": 16905000.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1722,7 +1705,7 @@
     "incomplete": false,
     "keep": 14,
     "buy": 0,
-    "sell": 5,
+    "sell": 4,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
@@ -1732,7 +1715,7 @@
     "formation": "3-3-4",
     "xi_rule": "formación 3-3-4 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 26
+    "cycles_left": 25
   },
   "summary_aspirational": {
     "mode": "aspirational",
