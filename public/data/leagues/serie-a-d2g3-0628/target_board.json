@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-30T10:06:34.787271+00:00",
+  "generated_at": "2026-09-30T17:06:51.409392+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -45,10 +45,10 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 51.86,
-      "complete": false,
+      "xpts_starters": 54.31,
+      "complete": true,
       "flex": 0,
-      "cost": 0
+      "cost": 3288469.0
     },
     {
       "formation": "3-5-2",
@@ -58,10 +58,10 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 52.81,
-      "complete": false,
+      "xpts_starters": 55.26,
+      "complete": true,
       "flex": 0,
-      "cost": 0
+      "cost": 3288469.0
     },
     {
       "formation": "3-4-3",
@@ -116,14 +116,14 @@
       "cost": 1803000.0
     }
   ],
-  "balance": 3815890.0,
-  "squad_value": 45220000.0,
+  "balance": 3452750.0,
+  "squad_value": 45570000.0,
   "wealth": {
-    "balance": 3815890.0,
-    "squad_value": 45220000.0,
-    "total": 49035890.0,
+    "balance": 3452750.0,
+    "squad_value": 45570000.0,
+    "total": 49022750.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 49035890.0
+    "budget_cap": 49022750.0
   },
   "perfect_squad": [
     {
@@ -1019,6 +1019,24 @@
   "watch_frees": [],
   "path": [
     {
+      "kind": "list",
+      "cycle": 0,
+      "player_id": "3173692",
+      "name": "M. Mout",
+      "position": "MF",
+      "amount": 160000.0,
+      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+    },
+    {
+      "kind": "list",
+      "cycle": 0,
+      "player_id": "31424",
+      "name": "T. Bašić",
+      "position": "MF",
+      "amount": 190000.0,
+      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+    },
+    {
       "kind": "clause",
       "cycle": 0,
       "player_id": "65452",
@@ -1029,24 +1047,24 @@
     }
   ],
   "constraints": {
-    "cycles_left": 30,
+    "cycles_left": 29,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
     "sale_remaining": 5,
-    "max_debt": 14940770.0,
-    "bid_cap": 14940770.0,
+    "max_debt": 12809725.0,
+    "bid_cap": 12809725.0,
     "max_squad": 25,
-    "n_free": 269,
+    "n_free": 266,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 242.89696271055556
+    "hours_to_jornada": 235.89357546416667
   },
   "finance": {
     "ok": true,
     "cost": 2697000.0,
-    "proceeds": 0,
-    "peak": -1118890.0,
+    "proceeds": 350000.0,
+    "peak": -755750.0,
     "covers_with_sales": true,
     "reason": ""
   },
@@ -1497,7 +1515,42 @@
         "p_appear": null
       }
     ],
-    "sell": []
+    "sell": [
+      {
+        "player_id": "31424",
+        "name": "T. Bašić",
+        "position": "MF",
+        "ep_score": 52.3,
+        "xpts": 0.95,
+        "price": 190000.0,
+        "delta_5d": -0.4225,
+        "value_note": "falling",
+        "why": "Fuera del 15 al KO · lista a ~190,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
+        "list_at": 190000.0,
+        "expected_proceeds": 190000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 24.0
+      },
+      {
+        "player_id": "3173692",
+        "name": "M. Mout",
+        "position": "MF",
+        "ep_score": 16.8,
+        "xpts": 0.54,
+        "price": 160000.0,
+        "delta_5d": 0.0,
+        "value_note": "stable",
+        "why": "Fuera del 15 al KO · lista a ~160,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
+        "list_at": 160000.0,
+        "expected_proceeds": 160000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 24.0
+      }
+    ]
   },
   "totals": {
     "ep_sum": 59.73,
@@ -1511,7 +1564,7 @@
     "slots_filled": 13,
     "slots_target": 15,
     "flex": 0,
-    "sell_to_fund": 0.0,
+    "sell_to_fund": 350000.0,
     "funded": true,
     "formation": "3-4-3",
     "ideal_buy_cost": 2697000.0,
@@ -1527,7 +1580,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 1118890.0,
+  "residual_after_reserve": 1105750.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1545,7 +1598,7 @@
     "incomplete": false,
     "keep": 12,
     "buy": 1,
-    "sell": 0,
+    "sell": 2,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
@@ -1555,7 +1608,7 @@
     "formation": "3-4-3",
     "xi_rule": "formación 3-4-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 30
+    "cycles_left": 29
   },
   "summary_aspirational": {
     "mode": "aspirational",
