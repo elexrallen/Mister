@@ -5385,32 +5385,162 @@
         "failed": 1,
         "skipped": 1
       }
+    },
+    {
+      "at": "2026-10-01T10:35:37.540349+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 123200.0,
+        "usable": 11943950.0,
+        "cash_in": 0.0,
+        "spent": 0.0,
+        "projected_cash": 123200.0,
+        "cycle_cap": 7166370.0,
+        "single_cap": 4777580.0,
+        "clause_cap": 3583185.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 10
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [],
+        "stale_offers": [],
+        "sale_remaining_after": 4,
+        "hours_to_jornada": 218.41552871833332,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mr",
+          "provider_label": "SofaScore",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 3,
+          "market_stay": 2,
+          "transfer_wait": 1,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 25000,
+            "goals": 100000,
+            "best_xi": 250000
+          },
+          "custom_rules": "📣 Compite contra miles de usuarios en distintas divisiones, con ascensos y descensos al final de cada tramo ⚽ ¡En total, 7 tramos diferentes! ⭐\r\n\r\n✅ Todos los usuarios empiezan en la misma división con 15 jugadores aleatorios y millones para fichar, en igualdad de condiciones 🛒​\r\n\r\n🏆 El vencedor final de la Macroliga Oficial de Serie A en Mister Fantasy, que será el primer clasificado de la 1ª División al término de la jornada 38 de la liga italiana, gana una camiseta del equipo que quiera de regalo 💝 \r\n\r\n⚡​ Criterios de desempate para ganar el premio a final de temporada:\r\n1. Usuario que haya ganado + jornadas en el último tramo (Jornadas 34 a 38).\r\n2. En caso de empate, usuario que haya quedado por delante de su rival en más ocasiones (las jornadas con empate a puntos se anulan).\r\n3. En caso de que continúe el empate: usuario que haya hecho más puntos en la última jornada (38).\r\n4. En caso de que aún continúe el empate: usuario que haya hecho más puntos en la primera jornada del último tramo (34).",
+          "type": "comunio",
+          "mode": "macro_league",
+          "external": "seriea",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": true,
+            "known": true,
+            "mode": "by_market_value",
+            "multiplier": null,
+            "source": "admin",
+            "multiplier_source": "by_market_value"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 375000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "points": 25000.0,
+              "goals": 100000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 375000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_sofascore",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_1",
+            "custom_rules_text",
+            "captain_by_value"
+          ],
+          "market_urgency": 1.5
+        }
+      },
+      "operations": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "3173692",
+          "name": "M. Mout",
+          "position": "MF",
+          "amount": 185000.0,
+          "status": "error",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 24 minutos para poder poner en venta este jugador",
+          "unverified": null,
+          "why": "Pon en venta a M. Mout: no entra en el once, juega poco. El siguiente ciclo aceptas (≈ 185k €) y el dinero llega al instante."
+        }
+      ],
+      "skipped": [],
+      "counts": {
+        "planned": 1,
+        "executed": 0,
+        "failed": 1,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-09-30T23:18:50.942245+00:00",
+  "updated_at": "2026-10-01T10:35:37.540349+00:00",
   "last_cycle": {
-    "at": "2026-09-30T23:18:50.942245+00:00",
+    "at": "2026-10-01T10:35:37.540349+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
-      "balance": 3452750.0,
-      "usable": 14845250.0,
+      "balance": 123200.0,
+      "usable": 11943950.0,
       "cash_in": 0.0,
       "spent": 0.0,
-      "projected_cash": 3452750.0,
-      "cycle_cap": 8907150.0,
-      "single_cap": 5938100.0,
-      "clause_cap": 4453575.0,
+      "projected_cash": 123200.0,
+      "cycle_cap": 7166370.0,
+      "single_cap": 4777580.0,
+      "clause_cap": 3583185.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 11
+      "free_slots_left": 10
     },
     "context": {
       "transfer_wait_hours": 24.0,
       "transfer_locked": [],
       "stale_offers": [],
       "sale_remaining_after": 4,
-      "hours_to_jornada": 229.69465923138887,
+      "hours_to_jornada": 218.41552871833332,
       "pending_offers": 0,
       "gameweek_live": false,
       "league_rules": {
@@ -5503,27 +5633,19 @@
         "player_id": "3173692",
         "name": "M. Mout",
         "position": "MF",
-        "amount": 160000.0,
+        "amount": 185000.0,
         "status": "error",
-        "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 12 horas para poder poner en venta este jugador",
+        "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 24 minutos para poder poner en venta este jugador",
         "unverified": null,
-        "why": "Pon en venta a M. Mout: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 160k €) y el dinero llega al instante."
+        "why": "Pon en venta a M. Mout: no entra en el once, juega poco. El siguiente ciclo aceptas (≈ 185k €) y el dinero llega al instante."
       }
     ],
-    "skipped": [
-      {
-        "kind": "clause_bid",
-        "player_id": "68425",
-        "name": "Alessandro Romano",
-        "amount": 3288469.0,
-        "reason": "cláusula sin alineación ≥70% conocida"
-      }
-    ],
+    "skipped": [],
     "counts": {
       "planned": 1,
       "executed": 0,
       "failed": 1,
-      "skipped": 1
+      "skipped": 0
     }
   }
 }
