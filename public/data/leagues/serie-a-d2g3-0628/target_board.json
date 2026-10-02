@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-02T17:01:50.108739+00:00",
+  "generated_at": "2026-10-02T23:20:32.160872+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1047,18 +1047,18 @@
     }
   ],
   "constraints": {
-    "cycles_left": 23,
+    "cycles_left": 22,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 4,
+    "sale_remaining": 3,
     "max_debt": 3336840.0,
     "bid_cap": 3336840.0,
     "max_squad": 25,
-    "n_free": 257,
+    "n_free": 256,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 187.97771572222223
+    "hours_to_jornada": 181.66547242305555
   },
   "finance": {
     "ok": true,
@@ -1624,7 +1624,7 @@
     "formation": "3-4-3",
     "xi_rule": "formación 3-4-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 23
+    "cycles_left": 22
   },
   "summary_aspirational": {
     "mode": "aspirational",
