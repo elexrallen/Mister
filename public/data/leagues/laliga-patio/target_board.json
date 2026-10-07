@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-07T17:58:10.231361+00:00",
+  "generated_at": "2026-10-07T20:30:12.949715+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -267,7 +267,7 @@
       "position": "MF",
       "role": "starter",
       "player_id": "27907",
-      "name": "R. Brugué 💥",
+      "name": "R. Brugué",
       "team": "Levante",
       "team_id": "12",
       "ep_score": 64.0,
@@ -713,7 +713,7 @@
       "position": "MF",
       "role": "starter",
       "player_id": "27907",
-      "name": "R. Brugué 💥",
+      "name": "R. Brugué",
       "team": "Levante",
       "team_id": "12",
       "ep_score": 64.0,
@@ -1047,7 +1047,7 @@
     }
   ],
   "constraints": {
-    "cycles_left": 4,
+    "cycles_left": 3,
     "cash_lag_hours": 12.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1055,10 +1055,10 @@
     "max_debt": 32839629.0,
     "bid_cap": 32839629.0,
     "max_squad": 25,
-    "n_free": 214,
+    "n_free": 215,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 49.036149611666666
+    "hours_to_jornada": 46.502026909444446
   },
   "finance": {
     "ok": true,
@@ -1211,7 +1211,7 @@
         "position": "MF",
         "role": "starter",
         "player_id": "27907",
-        "name": "R. Brugué 💥",
+        "name": "R. Brugué",
         "team": "Levante",
         "team_id": "12",
         "ep_score": 64.0,
@@ -1624,7 +1624,7 @@
     "formation": "3-4-3",
     "xi_rule": "formación 3-4-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 4
+    "cycles_left": 3
   },
   "summary_aspirational": {
     "mode": "aspirational",
