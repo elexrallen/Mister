@@ -109,7 +109,7 @@
         ],
         "source": "fg_user+admin"
       },
-      "automated": true,
+      "automated": false,
       "automation_dry_run": false
     },
     {
@@ -166,7 +166,7 @@
         ],
         "source": "fg_user+admin"
       },
-      "automated": true,
+      "automated": false,
       "automation_dry_run": false
     }
   ]
