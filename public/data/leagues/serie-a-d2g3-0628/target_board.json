@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-13T11:05:45.303712+00:00",
+  "generated_at": "2026-10-13T18:39:48.233435+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1085,65 +1085,28 @@
   ],
   "flex_slots": [],
   "watch_frees": [],
-  "path": [
-    {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "52384",
-      "name": "N. Pisilli",
-      "position": "MF",
-      "amount": 2554000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
-    },
-    {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "65128",
-      "name": "L. Miller",
-      "position": "MF",
-      "amount": 180000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
-    },
-    {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "3173692",
-      "name": "M. Mout",
-      "position": "MF",
-      "amount": 192000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
-    },
-    {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "4927626",
-      "name": "J. Enem",
-      "position": "FW",
-      "amount": 160000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
-    }
-  ],
+  "path": [],
   "constraints": {
     "cycles_left": 9,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 4,
-    "max_debt": 7260065.0,
-    "bid_cap": 7260065.0,
+    "sale_remaining": 3,
+    "max_debt": 5455865.0,
+    "bid_cap": 5455865.0,
     "max_squad": 25,
-    "n_free": 263,
+    "n_free": 267,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 79.66260085194445
+    "hours_to_jornada": 72.09512120611112
   },
   "finance": {
-    "ok": true,
+    "ok": false,
     "cost": 0,
     "proceeds": 3086000.0,
     "peak": 0.0,
-    "covers_with_sales": true,
-    "reason": ""
+    "covers_with_sales": false,
+    "reason": "sale_limit"
   },
   "moves": {
     "keep": [
@@ -1709,7 +1672,7 @@
     "slots_target": 15,
     "flex": 0,
     "sell_to_fund": 3086000.0,
-    "funded": true,
+    "funded": false,
     "formation": "5-3-2",
     "ideal_buy_cost": 0.0,
     "daily_primary_count": 0
