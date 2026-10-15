@@ -507,7 +507,15 @@ def _pid(p: dict[str, Any]) -> str:
     return str(p.get("id") or p.get("player_id") or "")
 
 
-def _avail_ok(p: dict[str, Any]) -> bool:
+def _avail_ok(p: dict[str, Any], *, owned: bool = False) -> bool:
+    """
+    Candidatos de mercado/cláusula: fuera si lesionados o gw_out.
+
+    Plantilla propia siempre pasa: si no, Pred11/FF con LP<40% (gw_out) o
+    lesión vacían el 15 al KO y el once desaparece aunque haya cuerpos.
+    """
+    if owned:
+        return True
     avail = (p.get("external") or {}).get("availability") or (
         "injured" if p.get("injury") else "unknown"
     )
@@ -527,7 +535,7 @@ def _normalize_player(
     pid = _pid(p)
     if not pid:
         return None
-    if not _avail_ok(p):
+    if not _avail_ok(p, owned=owned):
         return None
     market = _market_price(p)
     ask = _ask_price(p)

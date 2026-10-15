@@ -735,6 +735,98 @@ def test_budget_prefers_cheap_starters_over_luxury_clause() -> None:
     _assert(not any(m.get("player_id") == "luxury" for m in path), path)
 
 
+def test_owned_gw_out_still_fills_xi_bodies() -> None:
+    """
+    Pred11/FF marcan LP<40% como gw_out. Eso no puede borrar del 15 a los
+    propios: el once debe armarse con cuerpos (riesgo) aunque falten titulares ≥70%.
+    """
+    from target_board import _avail_ok  # noqa: WPS433
+
+    weak = _raw(
+        "weak_mf",
+        "MF",
+        owned=True,
+        xpts=0.3,
+        lineup_prob=0.18,
+        gw_starter=False,
+        gw_lineup_prob=18,
+        gw_out=True,
+        xpts_p_play=0.18,
+    )
+    injured = _raw(
+        "hurt_df",
+        "DF",
+        owned=True,
+        xpts=0.1,
+        lineup_prob=0.0,
+        gw_starter=False,
+        injury=True,
+        external={"availability": "injured"},
+        xpts_p_play=0.0,
+    )
+    market_out = _raw(
+        "mkt_out",
+        "MF",
+        owned=False,
+        xpts=7.0,
+        seller="market",
+        on_daily_market=True,
+        gw_out=True,
+        lineup_prob=0.2,
+        gw_starter=False,
+    )
+
+    _assert(_avail_ok(weak, owned=True), "owned gw_out debe pasar")
+    _assert(_avail_ok(injured, owned=True), "owned lesionado debe pasar")
+    _assert(not _avail_ok(market_out, owned=False), "mercado gw_out sigue fuera")
+
+    n_weak = _normalize_player(weak, owned=True, price_series=None)
+    n_hurt = _normalize_player(injured, owned=True, price_series=None)
+    n_mkt = _normalize_player(market_out, owned=False, price_series=None)
+    _assert(n_weak is not None, "normalize owned gw_out")
+    _assert(n_hurt is not None, "normalize owned injured")
+    _assert(n_mkt is None, "normalize mercado gw_out")
+
+    # Plantilla corta en titulares de calidad: 1 GK + 2 DF buenos + 2 MF buenos + 3 FW,
+    # más rellenos propios gw_out/lesión para completar líneas.
+    rows: list[tuple[dict, bool]] = [
+        (_raw("gk1", "GK", owned=True, xpts=6.0), True),
+        (_raw("d1", "DF", owned=True, xpts=5.5), True),
+        (_raw("d2", "DF", owned=True, xpts=5.0), True),
+        (injured, True),
+        (_raw("d4", "DF", owned=True, xpts=0.2, lineup_prob=0.18, gw_out=True, gw_starter=False), True),
+        (_raw("m1", "MF", owned=True, xpts=6.0), True),
+        (_raw("m2", "MF", owned=True, xpts=5.5), True),
+        (weak, True),
+        (_raw("f1", "FW", owned=True, xpts=5.0), True),
+        (_raw("f2", "FW", owned=True, xpts=4.5), True),
+        (_raw("f3", "FW", owned=True, xpts=4.0), True),
+    ]
+    universe = _universe(rows)
+    owned_ids = {r[0]["id"] for r in rows}
+    dest = assemble_destination(
+        universe,
+        owned_ids=owned_ids,
+        balance=5_000_000,
+        max_debt=20_000_000,
+        settle_ok=True,
+        sale_remaining=3,
+        listed_ids=set(),
+        k_future=4,
+        clauses_on=True,
+        n_free=0,
+        s_on_board=0,
+    )
+    xi = list(dest.get("xi") or [])
+    shape = dest.get("shape") or {"GK": 1, "DF": 4, "MF": 3, "FW": 3}
+    need = sum(int(shape.get(p) or 0) for p in ("GK", "DF", "MF", "FW"))
+    _assert(len(xi) >= need, (len(xi), need, [r.get("name") for r in xi]))
+    ids = {str(r.get("player_id")) for r in xi}
+    _assert("weak_mf" in ids or "hurt_df" in ids or "d4" in ids, ids)
+    # Titulares ≥70% incompletos: sigue marcando complete=False, pero hay once con cuerpos.
+    _assert(dest.get("complete") is False, dest.get("complete"))
+
+
 if __name__ == "__main__":
     test_appear_probability_lottery_not_queue()
     test_classify_reach_ghost_vs_clause_vs_watch()
@@ -754,4 +846,5 @@ if __name__ == "__main__":
     test_clause_without_lp_does_not_enter_destination()
     test_clause_low_lp_does_not_enter_destination()
     test_budget_prefers_cheap_starters_over_luxury_clause()
+    test_owned_gw_out_still_fills_xi_bodies()
     print("test_target_board: OK")
