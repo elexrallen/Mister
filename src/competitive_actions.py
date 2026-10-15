@@ -566,6 +566,38 @@ def sell_cash_phrase(
     return f"{base}; el siguiente ciclo aceptas y cobra al instante (~{lag}h)"
 
 
+def micro_sell_allowed(
+    price: float,
+    *,
+    reason: str = "",
+    need_slot: bool = False,
+    dead: bool = False,
+    funding_shortfall: float = 0.0,
+    fund_need: float = 0.0,
+) -> bool:
+    """
+    ¿Listar un jugador barato (< SELL_MICRO_VM_MAX)?
+
+    Por defecto no: 160k–1M casi no desbloquea fichajes serios y a veces aún
+    puntúan. Excepciones: falta de plaza, baja real cubierta, o la venta cubre
+    una fracción material del hueco de caja / coste del swap.
+    """
+    cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
+    p = float(price or 0)
+    if p >= cap - 1:
+        return True
+    reason_l = str(reason or "").strip().lower()
+    if need_slot or reason_l == "free_slot":
+        return True
+    if dead or reason_l == "injured_covered":
+        return True
+    share = float(getattr(config, "SELL_MICRO_FUND_SHARE_MIN", 0.25) or 0.25)
+    gap = max(float(funding_shortfall or 0), float(fund_need or 0))
+    if gap > 0 and p + 1 >= share * gap:
+        return True
+    return False
+
+
 def rescind_instant_alt(price: float) -> dict[str, Any]:
     """Alternativa de liquidez inmediata: rescindir ≈ RESCIND_VALUE_RATIO del VM."""
     ratio = float(getattr(config, "RESCIND_VALUE_RATIO", 0.80) or 0.80)
@@ -4069,6 +4101,9 @@ def resolve_liquidity_slots(
             break
 
     if not fixed:
+        # Relleno de liquidez: solo fichas con VM material (≥ SELL_MICRO_VM_MAX).
+        # Listar a 160k “por si acaso” no desbloquea swaps y quita cobertura.
+        micro_cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
         weakest = sorted(bench, key=lambda p: (_liquidity_prod(p), _money(p.get("price"))))
         min_listed = min(2, limit, len(bench))
         for p in weakest:
@@ -4078,6 +4113,8 @@ def resolve_liquidity_slots(
                 break
             pid = str(p.get("id") or "")
             if not pid or pid in chosen_ids:
+                continue
+            if _money(p.get("price") or p.get("market_value")) < micro_cap - 1:
                 continue
             chosen.append(p)
             chosen_ids.add(pid)
@@ -4191,6 +4228,35 @@ def build_sell_opportunities(
     def add(item: dict[str, Any]) -> None:
         pid = str(item.get("player_id") or "")
         if not pid:
+            return
+        price_i = _money(item.get("price"))
+        reason_i = str(item.get("sell_reason") or "")
+        lp_i = item.get("lineup_pct")
+        try:
+            lp_f = float(lp_i) if lp_i is not None else None
+        except (TypeError, ValueError):
+            lp_f = None
+        dead_i = bool(
+            item.get("plays_little")
+            or item.get("gw_out")
+            or (lp_f is not None and lp_f < 25)
+            or reason_i == "injured_covered"
+        )
+        fund_need_i = 0.0
+        if item.get("funds_for") or reason_i in ("fund_buy", "fund_target", "liquidity_slot"):
+            fund_need_i = max(
+                float(item.get("funding_shortfall") or 0),
+                float((item.get("upgrade_profile") or {}).get("bid") or 0)
+                - float(balance or 0),
+            )
+        if not micro_sell_allowed(
+            price_i,
+            reason=reason_i,
+            need_slot=bool(item.get("opens_slot") or reason_i == "free_slot"),
+            dead=dead_i,
+            funding_shortfall=float(item.get("funding_shortfall") or 0),
+            fund_need=max(0.0, fund_need_i),
+        ):
             return
         # Ya en venta en Mister, o marcado en seen sin fila en sells
         if pid in already_listed:

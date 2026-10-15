@@ -63,6 +63,9 @@ Los cortes están en las constantes `HOURS_MATCHDAY`, `HOURS_EVE`,
   razonable (≈≤1,25× VM) o gap de xPts material. El path lista primero
   `falling` y el 15 rechaza cláusulas que queman demasiado wealth (`clause − VM`)
   sin tapa-hueco. Predicted11 aporta la titularidad en Premier/Serie A.
+- **Ventas micro (<1M)**: no listar por liquidez genérica. 160k–1M casi no
+  desbloquea fichajes serios y a veces aún puntúan. Solo plaza (`free_slot`),
+  baja real cubierta, o si esa venta cubre ≥25% del hueco de caja del swap.
 - **Mercado según fase**: fichar y listar ventas en la ventana de compra; última
   llamada en confirmación; en víspera y día de partido el playbook **sigue a la
   cola** (si hay `buy_now` solvente, ficha esos con aviso de prima; si no, no

@@ -64,6 +64,8 @@ El JSON incluye `recommendations[]` según:
 
 - El corte de caja es **maxDebt**: pujar o clausular en negativo es legal; el
   cero no es una regla. El plan del ciclo gasta margen de deuda, no efectivo.
+- **No vender micros (&lt;1M)** salvo plaza, baja cubierta o funding material
+  (≥25% del hueco): listar a 160k no desbloquea casi nada y quita cobertura.
 - Tu puesto en la tabla (proteger valor vs remontar)
 - Carencias propias vs liquidez/gaps de rivales
 - Libres TOP con alto PPG histórico aún sin fichar

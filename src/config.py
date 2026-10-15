@@ -573,6 +573,11 @@ IDEAL_CLAUSE_PREMIUM_SOFT = 1.25
 DEST_CLAUSE_MAX_WEALTH_BURN = 2_500_000
 # Destino 15: con rank ≤ N, no cláusulas de lujo por encima de la prima soft
 DEST_CONSERVE_RANK_MAX = 3
+# Ventas micro: por debajo de esto no listar salvo plaza, muerto o funding material.
+# 160k–1M casi no desbloquea cláusulas/titulares y a veces aún puntúan.
+SELL_MICRO_VM_MAX = 1_000_000
+# La venta micro solo cuenta como funding si cubre ≥ esta fracción del hueco de caja
+SELL_MICRO_FUND_SHARE_MIN = 0.25
 # Banda de empate EP: preferir oportunidad (libre/mercado) si la diferencia ≤ esto
 IDEAL_EP_TIE_BAND = 5.0
 # Upgrade operable con cláusula cara: mínimo ΔEP por M€ de sobrecoste

@@ -1189,7 +1189,29 @@ def build_path(
     path: list[dict[str, Any]] = []
     sells = list(finance.get("sells") or finance.get("new_lists") or [])
     sells.sort(key=_sell_priority)
-    for s in sells:
+    # No listar micros (<1M) solo “para equilibrar”: casi no desbloquean y a veces puntúan.
+    # Solo se listan si hacen falta para cubrir el coste (tras agotar ventas materiales).
+    micro_cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
+    bal0 = float(balance) if balance is not None else 0.0
+    if balance is None:
+        try:
+            bal0 = max(0.0, _money(finance.get("cost")) - _money(finance.get("peak")))
+        except (TypeError, ValueError):
+            bal0 = 0.0
+    cost0 = _money(finance.get("cost"))
+    need_cash = max(0.0, cost0 - bal0) if settle_ok else 0.0
+    material = [s for s in sells if _vm(s) >= micro_cap - 1]
+    micros = [s for s in sells if _vm(s) < micro_cap - 1]
+    listed_sells: list[dict[str, Any]] = list(material)
+    raised = sum(_vm(s) for s in material) if settle_ok else 0.0
+    if settle_ok and raised + 1 < need_cash:
+        for s in micros:
+            listed_sells.append(s)
+            raised += _vm(s)
+            if raised + 1 >= need_cash:
+                break
+    for s in listed_sells:
+        is_micro = _vm(s) < micro_cap - 1
         path.append(
             {
                 "kind": "list",
@@ -1199,7 +1221,11 @@ def build_path(
                 "position": _pos(s),
                 "amount": _vm(s),
                 "why": (
-                    "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+                    (
+                        "Lista: hace falta su VM para cubrir el fichaje; el siguiente ciclo aceptas y cobra."
+                        if is_micro
+                        else "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+                    )
                     if settle_ok
                     else "Lista, pero el cobro no llega al KO: no financia este destino."
                 ),
