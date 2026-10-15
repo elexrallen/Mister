@@ -3535,6 +3535,86 @@ PARKING_SELL_REASONS = frozenset(
     {"expensive_bench", "low_minutes", "low_production", "form_drop"}
 )
 
+# Ventas que no pueden pisar un keep del 15 al KO (salvo que el destino las liste).
+DEST_PROTECTED_SELL_REASONS = PARKING_SELL_REASONS | frozenset(
+    {
+        "surplus_to_demand",
+        "fund_buy",
+        "fund_target",
+        "liquidity_slot",
+    }
+)
+
+
+def destination_board_ids(
+    target_board: dict[str, Any] | None,
+) -> tuple[set[str], set[str]]:
+    """
+    (keep_ids, sell_ids) del 15 al KO.
+
+    sell_ids gana: si el path/moves lo lista, no se protege como keep.
+    """
+    board = target_board if isinstance(target_board, dict) else {}
+    sell_ids: set[str] = set()
+    for row in (board.get("moves") or {}).get("sell") or []:
+        if not isinstance(row, dict):
+            continue
+        pid = str(row.get("player_id") or row.get("id") or "").strip()
+        if pid:
+            sell_ids.add(pid)
+    for step in board.get("path") or []:
+        if not isinstance(step, dict):
+            continue
+        kind = str(step.get("kind") or "").lower()
+        if kind not in ("list", "list_for_sale", "sell"):
+            continue
+        pid = str(step.get("player_id") or step.get("id") or "").strip()
+        if pid:
+            sell_ids.add(pid)
+    for row in (board.get("finance") or {}).get("sells") or []:
+        if not isinstance(row, dict):
+            continue
+        pid = str(row.get("player_id") or row.get("id") or "").strip()
+        if pid:
+            sell_ids.add(pid)
+
+    keep_ids: set[str] = set()
+    for row in board.get("destination_15") or board.get("perfect_squad") or []:
+        if not isinstance(row, dict):
+            continue
+        st = str(row.get("status") or "").lower()
+        if st not in ("keep", ""):
+            continue
+        if st == "" and not row.get("owned"):
+            continue
+        pid = str(row.get("player_id") or row.get("id") or "").strip()
+        if pid and row.get("kind") != "flex":
+            keep_ids.add(pid)
+    for row in (board.get("moves") or {}).get("keep") or []:
+        if not isinstance(row, dict):
+            continue
+        pid = str(row.get("player_id") or row.get("id") or "").strip()
+        if pid:
+            keep_ids.add(pid)
+
+    keep_ids -= sell_ids
+    return keep_ids, sell_ids
+
+
+def _dest_protects_owned(
+    pid: str,
+    *,
+    keep_ids: set[str],
+    sell_ids: set[str],
+    reason: str,
+) -> bool:
+    """True = no listar: es keep del destino y la venta no viene del 15."""
+    if not pid or pid in sell_ids:
+        return False
+    if pid not in keep_ids:
+        return False
+    return str(reason or "") in DEST_PROTECTED_SELL_REASONS
+
 
 def swap_covers(balance: float, slot_vm: float, bid: float) -> bool:
     """¿Saldo usable + cobro VM del listado cubre la puja del upgrade?"""
@@ -4057,6 +4137,14 @@ def resolve_liquidity_slots(
     """
     xi_ids = xi_owned_ids(recommended_xi)
     bench = _bench_not_xi(squad, xi_ids)
+    dest_keep, dest_sell = destination_board_ids(target_board)
+    # Liquidez solo con quien el 15 no protege (o ya marca como venta).
+    liq_pool = [
+        p
+        for p in bench
+        if str(p.get("id") or "") in dest_sell
+        or str(p.get("id") or "") not in dest_keep
+    ]
     limit = max(1, int(sale_limit or 5))
     fixed = (market_mode or "auction") == "fixed"
     profiles = collect_upgrade_profiles(
@@ -4071,6 +4159,18 @@ def resolve_liquidity_slots(
     funded: list[dict[str, Any]] = []
     avoided: list[dict[str, Any]] = []
 
+    # Preferir listados que el destino ya pide.
+    if dest_sell:
+        by_id = {str(p.get("id") or ""): p for p in squad if p.get("id")}
+        for sid in dest_sell:
+            if len(chosen) >= limit:
+                break
+            p = by_id.get(sid)
+            if not p or sid in chosen_ids:
+                continue
+            chosen.append(p)
+            chosen_ids.add(sid)
+
     for prof in profiles:
         if fixed and not prof.get("on_daily_market"):
             avoided.append({**prof, "avoid_reason": "off_market_fixed"})
@@ -4080,7 +4180,7 @@ def resolve_liquidity_slots(
             continue
         need = max(0.0, float(prof["bid"]) - float(balance or 0))
         slot = pick_funding_slot(
-            bench, need_cash=need, prefer_pos=str(prof.get("position") or "")
+            liq_pool, need_cash=need, prefer_pos=str(prof.get("position") or "")
         )
         if slot is None:
             avoided.append({**prof, "avoid_reason": "inabordable_sin_romper_xi"})
@@ -4104,8 +4204,10 @@ def resolve_liquidity_slots(
         # Relleno de liquidez: solo fichas con VM material (≥ SELL_MICRO_VM_MAX).
         # Listar a 160k “por si acaso” no desbloquea swaps y quita cobertura.
         micro_cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
-        weakest = sorted(bench, key=lambda p: (_liquidity_prod(p), _money(p.get("price"))))
-        min_listed = min(2, limit, len(bench))
+        weakest = sorted(
+            liq_pool, key=lambda p: (_liquidity_prod(p), _money(p.get("price")))
+        )
+        min_listed = min(2, limit, len(liq_pool))
         for p in weakest:
             if len(chosen) >= limit:
                 break
@@ -4224,6 +4326,7 @@ def build_sell_opportunities(
     lineup_moves: list[dict[str, Any]] = []
     seen: set[str] = set(already_listed)  # no re-listar
     seen_lineup: set[str] = set()
+    dest_keep_ids, dest_sell_ids = destination_board_ids(target_board)
 
     def add(item: dict[str, Any]) -> None:
         pid = str(item.get("player_id") or "")
@@ -4231,6 +4334,13 @@ def build_sell_opportunities(
             return
         price_i = _money(item.get("price"))
         reason_i = str(item.get("sell_reason") or "")
+        if _dest_protects_owned(
+            pid,
+            keep_ids=dest_keep_ids,
+            sell_ids=dest_sell_ids,
+            reason=reason_i,
+        ):
+            return
         lp_i = item.get("lineup_pct")
         try:
             lp_f = float(lp_i) if lp_i is not None else None
@@ -4249,7 +4359,8 @@ def build_sell_opportunities(
                 float((item.get("upgrade_profile") or {}).get("bid") or 0)
                 - float(balance or 0),
             )
-        if not micro_sell_allowed(
+        # El 15 al KO ya eligió listarlo: no re-aplicar el filtro micro.
+        if pid not in dest_sell_ids and not micro_sell_allowed(
             price_i,
             reason=reason_i,
             need_slot=bool(item.get("opens_slot") or reason_i == "free_slot"),
@@ -4424,7 +4535,14 @@ def build_sell_opportunities(
             )
             if bench_starter:
                 add_lineup_swap(p, bench_starter)
-                skip_parking_sell = bool(fixed)
+                # Auction y fixed: si hay swap de once, no listar por parking.
+                skip_parking_sell = True
+        # Keep del 15 al KO: no aparcar VM (Politano/Lautaro) salvo venta del destino.
+        if (
+            pid in dest_keep_ids
+            and pid not in dest_sell_ids
+        ):
+            skip_parking_sell = True
 
         # 1) Banquillo caro / valor estancado fuera del once real (≥3M o ≥7% plantilla)
         min_bench_price = max(3_000_000.0, squad_value * 0.07)
