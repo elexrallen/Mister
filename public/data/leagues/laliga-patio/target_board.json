@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T15:45:01.797034+00:00",
+  "generated_at": "2026-10-15T22:35:57.961526+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -172,8 +172,8 @@
       "xpts": 3.97,
       "price": 5298000.0,
       "status": "keep",
-      "delta_5d": 0.107,
-      "value_note": "rising",
+      "delta_5d": 0.0313,
+      "value_note": "stable",
       "value_ratio": 8.14,
       "lineup_prob": 70.0,
       "ff_mister_points": 23.0,
@@ -686,8 +686,8 @@
       "xpts": 3.97,
       "price": 5298000.0,
       "status": "keep",
-      "delta_5d": 0.107,
-      "value_note": "rising",
+      "delta_5d": 0.0313,
+      "value_note": "stable",
       "value_ratio": 8.14,
       "lineup_prob": 70.0,
       "ff_mister_points": 23.0,
@@ -1155,7 +1155,7 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 2,
+    "cycles_left": 1,
     "cash_lag_hours": 12.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1163,10 +1163,10 @@
     "max_debt": 34071349.0,
     "bid_cap": 34071349.0,
     "max_squad": 25,
-    "n_free": 193,
+    "n_free": 194,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 27.2550631775
+    "hours_to_jornada": 20.406314263888888
   },
   "finance": {
     "ok": false,
@@ -1224,8 +1224,8 @@
         "xpts": 3.97,
         "price": 5298000.0,
         "status": "keep",
-        "delta_5d": 0.107,
-        "value_note": "rising",
+        "delta_5d": 0.0313,
+        "value_note": "stable",
         "value_ratio": 8.14,
         "lineup_prob": 70.0,
         "ff_mister_points": 23.0,
@@ -1800,7 +1800,7 @@
     "ep_sum_starters": 49.5,
     "xpts_starters": 49.5,
     "xpts_total": 58.59,
-    "xpts_ceiling": 61.91,
+    "xpts_ceiling": 61.0,
     "xpts_yours": 49.5,
     "cost_sum": 127579000.0,
     "net_buys": 0.0,
@@ -1851,7 +1851,7 @@
     "formation": "3-3-4",
     "xi_rule": "formación 3-3-4 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 2
+    "cycles_left": 1
   },
   "summary_aspirational": {
     "mode": "aspirational",
