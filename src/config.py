@@ -569,6 +569,10 @@ IDEAL_FORMATIONS = (
 IDEAL_BENCH_MIN_POINTS = 100
 # Ideal operable: prima cláusula/mercado por encima de la cual se exige más EP vs libre/mercado
 IDEAL_CLAUSE_PREMIUM_SOFT = 1.25
+# Destino 15: quemar más de esto (cláusula − VM) sin tapa-hueco → rechazar
+DEST_CLAUSE_MAX_WEALTH_BURN = 2_500_000
+# Destino 15: con rank ≤ N, no cláusulas de lujo por encima de la prima soft
+DEST_CONSERVE_RANK_MAX = 3
 # Banda de empate EP: preferir oportunidad (libre/mercado) si la diferencia ≤ esto
 IDEAL_EP_TIE_BAND = 5.0
 # Upgrade operable con cláusula cara: mínimo ΔEP por M€ de sobrecoste

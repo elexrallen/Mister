@@ -40,6 +40,8 @@ HOST_MIN_GAP_S = {
     "futbolfantasy.com": 0.4,
     "www.jornadaperfecta.com": 0.3,
     "jornadaperfecta.com": 0.3,
+    "www.predicted11.com": 0.35,
+    "predicted11.com": 0.35,
 }
 DEFAULT_MIN_GAP_S = 0.0
 

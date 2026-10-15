@@ -13,7 +13,7 @@ from league_rules import ff_hint_for_provider  # noqa: E402
 from scrapers.ff_matchday import SERIEA_CLUB_SLUGS, _competition_club_slugs  # noqa: E402
 from scrapers.futbolfantasy import FF_PATH, _ff_path  # noqa: E402
 from scrapers.teams import team_slug  # noqa: E402
-from scrapers import JP_SUPPORTED, SUPPORTED_EXTERNAL  # noqa: E402
+from scrapers import JP_SUPPORTED, PRED11_SUPPORTED, SUPPORTED_EXTERNAL  # noqa: E402
 
 
 def _assert(cond: bool, msg: str = "") -> None:
@@ -53,6 +53,9 @@ def test_ff_paths_seriea() -> None:
     _assert(_ff_path("seriea") == "serie-a")
     _assert("seriea" in SUPPORTED_EXTERNAL)
     _assert("seriea" not in JP_SUPPORTED)
+    _assert("seriea" in PRED11_SUPPORTED)
+    _assert("premier" in PRED11_SUPPORTED)
+    _assert("laliga" not in PRED11_SUPPORTED)
     try:
         _ff_path("unknown-comp")
         raise AssertionError("expected ValueError for unknown FF_PATH")

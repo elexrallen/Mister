@@ -339,6 +339,100 @@ def _apply_matchday_overlay(
     return candidates
 
 
+def _apply_predicted11_overlay(
+    candidates: list[dict[str, Any]],
+    pred11: list[dict[str, Any]] | None,
+    *,
+    authority: bool = True,
+) -> list[dict[str, Any]]:
+    """
+    Predicted11 → gw_lineup_prob / flags de jornada.
+
+    En Premier/Serie A (`authority=True`) también pisa lineup_prob habitual
+    salvo lesionado/sancionado. En LaLiga no se llama (FF manda).
+    """
+    if not pred11:
+        return candidates
+
+    by_key: dict[str, dict[str, Any]] = {
+        (c.get("name") or "").strip().lower(): c for c in candidates if c.get("name")
+    }
+    # Índice secundario apellido|equipo para nombres cortos Pred11
+    by_team_alias: dict[str, dict[str, Any]] = {}
+    for c in candidates:
+        name = (c.get("name") or "").strip()
+        team = (c.get("team") or "").strip().lower()
+        if not name:
+            continue
+        parts = name.split()
+        alias = parts[-1].lower() if parts else name.lower()
+        if team:
+            by_team_alias[f"{alias}|{team}"] = c
+
+    for mp in pred11:
+        name = (mp.get("name") or "").strip()
+        key = name.lower()
+        if not key:
+            continue
+        pct = mp.get("lineup_prob")
+        try:
+            pct_i = int(pct) if pct is not None else None
+        except (TypeError, ValueError):
+            pct_i = None
+        if pct_i is None:
+            continue
+        role = "starter" if pct_i >= 70 else ("doubt" if pct_i >= 40 else "bench")
+        gw_starter = pct_i >= 70
+        gw_doubt = 40 <= pct_i < 70
+        gw_out = pct_i < 40
+
+        existing = by_key.get(key)
+        if not existing:
+            team = (mp.get("team") or "").strip().lower()
+            parts = name.split()
+            alias = parts[-1].lower() if parts else key
+            if team:
+                existing = by_team_alias.get(f"{alias}|{team}")
+        if existing:
+            avail = existing.get("availability") or "unknown"
+            if authority and avail not in ("injured", "suspended"):
+                existing["lineup_prob"] = pct_i
+            existing["gw_lineup_prob"] = pct_i
+            existing["gw_role"] = role
+            existing["gw_starter"] = gw_starter
+            existing["gw_doubt"] = gw_doubt
+            existing["gw_out"] = gw_out
+            existing["lineup_prob_source"] = "predicted11"
+            if pct_i >= 70:
+                existing["is_recommendation"] = True
+            src = "predicted11"
+            if src not in (existing.get("sources") or []):
+                existing.setdefault("sources", []).append(src)
+            if mp.get("team") and not existing.get("team"):
+                existing["team"] = mp["team"]
+        else:
+            rec = {
+                "name": name,
+                "team": mp.get("team"),
+                "availability": mp.get("availability") or "available",
+                "lineup_prob": pct_i if authority else None,
+                "is_chollo": False,
+                "is_recommendation": pct_i >= 70,
+                "profile_url": mp.get("profile_url"),
+                "sources": ["predicted11"],
+                "gw_lineup_prob": pct_i,
+                "gw_role": role,
+                "gw_starter": gw_starter,
+                "gw_doubt": gw_doubt,
+                "gw_out": gw_out,
+                "lineup_prob_source": "predicted11",
+            }
+            by_key[key] = rec
+            candidates.append(rec)
+
+    return candidates
+
+
 def enrich_players_with_external(
     players: list[dict[str, Any]],
     *,
@@ -347,14 +441,15 @@ def enrich_players_with_external(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """
     Devuelve jugadores enriquecidos + meta
-    {futbolfantasy, jornadaperfecta, ff_matchday, matched, ...}.
-    competition: `laliga` | `premier`.
+    {futbolfantasy, jornadaperfecta, predicted11, ff_matchday, matched, ...}.
+    competition: `laliga` | `premier` | `seriea`.
     squad_teams: equipos de plantilla propia (FF siempre scrapea estas páginas).
     """
     comp = (competition or "laliga").strip().lower() or "laliga"
     meta: dict[str, Any] = {
         "futbolfantasy": "fail",
         "jornadaperfecta": "skip",
+        "predicted11": "skip",
         "ff_matchday": "fail",
         "matched": 0,
         "cache_used": False,
@@ -383,6 +478,12 @@ def enrich_players_with_external(
             bundle.get("jornadaperfecta") or [],
         )
         candidates = _apply_matchday_overlay(candidates, matchday)
+        # Premier/Serie A: Predicted11 manda en titularidad de jornada.
+        pred11 = list(bundle.get("predicted11") or [])
+        if pred11 and comp in ("premier", "seriea"):
+            candidates = _apply_predicted11_overlay(
+                candidates, pred11, authority=True
+            )
 
         for k, v in status.items():
             meta[k] = v
@@ -415,6 +516,11 @@ def enrich_players_with_external(
         if best:
             matched += 1
             avail = best.get("availability") or "unknown"
+            lp_src = best.get("lineup_prob_source")
+            if not lp_src and "predicted11" in (best.get("sources") or []):
+                lp_src = "predicted11"
+            elif not lp_src and best.get("gw_lineup_prob") is not None:
+                lp_src = "futbolfantasy_matchday"
             ext = {
                 "availability": avail,
                 "lineup_prob_ext": best.get("lineup_prob"),
@@ -432,6 +538,7 @@ def enrich_players_with_external(
                 "gw_out": bool(best.get("gw_out")),
                 "gw_opponent": best.get("gw_opponent"),
                 "gw_fixture_id": best.get("gw_fixture_id"),
+                "lineup_prob_source": lp_src,
             }
             # Mister a veces trae escudos nuevos (Club 50…) → completar con club FF
             team_now = str(new_p.get("team") or "")

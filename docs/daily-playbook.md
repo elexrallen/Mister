@@ -58,6 +58,11 @@ Los cortes están en las constantes `HOURS_MATCHDAY`, `HOURS_EVE`,
   en negativo; el corte es la **deuda máxima**, no el cero. Listar hoy no
   cobra hoy: en el **siguiente ciclo** aceptas (≈ VM) y el dinero llega al
   instante. Hoy solo recomienda ir a deuda si esa venta llega antes de la jornada.
+- **Patrimonio vs riesgo** (destino 15 / cláusulas): conservar si vas arriba y el
+  fichaje es lujo caro; arriesgar solo si tapa un hueco titular con prima
+  razonable (≈≤1,25× VM) o gap de xPts material. El path lista primero
+  `falling` y el 15 rechaza cláusulas que queman demasiado wealth (`clause − VM`)
+  sin tapa-hueco. Predicted11 aporta la titularidad en Premier/Serie A.
 - **Mercado según fase**: fichar y listar ventas en la ventana de compra; última
   llamada en confirmación; en víspera y día de partido el playbook **sigue a la
   cola** (si hay `buy_now` solvente, ficha esos con aviso de prima; si no, no

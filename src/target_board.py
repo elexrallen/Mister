@@ -1952,6 +1952,10 @@ def build_target_board(
         if u.get("on_daily_market") or seller == "market":
             s_on_board += 1
 
+    try:
+        rank = int(me["rank"]) if me.get("rank") is not None else None
+    except (TypeError, ValueError):
+        rank = None
     dest = assemble_destination(
         universe,
         owned_ids=owned_ids,
@@ -1967,6 +1971,7 @@ def build_target_board(
         gw_target_xi=gw_target_xi,
         n_free=n_free,
         s_on_board=s_on_board,
+        rank=rank,
     )
     named = list(dest.get("xi") or []) + list(dest.get("bench") or [])
     perfect = [_dest_to_row(p, owned_ids=owned_ids) for p in named]

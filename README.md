@@ -19,12 +19,13 @@ terceros. Las fuentes externas solo cubren lo que Mister no da.
 | Prioridad | Fuente | Qué aporta | Estado |
 |-----------|--------|------------|--------|
 | 1 | **Mister** (`MISTER_TOKEN`): `ajax/sw/players`, `/feed`, `ajax/sw/gameweek`, `ajax/sw/competition`, balances y plantillas rivales | Mercado, plantilla, saldos, cláusulas, `recent_gw_points`, `price_delta_1d`, `next_opponent_team_id`, jornada y kickoffs, reglas | Autoridad |
-| 2 | **Fútbol Fantasy** | Probabilidad de titularidad (`gw_lineup_prob`), previa de alineaciones, lesionados y sancionados, producción por temporada (`ff_mister_avg`) | Autoridad complementaria |
-| 3 | **FotMob** | Nota, minutos, goles y xG de los últimos 5 partidos | Opcional, acotado a plantilla + mercado + top del pool (once objetivo) |
-| 4 | **Jornada Perfecta** | Dudas y `gw_*` | Respaldo: solo se ejecuta si la previa de FF sale `partial` o `fail` |
-| 5 | `public/data/leagues/<slug>/history/YYYY-MM-DD.json` | Serie propia de precios y puntos por jornada | Derivada |
-| 6 | API-Football o `src/performance_history.json` | PPG / minutos de temporadas previas | Derivada |
-| 7 | Mock / seed local | Demo inmediata sin secrets | Fallback |
+| 2 | **Fútbol Fantasy** | Lesionados/sancionados, producción (`ff_mister_avg`); en **LaLiga** también titularidad / previa (`gw_lineup_prob`) | Autoridad complementaria |
+| 3 | **Predicted11** | Titularidad agregada de expertos (`gw_lineup_prob`, `lineup_prob_source=predicted11`) | **Premier y Serie A** (FF suele ir fino ahí) |
+| 4 | **FotMob** | Nota, minutos, goles y xG de los últimos 5 partidos | Opcional, acotado a plantilla + mercado + top del pool (once objetivo) |
+| 5 | **Jornada Perfecta** | Dudas y `gw_*` | Respaldo LaLiga/Premier si la previa FF sale `partial` o `fail` (no Serie A) |
+| 6 | `public/data/leagues/<slug>/history/YYYY-MM-DD.json` | Serie propia de precios y puntos por jornada | Derivada |
+| 7 | API-Football o `src/performance_history.json` | PPG / minutos de temporadas previas | Derivada |
+| 8 | Mock / seed local | Demo inmediata sin secrets | Fallback |
 
 Sin secrets el proyecto **funciona al clonar** (mock + seed).
 

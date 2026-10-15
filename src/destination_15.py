@@ -12,6 +12,7 @@ import config
 from competitive_actions import (
     build_recommended_gw_xi,
     clause_premium_ratio,
+    clause_roi_gate,
     is_clause_starter_eligible,
     is_xi_quality_starter,
     mister_bid_cap,
@@ -136,6 +137,54 @@ def sale_limit(league_rules: dict[str, Any] | None) -> int:
     return max(1, limit)
 
 
+def _sell_priority(p: dict[str, Any]) -> tuple:
+    """Falling / ΔVM↓ primero; rising al final (no quemar upside para financiar)."""
+    note = str(p.get("value_note") or "")
+    d = _f(p.get("delta_5d"))
+    falling = note == "falling" or (d is not None and d < -0.02)
+    rising = note == "rising" or (d is not None and d > 0.02)
+    return (
+        0 if falling else (2 if rising else 1),
+        -_vm(p),
+        _xpts(p),
+    )
+
+
+def _clause_dest_ok(
+    cand: dict[str, Any],
+    *,
+    fills_gap: bool,
+    week_c: float,
+    week_i: float | None,
+    rank: int | None,
+) -> bool:
+    """
+    Doctrina patrimonio en el 15: ROI/prima + techo de wealth burn + conservar
+    si vas arriba (rank bajo) y el fichaje es lujo caro.
+    """
+    cost = buy_cost(cand)
+    vm = _vm(cand)
+    gap = week_c - (week_i or 0.0)
+    upgrade = max(30.0, gap * 10.0)
+    roi_ok, _why = clause_roi_gate(
+        upgrade_score=upgrade,
+        clause=cost,
+        market_value=vm or None,
+        fills=bool(fills_gap),
+    )
+    if not roi_ok:
+        return False
+    burn = max(0.0, cost - vm)
+    max_burn = float(getattr(config, "DEST_CLAUSE_MAX_WEALTH_BURN", 2_500_000) or 2_500_000)
+    if burn > max_burn + 1 and not fills_gap:
+        return False
+    conserve_rank = int(getattr(config, "DEST_CONSERVE_RANK_MAX", 3) or 3)
+    # Arriba en la tabla: no cláusulas de lujo; solo las que tapan hueco titular.
+    if rank is not None and 1 <= int(rank) <= conserve_rank and not fills_gap:
+        return False
+    return True
+
+
 def rotation_finance(
     dest: list[dict[str, Any]],
     *,
@@ -159,6 +208,8 @@ def rotation_finance(
         for i in owned_by_id
         if i not in dest_ids
     ]
+    # Preferir liquidar falling frente a rising (orden del path / sell_to_fund).
+    sells.sort(key=_sell_priority)
     cost = sum(buy_cost(p) for p in buys)
     proceeds = sum(_vm(p) for p in sells)
     new_lists = [p for p in sells if _pid(p) not in listed_ids]
@@ -803,6 +854,7 @@ def assemble_destination(
     gw_target_xi: dict[str, Any] | None = None,
     n_free: int = 0,
     s_on_board: int = 0,
+    rank: int | None = None,
 ) -> dict[str, Any]:
     """Elige formación y 15 alcanzable (named + flex)."""
     for p in universe:
@@ -939,6 +991,21 @@ def assemble_destination(
                 owned_ids=owned_ids,
             ):
                 continue
+            is_clause = cand.get("reach") == "clause" or str(
+                cand.get("acquisition") or ""
+            ) == "clause"
+            if is_clause:
+                inc = _incumbent_dropped(
+                    xi_now, t_xi, cand=cand, owned_ids=owned_ids
+                )
+                if not _clause_dest_ok(
+                    cand,
+                    fills_gap=bool(fills_gap),
+                    week_c=_xpts(cand),
+                    week_i=_xpts(inc) if inc is not None else None,
+                    rank=rank,
+                ):
+                    continue
             cand["fills_starter_gap"] = bool(fills_gap)
             fills_gap_by_id[_pid(cand)] = bool(fills_gap)
             pool = named
@@ -1121,6 +1188,7 @@ def build_path(
     """
     path: list[dict[str, Any]] = []
     sells = list(finance.get("sells") or finance.get("new_lists") or [])
+    sells.sort(key=_sell_priority)
     for s in sells:
         path.append(
             {
