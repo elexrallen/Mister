@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T12:07:11.504573+00:00",
+  "generated_at": "2026-10-15T15:45:01.797034+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 49.51,
+      "xpts_starters": 49.28,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 48.88,
+      "xpts_starters": 48.65,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 41.02,
+      "xpts_starters": 43.07,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 47.1,
+      "xpts_starters": 49.15,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 51.69,
+      "xpts_starters": 51.46,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 49.73,
+      "xpts_starters": 49.5,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 49.39,
+      "xpts_starters": 49.16,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 45.49,
+      "xpts_starters": 45.26,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -304,13 +304,13 @@
       "name": "Y. Fofana",
       "team": "Sevilla",
       "team_id": "17",
-      "ep_score": 44.9,
-      "xpts": 4.89,
+      "ep_score": 44.4,
+      "xpts": 4.66,
       "price": 8351000.0,
       "status": "keep",
       "delta_5d": 0.0805,
       "value_note": "rising",
-      "value_ratio": 5.38,
+      "value_ratio": 5.32,
       "lineup_prob": 90.0,
       "ff_mister_points": 26.0,
       "ff_mister_avg": 6.5,
@@ -325,7 +325,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.9 xPts · 8,351,000 € · keep · starter",
+      "why": "4.7 xPts · 8,351,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -818,13 +818,13 @@
       "name": "Y. Fofana",
       "team": "Sevilla",
       "team_id": "17",
-      "ep_score": 44.9,
-      "xpts": 4.89,
+      "ep_score": 44.4,
+      "xpts": 4.66,
       "price": 8351000.0,
       "status": "keep",
       "delta_5d": 0.0805,
       "value_note": "rising",
-      "value_ratio": 5.38,
+      "value_ratio": 5.32,
       "lineup_prob": 90.0,
       "ff_mister_points": 26.0,
       "ff_mister_avg": 6.5,
@@ -839,7 +839,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.9 xPts · 8,351,000 € · keep · starter",
+      "why": "4.7 xPts · 8,351,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1163,10 +1163,10 @@
     "max_debt": 34071349.0,
     "bid_cap": 34071349.0,
     "max_squad": 25,
-    "n_free": 202,
+    "n_free": 193,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 30.885652396111112
+    "hours_to_jornada": 27.2550631775
   },
   "finance": {
     "ok": false,
@@ -1356,13 +1356,13 @@
         "name": "Y. Fofana",
         "team": "Sevilla",
         "team_id": "17",
-        "ep_score": 44.9,
-        "xpts": 4.89,
+        "ep_score": 44.4,
+        "xpts": 4.66,
         "price": 8351000.0,
         "status": "keep",
         "delta_5d": 0.0805,
         "value_note": "rising",
-        "value_ratio": 5.38,
+        "value_ratio": 5.32,
         "lineup_prob": 90.0,
         "ff_mister_points": 26.0,
         "ff_mister_avg": 6.5,
@@ -1377,7 +1377,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.9 xPts · 8,351,000 € · keep · starter",
+        "why": "4.7 xPts · 8,351,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1709,23 +1709,6 @@
         "cash_lag_hours": 24.0
       },
       {
-        "player_id": "22547",
-        "name": "Pedri",
-        "position": "MF",
-        "ep_score": 42.4,
-        "xpts": 0.13,
-        "price": 21186000.0,
-        "delta_5d": -0.0032,
-        "value_note": "stable",
-        "why": "Fuera del 15 al KO · lista a ~21,186,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 21186000.0,
-        "expected_proceeds": 21186000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
-      },
-      {
         "player_id": "68497",
         "name": "S. Boselli",
         "position": "DF",
@@ -1746,8 +1729,8 @@
         "player_id": "28619",
         "name": "I. Balliu",
         "position": "DF",
-        "ep_score": 19.7,
-        "xpts": 1.1,
+        "ep_score": 27.1,
+        "xpts": 1.18,
         "price": 243000.0,
         "delta_5d": 0.3807,
         "value_note": "rising",
@@ -1792,16 +1775,33 @@
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
         "cash_lag_hours": 24.0
+      },
+      {
+        "player_id": "22547",
+        "name": "Pedri",
+        "position": "MF",
+        "ep_score": 46.6,
+        "xpts": 2.41,
+        "price": 21186000.0,
+        "delta_5d": -0.0032,
+        "value_note": "stable",
+        "why": "Fuera del 15 al KO · lista a ~21,186,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
+        "list_at": 21186000.0,
+        "expected_proceeds": 21186000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 24.0
       }
     ]
   },
   "totals": {
-    "ep_sum": 58.82,
-    "ep_sum_starters": 49.73,
-    "xpts_starters": 49.73,
-    "xpts_total": 58.82,
+    "ep_sum": 58.59,
+    "ep_sum_starters": 49.5,
+    "xpts_starters": 49.5,
+    "xpts_total": 58.59,
     "xpts_ceiling": 61.91,
-    "xpts_yours": 49.73,
+    "xpts_yours": 49.5,
     "cost_sum": 127579000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1845,8 +1845,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 58.82,
-    "ep_sum_starters": 49.73,
+    "ep_sum": 58.59,
+    "ep_sum_starters": 49.5,
     "mode": "ko",
     "formation": "3-3-4",
     "xi_rule": "formación 3-3-4 · once por xPts · 15 al KO",

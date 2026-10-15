@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-15T12:13:50.245967+00:00",
+  "generated_at": "2026-10-15T15:53:20.053134+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -481,7 +481,7 @@
       "delta_5d": -0.0028,
       "value_note": "stable",
       "value_ratio": 1.69,
-      "lineup_prob": 90.0,
+      "lineup_prob": 80.0,
       "ff_mister_points": 73.0,
       "ff_mister_avg": 14.6,
       "hist_ok": false,
@@ -961,7 +961,7 @@
       "delta_5d": -0.0028,
       "value_note": "stable",
       "value_ratio": 1.69,
-      "lineup_prob": 90.0,
+      "lineup_prob": 80.0,
       "ff_mister_points": 73.0,
       "ff_mister_avg": 14.6,
       "hist_ok": false,
@@ -1114,10 +1114,10 @@
     "max_debt": 15939715.0,
     "bid_cap": 15939715.0,
     "max_squad": 25,
-    "n_free": 119,
+    "n_free": 120,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 30.525384347499998
+    "hours_to_jornada": 26.86929552222222
   },
   "finance": {
     "ok": true,
@@ -1450,7 +1450,7 @@
         "delta_5d": -0.0028,
         "value_note": "stable",
         "value_ratio": 1.69,
-        "lineup_prob": 90.0,
+        "lineup_prob": 80.0,
         "ff_mister_points": 73.0,
         "ff_mister_avg": 14.6,
         "hist_ok": false,
