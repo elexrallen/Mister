@@ -86,6 +86,56 @@ def test_overlay_authority_premier() -> None:
     _assert(row["gw_starter"] is True, row)
 
 
+def test_overlay_demotes_bench_when_team_covered() -> None:
+    """J. Cunha (Nottingham) no está en XI Pred11 de Forest → no titular."""
+    # 11 titulares Pred11 en Nott. Forest + Cunha solo en FF al 70%
+    forest_xi = [
+        "Murillo",
+        "N. Williams",
+        "Ola Aina",
+        "Gibbs-White",
+        "Ndoye",
+        "Delap",
+        "X. Schlager",
+        "McAtee",
+        "Sels",
+        "Muñoz",
+        "O. Diomande",
+    ]
+    pred11 = [
+        {"name": n, "team": "Nott. Forest", "lineup_prob": 100, "source": "predicted11"}
+        for n in forest_xi
+    ]
+    candidates = [
+        {
+            "name": "Jair Cunha",
+            "team": "Nottingham",
+            "availability": "available",
+            "lineup_prob": 70,
+            "sources": ["futbolfantasy"],
+            "gw_lineup_prob": 70,
+        },
+        {
+            "name": "Murillo",
+            "team": "Nottingham Forest",
+            "availability": "available",
+            "lineup_prob": 80,
+            "sources": ["futbolfantasy"],
+            "gw_lineup_prob": 80,
+        },
+    ]
+    out = _apply_predicted11_overlay(candidates, pred11, authority=True)
+    by_name = {r["name"]: r for r in out}
+    cunha = by_name["Jair Cunha"]
+    murillo = by_name["Murillo"]
+    _assert(cunha["gw_lineup_prob"] == 18, cunha)
+    _assert(cunha["lineup_prob"] == 18, cunha)
+    _assert(cunha["gw_starter"] is False, cunha)
+    _assert(cunha["lineup_prob_source"] == "predicted11", cunha)
+    _assert(murillo["gw_lineup_prob"] == 100, murillo)
+    _assert(murillo["gw_starter"] is True, murillo)
+
+
 def test_fetch_all_external_wires_pred11() -> None:
     fake_pred = [
         {
@@ -122,6 +172,7 @@ def main() -> int:
     test_pick_expert_urls_prefers_rank()
     test_records_from_counts_pct()
     test_overlay_authority_premier()
+    test_overlay_demotes_bench_when_team_covered()
     test_fetch_all_external_wires_pred11()
     print("OK predicted11")
     return 0

@@ -339,6 +339,25 @@ def _apply_matchday_overlay(
     return candidates
 
 
+# Si Pred11 cubre el equipo y el jugador no está en esos onces → banquillo.
+PRED11_BENCH_PROB = 18
+PRED11_TEAM_MIN_STARTERS = 8
+
+
+def _pred11_team_key(team: str | None) -> str:
+    """Slug estable para cruzar 'Nott. Forest' ↔ 'Nottingham'."""
+    from scrapers.teams import team_slug
+    from scrapers.name_match import normalize_team
+
+    raw = (team or "").strip()
+    if not raw:
+        return ""
+    slug = team_slug(raw)
+    if slug:
+        return slug
+    return normalize_team(raw)
+
+
 def _apply_predicted11_overlay(
     candidates: list[dict[str, Any]],
     pred11: list[dict[str, Any]] | None,
@@ -349,7 +368,8 @@ def _apply_predicted11_overlay(
     Predicted11 → gw_lineup_prob / flags de jornada.
 
     En Premier/Serie A (`authority=True`) también pisa lineup_prob habitual
-    salvo lesionado/sancionado. En LaLiga no se llama (FF manda).
+    salvo lesionado/sancionado. Quien no aparece en el XI Pred11 de un equipo
+    ya cubierto baja a banquillo (no se queda el 70% optimista de FF).
     """
     if not pred11:
         return candidates
@@ -357,17 +377,42 @@ def _apply_predicted11_overlay(
     by_key: dict[str, dict[str, Any]] = {
         (c.get("name") or "").strip().lower(): c for c in candidates if c.get("name")
     }
-    # Índice secundario apellido|equipo para nombres cortos Pred11
+    # Índice secundario apellido|equipo_slug para nombres cortos Pred11
     by_team_alias: dict[str, dict[str, Any]] = {}
     for c in candidates:
         name = (c.get("name") or "").strip()
-        team = (c.get("team") or "").strip().lower()
+        tkey = _pred11_team_key(c.get("team"))
         if not name:
             continue
         parts = name.split()
         alias = parts[-1].lower() if parts else name.lower()
-        if team:
-            by_team_alias[f"{alias}|{team}"] = c
+        if tkey:
+            by_team_alias[f"{alias}|{tkey}"] = c
+
+    touched: set[int] = set()
+    starters_by_team: dict[str, int] = {}
+
+    def _touch(rec: dict[str, Any]) -> None:
+        touched.add(id(rec))
+
+    def _set_gw(rec: dict[str, Any], pct_i: int, *, write_lineup: bool) -> None:
+        role = "starter" if pct_i >= 70 else ("doubt" if pct_i >= 40 else "bench")
+        avail = rec.get("availability") or "unknown"
+        if write_lineup and avail not in ("injured", "suspended"):
+            rec["lineup_prob"] = pct_i
+        rec["gw_lineup_prob"] = pct_i
+        rec["gw_role"] = role
+        rec["gw_starter"] = pct_i >= 70
+        rec["gw_doubt"] = 40 <= pct_i < 70
+        rec["gw_out"] = pct_i < 40
+        rec["lineup_prob_source"] = "predicted11"
+        if pct_i >= 70:
+            rec["is_recommendation"] = True
+        else:
+            rec["is_recommendation"] = False
+        src = "predicted11"
+        if src not in (rec.get("sources") or []):
+            rec.setdefault("sources", []).append(src)
 
     for mp in pred11:
         name = (mp.get("name") or "").strip()
@@ -381,33 +426,18 @@ def _apply_predicted11_overlay(
             pct_i = None
         if pct_i is None:
             continue
-        role = "starter" if pct_i >= 70 else ("doubt" if pct_i >= 40 else "bench")
-        gw_starter = pct_i >= 70
-        gw_doubt = 40 <= pct_i < 70
-        gw_out = pct_i < 40
+        tkey = _pred11_team_key(mp.get("team"))
+        if tkey and pct_i >= 70:
+            starters_by_team[tkey] = starters_by_team.get(tkey, 0) + 1
 
         existing = by_key.get(key)
-        if not existing:
-            team = (mp.get("team") or "").strip().lower()
+        if not existing and tkey:
             parts = name.split()
             alias = parts[-1].lower() if parts else key
-            if team:
-                existing = by_team_alias.get(f"{alias}|{team}")
+            existing = by_team_alias.get(f"{alias}|{tkey}")
         if existing:
-            avail = existing.get("availability") or "unknown"
-            if authority and avail not in ("injured", "suspended"):
-                existing["lineup_prob"] = pct_i
-            existing["gw_lineup_prob"] = pct_i
-            existing["gw_role"] = role
-            existing["gw_starter"] = gw_starter
-            existing["gw_doubt"] = gw_doubt
-            existing["gw_out"] = gw_out
-            existing["lineup_prob_source"] = "predicted11"
-            if pct_i >= 70:
-                existing["is_recommendation"] = True
-            src = "predicted11"
-            if src not in (existing.get("sources") or []):
-                existing.setdefault("sources", []).append(src)
+            _set_gw(existing, pct_i, write_lineup=authority)
+            _touch(existing)
             if mp.get("team") and not existing.get("team"):
                 existing["team"] = mp["team"]
         else:
@@ -421,14 +451,32 @@ def _apply_predicted11_overlay(
                 "profile_url": mp.get("profile_url"),
                 "sources": ["predicted11"],
                 "gw_lineup_prob": pct_i,
-                "gw_role": role,
-                "gw_starter": gw_starter,
-                "gw_doubt": gw_doubt,
-                "gw_out": gw_out,
+                "gw_role": "starter" if pct_i >= 70 else ("doubt" if pct_i >= 40 else "bench"),
+                "gw_starter": pct_i >= 70,
+                "gw_doubt": 40 <= pct_i < 70,
+                "gw_out": pct_i < 40,
                 "lineup_prob_source": "predicted11",
             }
             by_key[key] = rec
             candidates.append(rec)
+            _touch(rec)
+
+    # Señal negativa: equipo cubierto por Pred11 y jugador no citado → banquillo.
+    covered = {
+        t for t, n in starters_by_team.items() if n >= PRED11_TEAM_MIN_STARTERS
+    }
+    if authority and covered:
+        for rec in candidates:
+            if id(rec) in touched:
+                continue
+            avail = rec.get("availability") or "unknown"
+            if avail in ("injured", "suspended"):
+                continue
+            tkey = _pred11_team_key(rec.get("team"))
+            if not tkey or tkey not in covered:
+                continue
+            _set_gw(rec, PRED11_BENCH_PROB, write_lineup=True)
+            _touch(rec)
 
     return candidates
 

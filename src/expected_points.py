@@ -113,6 +113,10 @@ def probability_of_playing(player: dict[str, Any]) -> tuple[float, str]:
     ff_prob = _num(player.get("gw_lineup_prob")) or _num(ext.get("gw_lineup_prob"))
     if ff_prob is not None:
         ff_prob = max(0.0, min(1.0, ff_prob / 100.0))
+    lp_src = str(
+        ext.get("lineup_prob_source") or player.get("lineup_prob_source") or ""
+    ).lower()
+    prev_label = "Predicted11" if lp_src == "predicted11" else "FF"
 
     probable = player.get("gw_probable_xi")
     confirmed = bool(player.get("gw_confirmed"))
@@ -121,9 +125,9 @@ def probability_of_playing(player: dict[str, Any]) -> tuple[float, str]:
         base = P_PLAY_CONFIRMED_XI if confirmed else P_PLAY_PROBABLE_XI
         why = "Once confirmado en Mister" if confirmed else "Once probable en Mister"
         if ff_prob is not None and not confirmed:
-            # FF puede rebajar un once probable todavía sin confirmar
+            # Previa externa puede rebajar un once probable todavía sin confirmar
             base = max(0.55, (base + ff_prob) / 2.0)
-            why = f"{why} + FF {ff_prob * 100:.0f}%"
+            why = f"{why} + {prev_label} {ff_prob * 100:.0f}%"
         return base, why
 
     if probable is False:
@@ -131,11 +135,11 @@ def probability_of_playing(player: dict[str, Any]) -> tuple[float, str]:
         why = "Fuera del once probable de Mister"
         if ff_prob is not None:
             base = min(0.45, max(base, ff_prob * 0.6))
-            why = f"{why} (FF {ff_prob * 100:.0f}%)"
+            why = f"{why} ({prev_label} {ff_prob * 100:.0f}%)"
         return base, why
 
     if ff_prob is not None:
-        return ff_prob, f"FF {ff_prob * 100:.0f}% titular"
+        return ff_prob, f"{prev_label} {ff_prob * 100:.0f}% titular"
 
     season_prob = _num(player.get("lineup_prob"))
     if season_prob is not None:
