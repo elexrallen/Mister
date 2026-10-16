@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-16T20:52:31.463106+00:00",
+  "generated_at": "2026-10-16T22:16:41.997353+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -206,8 +206,8 @@
       "xpts": 5.28,
       "price": 413000.0,
       "status": "keep",
-      "delta_5d": 0.1284,
-      "value_note": "rising",
+      "delta_5d": 0.0,
+      "value_note": "stable",
       "value_ratio": 98.31,
       "lineup_prob": 100.0,
       "ff_mister_points": 88.0,
@@ -652,8 +652,8 @@
       "xpts": 5.28,
       "price": 413000.0,
       "status": "keep",
-      "delta_5d": 0.1284,
-      "value_note": "rising",
+      "delta_5d": 0.0,
+      "value_note": "stable",
       "value_ratio": 98.31,
       "lineup_prob": 100.0,
       "ff_mister_points": 88.0,
@@ -1040,7 +1040,7 @@
     "n_free": 123,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 14.632045420277777
+    "hours_to_jornada": 13.227997919166667
   },
   "finance": {
     "ok": true,
@@ -1132,8 +1132,8 @@
         "xpts": 5.28,
         "price": 413000.0,
         "status": "keep",
-        "delta_5d": 0.1284,
-        "value_note": "rising",
+        "delta_5d": 0.0,
+        "value_note": "stable",
         "value_ratio": 98.31,
         "lineup_prob": 100.0,
         "ff_mister_points": 88.0,
