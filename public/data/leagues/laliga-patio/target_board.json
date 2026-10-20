@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-20T11:53:05.375907+00:00",
+  "generated_at": "2026-10-20T15:47:52.897758+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 58.68,
+      "xpts_starters": 58.25,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 56.16,
+      "xpts_starters": 55.51,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 48.25,
+      "xpts_starters": 47.6,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 55.36,
+      "xpts_starters": 54.71,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 58.11,
+      "xpts_starters": 57.46,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 59.29,
+      "xpts_starters": 58.86,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 56.22,
+      "xpts_starters": 55.79,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 48.54,
+      "xpts_starters": 47.89,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -134,13 +134,13 @@
       "name": "D. Soria",
       "team": "Getafe",
       "team_id": "9",
-      "ep_score": 71.6,
-      "xpts": 5.49,
+      "ep_score": 70.8,
+      "xpts": 5.06,
       "price": 10015000.0,
       "status": "keep",
       "delta_5d": -0.012,
       "value_note": "stable",
-      "value_ratio": 7.15,
+      "value_ratio": 7.07,
       "lineup_prob": 95.0,
       "ff_mister_points": 45.0,
       "ff_mister_avg": 5.63,
@@ -155,7 +155,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "5.5 xPts · 10,015,000 € · keep · starter",
+      "why": "5.1 xPts · 10,015,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -648,13 +648,13 @@
       "name": "D. Soria",
       "team": "Getafe",
       "team_id": "9",
-      "ep_score": 71.6,
-      "xpts": 5.49,
+      "ep_score": 70.8,
+      "xpts": 5.06,
       "price": 10015000.0,
       "status": "keep",
       "delta_5d": -0.012,
       "value_note": "stable",
-      "value_ratio": 7.15,
+      "value_ratio": 7.07,
       "lineup_prob": 95.0,
       "ff_mister_points": 45.0,
       "ff_mister_avg": 5.63,
@@ -669,7 +669,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "5.5 xPts · 10,015,000 € · keep · starter",
+      "why": "5.1 xPts · 10,015,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1163,10 +1163,10 @@
     "max_debt": 35959889.0,
     "bid_cap": 35959889.0,
     "max_squad": 25,
-    "n_free": 199,
+    "n_free": 196,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 30.12089192472222
+    "hours_to_jornada": 26.207715529722222
   },
   "finance": {
     "ok": false,
@@ -1186,13 +1186,13 @@
         "name": "D. Soria",
         "team": "Getafe",
         "team_id": "9",
-        "ep_score": 71.6,
-        "xpts": 5.49,
+        "ep_score": 70.8,
+        "xpts": 5.06,
         "price": 10015000.0,
         "status": "keep",
         "delta_5d": -0.012,
         "value_note": "stable",
-        "value_ratio": 7.15,
+        "value_ratio": 7.07,
         "lineup_prob": 95.0,
         "ff_mister_points": 45.0,
         "ff_mister_avg": 5.63,
@@ -1207,7 +1207,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "5.5 xPts · 10,015,000 € · keep · starter",
+        "why": "5.1 xPts · 10,015,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1780,8 +1780,8 @@
         "player_id": "19168",
         "name": "N. Gudelj",
         "position": "MF",
-        "ep_score": 39.6,
-        "xpts": 2.1,
+        "ep_score": 39.2,
+        "xpts": 1.88,
         "price": 1040000.0,
         "delta_5d": 0.194,
         "value_note": "rising",
@@ -1813,12 +1813,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 63.45,
-    "ep_sum_starters": 59.29,
-    "xpts_starters": 59.29,
-    "xpts_total": 63.45,
-    "xpts_ceiling": 71.24,
-    "xpts_yours": 59.29,
+    "ep_sum": 63.02,
+    "ep_sum_starters": 58.86,
+    "xpts_starters": 58.86,
+    "xpts_total": 63.02,
+    "xpts_ceiling": 63.88,
+    "xpts_yours": 58.86,
     "cost_sum": 148311000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1862,8 +1862,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 63.45,
-    "ep_sum_starters": 59.29,
+    "ep_sum": 63.02,
+    "ep_sum_starters": 58.86,
     "mode": "ko",
     "formation": "3-3-4",
     "xi_rule": "formación 3-3-4 · once por xPts · 15 al KO",
