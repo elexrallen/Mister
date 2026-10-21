@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-21T08:52:14.986841+00:00",
+  "generated_at": "2026-10-21T16:06:08.266493+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 51.28,
+      "xpts_starters": 50.97,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 43.38,
+      "xpts_starters": 43.07,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -573,7 +573,7 @@
       "position": "MF",
       "role": "bench",
       "player_id": "17453",
-      "name": "F. De Jong",
+      "name": "F. De Jong 💥",
       "team": "Barcelona",
       "team_id": "3",
       "ep_score": 14.4,
@@ -1087,7 +1087,7 @@
       "position": "MF",
       "role": "bench",
       "player_id": "17453",
-      "name": "F. De Jong",
+      "name": "F. De Jong 💥",
       "team": "Barcelona",
       "team_id": "3",
       "ep_score": 14.4,
@@ -1163,10 +1163,10 @@
     "max_debt": 44616349.0,
     "bid_cap": 44616349.0,
     "max_squad": 25,
-    "n_free": 198,
+    "n_free": 206,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 9.134889815277777
+    "hours_to_jornada": 1.9034961963888888
   },
   "finance": {
     "ok": false,
@@ -1625,7 +1625,7 @@
         "position": "MF",
         "role": "bench",
         "player_id": "17453",
-        "name": "F. De Jong",
+        "name": "F. De Jong 💥",
         "team": "Barcelona",
         "team_id": "3",
         "ep_score": 14.4,
@@ -1746,8 +1746,8 @@
         "player_id": "28619",
         "name": "I. Balliu",
         "position": "DF",
-        "ep_score": 26.0,
-        "xpts": 0.62,
+        "ep_score": 25.5,
+        "xpts": 0.31,
         "price": 344000.0,
         "delta_5d": 0.1467,
         "value_note": "rising",
@@ -1800,7 +1800,7 @@
     "ep_sum_starters": 56.4,
     "xpts_starters": 56.4,
     "xpts_total": 60.05,
-    "xpts_ceiling": 63.88,
+    "xpts_ceiling": 61.95,
     "xpts_yours": 56.4,
     "cost_sum": 143472000.0,
     "net_buys": 0.0,
