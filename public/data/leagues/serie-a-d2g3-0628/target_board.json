@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-26T10:35:05.908506+00:00",
+  "generated_at": "2026-10-26T19:03:46.337227+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 47.9,
+      "xpts_starters": 48.72,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 45.2,
+      "xpts_starters": 46.02,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 40.13,
+      "xpts_starters": 40.95,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 45.14,
+      "xpts_starters": 45.96,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 48.2,
+      "xpts_starters": 49.02,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 53.85,
+      "xpts_starters": 54.67,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 44.66,
+      "xpts_starters": 45.48,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 39.95,
+      "xpts_starters": 40.77,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -304,13 +304,13 @@
       "name": "N. Pisilli",
       "team": "Roma",
       "team_id": "196",
-      "ep_score": 39.6,
-      "xpts": 4.2,
+      "ep_score": 40.4,
+      "xpts": 5.02,
       "price": 3259000.0,
       "status": "keep",
       "delta_5d": 0.0824,
       "value_note": "rising",
-      "value_ratio": 12.15,
+      "value_ratio": 12.4,
       "lineup_prob": 100.0,
       "ff_mister_points": 49.0,
       "ff_mister_avg": 7.0,
@@ -325,7 +325,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.2 xPts · 3,259,000 € · keep · starter",
+      "why": "5.0 xPts · 3,259,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -784,13 +784,13 @@
       "name": "N. Pisilli",
       "team": "Roma",
       "team_id": "196",
-      "ep_score": 39.6,
-      "xpts": 4.2,
+      "ep_score": 40.4,
+      "xpts": 5.02,
       "price": 3259000.0,
       "status": "keep",
       "delta_5d": 0.0824,
       "value_note": "rising",
-      "value_ratio": 12.15,
+      "value_ratio": 12.4,
       "lineup_prob": 100.0,
       "ff_mister_points": 49.0,
       "ff_mister_avg": 7.0,
@@ -805,7 +805,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.2 xPts · 3,259,000 € · keep · starter",
+      "why": "5.0 xPts · 3,259,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1087,18 +1087,18 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 0,
+    "cycles_left": 2,
     "cash_lag_hours": 8.0,
-    "settle_before_ko": false,
+    "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 5,
-    "max_debt": 19814275.0,
-    "bid_cap": 19814275.0,
+    "sale_remaining": 4,
+    "max_debt": 13943765.0,
+    "bid_cap": 13943765.0,
     "max_squad": 25,
     "n_free": 108,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": null
+    "hours_to_jornada": 22.445368185833335
   },
   "finance": {
     "ok": false,
@@ -1288,13 +1288,13 @@
         "name": "N. Pisilli",
         "team": "Roma",
         "team_id": "196",
-        "ep_score": 39.6,
-        "xpts": 4.2,
+        "ep_score": 40.4,
+        "xpts": 5.02,
         "price": 3259000.0,
         "status": "keep",
         "delta_5d": 0.0824,
         "value_note": "rising",
-        "value_ratio": 12.15,
+        "value_ratio": 12.4,
         "lineup_prob": 100.0,
         "ff_mister_points": 49.0,
         "ff_mister_avg": 7.0,
@@ -1309,7 +1309,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.2 xPts · 3,259,000 € · keep · starter",
+        "why": "5.0 xPts · 3,259,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1711,12 +1711,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 54.96,
-    "ep_sum_starters": 53.85,
-    "xpts_starters": 53.85,
-    "xpts_total": 54.96,
+    "ep_sum": 55.78,
+    "ep_sum_starters": 54.67,
+    "xpts_starters": 54.67,
+    "xpts_total": 55.78,
     "xpts_ceiling": 91.9,
-    "xpts_yours": 67.93,
+    "xpts_yours": 68.75,
     "cost_sum": 37793000.0,
     "net_buys": 0.0,
     "slots_filled": 14,
@@ -1738,7 +1738,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 5769275.0,
+  "residual_after_reserve": 24156275.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1760,13 +1760,13 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 54.96,
-    "ep_sum_starters": 53.85,
+    "ep_sum": 55.78,
+    "ep_sum_starters": 54.67,
     "mode": "ko",
     "formation": "3-3-4",
     "xi_rule": "formación 3-3-4 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 0
+    "cycles_left": 2
   },
   "summary_aspirational": {
     "mode": "aspirational",
