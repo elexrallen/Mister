@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-26T19:03:46.337227+00:00",
+  "generated_at": "2026-10-27T00:09:35.713502+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -116,14 +116,14 @@
       "cost": 0
     }
   ],
-  "balance": 5769275.0,
-  "squad_value": 56180000.0,
+  "balance": 50765.0,
+  "squad_value": 61880000.0,
   "wealth": {
-    "balance": 5769275.0,
-    "squad_value": 56180000.0,
-    "total": 61949275.0,
+    "balance": 50765.0,
+    "squad_value": 61880000.0,
+    "total": 61930765.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 61949275.0
+    "budget_cap": 61930765.0
   },
   "perfect_squad": [
     {
@@ -1091,20 +1091,20 @@
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 4,
-    "max_debt": 13943765.0,
-    "bid_cap": 13943765.0,
+    "sale_remaining": 5,
+    "max_debt": 15520765.0,
+    "bid_cap": 15520765.0,
     "max_squad": 25,
-    "n_free": 108,
+    "n_free": 96,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 22.445368185833335
+    "hours_to_jornada": 17.347512199444445
   },
   "finance": {
     "ok": false,
     "cost": 0,
-    "proceeds": 18387000.0,
-    "peak": -5769275.0,
+    "proceeds": 24087000.0,
+    "peak": -50765.0,
     "covers_with_sales": false,
     "reason": "sale_limit"
   },
@@ -1607,23 +1607,6 @@
         "cash_lag_hours": 24.0
       },
       {
-        "player_id": "70703",
-        "name": "L. Lucchesi",
-        "position": "DF",
-        "ep_score": 6.3,
-        "xpts": 0.08,
-        "price": 160000.0,
-        "delta_5d": -0.1795,
-        "value_note": "falling",
-        "why": "Fuera del 15 al KO · lista a ~160,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 160000.0,
-        "expected_proceeds": 160000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
-      },
-      {
         "player_id": "59559",
         "name": "R. Sagrado",
         "position": "MF",
@@ -1675,6 +1658,23 @@
         "cash_lag_hours": 24.0
       },
       {
+        "player_id": "31468",
+        "name": "T. Koopmeiners",
+        "position": "MF",
+        "ep_score": 6.8,
+        "xpts": 0.12,
+        "price": 5860000.0,
+        "delta_5d": -0.0275,
+        "value_note": "stable",
+        "why": "Fuera del 15 al KO · lista a ~5,860,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
+        "list_at": 5860000.0,
+        "expected_proceeds": 5860000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 24.0
+      },
+      {
         "player_id": "65762",
         "name": "N. Fortini",
         "position": "DF",
@@ -1715,14 +1715,14 @@
     "ep_sum_starters": 54.67,
     "xpts_starters": 54.67,
     "xpts_total": 55.78,
-    "xpts_ceiling": 91.9,
+    "xpts_ceiling": 94.04,
     "xpts_yours": 68.75,
     "cost_sum": 37793000.0,
     "net_buys": 0.0,
     "slots_filled": 14,
     "slots_target": 15,
     "flex": 0,
-    "sell_to_fund": 18387000.0,
+    "sell_to_fund": 24087000.0,
     "funded": false,
     "formation": "3-3-4",
     "ideal_buy_cost": 0.0,
@@ -1738,7 +1738,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 24156275.0,
+  "residual_after_reserve": 24137765.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
