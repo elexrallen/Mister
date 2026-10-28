@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-27T18:15:18.882377+00:00",
+  "generated_at": "2026-10-27T23:57:55.634807+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 62.89,
+      "xpts_starters": 62.3,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 61.89,
+      "xpts_starters": 61.3,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 60.6,
+      "xpts_starters": 60.01,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 63.99,
+      "xpts_starters": 63.4,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 59.66,
+      "xpts_starters": 59.07,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 59.38,
+      "xpts_starters": 58.79,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -440,13 +440,13 @@
       "name": "L. Yamal",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 78.4,
-      "xpts": 8.07,
+      "ep_score": 77.4,
+      "xpts": 7.48,
       "price": 24578000.0,
       "status": "keep",
       "delta_5d": 0.0073,
       "value_note": "stable",
-      "value_ratio": 3.19,
+      "value_ratio": 3.15,
       "lineup_prob": 95.0,
       "ff_mister_points": 100.0,
       "ff_mister_avg": 11.11,
@@ -461,7 +461,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "8.1 xPts · 24,578,000 € · keep · starter",
+      "why": "7.5 xPts · 24,578,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -954,13 +954,13 @@
       "name": "L. Yamal",
       "team": "Barcelona",
       "team_id": "3",
-      "ep_score": 78.4,
-      "xpts": 8.07,
+      "ep_score": 77.4,
+      "xpts": 7.48,
       "price": 24578000.0,
       "status": "keep",
       "delta_5d": 0.0073,
       "value_note": "stable",
-      "value_ratio": 3.19,
+      "value_ratio": 3.15,
       "lineup_prob": 95.0,
       "ff_mister_points": 100.0,
       "ff_mister_avg": 11.11,
@@ -975,7 +975,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "8.1 xPts · 24,578,000 € · keep · starter",
+      "why": "7.5 xPts · 24,578,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1155,7 +1155,7 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 6,
+    "cycles_left": 5,
     "cash_lag_hours": 12.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1166,7 +1166,7 @@
     "n_free": 178,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 73.75028943916666
+    "hours_to_jornada": 68.04018311944444
   },
   "finance": {
     "ok": false,
@@ -1492,13 +1492,13 @@
         "name": "L. Yamal",
         "team": "Barcelona",
         "team_id": "3",
-        "ep_score": 78.4,
-        "xpts": 8.07,
+        "ep_score": 77.4,
+        "xpts": 7.48,
         "price": 24578000.0,
         "status": "keep",
         "delta_5d": 0.0073,
         "value_note": "stable",
-        "value_ratio": 3.19,
+        "value_ratio": 3.15,
         "lineup_prob": 95.0,
         "ff_mister_points": 100.0,
         "ff_mister_avg": 11.11,
@@ -1513,7 +1513,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "8.1 xPts · 24,578,000 € · keep · starter",
+        "why": "7.5 xPts · 24,578,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1813,12 +1813,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 67.91,
-    "ep_sum_starters": 63.99,
-    "xpts_starters": 63.99,
-    "xpts_total": 67.91,
+    "ep_sum": 67.32,
+    "ep_sum_starters": 63.4,
+    "xpts_starters": 63.4,
+    "xpts_total": 67.32,
     "xpts_ceiling": 69.8,
-    "xpts_yours": 63.99,
+    "xpts_yours": 63.4,
     "cost_sum": 161711000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1862,13 +1862,13 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 67.91,
-    "ep_sum_starters": 63.99,
+    "ep_sum": 67.32,
+    "ep_sum_starters": 63.4,
     "mode": "ko",
     "formation": "3-4-3",
     "xi_rule": "formación 3-4-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 6
+    "cycles_left": 5
   },
   "summary_aspirational": {
     "mode": "aspirational",
