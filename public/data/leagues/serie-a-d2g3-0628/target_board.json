@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-10-30T18:24:17.063968+00:00",
+  "generated_at": "2026-10-31T00:08:07.798187+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1087,7 +1087,7 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 2,
+    "cycles_left": 1,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1095,10 +1095,10 @@
     "max_debt": 20305765.0,
     "bid_cap": 20305765.0,
     "max_squad": 25,
-    "n_free": 256,
+    "n_free": 261,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 19.60335306638889
+    "hours_to_jornada": 13.871893889166667
   },
   "finance": {
     "ok": false,
@@ -1698,7 +1698,7 @@
     "ep_sum_starters": 57.4,
     "xpts_starters": 57.4,
     "xpts_total": 64.5,
-    "xpts_ceiling": 120.29,
+    "xpts_ceiling": 115.0,
     "xpts_yours": 82.66,
     "cost_sum": 45602000.0,
     "net_buys": 0.0,
@@ -1749,7 +1749,7 @@
     "formation": "4-3-3",
     "xi_rule": "formación 4-3-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 2
+    "cycles_left": 1
   },
   "summary_aspirational": {
     "mode": "aspirational",
