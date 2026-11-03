@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-03T12:24:14.295010+00:00",
+  "generated_at": "2026-11-03T19:57:24.165822+00:00",
   "league_slug": "serie-a-d2g3-0628",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -172,7 +172,7 @@
       "xpts": 7.05,
       "price": 1500000.0,
       "status": "buy",
-      "delta_5d": 0.1853,
+      "delta_5d": 0.2972,
       "value_note": "rising",
       "value_ratio": 28.2,
       "lineup_prob": 80.0,
@@ -652,7 +652,7 @@
       "xpts": 7.05,
       "price": 1500000.0,
       "status": "buy",
-      "delta_5d": 0.1853,
+      "delta_5d": 0.2972,
       "value_note": "rising",
       "value_ratio": 28.2,
       "lineup_prob": 80.0,
@@ -1106,7 +1106,7 @@
     }
   ],
   "constraints": {
-    "cycles_left": 9,
+    "cycles_left": 8,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1114,10 +1114,10 @@
     "max_debt": 18595955.0,
     "bid_cap": 18595955.0,
     "max_squad": 25,
-    "n_free": 167,
+    "n_free": 162,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 79.35519597833333
+    "hours_to_jornada": 71.8024660388889
   },
   "finance": {
     "ok": true,
@@ -1585,7 +1585,7 @@
         "xpts": 7.05,
         "price": 1500000.0,
         "status": "buy",
-        "delta_5d": 0.1853,
+        "delta_5d": 0.2972,
         "value_note": "rising",
         "value_ratio": 28.2,
         "lineup_prob": 80.0,
@@ -1752,7 +1752,7 @@
     "formation": "4-3-3",
     "xi_rule": "formación 4-3-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 9
+    "cycles_left": 8
   },
   "summary_aspirational": {
     "mode": "aspirational",
