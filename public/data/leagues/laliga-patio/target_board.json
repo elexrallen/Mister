@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T12:40:55.799040+00:00",
+  "generated_at": "2026-11-05T20:16:41.297032+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 51.22,
+      "xpts_starters": 51.5,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 52.26,
+      "xpts_starters": 52.54,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 52.05,
+      "xpts_starters": 52.33,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 51.38,
+      "xpts_starters": 51.66,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 48.61,
+      "xpts_starters": 48.43,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 51.18,
+      "xpts_starters": 51.46,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -474,13 +474,13 @@
       "name": "J. Álvarez",
       "team": "Atlético",
       "team_id": "2",
-      "ep_score": 42.5,
-      "xpts": 3.62,
+      "ep_score": 43.0,
+      "xpts": 3.9,
       "price": 11658000.0,
       "status": "keep",
       "delta_5d": 0.0353,
       "value_note": "stable",
-      "value_ratio": 3.65,
+      "value_ratio": 3.69,
       "lineup_prob": 70.0,
       "ff_mister_points": 30.0,
       "ff_mister_avg": 4.29,
@@ -495,7 +495,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "3.6 xPts · 11,658,000 € · keep · starter",
+      "why": "3.9 xPts · 11,658,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -988,13 +988,13 @@
       "name": "J. Álvarez",
       "team": "Atlético",
       "team_id": "2",
-      "ep_score": 42.5,
-      "xpts": 3.62,
+      "ep_score": 43.0,
+      "xpts": 3.9,
       "price": 11658000.0,
       "status": "keep",
       "delta_5d": 0.0353,
       "value_note": "stable",
-      "value_ratio": 3.65,
+      "value_ratio": 3.69,
       "lineup_prob": 70.0,
       "ff_mister_points": 30.0,
       "ff_mister_avg": 4.29,
@@ -1009,7 +1009,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "3.6 xPts · 11,658,000 € · keep · starter",
+      "why": "3.9 xPts · 11,658,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1155,7 +1155,7 @@
   "watch_frees": [],
   "path": [],
   "constraints": {
-    "cycles_left": 2,
+    "cycles_left": 1,
     "cash_lag_hours": 12.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1163,10 +1163,10 @@
     "max_debt": 52540904.0,
     "bid_cap": 52540904.0,
     "max_squad": 25,
-    "n_free": 201,
+    "n_free": 215,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 31.323254947499997
+    "hours_to_jornada": 23.727339645555556
   },
   "finance": {
     "ok": false,
@@ -1526,13 +1526,13 @@
         "name": "J. Álvarez",
         "team": "Atlético",
         "team_id": "2",
-        "ep_score": 42.5,
-        "xpts": 3.62,
+        "ep_score": 43.0,
+        "xpts": 3.9,
         "price": 11658000.0,
         "status": "keep",
         "delta_5d": 0.0353,
         "value_note": "stable",
-        "value_ratio": 3.65,
+        "value_ratio": 3.69,
         "lineup_prob": 70.0,
         "ff_mister_points": 30.0,
         "ff_mister_avg": 4.29,
@@ -1547,7 +1547,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "3.6 xPts · 11,658,000 € · keep · starter",
+        "why": "3.9 xPts · 11,658,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1729,8 +1729,8 @@
         "player_id": "523868",
         "name": "R. Ure",
         "position": "FW",
-        "ep_score": 22.7,
-        "xpts": 1.15,
+        "ep_score": 28.1,
+        "xpts": 0.69,
         "price": 2268000.0,
         "delta_5d": -0.131,
         "value_note": "falling",
@@ -1796,12 +1796,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 60.99,
-    "ep_sum_starters": 52.26,
-    "xpts_starters": 52.26,
-    "xpts_total": 60.99,
-    "xpts_ceiling": 70.63,
-    "xpts_yours": 52.26,
+    "ep_sum": 61.27,
+    "ep_sum_starters": 52.54,
+    "xpts_starters": 52.54,
+    "xpts_total": 61.27,
+    "xpts_ceiling": 70.8,
+    "xpts_yours": 52.54,
     "cost_sum": 165352000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1845,13 +1845,13 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 60.99,
-    "ep_sum_starters": 52.26,
+    "ep_sum": 61.27,
+    "ep_sum_starters": 52.54,
     "mode": "ko",
     "formation": "4-4-2",
     "xi_rule": "formación 4-4-2 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 2
+    "cycles_left": 1
   },
   "summary_aspirational": {
     "mode": "aspirational",
