@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-05T20:16:41.297032+00:00",
+  "generated_at": "2026-11-06T01:05:38.670836+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 48.43,
+      "xpts_starters": 47.85,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -1166,7 +1166,7 @@
     "n_free": 215,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 23.727339645555556
+    "hours_to_jornada": 18.911468858055557
   },
   "finance": {
     "ok": false,
@@ -1729,8 +1729,8 @@
         "player_id": "523868",
         "name": "R. Ure",
         "position": "FW",
-        "ep_score": 28.1,
-        "xpts": 0.69,
+        "ep_score": 10.7,
+        "xpts": 0.11,
         "price": 2268000.0,
         "delta_5d": -0.131,
         "value_note": "falling",
