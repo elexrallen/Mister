@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T11:47:03.584820+00:00",
+  "generated_at": "2026-11-14T18:33:21.856685+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -206,7 +206,7 @@
       "xpts": 3.79,
       "price": 3541500.0,
       "status": "buy",
-      "delta_5d": 0.0809,
+      "delta_5d": 0.1031,
       "value_note": "rising",
       "value_ratio": 11.1,
       "lineup_prob": 100.0,
@@ -444,7 +444,7 @@
       "xpts": 5.57,
       "price": 1968000.0,
       "status": "buy",
-      "delta_5d": 0.1032,
+      "delta_5d": 0.1069,
       "value_note": "rising",
       "value_ratio": 19.46,
       "lineup_prob": 75.0,
@@ -720,7 +720,7 @@
       "xpts": 3.79,
       "price": 3541500.0,
       "status": "buy",
-      "delta_5d": 0.0809,
+      "delta_5d": 0.1031,
       "value_note": "rising",
       "value_ratio": 11.1,
       "lineup_prob": 100.0,
@@ -958,7 +958,7 @@
       "xpts": 5.57,
       "price": 1968000.0,
       "status": "buy",
-      "delta_5d": 0.1032,
+      "delta_5d": 0.1069,
       "value_note": "rising",
       "value_ratio": 19.46,
       "lineup_prob": 75.0,
@@ -1192,7 +1192,7 @@
     }
   ],
   "constraints": {
-    "cycles_left": 21,
+    "cycles_left": 20,
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
@@ -1200,10 +1200,10 @@
     "max_debt": 13865581.0,
     "bid_cap": 13865581.0,
     "max_squad": 25,
-    "n_free": 153,
+    "n_free": 154,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 168.72434791749998
+    "hours_to_jornada": 161.95207021166667
   },
   "finance": {
     "ok": true,
@@ -1671,7 +1671,7 @@
         "xpts": 3.79,
         "price": 3541500.0,
         "status": "buy",
-        "delta_5d": 0.0809,
+        "delta_5d": 0.1031,
         "value_note": "rising",
         "value_ratio": 11.1,
         "lineup_prob": 100.0,
@@ -1705,7 +1705,7 @@
         "xpts": 5.57,
         "price": 1968000.0,
         "status": "buy",
-        "delta_5d": 0.1032,
+        "delta_5d": 0.1069,
         "value_note": "rising",
         "value_ratio": 19.46,
         "lineup_prob": 75.0,
@@ -1855,7 +1855,7 @@
     "formation": "4-3-3",
     "xi_rule": "formación 4-3-3 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 21
+    "cycles_left": 20
   },
   "summary_aspirational": {
     "mode": "aspirational",
