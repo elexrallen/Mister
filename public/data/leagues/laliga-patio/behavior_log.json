@@ -120,6 +120,18 @@
           "why": "Pon en venta a R. Hernández: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 16.8M €) y el dinero llega al instante."
         }
       ]
+    },
+    {
+      "at": "2026-11-16T14:02:54.506417+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -144,5 +156,5 @@
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-16T13:24:43.013181+00:00"
+  "updated_at": "2026-11-16T14:02:54.506417+00:00"
 }
