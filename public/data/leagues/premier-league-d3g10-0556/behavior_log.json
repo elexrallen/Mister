@@ -12,6 +12,18 @@
         "eligible": 0
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-16T13:07:30.347815+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -36,5 +48,5 @@
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-16T12:22:59.640842+00:00"
+  "updated_at": "2026-11-16T13:07:30.347815+00:00"
 }
