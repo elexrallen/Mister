@@ -132,11 +132,68 @@
         "eligible": 0
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-16T14:28:29.567695+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "70922",
+          "name": "I. Konaté",
+          "amount": 11144900,
+          "market_value": 11126000.0,
+          "buy_price": 11144900,
+          "threshold": 11479247,
+          "status": "recomendada",
+          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "65347",
+          "name": "R. Veiga",
+          "amount": 9937200,
+          "market_value": 9933000.0,
+          "buy_price": 9937200,
+          "threshold": 10235316,
+          "status": "recomendada",
+          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "12915",
+          "name": "C. Hernández",
+          "amount": 6533350,
+          "market_value": 6528000.0,
+          "buy_price": 6533350,
+          "threshold": 6729350,
+          "status": "recomendada",
+          "why": "Puja 6.53M € (baja 107,000 € hoy, +5% (5,350 €)). La máquina puede llegar a 6.85M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "6044",
+          "name": "E. Ünal",
+          "amount": 5369100,
+          "market_value": 5364000.0,
+          "buy_price": 5369100,
+          "threshold": 5530173,
+          "status": "recomendada",
+          "why": "Puja 5.37M € (sube 17,000 € hoy, +30% (5,100 €)). La máquina puede llegar a 5.63M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 0,
+      "bids": 4,
       "won": 0,
       "lost": 0,
       "lists": 5,
@@ -146,7 +203,7 @@
       "top_skips": []
     },
     "d14": {
-      "bids": 0,
+      "bids": 4,
       "won": 0,
       "lost": 0,
       "lists": 5,
@@ -156,5 +213,5 @@
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-16T14:02:54.506417+00:00"
+  "updated_at": "2026-11-16T14:28:29.567695+00:00"
 }
