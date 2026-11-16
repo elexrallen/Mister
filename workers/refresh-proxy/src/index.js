@@ -143,6 +143,7 @@ export default {
         ok: true,
         dispatched: true,
         league,
+        flip_mode: flipMode,
         accepted_at: new Date(now).toISOString(),
         recommended_poll_seconds: 15,
         expected_duration_minutes: 12,

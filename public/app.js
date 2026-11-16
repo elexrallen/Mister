@@ -3846,6 +3846,14 @@
         setRefreshUi("error", `No se pudo disparar: ${err}`);
         return;
       }
+      const askedFlip = body && typeof body.flip_mode === "boolean";
+      if (askedFlip && !(payload && typeof payload.flip_mode === "boolean")) {
+        setRefreshUi(
+          "error",
+          "El Worker desplegado no reenvía la reventa. Redesplega workers/refresh-proxy (npx wrangler deploy)."
+        );
+        return;
+      }
 
       const refreshMessage =
         (payload && payload.message) ||

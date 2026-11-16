@@ -53,6 +53,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Cycle window guard (Europe/Madrid)
         id: guard
@@ -114,34 +116,40 @@ jobs:
         if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         env:
           LEAGUE: ${{ steps.league.outputs.league }}
-          FLIP_MODE: ${{ github.event_name == 'repository_dispatch' && toJSON(github.event.client_payload.flip_mode) || '' }}
         run: |
           python - <<'PY'
+          import json
           import os
           import sys
           from pathlib import Path
           sys.path.insert(0, "src")
-          from flip_mode import apply_flip_toggle
-          league = os.environ.get("LEAGUE", "")
-          raw = os.environ.get("FLIP_MODE", "")
-          print(f"league={league!r} FLIP_MODE={raw!r}")
-          wrote = apply_flip_toggle(league, raw, root=Path("public/data/leagues"))
-          print("flip_mode escrito" if wrote else "sin cambio de reventa")
-          PY
+          from flip_mode import apply_flip_toggle, flip_mode_path
 
-      - name: Persist flip mode now
-        if: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.flip_mode != null }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add public/data/leagues/*/flip_mode.json || true
-          if git diff --staged --quiet; then
-            echo "flip_mode sin commit"
-          else
-            git commit -m "chore: persist flip_mode"
-            git pull --rebase --autostash origin main
-            git push
-          fi
+          league = os.environ.get("LEAGUE", "")
+          event_path = os.environ.get("GITHUB_EVENT_PATH") or ""
+          payload = {}
+          if event_path and Path(event_path).is_file():
+              try:
+                  event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError) as exc:
+                  print(f"no se pudo leer el evento: {exc}")
+                  event = {}
+              raw_payload = event.get("client_payload") if isinstance(event, dict) else None
+              if isinstance(raw_payload, dict):
+                  payload = raw_payload
+          print(f"league={league!r} client_payload={json.dumps(payload, ensure_ascii=False)}")
+          if "flip_mode" not in payload:
+              print("sin cambio de reventa")
+              sys.exit(0)
+          root = Path("public/data/leagues")
+          wrote = apply_flip_toggle(league, payload.get("flip_mode"), root=root)
+          print(f"ruta={flip_mode_path(league, root)}")
+          if wrote:
+              print("flip_mode escrito")
+          else:
+              print("::error::el payload trae flip_mode pero no se escribió (liga vacía, all o valor raro)")
+              sys.exit(1)
+          PY
 
       - name: Run data engine
         if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
@@ -259,10 +267,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # leagues/ arrastra el automation_log.json de cada liga: el rastro de
-          # lo ejecutado queda auditable en git junto al snapshot del ciclo.
+          # leagues/ arrastra flip_mode.json y el automation_log.json de cada liga.
           git add public/data/latest_data.json public/data/leagues.json public/data/leagues/ || true
+          git add public/data/leagues/*/flip_mode.json || true
           git add cache/rival_finances/ || true
+          echo "flip_mode.json en el commit:"
+          git diff --cached --name-only | grep flip_mode || echo "(ninguno)"
           if git diff --staged --quiet; then
             echo "No data changes to commit."
           else
