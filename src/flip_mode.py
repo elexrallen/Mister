@@ -80,18 +80,32 @@ def flip_enabled(slug: str, root: Path | None = None) -> bool:
     return bool(isinstance(data, dict) and data.get("enabled"))
 
 
+def _flip_flag(raw: Any) -> bool | None:
+    """true/false, 1/0, o el toJSON de Actions (`\"true\"` con comillas)."""
+    if isinstance(raw, bool):
+        return raw
+    text = str(raw if raw is not None else "").strip().lower()
+    if len(text) >= 2 and text[0] == text[-1] and text[0] in ("'", '"'):
+        text = text[1:-1].strip().lower()
+    if text in ("true", "1", "yes"):
+        return True
+    if text in ("false", "0", "no"):
+        return False
+    return None
+
+
 def apply_flip_toggle(league: str, raw: Any, *, root: Path | None = None) -> bool:
     """Escribe flip_mode.json si el disparo trae true o false. Si no, no toca nada."""
     slug = str(league or "").strip()
     if not slug or slug == "all":
         return False
-    text = str(raw if raw is not None else "").strip().lower()
-    if text not in ("true", "false"):
+    flag = _flip_flag(raw)
+    if flag is None:
         return False
     path = flip_mode_path(slug, root)
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
-        "enabled": text == "true",
+        "enabled": flag,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

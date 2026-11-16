@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,6 +101,7 @@ def test_sales_state_merges_offers_as_listed():
 
 
 def test_solvency_deadline_next_gw_when_ongoing():
+    nxt = (datetime.now(timezone.utc) + timedelta(days=7)).strftime("%Y-%m-%dT19:00:00")
     md = {
         "gameweek_status": "ongoing",
         "jornada": 2,
@@ -107,7 +109,7 @@ def test_solvency_deadline_next_gw_when_ongoing():
         "first_match": "2026-08-20T21:00:00",
         "season_schedule": [
             {"jornada": 2, "status": "ongoing", "first_match": "2026-08-20T21:00:00"},
-            {"jornada": 3, "status": "unstarted", "first_match": "2026-08-28T19:00:00"},
+            {"jornada": 3, "status": "unstarted", "first_match": nxt},
         ],
     }
     d = resolve_solvency_deadline(hours_to_jornada=6.0, matchday=md)
@@ -118,7 +120,7 @@ def test_solvency_deadline_next_gw_when_ongoing():
 
 
 def test_debt_allowed_with_coverage_in_strict_window():
-    # 5 M de coste / 1 M de caja / 10 M de maxDebt: legal aunque quede negativo
+    # Sin venta a tiempo: cabe en maxDebt pero deja negativo al pitido → bloqueo.
     fin_block = evaluate_bid_finance(
         5_000_000,
         1_000_000,
@@ -127,18 +129,20 @@ def test_debt_allowed_with_coverage_in_strict_window():
         matchday={"gameweek_status": "unstarted", "first_match": None},
         liquidity_coverage=0,
     )
-    assert fin_block["debt_risk"] is True
-    assert fin_block["solvency_blocked"] is False
-    assert fin_block["solvency_ok"] is True
-    assert fin_block["budget_fit"] == "stretch"
+    assert fin_block["block_reason"] == "ko_cover"
+    assert fin_block["solvency_blocked"] is True
+    assert fin_block["debt_risk"] is False
+    assert fin_block["budget_fit"] == "blocked"
 
+    # Venta que cobra antes del KO: se puede estar en negativo ahora.
     fin_ok = evaluate_bid_finance(
         5_000_000,
         1_000_000,
         max_debt=10_000_000,
         hours_to_jornada=24,
         matchday={"gameweek_status": "unstarted", "first_match": None},
-        liquidity_coverage=5_000_000,
+        sell_proceeds_timely=5_000_000,
+        cash_lag_hours=2,
     )
     assert fin_ok["debt_risk"] is True
     assert fin_ok["solvency_blocked"] is False

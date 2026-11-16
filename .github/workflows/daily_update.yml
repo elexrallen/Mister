@@ -39,8 +39,10 @@ permissions:
   id-token: write
 
 concurrency:
-  group: daily-data-update
-  cancel-in-progress: true
+  # Un toggle de reventa no comparte grupo con el cron: cancel-in-progress
+  # del dataset no puede matar el job antes de commitear flip_mode.json.
+  group: ${{ github.event.client_payload.flip_mode != null && format('flip-{0}', github.event.client_payload.league || 'league') || 'daily-data-update' }}
+  cancel-in-progress: ${{ github.event.client_payload.flip_mode == null }}
 
 jobs:
   update-data:
@@ -120,13 +122,26 @@ jobs:
           from pathlib import Path
           sys.path.insert(0, "src")
           from flip_mode import apply_flip_toggle
-          wrote = apply_flip_toggle(
-              os.environ.get("LEAGUE", ""),
-              os.environ.get("FLIP_MODE", ""),
-              root=Path("public/data/leagues"),
-          )
+          league = os.environ.get("LEAGUE", "")
+          raw = os.environ.get("FLIP_MODE", "")
+          print(f"league={league!r} FLIP_MODE={raw!r}")
+          wrote = apply_flip_toggle(league, raw, root=Path("public/data/leagues"))
           print("flip_mode escrito" if wrote else "sin cambio de reventa")
           PY
+
+      - name: Persist flip mode now
+        if: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.flip_mode != null }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/leagues/*/flip_mode.json || true
+          if git diff --staged --quiet; then
+            echo "flip_mode sin commit"
+          else
+            git commit -m "chore: persist flip_mode"
+            git pull --rebase --autostash origin main
+            git push
+          fi
 
       - name: Run data engine
         if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}

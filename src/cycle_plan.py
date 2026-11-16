@@ -1411,7 +1411,10 @@ def build_cycle_plan(
         if not pid or pid in accept_ids:
             continue
         if o.get("solvency_blocked") or o.get("budget_fit") == "blocked":
-            continue
+            # ko_cover: aún no hay venta oportuna en la ficha, pero este ciclo
+            # puede listar una que cobre antes del pitido. over_cap no pasa.
+            if str(o.get("block_reason") or "") != "ko_cover":
+                continue
         if o.get("gw_out") or (o.get("external") or {}).get("availability") in ("injured", "suspended"):
             continue
         if is_rival_market_listing(o):

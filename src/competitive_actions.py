@@ -391,9 +391,12 @@ def evaluate_bid_finance(
     liquidity_coverage: float = 0.0,
 ) -> dict[str, Any]:
     """
-    Corte duro: bid_cap (Mister maxDebt). Quedar en negativo es legal.
-    debt_risk = chip (la acción te deja en negativo), no veto.
-    budget_fit: comfortable|tight|stretch|blocked sobre el margen, no sobre caja ≥ 0.
+    Techo Mister: bid_cap (maxDebt). Por encima, bloqueo over_cap.
+
+    Al primer pitido de la jornada objetivo el saldo proyectado tiene que ser
+    ≥ 0. Solo cuentan ventas que cobran antes (timely_sells + liquidity_coverage).
+    Si no llegan a tiempo, bloqueo ko_cover: se puede estar en negativo ahora,
+    no al kickoff. debt_risk queda para «ahora negativo, las ventas tapan al KO».
     """
     bal = float(balance or 0)
     bid_cap = mister_bid_cap(bal, max_debt)
@@ -452,7 +455,6 @@ def evaluate_bid_finance(
     uses_debt = projected_no_sells < 0
     out["debt_risk"] = uses_debt and c <= bid_cap
 
-    # Techo Mister: único bloqueo
     if c > bid_cap:
         if min_cost is not None and float(min_cost) <= bid_cap:
             out["budget_fit"] = "stretch"
@@ -464,6 +466,17 @@ def evaluate_bid_finance(
             out["solvency_ok"] = False
             out["solvency_blocked"] = True
             out["debt_risk"] = False
+            out["block_reason"] = "over_cap"
+        return out
+
+    at_ko = projected_no_sells + coverage
+    if at_ko < -1:
+        out["budget_fit"] = "blocked"
+        out["solvency_ok"] = False
+        out["solvency_blocked"] = True
+        out["debt_risk"] = False
+        out["block_reason"] = "ko_cover"
+        out["projected_after"] = at_ko
         return out
 
     out["solvency_ok"] = True
@@ -6693,6 +6706,7 @@ def annotate_market_budget_risk(
         row["debt_risk"] = bool(fin.get("debt_risk"))
         row["solvency_ok"] = bool(fin.get("solvency_ok"))
         row["solvency_blocked"] = bool(fin.get("solvency_blocked"))
+        row["block_reason"] = fin.get("block_reason")
         row["solvency_strict"] = bool(fin.get("solvency_strict"))
         row["hours_to_jornada"] = fin.get("hours_to_jornada")
         row["rival_demand"] = len(

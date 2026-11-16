@@ -350,10 +350,9 @@ def test_unpublished_daily_limit_defaults_to_one_per_24h() -> None:
 # Pujas a libres frente a ofertas a rivales
 # ---------------------------------------------------------------------------
 
-def test_rival_listing_becomes_an_offer_not_a_bid() -> None:
+def test_rival_bid_is_dropped_not_an_offer() -> None:
     d = _run([_bid("1", 3 * M, owner_id="555", listed_by_rival=True)])
-    _assert(_kinds(d) == ["offer"], f"un listado de rival es una oferta: {_kinds(d)}")
-    _assert(d["operations"][0]["params"]["offeree_id"] == "555", d["operations"][0])
+    _assert(not d["operations"], f"un listado de rival no se puja ni se oferta: {d['operations']}")
 
 
 def test_free_agent_bid_has_no_offeree() -> None:
@@ -362,12 +361,18 @@ def test_free_agent_bid_has_no_offeree() -> None:
     _assert(d["operations"][0]["params"]["offeree_id"] == 0, d["operations"][0])
 
 
+def _offer(pid: str, amount: float, **over) -> dict:
+    row = _bid(pid, amount, **over)
+    row["kind"] = "offer"
+    return row
+
+
 def test_offers_do_not_consume_cycle_spend() -> None:
     """Una oferta pendiente no es dinero gastado: no puede bloquear las pujas."""
     d = _run(
         [
-            _bid("1", 7 * M, owner_id="555", listed_by_rival=True),
-            _bid("2", 7 * M, owner_id="556", listed_by_rival=True),
+            _offer("1", 7 * M, owner_id="555"),
+            _offer("2", 7 * M, owner_id="556"),
             _bid("3", 6 * M),
         ]
     )
@@ -376,9 +381,7 @@ def test_offers_do_not_consume_cycle_spend() -> None:
 
 
 def test_max_pending_offers_triggers() -> None:
-    moves = [
-        _bid(str(i), M, owner_id=f"55{i}", listed_by_rival=True) for i in (1, 2, 3)
-    ]
+    moves = [_offer(str(i), M, owner_id=f"55{i}") for i in (1, 2, 3)]
     d = _run(moves)
     _assert(len(d["operations"]) == 2, f"tope de 2 ofertas vivas: {_ids(d)}")
     _assert("ofertas vivas" in _skip_reason(d, "3"), _skip_reason(d, "3"))
@@ -386,7 +389,7 @@ def test_max_pending_offers_triggers() -> None:
 
 def test_existing_offers_count_against_the_quota() -> None:
     d = _run(
-        [_bid("1", M, owner_id="555", listed_by_rival=True)],
+        [_offer("1", M, owner_id="555")],
         state={"offers_sent": [{"player_id": "9"}, {"player_id": "8"}]},
     )
     _assert(not d["operations"], "ya hay 2 ofertas vivas, no cabe otra")
@@ -672,7 +675,7 @@ def test_hold_offer_moves_are_ignored() -> None:
 
 def test_execution_order_is_sells_then_clauses_then_bids_then_offers() -> None:
     moves = [
-        _bid("5", M, owner_id="555", listed_by_rival=True),
+        _offer("5", M, owner_id="555"),
         _bid("4", M),
         _clause("3", M),
         _listing("2", M),
@@ -1056,7 +1059,7 @@ TESTS = [
     test_second_clause_inside_24h_is_blocked,
     test_clause_allowed_after_24h_window,
     test_unpublished_daily_limit_defaults_to_one_per_24h,
-    test_rival_listing_becomes_an_offer_not_a_bid,
+    test_rival_bid_is_dropped_not_an_offer,
     test_free_agent_bid_has_no_offeree,
     test_offers_do_not_consume_cycle_spend,
     test_max_pending_offers_triggers,

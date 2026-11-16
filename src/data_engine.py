@@ -1233,6 +1233,7 @@ def classify_market_opportunities(
             "debt_risk": bool(fin.get("debt_risk")),
             "solvency_ok": bool(fin.get("solvency_ok")),
             "solvency_blocked": bool(fin.get("solvency_blocked")),
+            "block_reason": fin.get("block_reason"),
             "solvency_strict": bool(fin.get("solvency_strict")),
             "hours_to_jornada": fin.get("hours_to_jornada"),
             "ff_apps": ff_apps,
@@ -1390,6 +1391,7 @@ def find_free_agents_top(
             row["affordable"] = bf in ("comfortable", "tight", "stretch")
             row["debt_risk"] = bool(fin.get("debt_risk"))
             row["solvency_blocked"] = bool(fin.get("solvency_blocked"))
+            row["block_reason"] = fin.get("block_reason")
             row["bid_cap"] = fin.get("bid_cap")
             if bf in ("comfortable", "tight"):
                 row["target_tier"] = "realistic"
@@ -2488,6 +2490,7 @@ def build_action_plan(
             "cash_reserved": cash_reserved,
             "debt_risk": debt_risk,
             "solvency_blocked": solvency_blocked,
+            "block_reason": fin.get("block_reason"),
             "solvency_ok": bool(fin.get("solvency_ok")),
             "bid_cap": fin.get("bid_cap"),
             "bid_cap_ceiling": max_debt,

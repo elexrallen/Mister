@@ -491,7 +491,8 @@ def plan_operations(
         if kind == KIND_HOLD:
             continue
         if kind == KIND_BID and _is_offer_to_rival(move):
-            kind = KIND_OFFER
+            # Las pujas son solo a libres. Un listado de rival no se convierte en oferta.
+            continue
         if kind in by_phase:
             by_phase[kind].append(move)
 

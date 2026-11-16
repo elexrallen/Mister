@@ -386,6 +386,22 @@ def test_flip_play_ignores_xi_and_percent_caps() -> None:
     _assert(len(ops) == 1 and ops[0]["player_id"] == "21", decision["skipped"])
 
 
+def test_apply_flip_toggle_accepts_quoted_json() -> None:
+    import tempfile
+
+    from flip_mode import apply_flip_toggle, flip_enabled
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        for raw in ("true", '"true"', "'true'", True, "1"):
+            _assert(apply_flip_toggle("laliga", raw, root=root) is True, raw)
+            _assert(flip_enabled("laliga", root) is True, raw)
+        _assert(apply_flip_toggle("laliga", '"false"', root=root) is True, "false quoted")
+        _assert(flip_enabled("laliga", root) is False, "off")
+        _assert(apply_flip_toggle("all", "true", root=root) is False, "all")
+        _assert(apply_flip_toggle("laliga", "maybe", root=root) is False, "garbage")
+
+
 def main() -> None:
     test_daily_change_is_euros()
     test_bid_premium_and_margin()
@@ -397,6 +413,7 @@ def main() -> None:
     test_book_roundtrip()
     test_behavior_win_and_profit()
     test_flip_play_ignores_xi_and_percent_caps()
+    test_apply_flip_toggle_accepts_quoted_json()
     print("flip mode ok")
 
 
