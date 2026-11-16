@@ -1,6 +1,6 @@
 {
   "date": "2026-11-16",
-  "captured_at": "2026-11-16T15:25:40.349612+00:00",
+  "captured_at": "2026-11-16T15:38:16.050279+00:00",
   "cycle_hour_utc": 15,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -5529,6 +5529,12 @@
         "name": "S. Cáceres"
       },
       {
+        "player_id": "48657",
+        "action": "scout",
+        "price": 22066000.0,
+        "name": "Raphinha"
+      },
+      {
         "player_id": "1385821",
         "action": "scout",
         "price": 12957000.0,
@@ -5539,12 +5545,6 @@
         "action": "scout",
         "price": 3371000.0,
         "name": "M. Sarr"
-      },
-      {
-        "player_id": "31",
-        "action": "scout",
-        "price": 11064000.0,
-        "name": "Jan Oblak"
       },
       {
         "player_id": "55088",
@@ -5567,11 +5567,11 @@
     ],
     "allocation": {
       "balance": 1146274.0,
-      "usable": 21096724.0,
-      "planned_spend": 21082100.0,
+      "usable": 27630074.0,
+      "planned_spend": 27615450.0,
       "max_op_cost": 11144900.0,
-      "top_share": 0.5283,
-      "ops": 2,
+      "top_share": 0.4034,
+      "ops": 3,
       "xi_gap_count": 3
     }
   },
@@ -5583,6 +5583,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 112.7
+    "pipeline_seconds": 244.6
   }
 }

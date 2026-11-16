@@ -1,6 +1,6 @@
 {
   "date": "2026-11-16",
-  "captured_at": "2026-11-16T15:19:37.592363+00:00",
+  "captured_at": "2026-11-16T15:40:39.529290+00:00",
   "cycle_hour_utc": 15,
   "league_slug": "premier-league-d3g10-0556",
   "jornada": 11,
@@ -5232,12 +5232,6 @@
         "name": "M. Tel"
       },
       {
-        "player_id": "23331",
-        "action": "sell",
-        "price": 2918000.0,
-        "name": "W. Fofana"
-      },
-      {
         "player_id": "48972",
         "action": "wait",
         "price": 14851000.0,
@@ -5256,10 +5250,10 @@
         "name": "Ezri Konsa"
       },
       {
-        "player_id": "54863",
+        "player_id": "215370",
         "action": "scout",
-        "price": 14082000.0,
-        "name": "Bart Verbruggen"
+        "price": 8408000.0,
+        "name": "Konstantinos Tzolakis"
       },
       {
         "player_id": "54906",
@@ -5288,7 +5282,7 @@
     ],
     "allocation": {
       "balance": 115581.0,
-      "usable": 12474831.0,
+      "usable": 1316731.0,
       "planned_spend": 0,
       "max_op_cost": 0.0,
       "top_share": 0.0,
@@ -5304,6 +5298,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 235.7
+    "pipeline_seconds": 142.1
   }
 }

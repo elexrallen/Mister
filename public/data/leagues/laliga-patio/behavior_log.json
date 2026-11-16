@@ -382,6 +382,115 @@
           "market_value": 11126000.0,
           "buy_price": 11144900,
           "threshold": 11479247,
+          "status": "ejecutada",
+          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19809181038,
+              "id_player": "70922",
+              "action": "update",
+              "bid": 11144900
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 70922,
+              "id_market": 19809181038,
+              "action": "update",
+              "bid": 11144900,
+              "price": 11126000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": 1146274,
+                "future": -25304926,
+                "maxDebt": 27630074
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "65347",
+          "name": "R. Veiga",
+          "amount": 9937200,
+          "market_value": 9933000.0,
+          "buy_price": 9937200,
+          "threshold": 10235316,
+          "status": "ejecutada",
+          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19809181044,
+              "id_player": "65347",
+              "action": "update",
+              "bid": 9937200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 65347,
+              "id_market": 19809181044,
+              "action": "update",
+              "bid": 9937200,
+              "price": 9933000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": 1146274,
+                "future": -25304926,
+                "maxDebt": 27630074
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "12915",
+          "name": "C. Hernández",
+          "amount": 6533350,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "6044",
+          "name": "E. Ünal",
+          "amount": 5369100,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-16T15:38:15.878341+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "70922",
+          "name": "I. Konaté",
+          "amount": 11144900,
+          "market_value": 11126000.0,
+          "buy_price": 11144900,
+          "threshold": 11479247,
           "status": "recomendada",
           "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €."
         },
@@ -401,8 +510,11 @@
           "player_id": "12915",
           "name": "C. Hernández",
           "amount": 6533350,
-          "status": "descartada",
-          "why": "sin caja"
+          "market_value": 6528000.0,
+          "buy_price": 6533350,
+          "threshold": 6729350,
+          "status": "recomendada",
+          "why": "Puja 6.53M € (baja 107,000 € hoy, +5% (5,350 €)). La máquina puede llegar a 6.85M €."
         },
         {
           "kind": "bid",
@@ -417,7 +529,7 @@
   ],
   "summary": {
     "d7": {
-      "bids": 12,
+      "bids": 16,
       "won": 0,
       "lost": 0,
       "lists": 5,
@@ -427,12 +539,12 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 2
+          "count": 3
         }
       ]
     },
     "d14": {
-      "bids": 12,
+      "bids": 16,
       "won": 0,
       "lost": 0,
       "lists": 5,
@@ -442,10 +554,10 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 2
+          "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-16T15:25:40.077538+00:00"
+  "updated_at": "2026-11-16T15:38:15.878341+00:00"
 }

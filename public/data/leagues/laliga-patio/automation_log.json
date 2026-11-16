@@ -292,25 +292,235 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-11-16T15:34:07.947672+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 1146274.0,
+        "usable": 21096724.0,
+        "cash_in": 0.0,
+        "spent": 21082100.0,
+        "projected_cash": -19935826.0,
+        "cycle_cap": 12658034.0,
+        "single_cap": 8438690.0,
+        "clause_cap": 6329017.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 2
+      },
+      "context": {
+        "transfer_wait_hours": 0.0,
+        "transfer_locked": [],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": null,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mix",
+          "provider_label": "Mixto",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 2,
+          "market_stay": 1,
+          "transfer_wait": 0,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 0,
+            "goals": 200000,
+            "best_xi": 250000,
+            "positions": {
+              "1": 1200000,
+              "2": 1400000,
+              "3": 1600000,
+              "4": 1800000,
+              "9": 3000000,
+              "8": 2800000,
+              "7": 2600000,
+              "6": 2300000,
+              "5": 2000000,
+              "10": 3200000
+            }
+          },
+          "custom_rules": null,
+          "type": "comunio",
+          "mode": "private",
+          "external": "laliga",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": false,
+            "known": true,
+            "mode": "off",
+            "multiplier": 1.0,
+            "source": "admin",
+            "multiplier_source": "off"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 450000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "goals": 200000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 450000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_mixto",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_off"
+          ],
+          "market_urgency": 1.4
+        }
+      },
+      "operations": [
+        {
+          "kind": "bid",
+          "player_id": "70922",
+          "name": "I. Konaté",
+          "position": "DF",
+          "amount": 11144900.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19809181038,
+              "id_player": "70922",
+              "action": "update",
+              "bid": 11144900
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 70922,
+              "id_market": 19809181038,
+              "action": "update",
+              "bid": 11144900,
+              "price": 11126000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": 1146274,
+                "future": -25304926,
+                "maxDebt": 27630074
+              }
+            }
+          },
+          "http_status": null
+        },
+        {
+          "kind": "bid",
+          "player_id": "65347",
+          "name": "R. Veiga",
+          "position": "DF",
+          "amount": 9937200.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19809181044,
+              "id_player": "65347",
+              "action": "update",
+              "bid": 9937200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 65347,
+              "id_market": 19809181044,
+              "action": "update",
+              "bid": 9937200,
+              "price": 9933000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": 1146274,
+                "future": -25304926,
+                "maxDebt": 27630074
+              }
+            }
+          },
+          "http_status": null
+        }
+      ],
+      "skipped": [],
+      "counts": {
+        "planned": 2,
+        "executed": 2,
+        "failed": 0,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-11-16T15:23:45.328768+00:00",
+  "updated_at": "2026-11-16T15:34:07.947672+00:00",
   "last_cycle": {
-    "at": "2026-11-16T15:23:45.328768+00:00",
+    "at": "2026-11-16T15:34:07.947672+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
       "balance": 1146274.0,
-      "usable": 54081274.0,
+      "usable": 21096724.0,
       "cash_in": 0.0,
-      "spent": 32984550.0,
-      "projected_cash": -31838276.0,
-      "cycle_cap": 32448764.0,
-      "single_cap": 21632510.0,
-      "clause_cap": 16224382.0,
+      "spent": 21082100.0,
+      "projected_cash": -19935826.0,
+      "cycle_cap": 12658034.0,
+      "single_cap": 8438690.0,
+      "clause_cap": 6329017.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 0
+      "free_slots_left": 2
     },
     "context": {
       "transfer_wait_hours": 0.0,
@@ -430,7 +640,7 @@
             "offeree_id": 0,
             "id_market": 19809181038,
             "id_player": "70922",
-            "action": "bid",
+            "action": "update",
             "bid": 11144900
           }
         },
@@ -440,7 +650,7 @@
             "owner": 0,
             "id_player": 70922,
             "id_market": 19809181038,
-            "action": "bid",
+            "action": "update",
             "bid": 11144900,
             "price": 11126000,
             "public": 1,
@@ -448,8 +658,8 @@
             "community_mode": "private",
             "balance": {
               "current": 1146274,
-              "future": -9998626,
-              "maxDebt": 42936374
+              "future": -25304926,
+              "maxDebt": 27630074
             }
           }
         },
@@ -471,7 +681,7 @@
             "offeree_id": 0,
             "id_market": 19809181044,
             "id_player": "65347",
-            "action": "bid",
+            "action": "update",
             "bid": 9937200
           }
         },
@@ -481,7 +691,7 @@
             "owner": 0,
             "id_player": 65347,
             "id_market": 19809181044,
-            "action": "bid",
+            "action": "update",
             "bid": 9937200,
             "price": 9933000,
             "public": 1,
@@ -489,90 +699,8 @@
             "community_mode": "private",
             "balance": {
               "current": 1146274,
-              "future": -19935826,
-              "maxDebt": 32999174
-            }
-          }
-        },
-        "http_status": null
-      },
-      {
-        "kind": "bid",
-        "player_id": "12915",
-        "name": "C. Hernández",
-        "position": "FW",
-        "amount": 6533350.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Puja 6.53M € (baja 107,000 € hoy, +5% (5,350 €)). La máquina puede llegar a 6.85M €.",
-        "request": {
-          "path": "/ajax/bid",
-          "data": {
-            "offeree_id": 0,
-            "id_market": 19809181040,
-            "id_player": "12915",
-            "action": "bid",
-            "bid": 6533350
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 0,
-            "id_player": 12915,
-            "id_market": 19809181040,
-            "action": "bid",
-            "bid": 6533350,
-            "price": 6528000,
-            "public": 1,
-            "barter": [],
-            "community_mode": "private",
-            "balance": {
-              "current": 1146274,
-              "future": -26469176,
-              "maxDebt": 26465824
-            }
-          }
-        },
-        "http_status": null
-      },
-      {
-        "kind": "bid",
-        "player_id": "6044",
-        "name": "E. Ünal",
-        "position": "FW",
-        "amount": 5369100.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Puja 5.37M € (sube 17,000 € hoy, +30% (5,100 €)). La máquina puede llegar a 5.63M €.",
-        "request": {
-          "path": "/ajax/bid",
-          "data": {
-            "offeree_id": 0,
-            "id_market": 19809181051,
-            "id_player": "6044",
-            "action": "bid",
-            "bid": 5369100
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 0,
-            "id_player": 6044,
-            "id_market": 19809181051,
-            "action": "bid",
-            "bid": 5369100,
-            "price": 5364000,
-            "public": 1,
-            "barter": [],
-            "community_mode": "private",
-            "balance": {
-              "current": 1146274,
-              "future": -31838276,
-              "maxDebt": 21096724
+              "future": -25304926,
+              "maxDebt": 27630074
             }
           }
         },
@@ -581,8 +709,8 @@
     ],
     "skipped": [],
     "counts": {
-      "planned": 4,
-      "executed": 4,
+      "planned": 2,
+      "executed": 2,
       "failed": 0,
       "skipped": 0
     }
