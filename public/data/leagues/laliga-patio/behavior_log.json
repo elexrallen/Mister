@@ -24,6 +24,30 @@
           "why": "Pon en venta a R. Hernández: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 16.8M €) y el dinero llega al instante."
         }
       ]
+    },
+    {
+      "at": "2026-11-16T12:36:38.052278+00:00",
+      "league": "laliga-patio",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "616",
+          "name": "R. Hernández",
+          "amount": 16760000.0,
+          "market_value": null,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Pon en venta a R. Hernández: el VM ya no sube, juega poco. El siguiente ciclo aceptas (≈ 16.8M €) y el dinero llega al instante."
+        }
+      ]
     }
   ],
   "summary": {
@@ -31,7 +55,7 @@
       "bids": 0,
       "won": 0,
       "lost": 0,
-      "lists": 1,
+      "lists": 2,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -41,12 +65,12 @@
       "bids": 0,
       "won": 0,
       "lost": 0,
-      "lists": 1,
+      "lists": 2,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-16T12:18:17.626794+00:00"
+  "updated_at": "2026-11-16T12:36:38.052278+00:00"
 }
