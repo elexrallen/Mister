@@ -1,0 +1,40 @@
+{
+  "league": "premier-league-d3g10-0556",
+  "cycles": [
+    {
+      "at": "2026-11-16T12:22:59.640842+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
+    }
+  ],
+  "summary": {
+    "d7": {
+      "bids": 0,
+      "won": 0,
+      "lost": 0,
+      "lists": 0,
+      "accepts": 0,
+      "profit": 0,
+      "short_offers": 0,
+      "top_skips": []
+    },
+    "d14": {
+      "bids": 0,
+      "won": 0,
+      "lost": 0,
+      "lists": 0,
+      "accepts": 0,
+      "profit": 0,
+      "short_offers": 0,
+      "top_skips": []
+    }
+  },
+  "updated_at": "2026-11-16T12:22:59.640842+00:00"
+}
