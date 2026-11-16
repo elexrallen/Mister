@@ -576,6 +576,9 @@ DEST_CONSERVE_RANK_MAX = 3
 # Ventas micro: por debajo de esto no listar salvo plaza, muerto o funding material.
 # 160k–1M casi no desbloquea cláusulas/titulares y a veces aún puntúan.
 SELL_MICRO_VM_MAX = 1_000_000
+# Por debajo de esto el VM está en el suelo: no baja, y la caja no es margen.
+# No listar ni por baja ni para financiar. Solo si hace falta la plaza.
+SELL_NO_DROP_VM = 500_000
 # La venta micro solo cuenta como funding si cubre ≥ esta fracción del hueco de caja
 SELL_MICRO_FUND_SHARE_MIN = 0.25
 # Banda de empate EP: preferir oportunidad (libre/mercado) si la diferencia ≤ esto

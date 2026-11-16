@@ -26,6 +26,7 @@ from competitive_actions import (
     is_clause_starter_eligible,
     is_rival_market_listing,
     is_xi_quality_starter,
+    micro_sell_allowed,
     mister_bid_cap,
     resolve_transfer_wait_hours,
     sells_settle_before_deadline,
@@ -1389,6 +1390,9 @@ def build_cycle_plan(
     recover_base = _recover_pool(
         squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids, keeper_ids=keeper_ids
     )
+    # Menos de 500k no tapa un fichaje: no cuenta como caja recuperable.
+    no_drop = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
+    recover_base = [p for p in recover_base if _price(p) >= no_drop - 1]
     recover_cap = _recovery_capacity(
         recover_base if settle_new else [],
         sale_remaining=sale_remaining,
@@ -1734,6 +1738,8 @@ def build_cycle_plan(
             proceeds = _price(p)
             if proceeds <= 0:
                 continue
+            if not micro_sell_allowed(proceeds, funding_shortfall=recover_need):
+                continue
             recover_ids.add(pid)
             recover_lists.append(
                 _player_ref(
@@ -1791,6 +1797,9 @@ def build_cycle_plan(
             continue
         fade_cands.append((score, p))
     swap_cands.sort(key=lambda x: x[0])
+    fade_cands = [
+        (score, p) for score, p in fade_cands if micro_sell_allowed(_price(p))
+    ]
     fade_cands.sort(key=lambda x: -x[0])
 
     lists: list[dict[str, Any]] = list(recover_lists)
@@ -1799,6 +1808,10 @@ def build_cycle_plan(
     for _rank, p, beater in swap_cands:
         if len(lists) >= swap_cap:
             break
+        if _price(p) < no_drop - 1:
+            continue
+        if not micro_sell_allowed(_price(p), need_slot=True):
+            continue
         d5 = _f(p.get("delta_5d"))
         md = _f(beater.get("delta_5d"))
         why = (

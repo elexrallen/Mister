@@ -1192,6 +1192,8 @@ def build_path(
     # No listar micros (<1M) solo “para equilibrar”: casi no desbloquean y a veces puntúan.
     # Solo se listan si hacen falta para cubrir el coste (tras agotar ventas materiales).
     micro_cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
+    # Por debajo de 500k no se listan ni para cerrar el resto: no bajan y no son margen.
+    no_drop = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
     bal0 = float(balance) if balance is not None else 0.0
     if balance is None:
         try:
@@ -1201,7 +1203,7 @@ def build_path(
     cost0 = _money(finance.get("cost"))
     need_cash = max(0.0, cost0 - bal0) if settle_ok else 0.0
     material = [s for s in sells if _vm(s) >= micro_cap - 1]
-    micros = [s for s in sells if _vm(s) < micro_cap - 1]
+    micros = [s for s in sells if no_drop - 1 <= _vm(s) < micro_cap - 1]
     listed_sells: list[dict[str, Any]] = list(material)
     raised = sum(_vm(s) for s in material) if settle_ok else 0.0
     if settle_ok and raised + 1 < need_cash:

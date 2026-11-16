@@ -579,14 +579,20 @@ def micro_sell_allowed(
     ¿Listar un jugador barato (< SELL_MICRO_VM_MAX)?
 
     Por defecto no: 160k–1M casi no desbloquea fichajes serios y a veces aún
-    puntúan. Excepciones: falta de plaza, baja real cubierta, o la venta cubre
-    una fracción material del hueco de caja / coste del swap.
+    puntúan. Excepciones entre 500k y 1M: falta de plaza, baja real cubierta,
+    o la venta cubre una fracción material del hueco de caja / coste del swap.
+
+    Por debajo de 500k el valor no baja (suelo de Mister) y el importe no es
+    margen. Solo se listan si hace falta la plaza.
     """
-    cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
     p = float(price or 0)
+    floor = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
+    reason_l = str(reason or "").strip().lower()
+    if p < floor - 1:
+        return bool(need_slot or reason_l == "free_slot")
+    cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
     if p >= cap - 1:
         return True
-    reason_l = str(reason or "").strip().lower()
     if need_slot or reason_l == "free_slot":
         return True
     if dead or reason_l == "injured_covered":
@@ -4334,6 +4340,11 @@ def build_sell_opportunities(
             return
         price_i = _money(item.get("price"))
         reason_i = str(item.get("sell_reason") or "")
+        # Suelo de 500k: ni el 15 ni “juega poco” reabren la venta.
+        floor_i = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
+        opens_slot = bool(item.get("opens_slot") or reason_i == "free_slot")
+        if price_i < floor_i - 1 and not opens_slot:
+            return
         if _dest_protects_owned(
             pid,
             keep_ids=dest_keep_ids,
