@@ -1,10 +1,11 @@
 """
 Reventa por liga.
 
-Con el modo encendido el ciclo solo compra libres de más de 4M si, ya con el
-recargo de la revalorización diaria, la máquina al +5% del valor de mercado
-sigue dejando más de un 3% sobre el precio de compra. La plantilla del momento
-de activarlo queda congelada.
+Con el modo encendido el ciclo solo compra libres de más de 4M. La puja es el
+valor de mercado de Mister más una parte de la revalorización del día (30% si
+sube, 5% si baja), no la puja recomendada de subasta. Solo entra si la máquina
+al +5% del valor sigue dejando más de un 3% sobre ese precio. La plantilla del
+momento de activarlo queda congelada.
 """
 
 from __future__ import annotations
@@ -138,13 +139,21 @@ def save_book(slug: str, book: dict[str, Any], root: Path | None = None) -> None
 def daily_change_euros(player: dict[str, Any]) -> float | None:
     """Diferencia de hoy contra el valor de ayer que manda Mister, en euros."""
     vm = _money(player.get("market_value") or player.get("price"))
+    if vm <= 0:
+        return None
     prev = player.get("prev_market_value")
     if prev in (None, ""):
         prev = player.get("prev_value")
     prev_f = _f(prev)
-    if prev_f is None or vm <= 0:
+    if prev_f is not None:
+        return vm - prev_f
+    delta = _f(player.get("delta_1d"))
+    if delta is None:
+        delta = _f(player.get("price_delta_1d"))
+    if delta is None or delta <= -0.99:
         return None
-    return vm - prev_f
+    # delta = (hoy − ayer) / ayer
+    return vm * delta / (1.0 + delta)
 
 
 def _ask(player: dict[str, Any]) -> float:
@@ -177,14 +186,13 @@ def quote_bid(player: dict[str, Any]) -> dict[str, Any]:
     vm = _vm(player)
     change = daily_change_euros(player)
     premium = _premium(change)
-    bid = ask + premium
+    bid = vm + premium
     on_market = bool(player.get("on_daily_market") or str(player.get("seller") or "") == "market")
     rival = is_rival_market_listing(player)
     eligible = bool(
         on_market
         and not rival
-        and ask > float(config.FLIP_MIN_ASK)
-        and vm > 0
+        and vm > float(config.FLIP_MIN_ASK)
         and bid > 0
         and _margin_ok(vm, bid)
     )

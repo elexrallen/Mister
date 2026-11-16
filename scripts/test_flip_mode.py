@@ -15,6 +15,7 @@ from flip_mode import (  # noqa: E402
     build_flip_cycle,
     daily_change_euros,
     fresh_book,
+    quote_bid,
     load_book,
     save_book,
 )
@@ -73,6 +74,11 @@ def test_daily_change_is_euros() -> None:
     _assert(daily_change_euros(down) == -80_000, daily_change_euros(down))
     plain = _player("3", name="Plano", vm=5 * M, ask=5 * M, prev=None)
     _assert(daily_change_euros(plain) is None, daily_change_euros(plain))
+    konate = _player("4", name="Konate", vm=11_126_000, ask=12_238_600, prev=None)
+    konate["delta_1d"] = 0.0057
+    _assert(abs(daily_change_euros(konate) - 63_058.76) < 1, daily_change_euros(konate))
+    quoted = quote_bid(konate)
+    _assert(quoted["bid"] == 11_144_918 and quoted["eligible"], quoted)
 
 
 def test_bid_premium_and_margin() -> None:
@@ -85,7 +91,7 @@ def test_bid_premium_and_margin() -> None:
         _player("25", name="Justo", vm=5 * M, ask=5.1 * M, prev=5 * M),
         _player("26", name="Hueco", vm=5 * M, ask=5_090_000, prev=5 * M),
         _player("27", name="Barato", vm=3.9 * M, ask=3.9 * M, prev=3.9 * M),
-        _player("28", name="Tope", vm=8 * M, ask=4 * M, prev=8 * M),
+        _player("28", name="Tope", vm=4 * M, ask=4 * M, prev=4 * M),
         _player("29", name="Rival", vm=6 * M, ask=6 * M, prev=6 * M, rival=True),
     ]
     plan, book = build_flip_cycle(
@@ -102,9 +108,10 @@ def test_bid_premium_and_margin() -> None:
     _assert("21" in bids, bids.keys())
     _assert(bids["21"]["amount"] == 6_015_000, bids["21"]["amount"])
     _assert("22" not in bids, "la subida de 400k se come el margen")
-    _assert("23" in bids and bids["23"]["amount"] == 6_404_000, bids.get("23"))
-    _assert("24" not in bids and "25" not in bids, "sin margen o por debajo del corte")
-    _assert("26" in bids and bids["26"]["amount"] == 5_090_000, bids.get("26"))
+    _assert("23" in bids and bids["23"]["amount"] == 6_504_000, bids.get("23"))
+    _assert(bids["24"]["amount"] == 7_000_000, bids.get("24"))
+    _assert(bids["25"]["amount"] == 5_000_000, bids.get("25"))
+    _assert("26" in bids and bids["26"]["amount"] == 5_000_000, bids.get("26"))
     _assert("27" not in bids and "28" not in bids, "4M justo o por debajo no entra")
     _assert("29" not in bids, "rival")
     frozen = set(book["frozen_ids"])
