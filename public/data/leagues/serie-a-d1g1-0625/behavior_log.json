@@ -72,6 +72,30 @@
           "why": "Cláusula de Juan Jesus (1.5M €): cierra un hueco del once objetivo frente a R. Belghali · techo 15.7M € tras reservar 165k €."
         }
       ]
+    },
+    {
+      "at": "2026-11-16T15:23:43.937199+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "clause_bid",
+          "player_id": "27736",
+          "name": "Youssef Maleh",
+          "amount": 1000000.0,
+          "market_value": null,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Cláusula de Youssef Maleh (1M €): cierra un hueco del once objetivo frente a D. Frattesi · techo 15.7M € tras reservar 165k €."
+        }
+      ]
     }
   ],
   "summary": {
@@ -96,5 +120,5 @@
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-16T14:35:05.460704+00:00"
+  "updated_at": "2026-11-16T15:23:43.937199+00:00"
 }
