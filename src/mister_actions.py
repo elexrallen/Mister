@@ -24,6 +24,7 @@ ejecutor los deja apagados hasta confirmarlos:
 
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any, Callable
 
@@ -54,9 +55,34 @@ UNVERIFIED_PATHS = frozenset({"/ajax/offer", "/ajax/resale"})
 class ActionError(RuntimeError):
     """Mister rechazó la operación o respondió algo que no podemos dar por buena."""
 
+    def __init__(self, message: str, *, record: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.record = record
+
 
 class UnverifiedAction(ActionError):
     """La ruta existe pero su contrato no está confirmado; no se manda en vivo."""
+
+
+def _error_response(exc: BaseException) -> tuple[int | None, Any]:
+    """Cuerpo que devolvió Mister cuando el POST no llegó a un JSON de éxito."""
+    resp = getattr(exc, "response", None)
+    if resp is None and exc.__cause__ is not None:
+        resp = getattr(exc.__cause__, "response", None)
+    if resp is None:
+        return None, None
+    code = getattr(resp, "status_code", None)
+    text = getattr(resp, "text", None)
+    if not isinstance(text, str) or not text.strip():
+        return code if isinstance(code, int) else None, None
+    head = text.lstrip()[:20].lower()
+    if head.startswith("<!doctype") or head.startswith("<html"):
+        return code if isinstance(code, int) else None, {"html": True}
+    try:
+        body = json.loads(text)
+    except ValueError:
+        body = text[:500]
+    return code if isinstance(code, int) else None, body
 
 
 class MisterWriteClient:
@@ -101,7 +127,8 @@ class MisterWriteClient:
             self.sent.append(record)
             raise UnverifiedAction(
                 f"{path} tiene contrato sin confirmar; sondéalo con "
-                "scripts/probe_offer_endpoints.py antes de habilitarlo"
+                "scripts/probe_offer_endpoints.py antes de habilitarlo",
+                record=record,
             )
 
         # Con transporte inyectado no hay cuenta real detrás: es lo que usan los
@@ -115,18 +142,25 @@ class MisterWriteClient:
         except Exception as exc:  # noqa: BLE001
             record["status"] = "error"
             record["error"] = str(exc)
+            http_status, body = _error_response(exc)
+            if http_status:
+                record["http_status"] = http_status
+            if body is not None:
+                record["response"] = body
             self.sent.append(record)
-            raise ActionError(f"{path} falló: {exc}") from exc
+            raise ActionError(f"{path} falló: {exc}", record=record) from exc
 
         status = ""
         if isinstance(resp, dict):
             status = str(resp.get("status") or "")
             record["response"] = resp
+        elif resp not in (None, ""):
+            record["response"] = resp
         record["status"] = status or "unknown"
         self.sent.append(record)
 
         if status and status != "ok":
-            raise ActionError(f"{path} respondió status={status!r}")
+            raise ActionError(f"{path} respondió status={status!r}", record=record)
         return record
 
     # -- pujas y ofertas ----------------------------------------------------

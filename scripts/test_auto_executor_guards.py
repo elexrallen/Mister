@@ -847,6 +847,50 @@ def test_clause_pay_hydrates_owner_from_lookup() -> None:
 # El log que escribe es el que luego lee
 # ---------------------------------------------------------------------------
 
+def test_log_keeps_request_and_mister_response() -> None:
+    """La respuesta de Mister se queda en la operación y en el log."""
+    d = _run([_bid("1", M), _bid("2", 2 * M)])
+
+    def transport(path, data):
+        if data.get("id_player") == "1":
+            return {"status": "error", "message": "Debes esperar 19 horas"}
+        return {"status": "ok", "message": "puja registrada"}
+
+    ax.execute(d, client=MisterWriteClient(dry_run=False, transport=transport))
+    failed, ok = d["operations"]
+    _assert(failed["status"] == "error", failed)
+    _assert(failed["request"]["path"] == "/ajax/bid", failed)
+    _assert(failed["request"]["data"]["bid"] == int(M), failed["request"])
+    _assert(failed["response"]["message"] == "Debes esperar 19 horas", failed)
+    _assert(ok["status"] == "ok" and ok["response"]["message"] == "puja registrada", ok)
+
+    entry = ax.log_entry(d)
+    saved = entry["operations"][0]
+    _assert(saved["request"]["path"] == "/ajax/bid", saved)
+    _assert(saved["response"]["status"] == "error", saved)
+
+
+def test_http_error_body_is_kept() -> None:
+    """Un 400 de Mister guarda el JSON del cuerpo, no solo el texto de la excepción."""
+    d = _run([_listing("9", M)])
+
+    class _Resp:
+        status_code = 400
+        text = '{"status":"error","message":"Debes esperar 19 horas"}'
+
+    def transport(path, data):
+        err = RuntimeError("400 Client Error")
+        err.response = _Resp()
+        raise err
+
+    ax.execute(d, client=MisterWriteClient(dry_run=False, transport=transport))
+    op = d["operations"][0]
+    _assert(op["status"] == "error", op)
+    _assert(op["http_status"] == 400, op)
+    _assert(op["response"]["message"] == "Debes esperar 19 horas", op)
+    _assert(op["request"]["path"] == "/ajax/sale", op)
+
+
 def test_log_entry_feeds_back_the_transfer_lock() -> None:
     """
     Ida y vuelta del log.
@@ -1053,6 +1097,8 @@ TESTS = [
     test_recent_signing_is_deferred_after_hydrate,
     test_mister_400_recent_signing_is_deferred,
     test_clause_pay_hydrates_owner_from_lookup,
+    test_log_keeps_request_and_mister_response,
+    test_http_error_body_is_kept,
     test_log_entry_feeds_back_the_transfer_lock,
     test_failed_buy_does_not_lock_the_player,
     test_bid_without_id_market_is_not_posted,

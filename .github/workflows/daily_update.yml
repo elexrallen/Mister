@@ -108,6 +108,26 @@ jobs:
         if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         run: pip install -r requirements.txt
 
+      - name: Apply flip-mode toggle
+        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
+        env:
+          LEAGUE: ${{ steps.league.outputs.league }}
+          FLIP_MODE: ${{ github.event_name == 'repository_dispatch' && toJSON(github.event.client_payload.flip_mode) || '' }}
+        run: |
+          python - <<'PY'
+          import os
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "src")
+          from flip_mode import apply_flip_toggle
+          wrote = apply_flip_toggle(
+              os.environ.get("LEAGUE", ""),
+              os.environ.get("FLIP_MODE", ""),
+              root=Path("public/data/leagues"),
+          )
+          print("flip_mode escrito" if wrote else "sin cambio de reventa")
+          PY
+
       - name: Run data engine
         if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         env:

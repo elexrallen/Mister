@@ -756,6 +756,14 @@ CPU_SPREAD_HOLDS_ALLOWED = 1  # holds selectivos antes de forzar salida
 CPU_SPREAD_IMPATIENT_PCT = 0.98  # accept máquina si aprieta solvencia / wait>0
 CPU_SPREAD_QUEUE_BASE = 8_200  # debajo de secondary(9k) / hedge(8.5k)
 
+# Reventa: compra de libres caros para cobrar la prima de la máquina.
+FLIP_MIN_ASK = 4_000_000
+FLIP_MACHINE_PREMIUM = 0.05
+FLIP_MIN_PROFIT = 0.03
+FLIP_UP_SHARE = 0.30  # de la subida diaria en euros
+FLIP_DOWN_SHARE = 0.05  # de la bajada diaria en euros
+BEHAVIOR_LOG_DAYS = 30
+
 # Pool completo Mister via POST /ajax/sw/players (páginas de 50)
 MISTER_POOL_PAGE_SIZE = 50
 MISTER_POOL_MAX_OFFSET = 2000

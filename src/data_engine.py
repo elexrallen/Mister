@@ -3987,6 +3987,16 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         ),
         path=(target_board.get("path") if isinstance(target_board, dict) else None) or None,
     )
+    cycle_plan = _apply_flip_mode(
+        slug=slug,
+        cycle_plan=cycle_plan,
+        squad=squad,
+        market=[*(opportunities or []), *(free_agents or [])],
+        sales_state=sales_state if isinstance(sales_state, dict) else {},
+        me=me if isinstance(me, dict) else {},
+        league_rules=league_rules if isinstance(league_rules, dict) else {},
+        max_squad=config.league_max_squad(league_cfg),
+    )
     attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
     squad_vm = squad_value_summary(squad)
 
@@ -4450,6 +4460,125 @@ def prune_history(retention_days: int = config.HISTORY_RETENTION_DAYS, history_d
             log.info("Snapshot antiguo eliminado: %s", path.name)
 
 
+def _apply_flip_mode(
+    *,
+    slug: str,
+    cycle_plan: dict[str, Any],
+    squad: list[dict[str, Any]],
+    market: list[dict[str, Any]],
+    sales_state: dict[str, Any],
+    me: dict[str, Any],
+    league_rules: dict[str, Any],
+    max_squad: int,
+) -> dict[str, Any]:
+    """Sustituye el ciclo si la liga tiene la reventa encendida y anota el diario."""
+    from datetime import datetime, timezone
+
+    from behavior_log import update_league_log
+    from competitive_actions import resolve_transfer_wait_hours
+    from flip_mode import (
+        build_flip_cycle,
+        flip_enabled,
+        load_book,
+        merge_flip_exit,
+        save_book,
+    )
+
+    enabled = flip_enabled(slug)
+    book = load_book(slug)
+    now = datetime.now(timezone.utc)
+    locked: set[str] = set()
+    try:
+        from auto_executor import load_log, transfer_locked_ids
+
+        wait_h = resolve_transfer_wait_hours(league_rules.get("transfer_wait"))
+        locked = set(
+            transfer_locked_ids(
+                automation_log=load_log(slug),
+                transfer_wait_hours=wait_h,
+                now=now,
+            )
+        )
+    except Exception as exc:  # noqa: BLE001
+        log.warning("[%s] no se pudo leer la espera compra→venta: %s", slug, exc)
+        wait_h = 0.0
+
+    flip_plan, book = build_flip_cycle(
+        book=book,
+        enabled=enabled,
+        squad=squad,
+        market=market,
+        sales_state=sales_state,
+        me=me,
+        league_rules=league_rules,
+        max_squad=max_squad,
+        locked_ids=locked,
+        now=now,
+    )
+    try:
+        save_book(slug, book)
+    except OSError as exc:
+        log.warning("[%s] no se pudo guardar el libro de reventa: %s", slug, exc)
+
+    clock = cycle_plan.get("cycle") if isinstance(cycle_plan, dict) else {}
+    if enabled:
+        plan = flip_plan
+        plan["cycle"] = clock or {}
+        if isinstance(cycle_plan, dict) and cycle_plan.get("squad_value"):
+            plan["squad_value"] = cycle_plan["squad_value"]
+        mode = "reventa"
+    else:
+        open_count = int((flip_plan.get("flip") or {}).get("open_count") or 0)
+        if open_count:
+            plan = merge_flip_exit(cycle_plan, flip_plan, book)
+        else:
+            plan = dict(cycle_plan or {})
+            plan["flip"] = flip_plan.get("flip") or {"enabled": False}
+        mode = "normal"
+
+    squad_ids = {str(p.get("id") or p.get("player_id") or "") for p in squad if isinstance(p, dict)}
+    squad_ids.discard("")
+    market_ids = {str(p.get("id") or p.get("player_id") or "") for p in market if isinstance(p, dict)}
+    market_ids.discard("")
+    listed_now = {
+        str(m.get("player_id") or "")
+        for m in (plan.get("moves") or [])
+        if isinstance(m, dict) and m.get("kind") == "list_for_sale"
+    }
+    pending_list: set[str] = set()
+    for pid, pos in (book.get("positions") or {}).items():
+        if not isinstance(pos, dict) or pos.get("status") in ("sold", "listed") or pos.get("listed"):
+            continue
+        if str(pid) in listed_now:
+            continue
+        opened = pos.get("opened_at")
+        if opened and wait_h > 0:
+            try:
+                opened_at = datetime.fromisoformat(str(opened))
+            except ValueError:
+                opened_at = None
+            if opened_at is not None:
+                if opened_at.tzinfo is None:
+                    opened_at = opened_at.replace(tzinfo=timezone.utc)
+                if (now - opened_at).total_seconds() + 1 < wait_h * 3600:
+                    continue
+        pending_list.add(str(pid))
+    try:
+        update_league_log(
+            slug,
+            mode=mode,
+            plan=plan,
+            squad_ids=squad_ids,
+            market_ids=market_ids,
+            pending_list_ids=pending_list,
+            at=now,
+            flip=plan.get("flip") if isinstance(plan, dict) else None,
+        )
+    except OSError as exc:
+        log.warning("[%s] no se pudo escribir el diario: %s", slug, exc)
+    return plan
+
+
 def write_outputs(payload: dict[str, Any], *, league_cfg: dict[str, Any] | None = None) -> Path:
     """Escribe JSON público recortado + history slim de precios (desde el payload completo)."""
     league_cfg = dict(league_cfg or config.get_league(payload.get("league_slug")))
@@ -4542,6 +4671,12 @@ def write_leagues_index(entries: list[dict[str, Any]], *, merge: bool = False) -
         auto = config.automation_for_league(slug)
         entry["automated"] = bool(auto.get("enabled"))
         entry["automation_dry_run"] = bool(auto.get("enabled") and auto.get("dry_run"))
+        try:
+            from flip_mode import flip_enabled
+
+            entry["flip_mode"] = flip_enabled(slug)
+        except Exception:  # noqa: BLE001
+            entry["flip_mode"] = False
 
     index = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
