@@ -463,6 +463,7 @@ def automation_for_league(slug: str, *, refresh: bool = False) -> dict:
     settings["enabled"] = enabled
     settings["dry_run"] = bool(cfg["dry_run"] or settings.get("dry_run"))
     settings["slug"] = str(slug)
+    settings["env_killed"] = killed
     settings["kill_switch_off"] = not cfg["enabled"] or killed
     settings["league_registered"] = league_cfg is not None
     return settings

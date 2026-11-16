@@ -168,6 +168,56 @@ def test_unregistered_league_never_runs() -> None:
     _assert("no registrada" in d["reason"], d["reason"])
 
 
+def test_flip_runs_without_league_automation() -> None:
+    move = _bid("21", 11 * M, flip_play=True, is_xi_starter=False, name="Konate")
+    d = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {
+                "balance": 1.1 * M,
+                "spendable": 54 * M,
+                "free_slots_after_accepts": 4,
+                "sale_remaining": 5,
+            },
+            "moves": [move],
+        },
+        settings=_settings(
+            enabled=False,
+            kill_switch_off=True,
+            league_registered=False,
+            env_killed=False,
+        ),
+        now=NOW,
+    )
+    _assert(d["enabled"] is not False, d.get("reason"))
+    _assert(_ids(d) == ["21"], d.get("skipped"))
+
+
+def test_env_kill_blocks_flip_too() -> None:
+    d = ax.plan_operations(
+        cycle_plan={"flip": {"enabled": True}, "constraints": {"balance": 20 * M, "spendable": 20 * M, "free_slots_after_accepts": 2}, "moves": [_bid("1", M, flip_play=True)]},
+        settings=_settings(enabled=False, kill_switch_off=True, env_killed=True),
+        now=NOW,
+    )
+    _assert(not d["enabled"], d.get("reason"))
+    _assert("MISTER_AUTOMATION_OFF" in d["reason"], d["reason"])
+
+
+def test_flip_leagues_join_the_run_list() -> None:
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        league = root / "patio"
+        league.mkdir()
+        (league / "flip_mode.json").write_text('{"enabled": true}\n', encoding="utf-8")
+        (root / "apagada").mkdir()
+        (root / "apagada" / "flip_mode.json").write_text('{"enabled": false}\n', encoding="utf-8")
+        slugs = ax.leagues_for_run("all", root=root)
+    _assert("patio" in slugs, slugs)
+    _assert("apagada" not in slugs, slugs)
+
+
 def test_action_not_in_allowed_actions_is_skipped() -> None:
     d = _run([_bid("1", M)], settings=_settings(allowed_actions=["list_for_sale"]))
     _assert(not d["operations"], "bid fuera de allowed_actions no se manda")
@@ -1040,6 +1090,9 @@ def test_community_id_from_payload() -> None:
 TESTS = [
     test_kill_switch_blocks_everything,
     test_unregistered_league_never_runs,
+    test_flip_runs_without_league_automation,
+    test_env_kill_blocks_flip_too,
+    test_flip_leagues_join_the_run_list,
     test_action_not_in_allowed_actions_is_skipped,
     test_single_buy_cap_triggers,
     test_single_buy_cap_respected_by_a_hair,

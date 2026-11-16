@@ -24,6 +24,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 import config
@@ -203,10 +204,12 @@ class _Budget:
         ):
             return "plantilla a cupo, no queda plaza"
         if ignore_pct_caps:
-            if self.cash - cost < self.floor - 1:
+            # La reventa puede usar la deuda que Mister ya autoriza (spendable).
+            room = self.usable - self.spent
+            if cost > room + 1:
                 return (
-                    f"dejaría la caja por debajo del suelo "
-                    f"({(self.cash - cost) / 1e6:.1f}M < {self.floor / 1e6:.1f}M)"
+                    f"supera la deuda disponible: {cost / 1e6:.1f}M vs "
+                    f"{max(0.0, room) / 1e6:.1f}M"
                 )
             return None
         if cost > self.single_cap + 1:
@@ -400,14 +403,21 @@ def plan_operations(
             }
         )
 
-    if not settings.get("enabled"):
+    flip_on = isinstance(plan.get("flip"), dict) and bool(plan["flip"].get("enabled"))
+    # La reventa es un alta aparte: se escribe aunque el fichaje automático
+    # general esté apagado. MISTER_AUTOMATION_OFF sigue cortándolo.
+    if not settings.get("enabled") and not (flip_on and not settings.get("env_killed")):
         why = (
-            "kill switch global apagado"
-            if settings.get("kill_switch_off")
+            "MISTER_AUTOMATION_OFF"
+            if settings.get("env_killed")
             else (
-                "liga no registrada en config/automation.json"
-                if not settings.get("league_registered")
-                else "liga registrada pero desactivada"
+                "kill switch global apagado"
+                if settings.get("kill_switch_off")
+                else (
+                    "liga no registrada en config/automation.json"
+                    if not settings.get("league_registered")
+                    else "liga registrada pero desactivada"
+                )
             )
         )
         return {
@@ -1402,6 +1412,24 @@ def _summary_line(decision: dict[str, Any]) -> str:
     )
 
 
+def leagues_for_run(league_arg: str, *, root: Path | None = None) -> list[str]:
+    """Ligas a escribir: las automatizadas y, además, las que tienen reventa activa."""
+    if league_arg and league_arg != "all":
+        return [league_arg]
+    slugs = list(config.automated_league_slugs())
+    seen = set(slugs)
+    from flip_mode import flip_enabled
+
+    base = root if root is not None else config.LEAGUES_DIR
+    if base.is_dir():
+        for child in sorted(p for p in base.iterdir() if p.is_dir()):
+            if child.name in seen or not flip_enabled(child.name, root):
+                continue
+            slugs.append(child.name)
+            seen.add(child.name)
+    return slugs
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
@@ -1421,13 +1449,10 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 
-    if args.league and args.league != "all":
-        slugs = [args.league]
-    else:
-        slugs = config.automated_league_slugs()
-        if not slugs:
-            print("Ninguna liga automatizada activa (kill switch o config/automation.json).")
-            return 0
+    slugs = leagues_for_run(args.league)
+    if not slugs:
+        print("Ninguna liga automatizada ni con reventa activa.")
+        return 0
 
     acted: list[str] = []
     for slug in slugs:
