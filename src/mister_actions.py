@@ -271,10 +271,11 @@ class MisterWriteClient:
         bid_id: str | int | None = None,
     ) -> dict[str, Any]:
         """
-        Rechaza una oferta recibida.
+        Rechaza una oferta recibida y relista al jugador.
 
-        `callback_resale` quita la fila de la oferta y refresca el fin del ciclo:
-        el jugador se queda y sigue listado, no es una venta.
+        Es el botón de la propia oferta: `callback_resale` quita la fila y pone
+        un `ends` nuevo, así que el ciclo de mercado se reinicia. No es una
+        venta: el jugador se queda y vuelve a salir a la venta.
         """
         return self._post_action(
             "/ajax/resale",

@@ -355,7 +355,9 @@ AUTOMATION_DEFAULTS: dict = {
     # Tipos de move que el ejecutor puede llegar a mandar. Lo que no esté aquí
     # se registra como bloqueado. `sell_to_system` y `accept_offer` quedan
     # fuera de inicio: el primero regala un 20%; el segundo tiene endpoint
-    # sin sondear (`/ajax/offer`). `clause_bid` sí: el POST es id_player + id_uc.
+    # sin plantilla (`/ajax/offer`). La reventa (`flip_play`) es la excepción:
+    # acepta por encima del +3% y relista con /ajax/resale. `clause_bid` sí:
+    # el POST es id_player + id_uc.
     "allowed_actions": [
         "bid",
         "offer",

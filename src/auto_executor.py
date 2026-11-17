@@ -520,7 +520,14 @@ def plan_operations(
             pid = _pid(move)
             amount = _money(move.get("amount") or move.get("bid") or move.get("price"))
 
-            if kind not in allowed_set:
+            # La reventa vive aparte del fichaje automático: aceptar por encima
+            # del +3% y relistar con /ajax/resale son el propio modo, aunque
+            # `accept_offer` no esté en allowed_actions.
+            flip_offer = bool(move.get("flip_play")) and kind in {
+                KIND_ACCEPT,
+                KIND_DECLINE,
+            }
+            if kind not in allowed_set and not flip_offer:
                 if kind == KIND_CLAUSE:
                     skip(
                         move,
@@ -813,7 +820,7 @@ def _op(
     amount: float,
     params: dict[str, Any],
 ) -> dict[str, Any]:
-    return {
+    row = {
         "kind": kind,
         "action": DISPATCH[kind],
         "player_id": _pid(move),
@@ -823,6 +830,12 @@ def _op(
         "why": move.get("why"),
         "params": {k: v for k, v in params.items() if v is not None},
     }
+    if move.get("flip_play") and kind in {KIND_ACCEPT, KIND_DECLINE}:
+        # callback_offer / callback_resale confirman las rutas; el modo reventa
+        # no puede salir si el POST se queda en "sin sondear".
+        row["allow_unverified"] = True
+        row["flip_play"] = True
+    return row
 
 
 def _positive_id(raw: Any) -> int | None:
@@ -1113,7 +1126,10 @@ def execute(
                 log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), missing)
                 continue
         before = len(cl.sent)
+        prev_verified = getattr(cl, "verified_only", True)
         try:
+            if op.get("allow_unverified"):
+                cl.verified_only = False
             result = method(**op["params"])
         except UnverifiedAction as exc:
             op["status"] = "blocked"
@@ -1136,6 +1152,8 @@ def execute(
             op["error"] = str(exc)
             log.warning("%s %s falló: %s", op.get("kind"), op.get("name"), exc)
             continue
+        finally:
+            cl.verified_only = prev_verified
         _remember_exchange(op, result)
         op["status"] = str(result.get("status") or "unknown")
         if result.get("unverified"):
