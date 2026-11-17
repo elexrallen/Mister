@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-17T09:31:23.100697+00:00",
+  "generated_at": "2026-11-17T10:09:34.517591+00:00",
   "league_slug": "serie-a-d1g1-0625",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1150,10 +1150,10 @@
     "max_debt": 14959490.0,
     "bid_cap": 14959490.0,
     "max_squad": 25,
-    "n_free": 184,
+    "n_free": 186,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 100.48329304222223
+    "hours_to_jornada": 99.84679156166666
   },
   "finance": {
     "ok": true,
