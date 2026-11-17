@@ -695,47 +695,116 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-17T13:50:15.645125+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 5
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "29363",
+          "name": "M. Rogers",
+          "amount": 19203000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "7083",
+          "name": "P. Groß",
+          "amount": 15240400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55979",
+          "name": "K. Mainoo",
+          "amount": 11795800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "18009",
+          "name": "J. Justin",
+          "amount": 11690800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "58963",
+          "name": "D. Kamada",
+          "amount": 11042200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 53,
+      "bids": 58,
       "won": 4,
       "lost": 0,
-      "lists": 8,
+      "lists": 10,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 51
+          "count": 56
         },
         {
           "why": "espera compra→venta",
-          "count": 8
+          "count": 10
         }
       ]
     },
     "d14": {
-      "bids": 53,
+      "bids": 58,
       "won": 4,
       "lost": 0,
-      "lists": 8,
+      "lists": 10,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 51
+          "count": 56
         },
         {
           "why": "espera compra→venta",
-          "count": 8
+          "count": 10
         }
       ]
     }
   },
-  "updated_at": "2026-11-17T10:05:09.593084+00:00"
+  "updated_at": "2026-11-17T13:50:15.645125+00:00"
 }
