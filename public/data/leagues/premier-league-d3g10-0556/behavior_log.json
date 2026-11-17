@@ -1,0 +1,603 @@
+{
+  "league": "premier-league-d3g10-0556",
+  "cycles": [
+    {
+      "at": "2026-11-16T12:22:59.640842+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
+    },
+    {
+      "at": "2026-11-16T13:07:30.347815+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
+    },
+    {
+      "at": "2026-11-16T14:31:39.306104+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
+    },
+    {
+      "at": "2026-11-16T15:19:37.373918+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": []
+    },
+    {
+      "at": "2026-11-16T15:34:06.138722+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "eligible": 9
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "2380539",
+          "name": "Z. Suzuki",
+          "amount": 11158100,
+          "market_value": 11132000.0,
+          "buy_price": 11158100,
+          "threshold": 11492843,
+          "status": "ejecutada",
+          "why": "Puja 11.16M € (sube 87,000 € hoy, +30% (26,100 €)). La máquina puede llegar a 11.69M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19812997499,
+              "id_player": "2380539",
+              "action": "bid",
+              "bid": 11158100
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 2380539,
+              "id_market": 19812997499,
+              "action": "bid",
+              "bid": 11158100,
+              "price": 11132000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": 115581,
+                "future": -11042519,
+                "maxDebt": 1316731
+              }
+            }
+          },
+          "result": "ganada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22295000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23112",
+          "name": "J. Paul van Hecke",
+          "amount": 20136200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27497",
+          "name": "J. Pedro",
+          "amount": 19069450,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 14885500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "52140",
+          "name": "A. Semenyo",
+          "amount": 14279450,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10652900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "29185",
+          "name": "K. Ajer",
+          "amount": 8626200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "3848778",
+          "name": "A. Bouaddi",
+          "amount": 7741300,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-16T15:40:39.324173+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "eligible": 9
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22295000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23112",
+          "name": "J. Paul van Hecke",
+          "amount": 20136200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27497",
+          "name": "J. Pedro",
+          "amount": 19069450,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 14885500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "52140",
+          "name": "A. Semenyo",
+          "amount": 14279450,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2380539",
+          "name": "Z. Suzuki",
+          "amount": 11158100,
+          "status": "descartada",
+          "why": "sin caja",
+          "result": "ganada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10652900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "29185",
+          "name": "K. Ajer",
+          "amount": 8626200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "3848778",
+          "name": "A. Bouaddi",
+          "amount": 7741300,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T03:09:27.362608+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "eligible": 9
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": 4076000,
+          "market_value": 4067000.0,
+          "buy_price": 4076000,
+          "threshold": 4198280,
+          "status": "ejecutada",
+          "why": "Puja 4.08M € (baja 180,000 € hoy, +5% (9,000 €)). La máquina puede llegar a 4.27M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19816838709,
+              "id_player": "65715",
+              "action": "bid",
+              "bid": 4076000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 65715,
+              "id_market": 19816838709,
+              "action": "bid",
+              "bid": 4076000,
+              "price": 4067000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": -11042519,
+                "future": -15118519,
+                "maxDebt": 23731
+              }
+            }
+          },
+          "result": "ganada"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23112",
+          "name": "J. Paul van Hecke",
+          "amount": 20136200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27497",
+          "name": "J. Pedro",
+          "amount": 19069450,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 14885500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "19389",
+          "name": "P. Neto",
+          "amount": 11669400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10652900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10475850,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "3848778",
+          "name": "A. Bouaddi",
+          "amount": 7741300,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64540",
+          "name": "D. Ndoye",
+          "amount": 4727700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T03:18:13.924338+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "eligible": 9
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23112",
+          "name": "J. Paul van Hecke",
+          "amount": 20136200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27497",
+          "name": "J. Pedro",
+          "amount": 19069450,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 14885500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "19389",
+          "name": "P. Neto",
+          "amount": 11669400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10652900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10475850,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "3848778",
+          "name": "A. Bouaddi",
+          "amount": 7741300,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64540",
+          "name": "D. Ndoye",
+          "amount": 4727700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": 4076000,
+          "status": "descartada",
+          "why": "sin caja",
+          "result": "ganada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T08:34:02.479738+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 7
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "29363",
+          "name": "M. Rogers",
+          "amount": 19203000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4733613",
+          "name": "B. Barcola",
+          "amount": 14682400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "19389",
+          "name": "P. Neto",
+          "amount": 11684900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55979",
+          "name": "K. Mainoo",
+          "amount": 11795800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "58963",
+          "name": "D. Kamada",
+          "amount": 11042200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10432200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64540",
+          "name": "D. Ndoye",
+          "amount": 4742800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "d7": {
+      "bids": 43,
+      "won": 4,
+      "lost": 0,
+      "lists": 4,
+      "accepts": 0,
+      "profit": 0,
+      "short_offers": 0,
+      "top_skips": [
+        {
+          "why": "sin caja",
+          "count": 41
+        },
+        {
+          "why": "espera compra→venta",
+          "count": 4
+        }
+      ]
+    },
+    "d14": {
+      "bids": 43,
+      "won": 4,
+      "lost": 0,
+      "lists": 4,
+      "accepts": 0,
+      "profit": 0,
+      "short_offers": 0,
+      "top_skips": [
+        {
+          "why": "sin caja",
+          "count": 41
+        },
+        {
+          "why": "espera compra→venta",
+          "count": 4
+        }
+      ]
+    }
+  },
+  "updated_at": "2026-11-17T08:34:02.479738+00:00"
+}

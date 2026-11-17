@@ -81,10 +81,14 @@ export default {
     }
 
     let league = "all";
+    let flipMode = null;
     try {
       const body = await request.json();
       if (body && typeof body.league === "string" && body.league.trim()) {
         league = body.league.trim().toLowerCase();
+      }
+      if (body && typeof body.flip_mode === "boolean") {
+        flipMode = body.flip_mode;
       }
     } catch {
       // body vacío → all
@@ -106,7 +110,8 @@ export default {
       },
       body: JSON.stringify({
         event_type: "refresh-data",
-        client_payload: { league },
+        client_payload:
+          flipMode === null ? { league } : { league, flip_mode: flipMode },
       }),
     });
 
@@ -138,6 +143,7 @@ export default {
         ok: true,
         dispatched: true,
         league,
+        flip_mode: flipMode,
         accepted_at: new Date(now).toISOString(),
         recommended_poll_seconds: 15,
         expected_duration_minutes: 12,

@@ -27,6 +27,7 @@ from competitive_actions import (
     is_resale_play,
     is_rival_market_listing,
     is_xi_quality_starter,
+    micro_sell_allowed,
     mister_bid_cap,
     resolve_transfer_wait_hours,
     sells_settle_before_deadline,
@@ -1390,6 +1391,9 @@ def build_cycle_plan(
     recover_base = _recover_pool(
         squad, xi_ids=xi_ids, skip_ids=accept_ids | listed_ids, keeper_ids=keeper_ids
     )
+    # Menos de 500k no tapa un fichaje: no cuenta como caja recuperable.
+    no_drop = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
+    recover_base = [p for p in recover_base if _price(p) >= no_drop - 1]
     recover_cap = _recovery_capacity(
         recover_base if settle_new else [],
         sale_remaining=sale_remaining,
@@ -1408,7 +1412,10 @@ def build_cycle_plan(
         if not pid or pid in accept_ids:
             continue
         if o.get("solvency_blocked") or o.get("budget_fit") == "blocked":
-            continue
+            # ko_cover: aún no hay venta oportuna en la ficha, pero este ciclo
+            # puede listar una que cobre antes del pitido. over_cap no pasa.
+            if str(o.get("block_reason") or "") != "ko_cover":
+                continue
         if o.get("gw_out") or (o.get("external") or {}).get("availability") in ("injured", "suspended"):
             continue
         if is_rival_market_listing(o):
@@ -1430,7 +1437,7 @@ def build_cycle_plan(
                 continue
         elif has_negative_trend(o):
             continue
-        if not o.get("cpu_spread_play"):
+        if not o.get("cpu_spread_play") and not o.get("flip_play"):
             known_bench = _has_starter_signal(o) and not is_xi_quality_starter(o)
             if known_bench or (not is_xi_quality_starter(o) and pid not in target_ids):
                 continue
@@ -1739,6 +1746,8 @@ def build_cycle_plan(
             proceeds = _price(p)
             if proceeds <= 0:
                 continue
+            if not micro_sell_allowed(proceeds, funding_shortfall=recover_need):
+                continue
             recover_ids.add(pid)
             recover_lists.append(
                 _player_ref(
@@ -1796,6 +1805,9 @@ def build_cycle_plan(
             continue
         fade_cands.append((score, p))
     swap_cands.sort(key=lambda x: x[0])
+    fade_cands = [
+        (score, p) for score, p in fade_cands if micro_sell_allowed(_price(p))
+    ]
     fade_cands.sort(key=lambda x: -x[0])
 
     lists: list[dict[str, Any]] = list(recover_lists)
@@ -1804,6 +1816,10 @@ def build_cycle_plan(
     for _rank, p, beater in swap_cands:
         if len(lists) >= swap_cap:
             break
+        if _price(p) < no_drop - 1:
+            continue
+        if not micro_sell_allowed(_price(p), need_slot=True):
+            continue
         d5 = _f(p.get("delta_5d"))
         md = _f(beater.get("delta_5d"))
         why = (

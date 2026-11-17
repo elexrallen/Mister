@@ -168,6 +168,64 @@ def test_unregistered_league_never_runs() -> None:
     _assert("no registrada" in d["reason"], d["reason"])
 
 
+def test_flip_runs_without_league_automation() -> None:
+    move = _bid(
+        "21",
+        11 * M,
+        flip_play=True,
+        is_xi_starter=False,
+        name="Konate",
+        rising=True,
+        delta_5d=0.006,
+    )
+    d = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {
+                "balance": 1.1 * M,
+                "spendable": 54 * M,
+                "free_slots_after_accepts": 4,
+                "sale_remaining": 5,
+            },
+            "moves": [move],
+        },
+        settings=_settings(
+            enabled=False,
+            kill_switch_off=True,
+            league_registered=False,
+            env_killed=False,
+        ),
+        now=NOW,
+    )
+    _assert(d["enabled"] is not False, d.get("reason"))
+    _assert(_ids(d) == ["21"], d.get("skipped"))
+
+
+def test_env_kill_blocks_flip_too() -> None:
+    d = ax.plan_operations(
+        cycle_plan={"flip": {"enabled": True}, "constraints": {"balance": 20 * M, "spendable": 20 * M, "free_slots_after_accepts": 2}, "moves": [_bid("1", M, flip_play=True)]},
+        settings=_settings(enabled=False, kill_switch_off=True, env_killed=True),
+        now=NOW,
+    )
+    _assert(not d["enabled"], d.get("reason"))
+    _assert("MISTER_AUTOMATION_OFF" in d["reason"], d["reason"])
+
+
+def test_flip_leagues_join_the_run_list() -> None:
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        league = root / "patio"
+        league.mkdir()
+        (league / "flip_mode.json").write_text('{"enabled": true}\n', encoding="utf-8")
+        (root / "apagada").mkdir()
+        (root / "apagada" / "flip_mode.json").write_text('{"enabled": false}\n', encoding="utf-8")
+        slugs = ax.leagues_for_run("all", root=root)
+    _assert("patio" in slugs, slugs)
+    _assert("apagada" not in slugs, slugs)
+
+
 def test_action_not_in_allowed_actions_is_skipped() -> None:
     d = _run([_bid("1", M)], settings=_settings(allowed_actions=["list_for_sale"]))
     _assert(not d["operations"], "bid fuera de allowed_actions no se manda")
@@ -350,10 +408,9 @@ def test_unpublished_daily_limit_defaults_to_one_per_24h() -> None:
 # Pujas a libres frente a ofertas a rivales
 # ---------------------------------------------------------------------------
 
-def test_rival_listing_becomes_an_offer_not_a_bid() -> None:
+def test_rival_bid_is_dropped_not_an_offer() -> None:
     d = _run([_bid("1", 3 * M, owner_id="555", listed_by_rival=True)])
-    _assert(_kinds(d) == ["offer"], f"un listado de rival es una oferta: {_kinds(d)}")
-    _assert(d["operations"][0]["params"]["offeree_id"] == "555", d["operations"][0])
+    _assert(not d["operations"], f"un listado de rival no se puja ni se oferta: {d['operations']}")
 
 
 def test_free_agent_bid_has_no_offeree() -> None:
@@ -362,12 +419,18 @@ def test_free_agent_bid_has_no_offeree() -> None:
     _assert(d["operations"][0]["params"]["offeree_id"] == 0, d["operations"][0])
 
 
+def _offer(pid: str, amount: float, **over) -> dict:
+    row = _bid(pid, amount, **over)
+    row["kind"] = "offer"
+    return row
+
+
 def test_offers_do_not_consume_cycle_spend() -> None:
     """Una oferta pendiente no es dinero gastado: no puede bloquear las pujas."""
     d = _run(
         [
-            _bid("1", 7 * M, owner_id="555", listed_by_rival=True),
-            _bid("2", 7 * M, owner_id="556", listed_by_rival=True),
+            _offer("1", 7 * M, owner_id="555"),
+            _offer("2", 7 * M, owner_id="556"),
             _bid("3", 6 * M),
         ]
     )
@@ -376,9 +439,7 @@ def test_offers_do_not_consume_cycle_spend() -> None:
 
 
 def test_max_pending_offers_triggers() -> None:
-    moves = [
-        _bid(str(i), M, owner_id=f"55{i}", listed_by_rival=True) for i in (1, 2, 3)
-    ]
+    moves = [_offer(str(i), M, owner_id=f"55{i}") for i in (1, 2, 3)]
     d = _run(moves)
     _assert(len(d["operations"]) == 2, f"tope de 2 ofertas vivas: {_ids(d)}")
     _assert("ofertas vivas" in _skip_reason(d, "3"), _skip_reason(d, "3"))
@@ -386,7 +447,7 @@ def test_max_pending_offers_triggers() -> None:
 
 def test_existing_offers_count_against_the_quota() -> None:
     d = _run(
-        [_bid("1", M, owner_id="555", listed_by_rival=True)],
+        [_offer("1", M, owner_id="555")],
         state={"offers_sent": [{"player_id": "9"}, {"player_id": "8"}]},
     )
     _assert(not d["operations"], "ya hay 2 ofertas vivas, no cabe otra")
@@ -738,7 +799,7 @@ def test_hold_offer_moves_are_ignored() -> None:
 
 def test_execution_order_is_sells_then_clauses_then_bids_then_offers() -> None:
     moves = [
-        _bid("5", M, owner_id="555", listed_by_rival=True),
+        _offer("5", M, owner_id="555"),
         _bid("4", M),
         _clause("3", M),
         _listing("2", M),
@@ -913,6 +974,50 @@ def test_clause_pay_hydrates_owner_from_lookup() -> None:
 # El log que escribe es el que luego lee
 # ---------------------------------------------------------------------------
 
+def test_log_keeps_request_and_mister_response() -> None:
+    """La respuesta de Mister se queda en la operación y en el log."""
+    d = _run([_bid("1", M), _bid("2", 2 * M)])
+
+    def transport(path, data):
+        if data.get("id_player") == "1":
+            return {"status": "error", "message": "Debes esperar 19 horas"}
+        return {"status": "ok", "message": "puja registrada"}
+
+    ax.execute(d, client=MisterWriteClient(dry_run=False, transport=transport))
+    failed, ok = d["operations"]
+    _assert(failed["status"] == "error", failed)
+    _assert(failed["request"]["path"] == "/ajax/bid", failed)
+    _assert(failed["request"]["data"]["bid"] == int(M), failed["request"])
+    _assert(failed["response"]["message"] == "Debes esperar 19 horas", failed)
+    _assert(ok["status"] == "ok" and ok["response"]["message"] == "puja registrada", ok)
+
+    entry = ax.log_entry(d)
+    saved = entry["operations"][0]
+    _assert(saved["request"]["path"] == "/ajax/bid", saved)
+    _assert(saved["response"]["status"] == "error", saved)
+
+
+def test_http_error_body_is_kept() -> None:
+    """Un 400 de Mister guarda el JSON del cuerpo, no solo el texto de la excepción."""
+    d = _run([_listing("9", M)])
+
+    class _Resp:
+        status_code = 400
+        text = '{"status":"error","message":"Debes esperar 19 horas"}'
+
+    def transport(path, data):
+        err = RuntimeError("400 Client Error")
+        err.response = _Resp()
+        raise err
+
+    ax.execute(d, client=MisterWriteClient(dry_run=False, transport=transport))
+    op = d["operations"][0]
+    _assert(op["status"] == "error", op)
+    _assert(op["http_status"] == 400, op)
+    _assert(op["response"]["message"] == "Debes esperar 19 horas", op)
+    _assert(op["request"]["path"] == "/ajax/sale", op)
+
+
 def test_log_entry_feeds_back_the_transfer_lock() -> None:
     """
     Ida y vuelta del log.
@@ -1059,6 +1164,9 @@ def test_community_id_from_payload() -> None:
 TESTS = [
     test_kill_switch_blocks_everything,
     test_unregistered_league_never_runs,
+    test_flip_runs_without_league_automation,
+    test_env_kill_blocks_flip_too,
+    test_flip_leagues_join_the_run_list,
     test_action_not_in_allowed_actions_is_skipped,
     test_single_buy_cap_triggers,
     test_single_buy_cap_respected_by_a_hair,
@@ -1078,7 +1186,7 @@ TESTS = [
     test_second_clause_inside_24h_is_blocked,
     test_clause_allowed_after_24h_window,
     test_unpublished_daily_limit_defaults_to_one_per_24h,
-    test_rival_listing_becomes_an_offer_not_a_bid,
+    test_rival_bid_is_dropped_not_an_offer,
     test_free_agent_bid_has_no_offeree,
     test_offers_do_not_consume_cycle_spend,
     test_max_pending_offers_triggers,
@@ -1123,6 +1231,8 @@ TESTS = [
     test_recent_signing_is_deferred_after_hydrate,
     test_mister_400_recent_signing_is_deferred,
     test_clause_pay_hydrates_owner_from_lookup,
+    test_log_keeps_request_and_mister_response,
+    test_http_error_body_is_kept,
     test_log_entry_feeds_back_the_transfer_lock,
     test_failed_buy_does_not_lock_the_player,
     test_bid_without_id_market_is_not_posted,

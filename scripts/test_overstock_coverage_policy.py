@@ -339,7 +339,7 @@ def test_select_intent_skips_overstock_df() -> None:
 
 
 def test_solvency_strict_blocks_negative() -> None:
-    """≤48h: puja que deja liquidez < 0 sigue legal si cabe en maxDebt."""
+    """Sin cobro antes del pitido, una puja que deja caja < 0 se bloquea aunque quepa en maxDebt."""
     fin = evaluate_bid_finance(
         20_000_000,
         balance=5_000_000,
@@ -349,10 +349,11 @@ def test_solvency_strict_blocks_negative() -> None:
         hours_to_jornada=24.0,
     )
     assert fin["solvency_strict"] is True, fin
-    assert fin["solvency_blocked"] is False, fin
-    assert fin["solvency_ok"] is True, fin
-    assert fin["budget_fit"] == "stretch", fin
-    assert fin["debt_risk"] is True, fin
+    assert fin["block_reason"] == "ko_cover", fin
+    assert fin["solvency_blocked"] is True, fin
+    assert fin["solvency_ok"] is False, fin
+    assert fin["budget_fit"] == "blocked", fin
+    assert fin["debt_risk"] is False, fin
 
 
 def test_mf_overstock_fw_thin_prefers_fw() -> None:

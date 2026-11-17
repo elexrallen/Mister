@@ -1950,12 +1950,16 @@
     const plan = data.cycle_plan;
     if (!plan) {
       heroRoot.innerHTML = `<article class="cycle-plan-copy">
-        <p class="command-label">Ciclo de mercado</p>
+        <div class="cycle-plan-head">
+          <p class="command-label">Ciclo de mercado</p>
+          <button type="button" class="flip-toggle" id="flip-mode-toggle" aria-pressed="false">Activar reventa</button>
+        </div>
         <h3>Plan de este ciclo</h3>
         <p class="cycle-plan-narrative">Regenera los datos para ver el plan de este ciclo (ventas, listados y pujas).</p>
       </article>`;
       listRoot.innerHTML = "";
       if (countRoot) countRoot.textContent = "—";
+      bindFlipToggle(false);
       return;
     }
     const allMoves = Array.isArray(plan.moves) ? plan.moves : [];
@@ -1964,12 +1968,17 @@
     const urgent = actionable.filter((m) => m.kind === "accept_offer" || m.kind === "decline_offer");
     const toward = actionable.filter((m) => m.closes_gw_target && !urgent.includes(m));
     const rest = actionable.filter((m) => !urgent.includes(m) && !toward.includes(m));
-    const moves = [...urgent, ...toward, ...rest].slice(0, 4);
+    const flip = plan.flip || {};
+    const flipOn = Boolean(flip.enabled);
+    const ordered = [...urgent, ...toward, ...rest];
+    const moves = flipOn ? ordered : ordered.slice(0, 4);
     const clock = cycleClockLabel(data);
     if (hint) {
-      hint.textContent = clock
-        ? `${clock}. Listas ahora; el siguiente ciclo aceptas (≈ VM) y el dinero llega al instante.`
-        : "Solo movimientos de este ciclo. Listas ahora; el siguiente aceptas y cobra al instante.";
+      hint.textContent = flipOn
+        ? "Reventa: la plantilla congelada no se toca. Solo se acepta una oferta si supera el precio de compra en más de un 3%."
+        : clock
+          ? `${clock}. Listas ahora; el siguiente ciclo aceptas (≈ VM) y el dinero llega al instante.`
+          : "Solo movimientos de este ciclo. Listas ahora; el siguiente aceptas y cobra al instante.";
     }
 
     const headline = plan.headline || "Plan de este ciclo";
@@ -1981,13 +1990,25 @@
     const squadDelta =
       squadVm.delta_5d != null ? pct(Number(squadVm.delta_5d)) : null;
 
+    const flipLabel = flipOn ? "Reventa activa" : "Activar reventa";
+    const frozenNote =
+      flip.frozen_count != null
+        ? `<span>Congelados ${Number(flip.frozen_count)}</span>`
+        : "";
+    const openNote =
+      Number(flip.open_count) > 0 ? `<span>En reventa ${Number(flip.open_count)}</span>` : "";
     heroRoot.innerHTML = `<article class="cycle-plan-copy">
-      <p class="command-label">${escapeHtml(clock || "Ciclo de mercado")}</p>
+      <div class="cycle-plan-head">
+        <p class="command-label">${escapeHtml(clock || "Ciclo de mercado")}</p>
+        <button type="button" class="flip-toggle${flipOn ? " is-on" : ""}" id="flip-mode-toggle" aria-pressed="${flipOn ? "true" : "false"}">${escapeHtml(flipLabel)}</button>
+      </div>
       <h3>${escapeHtml(headline)}</h3>
       <p class="cycle-plan-narrative">${escapeHtml(narrative)}</p>
       <div class="cycle-plan-meta">
         <span>Plantilla ${Number(cons.squad_size || 0)}/${Number(cons.max_squad || 0)}</span>
         <span>En venta ${Number(cons.listed_count || 0)}/${Number(cons.sale_limit || 0)}</span>
+        ${frozenNote}
+        ${openNote}
         ${
           Number(cons.holds_count || holds.length)
             ? `<span>Ofertas en cartera ${Number(cons.holds_count || holds.length)}</span>`
@@ -2048,6 +2069,7 @@
     }
     bindAssetFallbacks(heroRoot);
     bindAssetFallbacks(listRoot);
+    bindFlipToggle(flipOn);
     listRoot.querySelectorAll(".cycle-move-chip").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-player-id");
@@ -3337,7 +3359,8 @@
       .map((L) => {
         // Un <option> no admite marcado, así que el distintivo va en el texto
         const auto = L.automated ? (L.automation_dry_run ? " · auto (sim)" : " · auto") : "";
-        const label = `${L.name || L.slug}${L.competition ? ` · ${L.competition}` : ""}${auto}`;
+        const flip = L.flip_mode ? " · reventa" : "";
+        const label = `${L.name || L.slug}${L.competition ? ` · ${L.competition}` : ""}${auto}${flip}`;
         const selAttr = L.slug === selectedSlug ? " selected" : "";
         return `<option value="${escapeHtml(L.slug)}"${selAttr}>${escapeHtml(label)}</option>`;
       })
@@ -3377,6 +3400,10 @@
       if (entry && entry.automated) {
         bits.push(entry.automation_dry_run ? "automatizada (simulación)" : "automatizada");
       }
+      const flipOn =
+        (entry && entry.flip_mode) ||
+        (data && data.cycle_plan && data.cycle_plan.flip && data.cycle_plan.flip.enabled);
+      if (flipOn) bits.push("reventa");
       if (bits.length) {
         rulesEl.textContent = bits.join(" · ");
         rulesEl.hidden = false;
@@ -3407,6 +3434,58 @@
     planned: "planificada",
   };
 
+  function exchangeText(value) {
+    if (value == null || value === "") return "";
+    if (typeof value === "string") return value;
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+
+  function exchangeHtml(op) {
+    const request = op && op.request;
+    const response = op && op.response;
+    if (!request && response == null) return "";
+    const sent = request
+      ? `${request.path || "POST"}\n${exchangeText(request.data || {})}`
+      : "";
+    const replied = response != null ? exchangeText(response) : "";
+    return `<details class="automation-exchange">
+      <summary>Petición y respuesta</summary>
+      <pre>${escapeHtml(sent)}${replied ? `\n\n${escapeHtml(replied)}` : ""}</pre>
+    </details>`;
+  }
+
+  function automationHistoryHtml(cycles) {
+    const recent = (cycles || []).slice(-10).reverse();
+    if (!recent.length) {
+      return `<p class="automation-empty">Aún no hay ciclos registrados.</p>`;
+    }
+    return recent
+      .filter((cycle, index) => index === 0 || (cycle.operations || []).length)
+      .map((cycle, index) => {
+        const inner = automationCycleHtml(cycle);
+        if (index === 0) return `<div class="automation-cycle">${inner}</div>`;
+        const when = cycle.at ? new Date(cycle.at) : null;
+        const stamp =
+          when && !Number.isNaN(when.getTime())
+            ? when.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+            : "sin fecha";
+        const failed = (cycle.counts && cycle.counts.failed) || 0;
+        const done = (cycle.operations || []).length;
+        const noun = done === 1 ? "acción" : "acciones";
+        const failNote = failed ? ` · ${failed} fallida${failed === 1 ? "" : "s"}` : "";
+        const opened = failed ? " open" : "";
+        return `<details class="automation-past"${opened}>
+          <summary>${escapeHtml(stamp)} · ${done} ${noun}${escapeHtml(failNote)}</summary>
+          ${inner}
+        </details>`;
+      })
+      .join("");
+  }
+
   function automationCycleHtml(cycle) {
     const ops = cycle.operations || [];
     const skipped = cycle.skipped || [];
@@ -3432,6 +3511,7 @@
           <span class="automation-op-kind">${escapeHtml(label)}</span>
           <span class="automation-op-name">${escapeHtml(op.name || op.player_id || "")}${escapeHtml(amount)}</span>
           <span class="automation-op-status">${escapeHtml(status)}</span>${err}
+          ${exchangeHtml(op)}
         </li>`;
       })
       .join("");
@@ -3470,33 +3550,119 @@
     `;
   }
 
+  function behaviorSummaryHtml(summary) {
+    const block = (label, row) => {
+      if (!row) return "";
+      const skips = (row.top_skips || [])
+        .map((item) => `${item.count}× ${item.why}`)
+        .join(" · ");
+      return `<article class="behavior-window">
+        <h4>${escapeHtml(label)}</h4>
+        <p>${row.bids} pujas · ${row.won} ganadas · ${row.lost} perdidas · ${row.lists} listados · ${row.accepts} aceptadas</p>
+        <p>Beneficio ${escapeHtml(formatMoney(row.profit || 0))} · ofertas cortas de margen ${row.short_offers || 0}</p>
+        ${skips ? `<p class="behavior-skips">${escapeHtml(skips)}</p>` : ""}
+      </article>`;
+    };
+    return `<div class="behavior-summary">
+      ${block("7 días", summary.d7)}
+      ${block("14 días", summary.d14)}
+    </div>`;
+  }
+
+  function behaviorCyclesHtml(cycles) {
+    const recent = (cycles || []).slice(-12).reverse();
+    if (!recent.length) return "";
+    const rows = recent
+      .map((cycle) => {
+        const when = cycle.at ? new Date(cycle.at) : null;
+        const stamp =
+          when && !Number.isNaN(when.getTime())
+            ? when.toLocaleString("es-ES", { dateStyle: "short", timeStyle: "short" })
+            : "sin fecha";
+        const decisions = cycle.decisions || [];
+        const lines = decisions
+          .slice(0, 8)
+          .map((decision) => {
+            const flag =
+              decision.status === "bloqueada" ||
+              decision.status === "error" ||
+              decision.list_state === "pendiente_listar"
+                ? " is-alert"
+                : "";
+            const amount = decision.amount ? ` · ${formatMoney(decision.amount)}` : "";
+            const result = decision.result ? ` · ${decision.result}` : "";
+            const state = decision.list_state ? ` · ${decision.list_state}` : "";
+            return `<li class="behavior-line${flag}">
+              <span>${escapeHtml(decision.kind || "")}</span>
+              <span>${escapeHtml(decision.name || decision.player_id || "")}${escapeHtml(amount)}</span>
+              <span>${escapeHtml(decision.status || "")}${escapeHtml(result)}${escapeHtml(state)}</span>
+              ${exchangeHtml(decision)}
+            </li>`;
+          })
+          .join("");
+        return `<details class="behavior-cycle">
+          <summary>${escapeHtml(stamp)} · ${escapeHtml(cycle.mode || "normal")} · ${decisions.length}</summary>
+          <ul>${lines || "<li>Sin decisiones</li>"}</ul>
+        </details>`;
+      })
+      .join("");
+    return `<div class="behavior-cycles">${rows}</div>`;
+  }
+
   async function renderAutomationLog(slug) {
     const panel = document.getElementById("automation-panel");
     const body = document.getElementById("automation-log");
     if (!panel || !body) return;
     const entry = leagueIndexEntry(slug);
-    if (!entry || !entry.automated) {
+    const flipOn =
+      (entry && entry.flip_mode) ||
+      (DATA && DATA.cycle_plan && DATA.cycle_plan.flip && DATA.cycle_plan.flip.enabled);
+    let behaviorHtml = "";
+    let actionHtml = "";
+    let hasActions = false;
+    if (entry) {
+      try {
+        const behaviorRes = await fetch(
+          `./data/leagues/${encodeURIComponent(slug)}/behavior_log.json`,
+          { cache: "no-store" }
+        );
+        if (behaviorRes.ok) {
+          const behavior = await behaviorRes.json();
+          behaviorHtml =
+            behaviorSummaryHtml(behavior.summary || {}) + behaviorCyclesHtml(behavior.cycles || []);
+        }
+      } catch {
+        behaviorHtml = "";
+      }
+      try {
+        const res = await fetch(
+          `./data/leagues/${encodeURIComponent(slug)}/automation_log.json`,
+          { cache: "no-store" }
+        );
+        if (res.ok) {
+          const log = await res.json();
+          const cycles = log.cycles || [];
+          hasActions = cycles.some((cycle) => (cycle.operations || []).length);
+          actionHtml = automationHistoryHtml(cycles);
+        }
+      } catch {
+        actionHtml = "";
+      }
+    }
+    if (!entry || (!entry.automated && !flipOn && !hasActions)) {
       panel.hidden = true;
       return;
     }
     panel.hidden = false;
-    try {
-      const res = await fetch(
-        `./data/leagues/${encodeURIComponent(slug)}/automation_log.json`,
-        { cache: "no-store" }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const log = await res.json();
-      const cycles = log.cycles || [];
-      const last = log.last_cycle || cycles[cycles.length - 1];
-      if (!last) {
-        body.innerHTML = `<p class="automation-empty">Aún no hay ciclos registrados.</p>`;
-        return;
-      }
-      body.innerHTML = automationCycleHtml(last);
-    } catch {
-      body.innerHTML = `<p class="automation-empty">Sin registro todavía: se escribe al cerrar el primer ciclo automatizado.</p>`;
+    if (!hasActions) {
+      body.innerHTML =
+        behaviorHtml ||
+        `<p class="automation-empty">Todavía no hay acciones enviadas a Mister.</p>`;
+      return;
     }
+    body.innerHTML =
+      behaviorHtml +
+      actionHtml;
   }
 
   async function loadLeaguesIndex() {
@@ -3614,13 +3780,37 @@
     return false;
   }
 
-  async function refreshData() {
+  function bindFlipToggle(enabled) {
+    const btn = document.getElementById("flip-mode-toggle");
+    if (!btn) return;
+    btn.addEventListener("click", () => {
+      requestFlipMode(!enabled);
+    });
+  }
+
+  async function requestFlipMode(enabled) {
+    const message = enabled
+      ? "Congela la plantilla actual de esta liga y solo busca reventas. ¿Activar?"
+      : "Deja de pujar. La plantilla congelada vuelve al plan normal. Los jugadores ya comprados para revender se siguen vendiendo si la oferta supera el +3%.";
+    if (!window.confirm(message)) return;
+    const league = currentLeagueSlug || "";
+    if (!league) {
+      setRefreshUi("error", "Elige una liga antes de cambiar la reventa.");
+      return;
+    }
+    await postRefresh(
+      { league, flip_mode: enabled },
+      enabled ? "Activando reventa…" : "Desactivando reventa…"
+    );
+  }
+
+  async function postRefresh(body, busyMessage) {
     if (refreshInFlight) return;
     refreshInFlight = true;
     const prev = DATA && DATA.generated_at;
-    const league = currentLeagueSlug || "all";
+    const league = (body && body.league) || currentLeagueSlug || "all";
     try {
-      setRefreshUi("busy", "Disparando actualización…");
+      setRefreshUi("busy", busyMessage || "Disparando actualización…");
       const cfg = await loadRefreshConfig();
       if (!cfg || !cfg.url) {
         await loadData(league);
@@ -3637,7 +3827,7 @@
           "Content-Type": "application/json",
           "X-Refresh-Key": cfg.key || "",
         },
-        body: JSON.stringify({ league }),
+        body: JSON.stringify(body),
       });
       let payload = null;
       try {
@@ -3654,6 +3844,14 @@
       if (!res.ok || (payload && payload.ok === false)) {
         const err = (payload && payload.error) || `HTTP ${res.status}`;
         setRefreshUi("error", `No se pudo disparar: ${err}`);
+        return;
+      }
+      const askedFlip = body && typeof body.flip_mode === "boolean";
+      if (askedFlip && !(payload && typeof payload.flip_mode === "boolean")) {
+        setRefreshUi(
+          "error",
+          "El Worker desplegado no reenvía la reventa. Redesplega workers/refresh-proxy (npx wrangler deploy)."
+        );
         return;
       }
 
@@ -3685,6 +3883,10 @@
         if (label) label.textContent = "Actualizar";
       }
     }
+  }
+
+  function refreshData() {
+    return postRefresh({ league: currentLeagueSlug || "all" }, "Disparando actualización…");
   }
 
   function initRefreshButton() {

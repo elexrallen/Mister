@@ -28,12 +28,15 @@ def test_micro_sell_gate() -> None:
     _assert(micro_sell_allowed(160_000) is False)
     _assert(micro_sell_allowed(160_000, need_slot=True) is True)
     _assert(micro_sell_allowed(160_000, reason="free_slot") is True)
-    _assert(micro_sell_allowed(200_000, dead=True) is True)
-    _assert(micro_sell_allowed(200_000, reason="injured_covered") is True)
-    # 200k no cubre 25% de un hueco de 5M
+    # Por debajo de 500k el VM no baja y la caja no es margen:
+    # ni la baja ni un hueco pequeño justifican listarlos.
+    _assert(micro_sell_allowed(200_000, dead=True) is False)
+    _assert(micro_sell_allowed(200_000, reason="injured_covered") is False)
     _assert(micro_sell_allowed(200_000, funding_shortfall=5_000_000) is False)
-    # 200k sí cubre 25% de un hueco de 700k
-    _assert(micro_sell_allowed(200_000, funding_shortfall=700_000) is True)
+    _assert(micro_sell_allowed(200_000, funding_shortfall=700_000) is False)
+    # 600k sí cubre 25% de un hueco de 700k (por encima del suelo de 500k)
+    _assert(micro_sell_allowed(600_000, funding_shortfall=700_000) is True)
+    _assert(micro_sell_allowed(600_000, dead=True) is True)
 
 
 def test_liquidity_padding_skips_micro() -> None:
@@ -239,12 +242,39 @@ def test_dest_path_skips_micro_unless_needed() -> None:
     )
     list_ids = [p.get("player_id") for p in path2 if p.get("kind") == "list"]
     _assert("fat" in list_ids, list_ids)
-    # need 2.2M; fat da 2M → aún faltan 0.2M → entra al menos un micro
-    _assert(any(x in list_ids for x in ("micro1", "micro2")), list_ids)
+    # Faltan 0.2M, pero 160k/270k no bajan y no son margen: no se listan.
+    _assert("micro1" not in list_ids and "micro2" not in list_ids, list_ids)
+
+    finance3 = {
+        **finance2,
+        "cost": 3_700_000,
+        "sells": finance2["sells"]
+        + [
+            {
+                "player_id": "mid",
+                "name": "Mid",
+                "position": "MF",
+                "price": 700_000,
+                "value_note": "falling",
+            }
+        ],
+    }
+    path3 = build_path(
+        dest,
+        owned_ids={"keep1", "micro1", "micro2", "fat", "mid"},
+        finance=finance3,
+        k_future=3,
+        settle_ok=True,
+        balance=1_000_000,
+    )
+    list_ids3 = [p.get("player_id") for p in path3 if p.get("kind") == "list"]
+    _assert("fat" in list_ids3 and "mid" in list_ids3, list_ids3)
+    _assert("micro1" not in list_ids3 and "micro2" not in list_ids3, list_ids3)
 
 
 def main() -> int:
     _assert(float(config.SELL_MICRO_VM_MAX) == 1_000_000)
+    _assert(float(config.SELL_NO_DROP_VM) == 500_000)
     test_micro_sell_gate()
     test_liquidity_padding_skips_micro()
     test_build_sells_drops_surplus_micro()

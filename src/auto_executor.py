@@ -24,6 +24,7 @@ import json
 import logging
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any, Callable
 
 import config
@@ -197,12 +198,22 @@ class _Budget:
         *,
         is_clause: bool,
         oversubscribe_slot: bool = False,
+        ignore_pct_caps: bool = False,
     ) -> str | None:
         cost = _money(cost)
         if self.free_slots <= 0 and not (
             oversubscribe_slot and self.slot_available_this_cycle
         ):
             return "plantilla a cupo, no queda plaza"
+        if ignore_pct_caps:
+            # La reventa puede usar la deuda que Mister ya autoriza (spendable).
+            room = self.usable - self.spent
+            if cost > room + 1:
+                return (
+                    f"supera la deuda disponible: {cost / 1e6:.1f}M vs "
+                    f"{max(0.0, room) / 1e6:.1f}M"
+                )
+            return None
         if cost > self.single_cap + 1:
             return (
                 f"supera max_single_buy_pct: {cost / 1e6:.1f}M vs "
@@ -394,14 +405,21 @@ def plan_operations(
             }
         )
 
-    if not settings.get("enabled"):
+    flip_on = isinstance(plan.get("flip"), dict) and bool(plan["flip"].get("enabled"))
+    # La reventa es un alta aparte: se escribe aunque el fichaje automático
+    # general esté apagado. MISTER_AUTOMATION_OFF sigue cortándolo.
+    if not settings.get("enabled") and not (flip_on and not settings.get("env_killed")):
         why = (
-            "kill switch global apagado"
-            if settings.get("kill_switch_off")
+            "MISTER_AUTOMATION_OFF"
+            if settings.get("env_killed")
             else (
-                "liga no registrada en config/automation.json"
-                if not settings.get("league_registered")
-                else "liga registrada pero desactivada"
+                "kill switch global apagado"
+                if settings.get("kill_switch_off")
+                else (
+                    "liga no registrada en config/automation.json"
+                    if not settings.get("league_registered")
+                    else "liga registrada pero desactivada"
+                )
             )
         )
         return {
@@ -485,7 +503,8 @@ def plan_operations(
         if kind == KIND_HOLD:
             continue
         if kind == KIND_BID and _is_offer_to_rival(move):
-            kind = KIND_OFFER
+            # Las pujas son solo a libres. Un listado de rival no se convierte en oferta.
+            continue
         if kind in by_phase:
             by_phase[kind].append(move)
 
@@ -589,7 +608,11 @@ def plan_operations(
                         f"espera compra→venta: faltan {locked[pid]:.1f}h de {wait_h:.0f}h",
                     )
                     continue
-                if protect_xi and _xi_starter_sale_blocked(move, pid, xi_ids):
+                if (
+                    protect_xi
+                    and not move.get("flip_play")
+                    and _xi_starter_sale_blocked(move, pid, xi_ids)
+                ):
                     skip(move, kind, "titular del once y never_sell_xi_starters activo")
                     continue
                 price = _money(move.get("price") or move.get("amount"))
@@ -627,7 +650,7 @@ def plan_operations(
                         "reventa: solo se puja si el jugador revaloriza en positivo",
                     )
                     continue
-                if not move.get("cpu_spread_play"):
+                if not move.get("cpu_spread_play") and not move.get("flip_play"):
                     if require_trend and has_negative_trend(move):
                         skip(
                             move,
@@ -706,6 +729,7 @@ def plan_operations(
                     amount,
                     is_clause=False,
                     oversubscribe_slot=bool(move.get("closes_gw_target")),
+                    ignore_pct_caps=bool(move.get("flip_play")),
                 )
                 if blocked:
                     skip(move, kind, blocked)
@@ -996,6 +1020,41 @@ def _hydrate_listing_op(
     return None
 
 
+_EXCHANGE_LIMIT = 700
+
+
+def _shrink_value(value: Any, limit: int = _EXCHANGE_LIMIT) -> Any:
+    """Recorta una respuesta de Mister para poder guardarla y leerla después."""
+    if isinstance(value, str):
+        return value if len(value) <= limit else value[:limit] + "…"
+    if isinstance(value, (int, float, bool)) or value is None:
+        return value
+    try:
+        raw = json.dumps(value, ensure_ascii=False, default=str)
+    except TypeError:
+        raw = str(value)
+    if len(raw) <= limit:
+        return value
+    return raw[:limit] + "…"
+
+
+def _remember_exchange(op: dict[str, Any], record: Any) -> None:
+    """Deja en la operación la petición que salió y lo que contestó Mister."""
+    if not isinstance(record, dict):
+        return
+    path = record.get("path")
+    data = record.get("data")
+    if path or isinstance(data, dict):
+        op["request"] = {
+            "path": path,
+            "data": data if isinstance(data, dict) else {},
+        }
+    if "response" in record and record.get("response") is not None:
+        op["response"] = _shrink_value(record.get("response"))
+    if record.get("http_status"):
+        op["http_status"] = record.get("http_status")
+
+
 def execute(
     decision: dict[str, Any],
     *,
@@ -1053,15 +1112,21 @@ def execute(
                 op["error"] = missing
                 log.info("%s %s aplazada: %s", op.get("kind"), op.get("name"), missing)
                 continue
+        before = len(cl.sent)
         try:
             result = method(**op["params"])
         except UnverifiedAction as exc:
             op["status"] = "blocked"
             op["error"] = str(exc)
             op["unverified"] = True
+            _remember_exchange(op, getattr(exc, "record", None))
             log.info("%s %s bloqueada: %s", op.get("kind"), op.get("name"), exc)
             continue
         except Exception as exc:  # noqa: BLE001
+            record = getattr(exc, "record", None)
+            if record is None and len(cl.sent) > before:
+                record = cl.sent[-1]
+            _remember_exchange(op, record)
             if op.get("kind") == KIND_CLAUSE and is_recent_signing_clause_error(exc):
                 op["status"] = "deferred"
                 op["error"] = str(exc)
@@ -1071,6 +1136,7 @@ def execute(
             op["error"] = str(exc)
             log.warning("%s %s falló: %s", op.get("kind"), op.get("name"), exc)
             continue
+        _remember_exchange(op, result)
         op["status"] = str(result.get("status") or "unknown")
         if result.get("unverified"):
             op["unverified"] = True
@@ -1127,6 +1193,9 @@ def log_entry(decision: dict[str, Any]) -> dict[str, Any]:
                 "error": op.get("error"),
                 "unverified": op.get("unverified"),
                 "why": op.get("why"),
+                "request": op.get("request"),
+                "response": op.get("response"),
+                "http_status": op.get("http_status"),
             }
             for op in decision.get("operations") or []
         ],
@@ -1267,6 +1336,12 @@ def run_cycle(
             write_log(slug, decision)
         except OSError as exc:
             log.warning("[%s] no se pudo escribir automation_log: %s", slug, exc)
+        try:
+            from behavior_log import stamp_execution
+
+            stamp_execution(slug, decision.get("operations") or [])
+        except Exception as exc:  # noqa: BLE001
+            log.warning("[%s] no se pudo anotar el diario: %s", slug, exc)
     return decision
 
 
@@ -1343,6 +1418,24 @@ def _summary_line(decision: dict[str, Any]) -> str:
     )
 
 
+def leagues_for_run(league_arg: str, *, root: Path | None = None) -> list[str]:
+    """Ligas a escribir: las automatizadas y, además, las que tienen reventa activa."""
+    if league_arg and league_arg != "all":
+        return [league_arg]
+    slugs = list(config.automated_league_slugs())
+    seen = set(slugs)
+    from flip_mode import flip_enabled
+
+    base = root if root is not None else config.LEAGUES_DIR
+    if base.is_dir():
+        for child in sorted(p for p in base.iterdir() if p.is_dir()):
+            if child.name in seen or not flip_enabled(child.name, root):
+                continue
+            slugs.append(child.name)
+            seen.add(child.name)
+    return slugs
+
+
 def main(argv: list[str] | None = None) -> int:
     import argparse
 
@@ -1362,13 +1455,10 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s %(message)s")
 
-    if args.league and args.league != "all":
-        slugs = [args.league]
-    else:
-        slugs = config.automated_league_slugs()
-        if not slugs:
-            print("Ninguna liga automatizada activa (kill switch o config/automation.json).")
-            return 0
+    slugs = leagues_for_run(args.league)
+    if not slugs:
+        print("Ninguna liga automatizada ni con reventa activa.")
+        return 0
 
     acted: list[str] = []
     for slug in slugs:

@@ -391,9 +391,12 @@ def evaluate_bid_finance(
     liquidity_coverage: float = 0.0,
 ) -> dict[str, Any]:
     """
-    Corte duro: bid_cap (Mister maxDebt). Quedar en negativo es legal.
-    debt_risk = chip (la acción te deja en negativo), no veto.
-    budget_fit: comfortable|tight|stretch|blocked sobre el margen, no sobre caja ≥ 0.
+    Techo Mister: bid_cap (maxDebt). Por encima, bloqueo over_cap.
+
+    Al primer pitido de la jornada objetivo el saldo proyectado tiene que ser
+    ≥ 0. Solo cuentan ventas que cobran antes (timely_sells + liquidity_coverage).
+    Si no llegan a tiempo, bloqueo ko_cover: se puede estar en negativo ahora,
+    no al kickoff. debt_risk queda para «ahora negativo, las ventas tapan al KO».
     """
     bal = float(balance or 0)
     bid_cap = mister_bid_cap(bal, max_debt)
@@ -452,7 +455,6 @@ def evaluate_bid_finance(
     uses_debt = projected_no_sells < 0
     out["debt_risk"] = uses_debt and c <= bid_cap
 
-    # Techo Mister: único bloqueo
     if c > bid_cap:
         if min_cost is not None and float(min_cost) <= bid_cap:
             out["budget_fit"] = "stretch"
@@ -464,6 +466,17 @@ def evaluate_bid_finance(
             out["solvency_ok"] = False
             out["solvency_blocked"] = True
             out["debt_risk"] = False
+            out["block_reason"] = "over_cap"
+        return out
+
+    at_ko = projected_no_sells + coverage
+    if at_ko < -1:
+        out["budget_fit"] = "blocked"
+        out["solvency_ok"] = False
+        out["solvency_blocked"] = True
+        out["debt_risk"] = False
+        out["block_reason"] = "ko_cover"
+        out["projected_after"] = at_ko
         return out
 
     out["solvency_ok"] = True
@@ -579,14 +592,20 @@ def micro_sell_allowed(
     ¿Listar un jugador barato (< SELL_MICRO_VM_MAX)?
 
     Por defecto no: 160k–1M casi no desbloquea fichajes serios y a veces aún
-    puntúan. Excepciones: falta de plaza, baja real cubierta, o la venta cubre
-    una fracción material del hueco de caja / coste del swap.
+    puntúan. Excepciones entre 500k y 1M: falta de plaza, baja real cubierta,
+    o la venta cubre una fracción material del hueco de caja / coste del swap.
+
+    Por debajo de 500k el valor no baja (suelo de Mister) y el importe no es
+    margen. Solo se listan si hace falta la plaza.
     """
-    cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
     p = float(price or 0)
+    floor = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
+    reason_l = str(reason or "").strip().lower()
+    if p < floor - 1:
+        return bool(need_slot or reason_l == "free_slot")
+    cap = float(getattr(config, "SELL_MICRO_VM_MAX", 1_000_000) or 1_000_000)
     if p >= cap - 1:
         return True
-    reason_l = str(reason or "").strip().lower()
     if need_slot or reason_l == "free_slot":
         return True
     if dead or reason_l == "injured_covered":
@@ -1014,10 +1033,12 @@ def has_positive_trend(p: dict[str, Any] | None) -> bool:
 
 
 def is_resale_play(p: dict[str, Any] | None) -> bool:
-    """Harvest CPU o revalorización: se ficha para revender, no para el once."""
+    """Harvest CPU, revalorización o modo flip: se ficha para revender, no para el once."""
     if not p:
         return False
-    return bool(p.get("cpu_spread_play") or p.get("appreciation_play"))
+    return bool(
+        p.get("cpu_spread_play") or p.get("appreciation_play") or p.get("flip_play")
+    )
 
 
 def xi_pick_tier(p: dict[str, Any] | None) -> int:
@@ -4343,6 +4364,11 @@ def build_sell_opportunities(
             return
         price_i = _money(item.get("price"))
         reason_i = str(item.get("sell_reason") or "")
+        # Suelo de 500k: ni el 15 ni “juega poco” reabren la venta.
+        floor_i = float(getattr(config, "SELL_NO_DROP_VM", 500_000) or 500_000)
+        opens_slot = bool(item.get("opens_slot") or reason_i == "free_slot")
+        if price_i < floor_i - 1 and not opens_slot:
+            return
         if _dest_protects_owned(
             pid,
             keep_ids=dest_keep_ids,
@@ -6691,6 +6717,7 @@ def annotate_market_budget_risk(
         row["debt_risk"] = bool(fin.get("debt_risk"))
         row["solvency_ok"] = bool(fin.get("solvency_ok"))
         row["solvency_blocked"] = bool(fin.get("solvency_blocked"))
+        row["block_reason"] = fin.get("block_reason")
         row["solvency_strict"] = bool(fin.get("solvency_strict"))
         row["hours_to_jornada"] = fin.get("hours_to_jornada")
         row["rival_demand"] = len(

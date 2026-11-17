@@ -90,6 +90,7 @@ def _free_agent(
 def test_resale_play_flags() -> None:
     _assert(is_resale_play({"cpu_spread_play": True}) is True, "cpu")
     _assert(is_resale_play({"appreciation_play": True}) is True, "appr")
+    _assert(is_resale_play({"flip_play": True}) is True, "flip")
     _assert(is_resale_play({"fills_need": True}) is False, "xi hole")
     _assert(is_resale_play({}) is False, "empty")
     _assert(is_resale_play(None) is False, "none")

@@ -463,6 +463,7 @@ def automation_for_league(slug: str, *, refresh: bool = False) -> dict:
     settings["enabled"] = enabled
     settings["dry_run"] = bool(cfg["dry_run"] or settings.get("dry_run"))
     settings["slug"] = str(slug)
+    settings["env_killed"] = killed
     settings["kill_switch_off"] = not cfg["enabled"] or killed
     settings["league_registered"] = league_cfg is not None
     return settings
@@ -576,6 +577,9 @@ DEST_CONSERVE_RANK_MAX = 3
 # Ventas micro: por debajo de esto no listar salvo plaza, muerto o funding material.
 # 160k–1M casi no desbloquea cláusulas/titulares y a veces aún puntúan.
 SELL_MICRO_VM_MAX = 1_000_000
+# Por debajo de esto el VM está en el suelo: no baja, y la caja no es margen.
+# No listar ni por baja ni para financiar. Solo si hace falta la plaza.
+SELL_NO_DROP_VM = 500_000
 # La venta micro solo cuenta como funding si cubre ≥ esta fracción del hueco de caja
 SELL_MICRO_FUND_SHARE_MIN = 0.25
 # Banda de empate EP: preferir oportunidad (libre/mercado) si la diferencia ≤ esto
@@ -642,8 +646,9 @@ BOOTSTRAP_CYCLE_END_URGENT_HOURS = float(
     os.environ.get("BOOTSTRAP_CYCLE_END_URGENT_HOURS", "3")
 )
 
-# Solvencia: el corte duro es maxDebt. Quedar en negativo es legal.
-# Ventana strict se conserva como contexto de timing, no como veto.
+# Solvencia: se puede pujar hasta maxDebt y quedar en negativo ahora,
+# pero al primer pitido de la jornada objetivo el saldo proyectado es ≥ 0.
+# Solo cuentan ventas que cobran antes de ese kickoff (buffer de 2 h).
 SOLVENCY_STRICT_HOURS = 48
 # Margen de seguridad para cobro de ventas antes del kickoff de jornada (h).
 SOLVENCY_SETTLE_BUFFER_HOURS = 2
@@ -756,6 +761,14 @@ CPU_SPREAD_BUY_VM_RATIO_MAX = 1.01  # comprar ~al VM
 CPU_SPREAD_HOLDS_ALLOWED = 1  # holds selectivos antes de forzar salida
 CPU_SPREAD_IMPATIENT_PCT = 0.98  # accept máquina si aprieta solvencia / wait>0
 CPU_SPREAD_QUEUE_BASE = 8_200  # debajo de secondary(9k) / hedge(8.5k)
+
+# Reventa: compra de libres caros para cobrar la prima de la máquina.
+FLIP_MIN_ASK = 4_000_000
+FLIP_MACHINE_PREMIUM = 0.05
+FLIP_MIN_PROFIT = 0.03
+FLIP_UP_SHARE = 0.30  # de la subida diaria en euros
+FLIP_DOWN_SHARE = 0.05  # de la bajada diaria en euros
+BEHAVIOR_LOG_DAYS = 30
 
 # Pool completo Mister via POST /ajax/sw/players (páginas de 50)
 MISTER_POOL_PAGE_SIZE = 50

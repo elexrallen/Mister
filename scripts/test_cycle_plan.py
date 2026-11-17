@@ -697,6 +697,78 @@ def test_does_not_list_riser_when_full_but_market_not_hotter() -> None:
     _assert("Cepeda" not in listed_names, listed_names)
 
 
+def test_does_not_list_floor_price_fade() -> None:
+    """Menos de 500k: el VM no baja y la venta no deja margen."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9, "xpts": 8},
+        {
+            "id": "floor",
+            "name": "F. Pérez",
+            "position": "MF",
+            "price": 160_000,
+            "lineup_prob": 0.15,
+            "xpts": 1.2,
+            "delta_5d": -0.01,
+            "decelerating": True,
+        },
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 5_000_000, "squad": squad},
+        squad=squad,
+        opportunities=[],
+        sales_state={"listed_ids": [], "pending_offers": []},
+        recommended_xi=_xi("xi1"),
+        league_rules={"max_squad": 25, "sale_limit": 5},
+        max_squad=25,
+    )
+    listed = [m["name"] for m in plan["moves"] if m["kind"] == KIND_LIST]
+    _assert("F. Pérez" not in listed, listed)
+
+
+def test_debt_recovery_skips_floor_price() -> None:
+    """172k no tapa un fichaje: no se lista y no autoriza la puja a deuda."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+        _fade_bench("crumb", "Yates", 172_000),
+    ]
+    market = [
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 8_000_000,
+            "bid": 8_000_000,
+            "puja_recomendada": 8_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "debt_risk": True,
+            "budget_fit": "stretch",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+    )
+    names = [m.get("name") for m in plan["moves"] if m["kind"] in (KIND_LIST, KIND_BID)]
+    _assert("Yates" not in names and "Objetivo" not in names, plan["moves"])
+
+
 def test_lists_fading_bench_with_free_slots() -> None:
     """Banquillo que ya no sube sí se lista aunque haya plazas: el VM no tira."""
     squad = [
@@ -1887,6 +1959,52 @@ def test_debt_bid_skipped_if_sale_misses_jornada() -> None:
     _assert(not any(m["name"] == "Objetivo" for m in bids), plan["moves"])
 
 
+def test_ko_cover_flag_still_bids_when_sale_settles() -> None:
+    """La ficha viene bloqueada por KO, pero el ciclo lista una venta que llega a tiempo."""
+    squad = [
+        {"id": "xi1", "name": "Titular", "position": "FW", "price": 8_000_000, "lineup_prob": 0.9},
+        _fade_bench(),
+    ]
+    market = [
+        {
+            "id": "target",
+            "name": "Objetivo",
+            "position": "FW",
+            "price": 8_000_000,
+            "bid": 8_000_000,
+            "puja_recomendada": 8_000_000,
+            "on_daily_market": True,
+            "seller": "market",
+            "delta_5d": 0.04,
+            "rising": True,
+            "lineup_prob": 0.85,
+            "debt_risk": False,
+            "budget_fit": "blocked",
+            "solvency_blocked": True,
+            "block_reason": "ko_cover",
+        }
+    ]
+    plan = build_cycle_plan(
+        me={"balance": 2_000_000, "max_debt": 20_000_000, "squad": squad},
+        squad=squad,
+        opportunities=market,
+        sales_state={"listed_ids": [], "pending_offers": [], "listed_count": 0},
+        recommended_xi=_xi("xi1"),
+        gw_target_xi={
+            "xi": [{"player_id": "target", "ownership": "daily_market", "reachable": "daily_market"}],
+            "coverage": {
+                "missing_slots": [{"player_id": "target", "reachable": "daily_market"}],
+            },
+        },
+        league_rules={"max_squad": 15, "sale_limit": 5},
+        max_squad=15,
+        hours_to_jornada=120,
+        market_cycle={"cash_lag_hours": 24, "hours_to_end": 10, "cycle_hours": 24},
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+    _assert(any(m["name"] == "Objetivo" for m in bids), plan["moves"])
+
+
 def _clause_rival(
     pid: str,
     name: str,
@@ -2337,6 +2455,8 @@ if __name__ == "__main__":
     test_does_not_list_strong_risers_with_free_slots()
     test_lists_riser_only_when_full_and_market_hotter()
     test_does_not_list_riser_when_full_but_market_not_hotter()
+    test_does_not_list_floor_price_fade()
+    test_debt_recovery_skips_floor_price()
     test_lists_fading_bench_with_free_slots()
     test_rotation_scorer_is_not_listed()
     test_top_squad_scorer_is_not_listed()
@@ -2360,6 +2480,7 @@ if __name__ == "__main__":
     test_flip_does_not_use_debt()
     test_hoy_one_clause_after_market_bids()
     test_debt_bid_skipped_without_recover_sale()
+    test_ko_cover_flag_still_bids_when_sale_settles()
     test_debt_bid_skipped_if_sale_misses_jornada()
     test_hoy_clause_skipped_for_tiny_upgrade_of_performing_starter()
     test_hoy_clause_when_upgrade_beats_weakest_starter()
