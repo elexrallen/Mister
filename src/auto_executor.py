@@ -33,8 +33,10 @@ from competitive_actions import (
     _has_starter_signal,
     clause_executable,
     has_negative_trend,
+    has_positive_trend,
     hours_since_acquired,
     is_clause_starter_eligible,
+    is_resale_play,
     is_xi_quality_starter,
     mister_bid_cap,
     owner_signed_hours_from_profile,
@@ -640,26 +642,30 @@ def plan_operations(
                 debt_shortfall -= amount
                 continue
 
-            if (
-                kind in (KIND_CLAUSE, KIND_BID, KIND_OFFER)
-                and not move.get("cpu_spread_play")
-                and not move.get("flip_play")
-            ):
-                if require_trend and has_negative_trend(move):
+            if kind in (KIND_CLAUSE, KIND_BID, KIND_OFFER):
+                if require_trend and is_resale_play(move) and not has_positive_trend(move):
                     skip(
                         move,
                         kind,
-                        "tendencia negativa: no entra en el once objetivo",
+                        "reventa: solo se puja si el jugador revaloriza en positivo",
                     )
                     continue
-                if require_starters:
-                    flagged = move.get("is_xi_starter")
-                    known_bench = _has_starter_signal(move) and not is_xi_quality_starter(
-                        move
-                    )
-                    if flagged is False or (flagged is None and known_bench):
-                        skip(move, kind, "solo se ficha un titular real para el once")
+                if not move.get("cpu_spread_play") and not move.get("flip_play"):
+                    if require_trend and has_negative_trend(move):
+                        skip(
+                            move,
+                            kind,
+                            "tendencia negativa: no entra en el once objetivo",
+                        )
                         continue
+                    if require_starters:
+                        flagged = move.get("is_xi_starter")
+                        known_bench = _has_starter_signal(move) and not is_xi_quality_starter(
+                            move
+                        )
+                        if flagged is False or (flagged is None and known_bench):
+                            skip(move, kind, "solo se ficha un titular real para el once")
+                            continue
 
             if kind == KIND_CLAUSE:
                 if clauses_done >= max_clauses:

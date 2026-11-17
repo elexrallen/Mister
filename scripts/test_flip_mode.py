@@ -108,10 +108,8 @@ def test_bid_premium_and_margin() -> None:
     _assert("21" in bids, bids.keys())
     _assert(bids["21"]["amount"] == 6_015_000, bids["21"]["amount"])
     _assert("22" not in bids, "la subida de 400k se come el margen")
-    _assert("23" in bids and bids["23"]["amount"] == 6_504_000, bids.get("23"))
-    _assert(bids["24"]["amount"] == 7_000_000, bids.get("24"))
-    _assert(bids["25"]["amount"] == 5_000_000, bids.get("25"))
-    _assert("26" in bids and bids["26"]["amount"] == 5_000_000, bids.get("26"))
+    _assert("23" not in bids, "baja de VM: no se puja en reventa")
+    _assert("24" not in bids and "25" not in bids and "26" not in bids, "VM plano")
     _assert("27" not in bids and "28" not in bids, "4M justo o por debajo no entra")
     _assert("29" not in bids, "rival")
     frozen = set(book["frozen_ids"])
@@ -136,7 +134,7 @@ def test_cash_keeps_the_wider_margin() -> None:
         now=NOW,
     )
     bids = [m for m in plan["moves"] if m["kind"] == "bid"]
-    _assert(len(bids) == 1 and bids[0]["player_id"] == "23", bids)
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
 
 
 def test_snapshot_is_not_retaken() -> None:
@@ -350,7 +348,8 @@ def test_flip_play_ignores_xi_and_percent_caps() -> None:
         "bid": 6_015_000,
         "flip_play": True,
         "is_xi_starter": False,
-        "delta_5d": -0.04,
+        "rising": True,
+        "delta_5d": 0.04,
         "id_market": 121,
         "why": "reventa",
     }
@@ -393,6 +392,66 @@ def test_flip_play_ignores_xi_and_percent_caps() -> None:
     _assert(len(ops) == 1 and ops[0]["player_id"] == "21", decision["skipped"])
 
 
+def test_flip_skips_without_positive_revaluation() -> None:
+    falling = _player("23", name="Frio", vm=6.5 * M, ask=6.4 * M, prev=6.5 * M + 80_000)
+    flat = _player("24", name="Caro", vm=7 * M, ask=7.2 * M, prev=7 * M)
+    quoted_down = quote_bid(falling)
+    quoted_flat = quote_bid(flat)
+    _assert(quoted_down["eligible"] is False, quoted_down)
+    _assert(quoted_flat["eligible"] is False, quoted_flat)
+
+    decision = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {
+                "balance": 20 * M,
+                "spendable": 20 * M,
+                "max_debt": 20 * M,
+                "free_slots_after_accepts": 2,
+                "sale_remaining": 3,
+            },
+            "moves": [
+                {
+                    "kind": "bid",
+                    "player_id": "23",
+                    "name": "Frio",
+                    "amount": 6_504_000,
+                    "flip_play": True,
+                    "rising": False,
+                    "delta_5d": -0.012,
+                    "id_market": 123,
+                }
+            ],
+        },
+        settings={
+            "slug": "test",
+            "enabled": True,
+            "dry_run": True,
+            "kill_switch_off": False,
+            "league_registered": True,
+            "allowed_actions": ["bid"],
+            "max_spend_per_cycle_pct": 0.60,
+            "max_single_buy_pct": 0.40,
+            "max_clause_pct": 0.30,
+            "max_clauses_per_cycle": 1,
+            "max_ops_per_cycle": 6,
+            "max_pending_offers": 2,
+            "offer_stale_cycles": 2,
+            "min_cash_floor": 0,
+            "never_sell_xi_starters": True,
+            "require_xi_starters": True,
+            "require_positive_trend": True,
+            "allow_rescind": False,
+        },
+        state={},
+        league_rules={"transfer_wait": 0},
+        now=NOW,
+    )
+    _assert(not decision["operations"], decision["operations"])
+    reasons = " ".join(s.get("reason") or "" for s in decision["skipped"])
+    _assert("reventa" in reasons, decision["skipped"])
+
+
 def test_apply_flip_toggle_accepts_quoted_json() -> None:
     import tempfile
 
@@ -420,6 +479,7 @@ def main() -> None:
     test_book_roundtrip()
     test_behavior_win_and_profit()
     test_flip_play_ignores_xi_and_percent_caps()
+    test_flip_skips_without_positive_revaluation()
     test_apply_flip_toggle_accepts_quoted_json()
     print("flip mode ok")
 

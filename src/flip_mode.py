@@ -1,10 +1,10 @@
 """
 Reventa por liga.
 
-Con el modo encendido el ciclo solo compra libres de más de 4M. La puja es el
-valor de mercado de Mister más una parte de la revalorización del día (30% si
-sube, 5% si baja), no la puja recomendada de subasta. Solo entra si la máquina
-al +5% del valor sigue dejando más de un 3% sobre ese precio. La plantilla del
+Con el modo encendido el ciclo solo compra libres de más de 4M que revalorizan
+en positivo. La puja es el valor de mercado de Mister más el 30% de la subida
+del día, no la puja recomendada de subasta. Solo entra si la máquina al +5%
+del valor sigue dejando más de un 3% sobre ese precio. La plantilla del
 momento de activarlo queda congelada.
 """
 
@@ -189,9 +189,11 @@ def quote_bid(player: dict[str, Any]) -> dict[str, Any]:
     bid = vm + premium
     on_market = bool(player.get("on_daily_market") or str(player.get("seller") or "") == "market")
     rival = is_rival_market_listing(player)
+    rising_today = change is not None and change > 0
     eligible = bool(
         on_market
         and not rival
+        and rising_today
         and vm > float(config.FLIP_MIN_ASK)
         and bid > 0
         and _margin_ok(vm, bid)
@@ -551,6 +553,8 @@ def build_flip_cycle(
                     "buy_price": quote["bid"],
                     "premium": quote["premium"],
                     "daily_change": change,
+                    "rising": True,
+                    "positive_trend": True,
                     "threshold": round(quote["bid"] * (1.0 + float(config.FLIP_MIN_PROFIT))),
                 },
             )

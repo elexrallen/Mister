@@ -24,6 +24,7 @@ from competitive_actions import (
     has_negative_trend,
     has_positive_trend,
     is_clause_starter_eligible,
+    is_resale_play,
     is_rival_market_listing,
     is_xi_quality_starter,
     micro_sell_allowed,
@@ -1429,10 +1430,14 @@ def build_cycle_plan(
         strong = float(getattr(config, "CYCLE_STRONG_RISE", 0.08) or 0.08)
         if d5 is not None and d5 <= -strong and not _starter_coverage_hole(o):
             continue
-        # Tendencia a la baja: no pujar (salvo harvest CPU).
-        if has_negative_trend(o) and not o.get("cpu_spread_play"):
+        # Reventa (harvest CPU / revalorización): solo si el VM sube.
+        # El once puede pujar por un titular plano; el flip no.
+        if is_resale_play(o):
+            if not has_positive_trend(o):
+                continue
+        elif has_negative_trend(o):
             continue
-        if not o.get("cpu_spread_play"):
+        if not o.get("cpu_spread_play") and not o.get("flip_play"):
             known_bench = _has_starter_signal(o) and not is_xi_quality_starter(o)
             if known_bench or (not is_xi_quality_starter(o) and pid not in target_ids):
                 continue
