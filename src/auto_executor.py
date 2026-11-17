@@ -60,6 +60,7 @@ log = logging.getLogger("auto_executor")
 # Tipos de move que produce cycle_plan
 KIND_ACCEPT = "accept_offer"
 KIND_DECLINE = "decline_offer"
+KIND_RENEW = "renew_offer"
 KIND_LIST = "list_for_sale"
 KIND_BID = "bid"
 KIND_CLAUSE = "clause_bid"
@@ -77,6 +78,7 @@ LISTING_KINDS = frozenset({KIND_BID, KIND_OFFER, KIND_WITHDRAW})
 # solo compromete.
 PHASES = [
     KIND_ACCEPT,
+    KIND_RENEW,
     KIND_DECLINE,
     KIND_WITHDRAW,
     KIND_LIST,
@@ -95,6 +97,7 @@ NON_SUCCESS_STATUSES = frozenset(
 DISPATCH = {
     KIND_ACCEPT: "accept_offer",
     KIND_DECLINE: "decline_offer",
+    KIND_RENEW: "renew_listing",
     KIND_LIST: "list_for_sale",
     KIND_RESCIND: "sell_to_system",
     KIND_CLAUSE: "pay_clause",
@@ -521,10 +524,11 @@ def plan_operations(
             amount = _money(move.get("amount") or move.get("bid") or move.get("price"))
 
             # La reventa vive aparte del fichaje automático: aceptar por encima
-            # del +3% y relistar con /ajax/resale son el propio modo, aunque
+            # del +3% y renovar el listado son el propio modo, aunque
             # `accept_offer` no esté en allowed_actions.
             flip_offer = bool(move.get("flip_play")) and kind in {
                 KIND_ACCEPT,
+                KIND_RENEW,
                 KIND_DECLINE,
             }
             if kind not in allowed_set and not flip_offer:
@@ -552,6 +556,9 @@ def plan_operations(
 
             if kind == KIND_ACCEPT:
                 bid_id = move.get("id_bid")
+                if not bid_id:
+                    skip(move, kind, "sin id_bid: no se puede aceptar la oferta")
+                    continue
                 operations.append(
                     _op(
                         move,
@@ -559,15 +566,33 @@ def plan_operations(
                         amount=amount,
                         params={
                             "player_id": pid,
-                            "owner_id": move.get("owner_id"),
                             "bid_id": bid_id,
+                            "amount": amount,
                         },
                     )
                 )
                 budget.commit_sale(amount)
                 continue
 
+            if kind == KIND_RENEW:
+                market_id = _positive_id(move.get("id_market"))
+                if not market_id:
+                    skip(move, kind, "sin id_market: no se puede renovar el listado")
+                    continue
+                operations.append(
+                    _op(
+                        move,
+                        kind,
+                        amount=amount,
+                        params={"player_id": pid, "id_market": market_id},
+                    )
+                )
+                continue
+
             if kind == KIND_DECLINE:
+                if not move.get("id_bid"):
+                    skip(move, kind, "sin id_bid: no se puede rechazar la oferta")
+                    continue
                 operations.append(
                     _op(
                         move,
@@ -575,7 +600,6 @@ def plan_operations(
                         amount=amount,
                         params={
                             "player_id": pid,
-                            "owner_id": move.get("owner_id"),
                             "bid_id": move.get("id_bid"),
                         },
                     )
@@ -830,9 +854,9 @@ def _op(
         "why": move.get("why"),
         "params": {k: v for k, v in params.items() if v is not None},
     }
-    if move.get("flip_play") and kind in {KIND_ACCEPT, KIND_DECLINE}:
-        # callback_offer / callback_resale confirman las rutas; el modo reventa
-        # no puede salir si el POST se queda en "sin sondear".
+    if move.get("flip_play") and kind in {KIND_ACCEPT, KIND_RENEW, KIND_DECLINE}:
+        # El check y el botón circular están en la plantilla de ofertas.
+        # El modo reventa no puede quedarse en "sin sondear".
         row["allow_unverified"] = True
         row["flip_play"] = True
     return row

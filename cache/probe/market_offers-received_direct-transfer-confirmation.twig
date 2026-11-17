@@ -1,0 +1,53 @@
+{% import '../../../macros.twig?' ~ cfg.twig as macros %}
+
+<div class="header">
+  <h3>{{ playername }}</h3>
+</div>
+<div class="sub-player">
+  {{ teamLogo(cfg.teams[id_team].logoPublicUrl, 25) }}
+  <a class="btn-sw-link player-avatar player-avatar--md" href="players/{{ id_player }}/{{ playername|slug }}" data-event="clicked_player">
+    <img src="{{ photourl }}" loading="lazy">
+  </a>
+  {{ playerPosition(position, 'pos--lg') }}
+</div>
+<div class="content">
+  <form>
+    <input type="hidden" name="id_bid" value="{{ id_bid }}">
+    <input type="hidden" name="type" value="accept">
+    <input type="hidden" name="amount" value="{{ bid }}" class="input-amount">
+    <div class="direct-transfer-wrapper">
+      <div class="direct-transfer">
+        <div class="user">
+          {{ macros.pic_user('xs', cfg.user.avatar.color, cfg.user.avatar.initials, cfg.user.avatar.pic) }}
+          {{ cfg.user.name }}
+        </div>
+        {{ svg('arrow', 12) }}
+        <div class="user">
+          {{ macros.pic_user('xs', avatar.color, avatar.initials, avatar.pic) }}
+          {{ username }}
+        </div>
+      </div>
+    </div>
+    <input type="text" class="input-amount" readonly value="{{ bid|number_format }}">
+    {% if barter|keys|length > 0 %}
+      <div class="direct-transfer-barter">
+        {{ svg('add') }}
+        <div class="players">
+          {% for p in barter %}
+            <div class="barter-player">
+              {{ teamLogo(cfg.teams[p.id_team].logoPublicUrl) }}
+              {{ playerPosition(p.position) }}
+              {{ p.name }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+    <p class="description">El traspaso se efectuará de forma inmediata</p>
+  </form>
+</div>
+<div class="footer">
+  <div class="buttons player-offers-direct">
+    <button type="button" id="btn-send" class="btn btn--primary btn--lg" data-ajax="offer">{{ trans('Vender') }}</button>
+  </div>
+</div>

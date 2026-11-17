@@ -1,0 +1,100 @@
+{% import '../../macros.twig?' ~ cfg.twig as macros %}
+
+<ul class="wrapper wrapper--spaced sw-market-offers">
+
+  {% for i in offers %}
+    <li class="offer-wrapper player-list player-list--primary">
+      <div class="player-row">
+        {{ macros.player(i, cfg) }}
+        <div class="player-btns">
+          <button class="btn btn--secondary btn--md btn-popup btn-resale"
+            data-popup="resale"
+            data-id_market="{{ i.id_market }}"
+            data-id_owner="{{ i.owner|default(0) }}"
+            data-id_player="{{ i.id }}"
+            data-name="{{ i.name }}"
+          >
+            {{ svg('rotate') }}
+          </button>
+        </div>
+      </div>
+      <ul class="player-offers">
+        {% for j in i.offers %}
+          <li data-id-offer="{{ j.id_bid }}">
+            {% if j.days %}
+              <input id="offer-expires-{{ j.id_bid }}" type="hidden" value="{{ j.expiration_date }}"/>
+            {% endif %}
+            <div class="user">
+              {{ macros.pic_user('xs', j.avatar.color, j.avatar.initials, j.avatar.pic) }}
+            </div>
+            <div class="info">
+              <div class="user-name">
+                {% if j.days %}
+                  <strong>{{ j.uname }}</strong>,&nbsp;<span class="loan-end"></span>
+                {% else %}
+                  <strong>{{ j.uname }}</strong>, {{ j.date }}
+                {% endif %}
+              </div>
+              <div class="offer">
+                <div class="offer-amount">
+                  {% if j.type == 'loan' %}
+                    <div class="extra">{{ trans('MARKET_PLAYER_LOAN_DAYS', { daysCount: j.days }) }}</div>
+                  {% endif %}
+                  <div class="amount green">{{ j.bid|number_format }}</div>
+                  {% for p in j.barter %}
+                    <a class="btn btn-sw-link barter-player" href="players/{{ p.id_player }}/{{ p.name|slug }}" data-event="clicked_player">
+                      {{ teamLogo(cfg.teams[p.id_team].logoPublicUrl) }}
+                      {{ playerPosition(p.position) }}
+                      {{ p.name }}
+                    </a>
+                  {% endfor %}
+                </div>
+                <div class="offer-btns">
+                  <button class="btn btn-decline btn--md {{ j.bid_status == 'decline' ? 'btn--red' : 'btn--secondary' }}" data-id_bid="{{ j.id_bid }}" data-type="decline">
+                    {{ svg('cross', 14) }}
+                  </button>
+                  {% if j.type == 'loan' %}
+                    <button class="btn btn-popup btn--secondary btn--md" data-popup="loan-confirm" data-id="{{ j.id_bid }}" data-name="{{ i.name }}" data-amount="{{ j.bid }}" data-days="{{ j.days }}">
+                      {{ svg('accept', 20) }}
+                    </button>
+                  {% else %}
+                    {% if user.communities[user.id_community].direct_transfer %}
+                      <button class="btn btn-popup btn--secondary btn--md"
+                        data-popup="market/offers-received/direct-transfer-confirmation"
+                        data-playername="{{ i.name }}"
+                        data-username="{{ j.uname }}"
+                        data-bid="{{ j.bid }}"
+                        data-id_bid="{{ j.id_bid }}"
+                        data-barter='{{ j.barter|json_encode }}'
+                        data-preload="player-community-info"
+                        data-id_player="{{ i.id }}"
+                        data-photourl="{{ i.photoUrl }}"
+                        data-avatar='{{ j.avatar|json_encode }}'
+                        data-position="{{ i.position }}"
+                        data-id_team="{{ j.id_team }}"
+                      >
+                        {{ svg('accept', 20) }}
+                      </button>
+                    {% else %}
+                      <button class="btn btn-accept btn--md {{ j.bid_status == 'accept' ? 'btn--accent' : 'btn--secondary' }}" data-id_bid="{{ j.id_bid }}" data-type="accept">
+                        {{ svg('accept', 20) }}
+                      </button>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    </li>
+  {% endfor %}
+
+</ul>
+
+{{ macros.empty(cfg, trans('Nada que mostrar'), offers|length > 0 ? 'none' : 'block') }}
+
+<script>
+  $('.sw-title').text("{{ trans('MARKET_OFFER_RECEIVED_N', { n: count.total }) }}");
+  loanOfferExpirationTimer();
+</script>

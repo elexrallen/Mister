@@ -1,0 +1,15 @@
+<div class="header">
+  <h3>{{ name }}</h3>
+</div>
+<div class="content">
+  <form>
+    <input type="hidden" name="id_market" value="{{ id_market }}">
+  </form>
+  <p>{{ trans('¿Estás seguro de volver a poner este jugador en venta?') }}</p>
+  <p class="description">{{ trans('Si lo haces, se rechazarán automáticamente todas las ofertas recibidas por él.')}}
+</div>
+<div class="footer">
+  <div class="buttons">
+    <button type="button" id="btn-send" class="btn btn--primary btn--lg" data-ajax="resale">{{ trans('Sí, seguro') }}</button>
+  </div>
+</div>

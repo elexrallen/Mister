@@ -192,6 +192,8 @@ def test_offer_threshold_and_frozen_untouched() -> None:
             "market_value": 6.5 * M,
             "id_bid": 847981312,
             "offer_id": "847981312",
+            "id_market": 19813428020,
+            "id_uc": 0,
             "owner_id": "15399168",
         },
     ]
@@ -207,12 +209,14 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     )
     kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
     _assert(("1", "accept_offer") not in kinds and ("1", "decline_offer") not in kinds, kinds)
-    _assert(("9", "decline_offer") in kinds, kinds)
+    _assert(("9", "renew_offer") in kinds, kinds)
+    _assert(("9", "decline_offer") not in kinds, kinds)
     _assert(("9", "accept_offer") not in kinds, kinds)
-    decline = next(m for m in plan["moves"] if m["kind"] == "decline_offer")
-    _assert(decline.get("id_bid") in (847981312, "847981312"), decline)
-    _assert(str(decline.get("owner_id")) == "15399168", decline)
-    _assert("vuelve a listar" in (decline.get("why") or ""), decline)
+    renew = next(m for m in plan["moves"] if m["kind"] == "renew_offer")
+    _assert(renew.get("id_bid") in (847981312, "847981312"), renew)
+    _assert(renew.get("id_market") == 19813428020, renew)
+    _assert(renew.get("id_uc") == 0, renew)
+    _assert("renueva" in (renew.get("why") or "").lower(), renew)
 
     offers[1]["amount"] = 6_650_000
     plan, _book = build_flip_cycle(
@@ -228,6 +232,60 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
     _assert(accept["player_id"] == "9" and accept["amount"] == 6_650_000, accept)
     _assert(accept.get("id_bid") in (847981312, "847981312"), accept)
+
+
+def test_konate_accepts_and_the_other_two_renew() -> None:
+    """Konaté supera el +3%. Ünal y Veiga se renuevan, no se rechazan."""
+    book = fresh_book()
+    book["active"] = True
+    book["frozen_ids"] = []
+    book["positions"] = {
+        "70922": {"player_id": "70922", "name": "I. Konaté", "buy_price": 11_144_900, "status": "listed", "listed": True},
+        "6044": {"player_id": "6044", "name": "E. Ünal", "buy_price": 5_369_100, "status": "listed", "listed": True},
+        "65347": {"player_id": "65347", "name": "R. Veiga", "buy_price": 9_937_200, "status": "listed", "listed": True},
+    }
+    squad = [
+        _player("70922", name="I. Konaté", vm=11_126_000, ask=11_126_000, on_sale=True),
+        _player("6044", name="E. Ünal", vm=5_368_000, ask=5_368_000, on_sale=True),
+        _player("65347", name="R. Veiga", vm=9_933_000, ask=9_933_000, on_sale=True),
+    ]
+    offers = [
+        {"player_id": "70922", "name": "I. Konaté", "amount": 11_571_040, "id_bid": "847981378", "id_market": 19813428020, "id_uc": 0},
+        {"player_id": "6044", "name": "E. Ünal", "amount": 5_471_280, "id_bid": "847981312", "id_market": 19813428021, "id_uc": 0},
+        {"player_id": "65347", "name": "R. Veiga", "amount": 9_436_350, "id_bid": "847981399", "id_market": 19813428022, "id_uc": 0},
+    ]
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={"pending_offers": offers},
+        me={"balance": 1 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    by_id = {m["player_id"]: m for m in plan["moves"]}
+    _assert(by_id["70922"]["kind"] == "accept_offer", by_id["70922"])
+    _assert(by_id["70922"]["id_bid"] == "847981378", by_id["70922"])
+    _assert(by_id["6044"]["kind"] == "renew_offer" and by_id["6044"]["id_market"] == 19813428021, by_id["6044"])
+    _assert(by_id["65347"]["kind"] == "renew_offer" and by_id["65347"]["id_market"] == 19813428022, by_id["65347"])
+    _assert(all(m["kind"] != "decline_offer" for m in plan["moves"]), plan["moves"])
+
+    offers[0]["status"] = "decline"
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={"pending_offers": offers[1:], "offers_received": offers},
+        me={"balance": 1 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    by_id = {m["player_id"]: m for m in plan["moves"]}
+    _assert(by_id["70922"]["kind"] == "accept_offer", by_id.get("70922"))
+    _assert(by_id["6044"]["kind"] == "renew_offer", by_id.get("6044"))
+    _assert(by_id["65347"]["kind"] == "renew_offer", by_id.get("65347"))
 
 
 def test_disable_stops_bids_and_keeps_exit() -> None:
@@ -487,6 +545,7 @@ def main() -> None:
     test_cash_keeps_the_wider_margin()
     test_snapshot_is_not_retaken()
     test_offer_threshold_and_frozen_untouched()
+    test_konate_accepts_and_the_other_two_renew()
     test_disable_stops_bids_and_keeps_exit()
     test_full_sale_limit_blocks_new_bids()
     test_book_roundtrip()

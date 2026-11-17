@@ -922,24 +922,58 @@ def test_flip_accept_runs_without_allowed_actions() -> None:
     ax.execute(d, client=client)
     _assert(len(calls) == 1, calls)
     _assert(calls[0][0] == "/ajax/offer", calls[0])
-    _assert(calls[0][1]["id_player"] == "70922", calls[0])
-    _assert(calls[0][1]["id_bid"] == "847981378", calls[0])
-    _assert(calls[0][1]["action"] == "accept", calls[0])
+    _assert(calls[0][1] == {"id_bid": "847981378", "type": "accept", "amount": 11_571_040}, calls[0])
+    _assert("id_owner" not in calls[0][1] and "action" not in calls[0][1], calls[0])
     _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
     _assert(d.get("blocked", 0) == 0, d)
 
 
-def test_flip_decline_relists_via_resale() -> None:
-    """Ünal / Veiga: oferta por debajo del +3% → /ajax/resale (rechazar y relistar)."""
+def test_flip_accept_marked_decline_is_an_error() -> None:
+    """El status exterior ok con data.status=decline no es una venta."""
     move = {
-        "kind": "decline_offer",
+        "kind": "accept_offer",
+        "player_id": "70922",
+        "name": "I. Konaté",
+        "amount": 11_571_040,
+        "id_bid": "847981378",
+        "flip_play": True,
+    }
+    d = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {"balance": 0, "spendable": 34 * M, "free_slots_after_accepts": 0},
+            "moves": [move],
+        },
+        settings=_settings(enabled=True, allowed_actions=["bid"]),
+        now=NOW,
+    )
+    client = MisterWriteClient(
+        dry_run=False,
+        transport=lambda p, data: {
+            "status": "ok",
+            "data": {"status": "decline", "offers": {"pending": 2, "accept": 0, "decline": 1}},
+        },
+    )
+    ax.execute(d, client=client)
+    op = d["operations"][0]
+    _assert(op["status"] == "error", op)
+    _assert("rechazada" in (op.get("error") or ""), op)
+    _assert(d.get("executed", 0) == 0, d)
+
+
+def test_flip_renew_posts_only_id_market() -> None:
+    """Ünal / Veiga: el botón circular renueva con id_market, no rechaza la oferta."""
+    move = {
+        "kind": "renew_offer",
         "player_id": "6044",
         "name": "E. Ünal",
         "amount": 5_471_280,
         "id_bid": "847981312",
+        "id_market": 19813428021,
+        "id_uc": 0,
         "owner_id": "15399168",
         "flip_play": True,
-        "why": "Oferta 5.47M € no supera 5.53M €. Se rechaza y se vuelve a listar.",
+        "why": "Oferta 5.47M € no supera 5.53M €. Se renueva el listado.",
     }
     d = ax.plan_operations(
         cycle_plan={
@@ -961,7 +995,7 @@ def test_flip_decline_relists_via_resale() -> None:
         ),
         now=NOW,
     )
-    _assert(_kinds(d) == ["decline_offer"], d.get("skipped"))
+    _assert(_kinds(d) == ["renew_offer"], d.get("skipped"))
     calls: list = []
     client = MisterWriteClient(
         dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
@@ -969,9 +1003,7 @@ def test_flip_decline_relists_via_resale() -> None:
     ax.execute(d, client=client)
     _assert(len(calls) == 1, calls)
     _assert(calls[0][0] == "/ajax/resale", calls[0])
-    _assert(calls[0][1]["id_player"] == "6044", calls[0])
-    _assert(calls[0][1]["id_bid"] == "847981312", calls[0])
-    _assert(calls[0][1]["action"] == "decline", calls[0])
+    _assert(calls[0][1] == {"id_market": 19813428021}, calls[0])
     _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
     _assert(d.get("blocked", 0) == 0, d)
 
@@ -1321,7 +1353,8 @@ TESTS = [
     test_execute_survives_a_rejected_operation,
     test_unverified_endpoint_is_blocked_in_live_mode,
     test_flip_accept_runs_without_allowed_actions,
-    test_flip_decline_relists_via_resale,
+    test_flip_accept_marked_decline_is_an_error,
+    test_flip_renew_posts_only_id_market,
     test_clause_pay_posts_id_player_and_id_uc,
     test_recent_signing_is_skipped_at_plan_when_hours_known,
     test_recent_signing_is_deferred_after_hydrate,

@@ -18,8 +18,8 @@ Endpoints que existen (aparecen sus `callback_*` en el JS) pero cuyo payload
 exacto no está confirmado. `scripts/probe_offer_endpoints.py` los lista y el
 ejecutor los deja apagados hasta confirmarlos:
 
-    ajax/offer       aceptar una oferta recibida
-    ajax/resale      rechazar la oferta / volver a listar
+    ajax/offer       aceptar (type=accept, id_bid) o rechazar (type=decline, id_bid)
+    ajax/resale      renovar el listado (solo id_market; Mister rechaza las ofertas)
 """
 
 from __future__ import annotations
@@ -45,6 +45,17 @@ SALE_REMOVE = "remove"
 # Acciones sobre una oferta recibida
 OFFER_ACCEPT = "accept"
 OFFER_DECLINE = "decline"
+
+
+def _offer_marked_decline(record: dict[str, Any]) -> bool:
+    """True si Mister guardó la oferta como rechazada pese a un status exterior ok."""
+    resp = record.get("response")
+    if not isinstance(resp, dict):
+        return False
+    data = resp.get("data") if isinstance(resp.get("data"), dict) else resp
+    if not isinstance(data, dict):
+        return False
+    return str(data.get("status") or "") == "decline"
 
 # Rutas cuyo payload no está confirmado en la caché del repo. Se pueden simular,
 # pero un POST real necesita `verified_only=False` explícito: si el formato es
@@ -245,23 +256,32 @@ class MisterWriteClient:
         player_id: str | int,
         owner_id: str | int | None = None,
         bid_id: str | int | None = None,
+        amount: float | None = None,
     ) -> dict[str, Any]:
         """
-        Acepta una oferta de un rival por un jugador propio.
-
-        Contrato inferido de `callback_offer`, que refresca saldo, contador de
-        ofertas y dueño del jugador. Irreversible, y encima el rival elige el
-        precio, así que el ejecutor solo la usa por encima del umbral de ratio.
+        Acepta una oferta. Es el check de la fila: POST /ajax/offer con
+        id_bid y type=accept (views/ajax/market/offers-received.twig y el
+        popup de traspaso directo). `action=accept` sin `type` la deja en
+        decline.
         """
-        return self._post_action(
-            "/ajax/offer",
-            {
-                "id_player": str(player_id),
-                "id_owner": str(owner_id) if owner_id is not None else None,
-                "id_bid": str(bid_id) if bid_id is not None else None,
-                "action": OFFER_ACCEPT,
-            },
-        )
+        del owner_id  # el formulario no manda al dueño
+        if bid_id in (None, "", 0, "0"):
+            raise ActionError(f"sin id_bid para aceptar la oferta de {player_id}")
+        payload: dict[str, Any] = {"id_bid": str(bid_id), "type": OFFER_ACCEPT}
+        if amount is not None:
+            try:
+                amount_int = int(round(float(amount)))
+            except (TypeError, ValueError):
+                amount_int = 0
+            if amount_int > 0:
+                payload["amount"] = amount_int
+        record = self._post_action("/ajax/offer", payload)
+        if _offer_marked_decline(record):
+            raise ActionError(
+                "Mister marcó la oferta como rechazada",
+                record=record,
+            )
+        return record
 
     def decline_offer(
         self,
@@ -271,21 +291,36 @@ class MisterWriteClient:
         bid_id: str | int | None = None,
     ) -> dict[str, Any]:
         """
-        Rechaza una oferta recibida y relista al jugador.
-
-        Es el botón de la propia oferta: `callback_resale` quita la fila y pone
-        un `ends` nuevo, así que el ciclo de mercado se reinicia. No es una
-        venta: el jugador se queda y vuelve a salir a la venta.
+        Rechaza una oferta concreta. Es la X de la fila: mismo /ajax/offer,
+        con type=decline e id_bid. No renueva el listado.
         """
+        del owner_id
+        if bid_id in (None, "", 0, "0"):
+            raise ActionError(f"sin id_bid para rechazar la oferta de {player_id}")
         return self._post_action(
-            "/ajax/resale",
-            {
-                "id_player": str(player_id),
-                "id_owner": str(owner_id) if owner_id is not None else None,
-                "id_bid": str(bid_id) if bid_id is not None else None,
-                "action": OFFER_DECLINE,
-            },
+            "/ajax/offer",
+            {"id_bid": str(bid_id), "type": OFFER_DECLINE},
         )
+
+    def renew_listing(
+        self,
+        *,
+        player_id: str | int,
+        id_market: str | int | None = None,
+    ) -> dict[str, Any]:
+        """
+        Botón circular (popup resale): solo id_market. Mister vuelve a poner
+        el jugador en venta y rechaza solo las ofertas de ese listado.
+        """
+        try:
+            mid = int(id_market) if id_market not in (None, "", 0, "0") else 0
+        except (TypeError, ValueError):
+            mid = 0
+        if mid <= 0:
+            raise ActionError(
+                f"id_market ausente para {player_id}: no se puede renovar el listado"
+            )
+        return self._post_action("/ajax/resale", {"id_market": mid})
 
     def sell_to_system(self, *, player_id: str | int) -> dict[str, Any]:
         """

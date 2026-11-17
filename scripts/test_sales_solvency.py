@@ -46,6 +46,8 @@ def test_parse_offers_machine():
                     "bid_status": "pending",
                     "uname": "Mister",
                     "id_user": 0,
+                    "id_uc": 0,
+                    "id_market": 18831795684,
                     "owner": 1,
                 }
             },
@@ -57,6 +59,9 @@ def test_parse_offers_machine():
     assert o["from_machine"] is True
     assert o["player_id"] == "18004"
     assert o["amount"] == 16_500_000
+    assert o["id_uc"] == 0
+    assert o["id_market"] == 18831795684
+    assert o["owner_id"] == "1"
 
 
 def test_tag_own_listings():

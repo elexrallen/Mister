@@ -110,6 +110,17 @@ def parse_offers_received(raw: Any) -> dict[str, Any]:
     }
 
 
+def _bidder_id(raw: Any) -> int | str | None:
+    """id_uc de quien puja. 0 es la máquina y hay que conservarlo."""
+    if raw in (None, ""):
+        return None
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        text = str(raw).strip()
+        return text or None
+
+
 def _normalize_offer(row: dict[str, Any], *, fallback_id: str | None = None) -> dict[str, Any]:
     pid = str(row.get("id") or fallback_id or "")
     bid = _f(row.get("bid")) or 0.0
@@ -139,6 +150,7 @@ def _normalize_offer(row: dict[str, Any], *, fallback_id: str | None = None) -> 
         "from_name": uname or ("Mister" if from_machine else "Rival"),
         "id_market": row.get("id_market"),
         "id_bid": row.get("id_bid"),
+        "id_uc": _bidder_id(row.get("id_uc")),
         "pct_of_vm": round(pct, 4) if pct is not None else None,
         "date": row.get("date"),
         "owner_id": str(row.get("owner") or "") or None,

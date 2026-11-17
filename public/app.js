@@ -1667,6 +1667,7 @@
         ? { label: "Vender", verb: "Vende a", cls: "is-sell" }
         : { label: "Poner en venta", verb: "Pon en venta a", cls: "is-sell" },
       accept_offer: { label: "Aceptar oferta", verb: "Acepta oferta por", cls: "is-sell" },
+      renew_offer: { label: "Renovar venta", verb: "Renueva la venta de", cls: "is-wait" },
       decline_offer: { label: "Rechazar oferta", verb: "Rechaza oferta por", cls: "is-wait" },
       hold_offer: { label: "Oferta en cartera", verb: "Deja la oferta de", cls: "is-wait" },
       avoid: { label: "Evitar", verb: "Descarta a", cls: "is-avoid" },
@@ -1764,6 +1765,7 @@
     }
     if (
       action.action === "accept_offer" ||
+      action.action === "renew_offer" ||
       action.action === "decline_offer" ||
       action.action === "hold_offer"
     ) {
@@ -1965,7 +1967,9 @@
     const allMoves = Array.isArray(plan.moves) ? plan.moves : [];
     const holds = allMoves.filter((m) => m.kind === "hold_offer");
     const actionable = allMoves.filter((m) => m.kind !== "hold_offer");
-    const urgent = actionable.filter((m) => m.kind === "accept_offer" || m.kind === "decline_offer");
+    const urgent = actionable.filter(
+      (m) => m.kind === "accept_offer" || m.kind === "renew_offer" || m.kind === "decline_offer"
+    );
     const toward = actionable.filter((m) => m.closes_gw_target && !urgent.includes(m));
     const rest = actionable.filter((m) => !urgent.includes(m) && !toward.includes(m));
     const flip = plan.flip || {};
@@ -2023,6 +2027,7 @@
       { kinds: ["list_for_sale"], label: "Poner en venta", cls: "is-sell" },
       { kinds: ["bid"], label: isFixedMarket(data) ? "Fichar" : "Pujar", cls: "is-buy" },
       { kinds: ["clause_bid"], label: "Cláusula", cls: "is-buy" },
+      { kinds: ["renew_offer"], label: "Renovar", cls: "is-wait" },
       { kinds: ["decline_offer"], label: "No cerrar", cls: "is-avoid" },
     ];
     const sections = groups
@@ -2036,7 +2041,7 @@
             const dLabel = trendDeltaLabel(item);
             return `<button type="button" class="cycle-move-chip ${g.cls}" data-player-id="${escapeHtml(
               rec.player_id || rec.id || ""
-            )}" data-focus-tab="${item.kind === "list_for_sale" || item.kind === "accept_offer" ? "squad" : "market"}">
+            )}" data-focus-tab="${item.kind === "list_for_sale" || item.kind === "accept_offer" || item.kind === "renew_offer" ? "squad" : "market"}">
               ${playerMedia(rec, "is-row")}
               <span class="cycle-move-main">
                 <strong>${escapeHtml(item.name || "")}</strong>
@@ -3422,6 +3427,7 @@
     clause_bid: "Cláusula",
     list_for_sale: "Puesto en venta",
     accept_offer: "Oferta aceptada",
+    renew_offer: "Venta renovada",
     decline_offer: "Oferta rechazada",
     sell_to_system: "Rescisión",
   };

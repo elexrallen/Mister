@@ -21,6 +21,7 @@ from competitive_actions import is_rival_market_listing, mister_bid_cap
 
 KIND_ACCEPT = "accept_offer"
 KIND_DECLINE = "decline_offer"
+KIND_RENEW = "renew_offer"
 KIND_LIST = "list_for_sale"
 KIND_BID = "bid"
 
@@ -367,12 +368,27 @@ def build_flip_cycle(
     accept_ids: set[str] = set()
     cash_in = 0.0
 
-    for offer in state.get("pending_offers") or []:
+    seen_offers: set[str] = set()
+    inbox: list[dict[str, Any]] = []
+    for offer in list(state.get("pending_offers") or []) + list(state.get("offers_received") or []):
         if not isinstance(offer, dict):
             continue
         pid = _pid(offer)
-        if not pid or pid in frozen:
+        if not pid or pid in seen_offers or pid in frozen:
             continue
+        status = str(offer.get("status") or "pending").strip().lower()
+        # La fila sigue en el buzón aunque el último POST la pintara como
+        # rechazada. 'accept' es una venta ya hecha y no se toca.
+        if status == "accept":
+            continue
+        if status not in ("pending", "decline"):
+            continue
+        seen_offers.add(pid)
+        inbox.append(offer)
+
+    for offer in inbox:
+        pid = _pid(offer)
+        status = str(offer.get("status") or "pending").strip().lower()
         pos = positions.get(pid)
         if not isinstance(pos, dict) or pos.get("status") == "sold":
             continue
@@ -395,10 +411,11 @@ def build_flip_cycle(
             "buy_price": round(buy),
             "threshold": round(threshold),
             "from_machine": offer.get("from_machine", True),
-            # El POST de aceptar/rechazar va contra la oferta, no contra la
-            # ficha del jugador: sin id_bid el ejecutor manda un body incompleto.
+            # El check y el botón circular identifican la oferta y el listado,
+            # no al dueño. id_uc es quien puja (0 = máquina).
             "id_bid": offer.get("id_bid") or offer.get("offer_id"),
-            "owner_id": offer.get("owner_id") or offer.get("id_owner"),
+            "id_market": offer.get("id_market"),
+            "id_uc": offer.get("id_uc"),
         }
         if amount > threshold:
             moves.append(
@@ -415,16 +432,18 @@ def build_flip_cycle(
             )
             accept_ids.add(pid)
             cash_in += amount
+        elif status != "pending":
+            continue
         else:
             moves.append(
                 _move(
                     player,
-                    kind=KIND_DECLINE,
+                    kind=KIND_RENEW,
                     amount=amount,
                     why=(
                         f"Oferta {_fmt_money(amount)} no supera {_fmt_money(threshold)} "
                         f"(compra {_fmt_money(buy)} + 3%). "
-                        "Se rechaza y se vuelve a listar."
+                        "Se renueva el listado."
                     ),
                     extra=extra,
                 )
@@ -614,6 +633,7 @@ def build_flip_cycle(
             "bid": sum(1 for m in moves if m["kind"] == KIND_BID),
             "clause": 0,
             "decline": sum(1 for m in moves if m["kind"] == KIND_DECLINE),
+            "renew": sum(1 for m in moves if m["kind"] == KIND_RENEW),
             "hold": 0,
         },
         "flip": {
