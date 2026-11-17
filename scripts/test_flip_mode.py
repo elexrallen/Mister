@@ -185,7 +185,15 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     ]
     offers = [
         {"player_id": "1", "name": "Titular", "amount": 9.5 * M, "market_value": 9 * M},
-        {"player_id": "9", "name": "Flip", "amount": 6_596_120, "market_value": 6.5 * M},
+        {
+            "player_id": "9",
+            "name": "Flip",
+            "amount": 6_596_120,
+            "market_value": 6.5 * M,
+            "id_bid": 847981312,
+            "offer_id": "847981312",
+            "owner_id": "15399168",
+        },
     ]
     plan, _book = build_flip_cycle(
         book=book,
@@ -201,6 +209,10 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     _assert(("1", "accept_offer") not in kinds and ("1", "decline_offer") not in kinds, kinds)
     _assert(("9", "decline_offer") in kinds, kinds)
     _assert(("9", "accept_offer") not in kinds, kinds)
+    decline = next(m for m in plan["moves"] if m["kind"] == "decline_offer")
+    _assert(decline.get("id_bid") in (847981312, "847981312"), decline)
+    _assert(str(decline.get("owner_id")) == "15399168", decline)
+    _assert("vuelve a listar" in (decline.get("why") or ""), decline)
 
     offers[1]["amount"] = 6_650_000
     plan, _book = build_flip_cycle(
@@ -215,6 +227,7 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     )
     accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
     _assert(accept["player_id"] == "9" and accept["amount"] == 6_650_000, accept)
+    _assert(accept.get("id_bid") in (847981312, "847981312"), accept)
 
 
 def test_disable_stops_bids_and_keeps_exit() -> None:

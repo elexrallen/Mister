@@ -882,6 +882,100 @@ def test_unverified_endpoint_is_blocked_in_live_mode() -> None:
     _assert("sin confirmar" in d["operations"][0]["error"], d["operations"][0])
 
 
+def test_flip_accept_runs_without_allowed_actions() -> None:
+    """Konaté: la reventa acepta aunque accept_offer no esté en la config."""
+    move = {
+        "kind": "accept_offer",
+        "player_id": "70922",
+        "name": "I. Konaté",
+        "amount": 11_571_040,
+        "id_bid": "847981378",
+        "owner_id": "15399168",
+        "flip_play": True,
+    }
+    d = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {
+                "balance": 0,
+                "spendable": 34 * M,
+                "free_slots_after_accepts": 0,
+                "sale_remaining": 2,
+            },
+            "moves": [move],
+        },
+        settings=_settings(
+            enabled=False,
+            kill_switch_off=True,
+            league_registered=False,
+            env_killed=False,
+            allowed_actions=["bid", "list_for_sale", "decline_offer"],
+        ),
+        now=NOW,
+    )
+    _assert(_kinds(d) == ["accept_offer"], d.get("skipped"))
+    _assert(d["operations"][0].get("allow_unverified") is True, d["operations"][0])
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
+    ax.execute(d, client=client)
+    _assert(len(calls) == 1, calls)
+    _assert(calls[0][0] == "/ajax/offer", calls[0])
+    _assert(calls[0][1]["id_player"] == "70922", calls[0])
+    _assert(calls[0][1]["id_bid"] == "847981378", calls[0])
+    _assert(calls[0][1]["action"] == "accept", calls[0])
+    _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
+    _assert(d.get("blocked", 0) == 0, d)
+
+
+def test_flip_decline_relists_via_resale() -> None:
+    """Ünal / Veiga: oferta por debajo del +3% → /ajax/resale (rechazar y relistar)."""
+    move = {
+        "kind": "decline_offer",
+        "player_id": "6044",
+        "name": "E. Ünal",
+        "amount": 5_471_280,
+        "id_bid": "847981312",
+        "owner_id": "15399168",
+        "flip_play": True,
+        "why": "Oferta 5.47M € no supera 5.53M €. Se rechaza y se vuelve a listar.",
+    }
+    d = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {
+                "balance": 0,
+                "spendable": 34 * M,
+                "free_slots_after_accepts": 0,
+                "sale_remaining": 2,
+            },
+            "moves": [move],
+        },
+        settings=_settings(
+            enabled=False,
+            kill_switch_off=True,
+            league_registered=False,
+            env_killed=False,
+            allowed_actions=["bid", "list_for_sale"],
+        ),
+        now=NOW,
+    )
+    _assert(_kinds(d) == ["decline_offer"], d.get("skipped"))
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
+    ax.execute(d, client=client)
+    _assert(len(calls) == 1, calls)
+    _assert(calls[0][0] == "/ajax/resale", calls[0])
+    _assert(calls[0][1]["id_player"] == "6044", calls[0])
+    _assert(calls[0][1]["id_bid"] == "847981312", calls[0])
+    _assert(calls[0][1]["action"] == "decline", calls[0])
+    _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
+    _assert(d.get("blocked", 0) == 0, d)
+
+
 def test_clause_pay_posts_id_player_and_id_uc() -> None:
     """views/ajax/clause-pay.twig: id_player, id_uc, id_giphy. El importe no viaja."""
     d = _run([_clause("55646", 2 * M, name="Christos Mandas", owner_id="888")])
@@ -1226,6 +1320,8 @@ TESTS = [
     test_execute_in_dry_run_sends_nothing,
     test_execute_survives_a_rejected_operation,
     test_unverified_endpoint_is_blocked_in_live_mode,
+    test_flip_accept_runs_without_allowed_actions,
+    test_flip_decline_relists_via_resale,
     test_clause_pay_posts_id_player_and_id_uc,
     test_recent_signing_is_skipped_at_plan_when_hours_known,
     test_recent_signing_is_deferred_after_hydrate,

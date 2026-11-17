@@ -395,6 +395,10 @@ def build_flip_cycle(
             "buy_price": round(buy),
             "threshold": round(threshold),
             "from_machine": offer.get("from_machine", True),
+            # El POST de aceptar/rechazar va contra la oferta, no contra la
+            # ficha del jugador: sin id_bid el ejecutor manda un body incompleto.
+            "id_bid": offer.get("id_bid") or offer.get("offer_id"),
+            "owner_id": offer.get("owner_id") or offer.get("id_owner"),
         }
         if amount > threshold:
             moves.append(
@@ -419,7 +423,8 @@ def build_flip_cycle(
                     amount=amount,
                     why=(
                         f"Oferta {_fmt_money(amount)} no supera {_fmt_money(threshold)} "
-                        f"(compra {_fmt_money(buy)} + 3%). Sigue listado."
+                        f"(compra {_fmt_money(buy)} + 3%). "
+                        "Se rechaza y se vuelve a listar."
                     ),
                     extra=extra,
                 )
