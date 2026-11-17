@@ -13,6 +13,7 @@ from competitive_actions import (  # noqa: E402
     finalize_action_plan,
     harvest_blocks_on_critical_need,
     is_cpu_spread_candidate,
+    is_resale_play,
     promote_appreciation_plays,
     promote_cpu_spread_harvest,
     resolve_transfer_wait_hours,
@@ -79,9 +80,19 @@ def _free_agent(
         "debt_risk": True,
         "bid_cap": 20_000_000,
         "priority_score": 10,
-        "rising": False,
+        "rising": True,
         "decelerating": False,
+        "delta_5d": 0.05,
+        "delta_cycle": 0.02,
     }
+
+
+def test_resale_play_flags() -> None:
+    _assert(is_resale_play({"cpu_spread_play": True}) is True, "cpu")
+    _assert(is_resale_play({"appreciation_play": True}) is True, "appr")
+    _assert(is_resale_play({"fills_need": True}) is False, "xi hole")
+    _assert(is_resale_play({}) is False, "empty")
+    _assert(is_resale_play(None) is False, "none")
 
 
 def test_candidate_gates_vm_and_ratio() -> None:
@@ -101,6 +112,19 @@ def test_candidate_gates_vm_and_ratio() -> None:
     rival["listed_by_rival"] = True
     rival["owner_id"] = "99"
     _assert(not is_cpu_spread_candidate(rival, bid_cap=20_000_000), "rival blocked")
+    flat = _free_agent()
+    flat["rising"] = False
+    flat["delta_5d"] = 0.0
+    flat["delta_cycle"] = 0.0
+    _assert(not is_cpu_spread_candidate(flat, bid_cap=20_000_000), "flat VM blocked")
+    falling = _free_agent()
+    falling["rising"] = False
+    falling["delta_5d"] = -0.04
+    falling["trend"] = "down"
+    _assert(
+        not is_cpu_spread_candidate(falling, bid_cap=20_000_000),
+        "falling VM blocked",
+    )
 
 
 def test_promote_only_when_idle() -> None:
@@ -340,7 +364,9 @@ def test_cycle_bid_cpu_spread_with_debt() -> None:
             "cpu_spread_play": True,
             "debt_risk": True,
             "budget_fit": "stretch",
-            "delta_5d": 0.0,
+            "rising": True,
+            "delta_5d": 0.05,
+            "delta_cycle": 0.02,
         }
     ]
     plan = build_cycle_plan(
@@ -357,6 +383,59 @@ def test_cycle_bid_cpu_spread_with_debt() -> None:
     bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
     _assert(any(m.get("cpu_spread_play") for m in bids), plan["moves"])
     _assert(any(m.get("cpu_spread_list_now") for m in bids), bids)
+
+
+def test_cycle_skips_cpu_spread_without_positive_trend() -> None:
+    """Reventa: VM plano o a la baja no entra en el plan del ciclo."""
+    squad = [
+        {"player_id": f"x{i}", "name": f"P{i}", "position": "MF", "price": 1_000_000}
+        for i in range(16)
+    ]
+    me = {"balance": 100_000, "max_debt": 20_000_000, "squad": squad}
+
+    def _plan(market):
+        return build_cycle_plan(
+            me=me,
+            squad=squad,
+            opportunities=market,
+            sales_state={"listed_ids": [], "pending_offers": []},
+            league_rules={"max_squad": 25, "sale_limit": 5, "transfer_wait": 0},
+            recommended_xi={"xi": []},
+            hours_to_solvency_deadline=100.0,
+            market_cycle={"cycle_hours": 12, "hours_to_end": 6, "cash_lag_hours": 12},
+            solvency_target="siguiente",
+        )
+
+    base = {
+        "player_id": "h1",
+        "name": "Harvest",
+        "position": "MF",
+        "on_daily_market": True,
+        "seller": "market",
+        "market_value": 5_000_000,
+        "price": 5_000_000,
+        "bid": 5_000_000,
+        "puja_recomendada": 5_000_000,
+        "cpu_spread_play": True,
+        "debt_risk": True,
+        "budget_fit": "stretch",
+    }
+    flat = {**base, "rising": False, "delta_5d": 0.0, "delta_cycle": 0.0}
+    falling = {
+        **base,
+        "player_id": "h2",
+        "name": "Falling",
+        "rising": False,
+        "delta_5d": -0.04,
+        "trend": "down",
+    }
+    for market in ([flat], [falling]):
+        plan = _plan(market)
+        bids = [m for m in plan["moves"] if m["kind"] == KIND_BID]
+        _assert(
+            not any(m.get("cpu_spread_play") for m in bids),
+            (market[0].get("name"), bids),
+        )
 
 
 def test_appreciation_still_first() -> None:
@@ -391,6 +470,7 @@ if __name__ == "__main__":
     tests = [
         test_transfer_wait_normalize,
         test_solvency_hours_profiles,
+        test_resale_play_flags,
         test_candidate_gates_vm_and_ratio,
         test_promote_only_when_idle,
         test_promote_skips_critical_and_strict,
@@ -400,6 +480,7 @@ if __name__ == "__main__":
         test_finalize_queue_role_cpu_spread,
         test_cycle_impatient_accept_when_wait,
         test_cycle_bid_cpu_spread_with_debt,
+        test_cycle_skips_cpu_spread_without_positive_trend,
         test_appreciation_still_first,
     ]
     failed = 0

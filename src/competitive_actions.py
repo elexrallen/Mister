@@ -1013,6 +1013,13 @@ def has_positive_trend(p: dict[str, Any] | None) -> bool:
     return d5 is not None and d5 > 1e-9
 
 
+def is_resale_play(p: dict[str, Any] | None) -> bool:
+    """Harvest CPU o revalorización: se ficha para revender, no para el once."""
+    if not p:
+        return False
+    return bool(p.get("cpu_spread_play") or p.get("appreciation_play"))
+
+
 def xi_pick_tier(p: dict[str, Any] | None) -> int:
     """0 titular al alza … 3 banquillo. Desempate del once, no recorte."""
     if is_xi_quality_starter(p):
@@ -3058,6 +3065,8 @@ def is_cpu_spread_candidate(
     if not bool(getattr(config, "CPU_SPREAD_ENABLED", True)):
         return False
     if not item.get("on_daily_market") and item.get("seller") != "market":
+        return False
+    if not has_positive_trend(item):
         return False
     if _blocks_appreciation(item):
         return False

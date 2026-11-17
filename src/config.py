@@ -743,6 +743,7 @@ CYCLE_MAX_BIDS = 5
 CYCLE_MAX_LISTS = 5
 
 # Harvest del spread CPU (±~5% VM): carril terciario bajo appreciation.
+# Solo si el jugador revaloriza en positivo: el flip no compra flechas planas.
 # Histograma live (~2026-09): media pct_of_vm≈0.97; primas >1.0 escasas → selectivo.
 CPU_SPREAD_ENABLED = True
 CPU_SPREAD_MAX_BUYS = 1

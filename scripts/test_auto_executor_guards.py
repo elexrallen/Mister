@@ -515,6 +515,72 @@ def test_starter_with_positive_trend_still_buys() -> None:
     _assert(_ids(d) == ["1"], d["skipped"])
 
 
+def test_cpu_spread_without_positive_trend_is_skipped() -> None:
+    d = _run(
+        [
+            _bid(
+                "1",
+                2 * M,
+                cpu_spread_play=True,
+                rising=False,
+                delta_5d=0.0,
+            )
+        ]
+    )
+    _assert(not d["operations"], d["operations"])
+    _assert("reventa" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
+def test_cpu_spread_falling_is_skipped() -> None:
+    d = _run(
+        [
+            _bid(
+                "1",
+                2 * M,
+                cpu_spread_play=True,
+                rising=False,
+                delta_5d=-0.04,
+                trend="down",
+            )
+        ]
+    )
+    _assert(not d["operations"], d["operations"])
+    _assert("reventa" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
+def test_cpu_spread_with_positive_trend_still_buys() -> None:
+    d = _run(
+        [
+            _bid(
+                "1",
+                2 * M,
+                cpu_spread_play=True,
+                rising=True,
+                delta_5d=0.06,
+            )
+        ]
+    )
+    _assert(_ids(d) == ["1"], d["skipped"])
+
+
+def test_appreciation_play_without_positive_trend_is_skipped() -> None:
+    d = _run(
+        [
+            _bid(
+                "1",
+                2 * M,
+                appreciation_play=True,
+                is_xi_starter=True,
+                lineup_prob=0.9,
+                rising=False,
+                delta_5d=0.0,
+            )
+        ]
+    )
+    _assert(not d["operations"], d["operations"])
+    _assert("reventa" in _skip_reason(d, "1"), _skip_reason(d, "1"))
+
+
 def test_never_sell_xi_starters_triggers() -> None:
     d = _run([_listing("1", M)], state={"xi_ids": ["1"]})
     _assert(not d["operations"], "no se lista un titular del once")
@@ -1027,6 +1093,10 @@ TESTS = [
     test_negative_trend_buy_is_skipped,
     test_known_bench_buy_is_skipped,
     test_starter_with_positive_trend_still_buys,
+    test_cpu_spread_without_positive_trend_is_skipped,
+    test_cpu_spread_falling_is_skipped,
+    test_cpu_spread_with_positive_trend_still_buys,
+    test_appreciation_play_without_positive_trend_is_skipped,
     test_never_sell_xi_starters_triggers,
     test_bench_in_recommended_xi_can_be_listed,
     test_multiple_listings_all_go_through,
