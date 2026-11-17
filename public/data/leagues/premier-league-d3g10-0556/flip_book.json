@@ -26,8 +26,8 @@
       "name": "Z. Suzuki 💥",
       "buy_price": 11158100,
       "opened_at": "2026-11-17T03:09:27.362608+00:00",
-      "status": "owned",
-      "listed": false
+      "status": "listed",
+      "listed": true
     },
     "65715": {
       "player_id": "65715",

@@ -506,7 +506,8 @@
           "name": "M. Rogers",
           "amount": 19203000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -591,7 +592,8 @@
           "name": "M. Rogers",
           "amount": 19203000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -660,7 +662,8 @@
           "name": "M. Rogers",
           "amount": 19203000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -729,7 +732,8 @@
           "name": "M. Rogers",
           "amount": 19203000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -764,47 +768,155 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-17T21:22:56.221406+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": 11232000,
+          "market_value": 11232000.0,
+          "buy_price": 11158100,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 11.23M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "2380539",
+              "action": "sale",
+              "price": 11232000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 2380539,
+              "id_market": 19828377739,
+              "action": "sale",
+              "price": 11232000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "7083",
+          "name": "P. Groß",
+          "amount": 15240400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "18009",
+          "name": "J. Justin",
+          "amount": 11690800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T21:30:48.039383+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "7083",
+          "name": "P. Groß",
+          "amount": 15240400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "18009",
+          "name": "J. Justin",
+          "amount": 11690800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 58,
+      "bids": 62,
       "won": 4,
-      "lost": 0,
-      "lists": 10,
+      "lost": 4,
+      "lists": 13,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 56
+          "count": 60
         },
         {
           "why": "espera compra→venta",
-          "count": 10
+          "count": 12
         }
       ]
     },
     "d14": {
-      "bids": 58,
+      "bids": 62,
       "won": 4,
-      "lost": 0,
-      "lists": 10,
+      "lost": 4,
+      "lists": 13,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 56
+          "count": 60
         },
         {
           "why": "espera compra→venta",
-          "count": 10
+          "count": 12
         }
       ]
     }
   },
-  "updated_at": "2026-11-17T13:50:15.645125+00:00"
+  "updated_at": "2026-11-17T21:30:48.039383+00:00"
 }

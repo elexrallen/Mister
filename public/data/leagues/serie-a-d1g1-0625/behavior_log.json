@@ -216,6 +216,30 @@
           "why": "Cláusula de Juan Jesus (1.5M €): cierra un hueco del once objetivo frente a R. Belghali."
         }
       ]
+    },
+    {
+      "at": "2026-11-17T21:26:48.018488+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "clause_bid",
+          "player_id": "8257",
+          "name": "Juan Jesus",
+          "amount": 1500000.0,
+          "market_value": null,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Cláusula de Juan Jesus (1.5M €): cierra un hueco del once objetivo frente a R. Belghali."
+        }
+      ]
     }
   ],
   "summary": {
@@ -240,5 +264,5 @@
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-17T13:54:22.019057+00:00"
+  "updated_at": "2026-11-17T21:26:48.018488+00:00"
 }

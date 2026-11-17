@@ -1724,31 +1724,382 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-11-17T21:26:49.132872+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 0.0,
+        "usable": 32479664.0,
+        "cash_in": 5636400.0,
+        "spent": 16613800.0,
+        "projected_cash": -10977400.0,
+        "cycle_cap": 19487798.0,
+        "single_cap": 12991866.0,
+        "clause_cap": 9743899.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 1
+      },
+      "context": {
+        "transfer_wait_hours": 0.0,
+        "transfer_locked": [],
+        "stale_offers": [],
+        "sale_remaining_after": 1,
+        "hours_to_jornada": null,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mix",
+          "provider_label": "Mixto",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 2,
+          "market_stay": 1,
+          "transfer_wait": 0,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 0,
+            "goals": 200000,
+            "best_xi": 250000,
+            "positions": {
+              "1": 1200000,
+              "2": 1400000,
+              "3": 1600000,
+              "4": 1800000,
+              "9": 3000000,
+              "8": 2800000,
+              "7": 2600000,
+              "6": 2300000,
+              "5": 2000000,
+              "10": 3200000
+            }
+          },
+          "custom_rules": null,
+          "type": "comunio",
+          "mode": "private",
+          "external": "laliga",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": false,
+            "known": true,
+            "mode": "off",
+            "multiplier": 1.0,
+            "source": "admin",
+            "multiplier_source": "off"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 450000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "goals": 200000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 450000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_mixto",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_off"
+          ],
+          "market_urgency": 1.4
+        }
+      },
+      "operations": [
+        {
+          "kind": "accept_offer",
+          "player_id": "6044",
+          "name": "E. Ünal",
+          "position": "FW",
+          "amount": 5636400.0,
+          "status": "ok",
+          "error": null,
+          "unverified": true,
+          "why": "Oferta 5.64M € supera el +3% de la compra (5.37M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "848170671",
+              "type": "accept",
+              "amount": 5636400
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19821091048,
+              "id_player": 6044,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -22309686,
+                "future": -22309686,
+                "maxDebt": 36774064
+              }
+            }
+          },
+          "http_status": null
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "65347",
+          "name": "R. Veiga",
+          "position": "DF",
+          "amount": 9574870.0,
+          "status": "ok",
+          "error": null,
+          "unverified": true,
+          "why": "Oferta 9.57M € no supera 10.24M € (compra 9.94M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19821091051
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 65347,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795017600
+            }
+          },
+          "http_status": null
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "1713",
+          "name": "F. Lejeune",
+          "position": "DF",
+          "amount": 5964000.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Listar a 5.96M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "1713",
+              "action": "sale",
+              "price": 5964000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 1713,
+              "id_market": 19828377729,
+              "action": "sale",
+              "price": 5964000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          },
+          "http_status": null
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "3728",
+          "name": "M. Roca",
+          "position": "MF",
+          "amount": 8380000.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Listar a 8.38M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "3728",
+              "action": "sale",
+              "price": 8380000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 3728,
+              "id_market": 19828377730,
+              "action": "sale",
+              "price": 8380000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          },
+          "http_status": null
+        },
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "position": "MF",
+          "amount": 11578200.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja 11.58M € (sube 54,000 € hoy, +30% (16,200 €)). La máquina puede llegar a 12.14M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19824878687,
+              "id_player": "29223",
+              "action": "bid",
+              "bid": 11578200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 29223,
+              "id_market": 19824878687,
+              "action": "bid",
+              "bid": 11578200,
+              "price": 11562000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -22309686,
+                "future": -33887886,
+                "maxDebt": 25195864
+              }
+            }
+          },
+          "http_status": null
+        },
+        {
+          "kind": "bid",
+          "player_id": "25867",
+          "name": "A. Blanco",
+          "position": "MF",
+          "amount": 5035600.0,
+          "status": "ok",
+          "error": null,
+          "unverified": null,
+          "why": "Puja 5.04M € (sube 142,000 € hoy, +30% (42,600 €)). La máquina puede llegar a 5.24M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19824878683,
+              "id_player": "25867",
+              "action": "bid",
+              "bid": 5035600
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 25867,
+              "id_market": 19824878683,
+              "action": "bid",
+              "bid": 5035600,
+              "price": 4993000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -22309686,
+                "future": -38923486,
+                "maxDebt": 20160264
+              }
+            }
+          },
+          "http_status": null
+        }
+      ],
+      "skipped": [],
+      "counts": {
+        "planned": 6,
+        "executed": 6,
+        "failed": 0,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-11-17T13:54:23.326496+00:00",
+  "updated_at": "2026-11-17T21:26:49.132872+00:00",
   "last_cycle": {
-    "at": "2026-11-17T13:54:23.326496+00:00",
+    "at": "2026-11-17T21:26:49.132872+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
       "balance": 0.0,
-      "usable": 28762064.0,
-      "cash_in": 0.0,
-      "spent": 14390800.0,
-      "projected_cash": -14390800.0,
-      "cycle_cap": 17257238.0,
-      "single_cap": 11504826.0,
-      "clause_cap": 8628619.0,
+      "usable": 32479664.0,
+      "cash_in": 5636400.0,
+      "spent": 16613800.0,
+      "projected_cash": -10977400.0,
+      "cycle_cap": 19487798.0,
+      "single_cap": 12991866.0,
+      "clause_cap": 9743899.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 0
+      "free_slots_left": 1
     },
     "context": {
       "transfer_wait_hours": 0.0,
       "transfer_locked": [],
       "stale_offers": [],
-      "sale_remaining_after": 2,
+      "sale_remaining_after": 1,
       "hours_to_jornada": null,
       "pending_offers": 0,
       "gameweek_live": false,
@@ -1847,41 +2198,141 @@
     },
     "operations": [
       {
-        "kind": "bid",
-        "player_id": "3728",
-        "name": "M. Roca",
-        "position": "MF",
-        "amount": 8407000.0,
+        "kind": "accept_offer",
+        "player_id": "6044",
+        "name": "E. Ünal",
+        "position": "FW",
+        "amount": 5636400.0,
         "status": "ok",
         "error": null,
-        "unverified": null,
-        "why": "Puja 8.41M € (sube 90,000 € hoy, +30% (27,000 €)). La máquina puede llegar a 8.8M €.",
+        "unverified": true,
+        "why": "Oferta 5.64M € supera el +3% de la compra (5.37M €).",
         "request": {
-          "path": "/ajax/bid",
+          "path": "/ajax/offer",
           "data": {
-            "offeree_id": 0,
-            "id_market": 19820536564,
-            "id_player": "3728",
-            "action": "update",
-            "bid": 8407000
+            "id_bid": "848170671",
+            "type": "accept",
+            "amount": 5636400
           }
         },
         "response": {
           "status": "ok",
           "data": {
-            "owner": 0,
-            "id_player": 3728,
-            "id_market": 19820536564,
-            "action": "update",
-            "bid": 8407000,
-            "price": 8380000,
-            "public": 1,
-            "barter": [],
-            "community_mode": "private",
+            "owner": 15399168,
+            "id_market": 19821091048,
+            "id_player": 6044,
+            "type": "accept",
+            "status": "accept",
+            "offers": {
+              "pending": 1,
+              "accept": 0,
+              "decline": 0
+            },
             "balance": {
-              "current": -13733886,
-              "future": -28124686,
-              "maxDebt": 28762064
+              "current": -22309686,
+              "future": -22309686,
+              "maxDebt": 36774064
+            }
+          }
+        },
+        "http_status": null
+      },
+      {
+        "kind": "renew_offer",
+        "player_id": "65347",
+        "name": "R. Veiga",
+        "position": "DF",
+        "amount": 9574870.0,
+        "status": "ok",
+        "error": null,
+        "unverified": true,
+        "why": "Oferta 9.57M € no supera 10.24M € (compra 9.94M € + 3%). Se renueva el listado.",
+        "request": {
+          "path": "/ajax/resale",
+          "data": {
+            "id_market": 19821091051
+          }
+        },
+        "response": {
+          "status": "ok",
+          "data": {
+            "owner": 15399168,
+            "id_player": 65347,
+            "offers": {
+              "pending": 0,
+              "accept": 0,
+              "decline": 0
+            },
+            "ends": 1795017600
+          }
+        },
+        "http_status": null
+      },
+      {
+        "kind": "list_for_sale",
+        "player_id": "1713",
+        "name": "F. Lejeune",
+        "position": "DF",
+        "amount": 5964000.0,
+        "status": "ok",
+        "error": null,
+        "unverified": null,
+        "why": "Listar a 5.96M € para que la máquina oferte en el siguiente ciclo.",
+        "request": {
+          "path": "/ajax/sale",
+          "data": {
+            "id_player": "1713",
+            "action": "sale",
+            "price": 5964000
+          }
+        },
+        "response": {
+          "status": "ok",
+          "data": {
+            "owner": 15399168,
+            "id_player": 1713,
+            "id_market": 19828377729,
+            "action": "sale",
+            "price": 5964000,
+            "offers": {
+              "pending": 0,
+              "accept": 0,
+              "decline": 0
+            }
+          }
+        },
+        "http_status": null
+      },
+      {
+        "kind": "list_for_sale",
+        "player_id": "3728",
+        "name": "M. Roca",
+        "position": "MF",
+        "amount": 8380000.0,
+        "status": "ok",
+        "error": null,
+        "unverified": null,
+        "why": "Listar a 8.38M € para que la máquina oferte en el siguiente ciclo.",
+        "request": {
+          "path": "/ajax/sale",
+          "data": {
+            "id_player": "3728",
+            "action": "sale",
+            "price": 8380000
+          }
+        },
+        "response": {
+          "status": "ok",
+          "data": {
+            "owner": 15399168,
+            "id_player": 3728,
+            "id_market": 19828377730,
+            "action": "sale",
+            "price": 8380000,
+            "offers": {
+              "pending": 0,
+              "accept": 0,
+              "decline": 0
             }
           }
         },
@@ -1889,40 +2340,81 @@
       },
       {
         "kind": "bid",
-        "player_id": "1713",
-        "name": "F. Lejeune",
-        "position": "DF",
-        "amount": 5983800.0,
+        "player_id": "29223",
+        "name": "M. Soriano",
+        "position": "MF",
+        "amount": 11578200.0,
         "status": "ok",
         "error": null,
         "unverified": null,
-        "why": "Puja 5.98M € (sube 66,000 € hoy, +30% (19,800 €)). La máquina puede llegar a 6.26M €.",
+        "why": "Puja 11.58M € (sube 54,000 € hoy, +30% (16,200 €)). La máquina puede llegar a 12.14M €.",
         "request": {
           "path": "/ajax/bid",
           "data": {
             "offeree_id": 0,
-            "id_market": 19820536561,
-            "id_player": "1713",
-            "action": "update",
-            "bid": 5983800
+            "id_market": 19824878687,
+            "id_player": "29223",
+            "action": "bid",
+            "bid": 11578200
           }
         },
         "response": {
           "status": "ok",
           "data": {
             "owner": 0,
-            "id_player": 1713,
-            "id_market": 19820536561,
-            "action": "update",
-            "bid": 5983800,
-            "price": 5964000,
+            "id_player": 29223,
+            "id_market": 19824878687,
+            "action": "bid",
+            "bid": 11578200,
+            "price": 11562000,
             "public": 1,
             "barter": [],
             "community_mode": "private",
             "balance": {
-              "current": -13733886,
-              "future": -28124686,
-              "maxDebt": 28762064
+              "current": -22309686,
+              "future": -33887886,
+              "maxDebt": 25195864
+            }
+          }
+        },
+        "http_status": null
+      },
+      {
+        "kind": "bid",
+        "player_id": "25867",
+        "name": "A. Blanco",
+        "position": "MF",
+        "amount": 5035600.0,
+        "status": "ok",
+        "error": null,
+        "unverified": null,
+        "why": "Puja 5.04M € (sube 142,000 € hoy, +30% (42,600 €)). La máquina puede llegar a 5.24M €.",
+        "request": {
+          "path": "/ajax/bid",
+          "data": {
+            "offeree_id": 0,
+            "id_market": 19824878683,
+            "id_player": "25867",
+            "action": "bid",
+            "bid": 5035600
+          }
+        },
+        "response": {
+          "status": "ok",
+          "data": {
+            "owner": 0,
+            "id_player": 25867,
+            "id_market": 19824878683,
+            "action": "bid",
+            "bid": 5035600,
+            "price": 4993000,
+            "public": 1,
+            "barter": [],
+            "community_mode": "private",
+            "balance": {
+              "current": -22309686,
+              "future": -38923486,
+              "maxDebt": 20160264
             }
           }
         },
@@ -1931,8 +2423,8 @@
     ],
     "skipped": [],
     "counts": {
-      "planned": 2,
-      "executed": 2,
+      "planned": 6,
+      "executed": 6,
       "failed": 0,
       "skipped": 0
     }
