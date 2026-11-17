@@ -153,7 +153,8 @@
           "buy_price": 11144900,
           "threshold": 11479247,
           "status": "recomendada",
-          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €."
+          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -164,7 +165,8 @@
           "buy_price": 9937200,
           "threshold": 10235316,
           "status": "recomendada",
-          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €."
+          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -186,7 +188,8 @@
           "buy_price": 5369100,
           "threshold": 5530173,
           "status": "recomendada",
-          "why": "Puja 5.37M € (sube 17,000 € hoy, +30% (5,100 €)). La máquina puede llegar a 5.63M €."
+          "why": "Puja 5.37M € (sube 17,000 € hoy, +30% (5,100 €)). La máquina puede llegar a 5.63M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -239,7 +242,8 @@
                 "maxDebt": 42936374
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -279,7 +283,8 @@
                 "maxDebt": 32999174
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -359,7 +364,8 @@
                 "maxDebt": 21096724
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -412,7 +418,8 @@
                 "maxDebt": 27630074
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -452,7 +459,8 @@
                 "maxDebt": 27630074
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -468,7 +476,8 @@
           "name": "E. Ünal",
           "amount": 5369100,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -492,7 +501,8 @@
           "buy_price": 11144900,
           "threshold": 11479247,
           "status": "recomendada",
-          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €."
+          "why": "Puja 11.14M € (sube 63,000 € hoy, +30% (18,900 €)). La máquina puede llegar a 11.68M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -503,7 +513,8 @@
           "buy_price": 9937200,
           "threshold": 10235316,
           "status": "recomendada",
-          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €."
+          "why": "Puja 9.94M € (baja 84,000 € hoy, +5% (4,200 €)). La máquina puede llegar a 10.43M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -522,21 +533,135 @@
           "name": "E. Ünal",
           "amount": 5369100,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T03:05:35.208268+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "25621",
+          "name": "A. Rațiu",
+          "amount": 7811200,
+          "market_value": 7774000.0,
+          "buy_price": 7811200,
+          "threshold": 8045536,
+          "status": "ejecutada",
+          "why": "Puja 7.81M € (sube 124,000 € hoy, +30% (37,200 €)). La máquina puede llegar a 8.16M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19813377720,
+              "id_player": "25621",
+              "action": "update",
+              "bid": 7811200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 25621,
+              "id_market": 19813377720,
+              "action": "update",
+              "bid": 7811200,
+              "price": 7774000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -25304926,
+                "future": -33116126,
+                "maxDebt": 26424624
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 6978600,
+          "status": "descartada",
+          "why": "sin plaza"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48203",
+          "name": "R. Terrats",
+          "amount": 5741400,
+          "status": "descartada",
+          "why": "sin plaza"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T03:15:49.405636+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "25621",
+          "name": "A. Rațiu",
+          "amount": 7811200,
+          "market_value": 7774000.0,
+          "buy_price": 7811200,
+          "threshold": 8045536,
+          "status": "recomendada",
+          "why": "Puja 7.81M € (sube 124,000 € hoy, +30% (37,200 €)). La máquina puede llegar a 8.16M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 6978600,
+          "status": "descartada",
+          "why": "sin plaza"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48203",
+          "name": "R. Terrats",
+          "amount": 5741400,
+          "status": "descartada",
+          "why": "sin plaza"
         }
       ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 16,
-      "won": 0,
+      "bids": 22,
+      "won": 12,
       "lost": 0,
       "lists": 5,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
+        {
+          "why": "sin plaza",
+          "count": 4
+        },
         {
           "why": "sin caja",
           "count": 3
@@ -544,8 +669,8 @@
       ]
     },
     "d14": {
-      "bids": 16,
-      "won": 0,
+      "bids": 22,
+      "won": 12,
       "lost": 0,
       "lists": 5,
       "accepts": 0,
@@ -553,11 +678,15 @@
       "short_offers": 0,
       "top_skips": [
         {
+          "why": "sin plaza",
+          "count": 4
+        },
+        {
           "why": "sin caja",
           "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-16T15:38:15.878341+00:00"
+  "updated_at": "2026-11-17T03:15:49.405636+00:00"
 }
