@@ -2,124 +2,6 @@
   "league": "premier-league-d3g10-0556",
   "cycles": [
     {
-      "at": "2026-09-24T22:47:43.068619+00:00",
-      "dry_run": false,
-      "enabled": true,
-      "reason": null,
-      "budget": {
-        "balance": 15171700.0,
-        "usable": 19600610.0,
-        "cash_in": 0.0,
-        "spent": 0.0,
-        "projected_cash": 15171700.0,
-        "cycle_cap": 11760366.0,
-        "single_cap": 7840244.0,
-        "clause_cap": 5880183.0,
-        "min_cash_floor": 0.0,
-        "free_slots_left": 17
-      },
-      "context": {
-        "transfer_wait_hours": 24.0,
-        "transfer_locked": [],
-        "stale_offers": [],
-        "sale_remaining_after": 4,
-        "hours_to_jornada": 372.7870664516667,
-        "pending_offers": 0,
-        "gameweek_live": false,
-        "league_rules": {
-          "provider": "mr",
-          "provider_label": "SofaScore",
-          "max_squad": 25,
-          "market_mode": "auction",
-          "clauses": true,
-          "clause_rules": {
-            "enabled": true,
-            "block": false,
-            "signs": 1,
-            "gameweek": 1,
-            "daily_limit": 1,
-            "max_inbound": 2,
-            "shields": true
-          },
-          "clauses_block": false,
-          "clauses_signs": 1,
-          "clauses_gameweek": 1,
-          "clauses_daily": 1,
-          "max_inbound_clauses": 2,
-          "loans": true,
-          "loans_floor": 10,
-          "market_speed": 3,
-          "market_stay": 2,
-          "transfer_wait": 1,
-          "salaries": false,
-          "live_changes": true,
-          "show_balances": false,
-          "rewards": true,
-          "sale_limit": 5,
-          "prizes": {
-            "points": 25000,
-            "goals": 100000,
-            "best_xi": 250000
-          },
-          "custom_rules": "📣 Compite contra miles de usuarios en distintas divisiones, con ascensos y descensos al final de cada tramo ⚽ ¡En total, 7 tramos diferentes! ⭐\r\n\r\n✅ Todos los usuarios empiezan en la misma división con 15 jugadores aleatorios y millones para fichar, en igualdad de condiciones 🛒​\r\n\r\n🏆 El vencedor final de la Macroliga Oficial de Premier League en Mister Fantasy, que será el primer clasificado de la 1ª División al término de la jornada 38 de LaLiga, gana una camiseta del equipo que quiera de regalo 💝 \r\n\r\n⚡​ Criterios de desempate para ganar el premio a final de temporada:\r\n1. Usuario que haya ganado + jornadas en el último tramo (Jornadas 31 a 38).\r\n2. En caso de empate, usuario que haya quedado por delante de su rival en más ocasiones (las jornadas con empate a puntos se anulan).\r\n3. En caso de que continúe el empate: usuario que haya hecho más puntos en la última jornada (38).\r\n4. En caso de que aún continúe el empate: usuario que haya hecho más puntos en la primera jornada del último tramo (31).",
-          "type": "comunio",
-          "mode": "macro_league",
-          "external": "premier",
-          "source": "fg_user+admin",
-          "is_admin": false,
-          "captain": {
-            "enabled": true,
-            "known": true,
-            "mode": "by_market_value",
-            "multiplier": null,
-            "source": "admin",
-            "multiplier_source": "by_market_value"
-          },
-          "economy": {
-            "gw_cash_bonus": true,
-            "no_gw_cash_bonus": false,
-            "credit_prizes": false,
-            "expected_gw_cash": 375000.0,
-            "source": "prizes_euros",
-            "confidence": "medium",
-            "when": "after_gameweek",
-            "prizes": {
-              "points": 25000.0,
-              "goals": 100000.0,
-              "best_xi": 250000.0
-            },
-            "prize_cash_total": 375000.0,
-            "salaries": false,
-            "sale_limit": 5,
-            "max_debt": 4.0,
-            "usable_for_bids_today": false
-          },
-          "factors": [
-            "scoring_sofascore",
-            "auction_urgency",
-            "clause_bids",
-            "loans_liquidity",
-            "max_squad_25",
-            "fast_market",
-            "gw_cash_bonus",
-            "sale_limit_5",
-            "transfer_wait_1",
-            "custom_rules_text",
-            "captain_by_value"
-          ],
-          "market_urgency": 1.5
-        }
-      },
-      "operations": [],
-      "skipped": [],
-      "counts": {
-        "planned": 0,
-        "executed": 0,
-        "failed": 0,
-        "skipped": 0
-      }
-    },
-    {
       "at": "2026-09-25T09:12:33.440191+00:00",
       "dry_run": false,
       "enabled": true,
@@ -5568,30 +5450,152 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-11-17T08:38:13.616604+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 0.0,
+        "usable": 1138231.0,
+        "cash_in": 0.0,
+        "spent": 0.0,
+        "projected_cash": 0.0,
+        "cycle_cap": 682939.0,
+        "single_cap": 455292.0,
+        "clause_cap": 341469.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 5
+      },
+      "context": {
+        "transfer_wait_hours": 24.0,
+        "transfer_locked": [
+          "2380539",
+          "65715"
+        ],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": null,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mr",
+          "provider_label": "SofaScore",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 3,
+          "market_stay": 2,
+          "transfer_wait": 1,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 25000,
+            "goals": 100000,
+            "best_xi": 250000
+          },
+          "custom_rules": "📣 Compite contra miles de usuarios en distintas divisiones, con ascensos y descensos al final de cada tramo ⚽ ¡En total, 7 tramos diferentes! ⭐\r\n\r\n✅ Todos los usuarios empiezan en la misma división con 15 jugadores aleatorios y millones para fichar, en igualdad de condiciones 🛒​\r\n\r\n🏆 El vencedor final de la Macroliga Oficial de Premier League en Mister Fantasy, que será el primer clasificado de la 1ª División al término de la jornada 38 de LaLiga, gana una camiseta del equipo que quiera de regalo 💝 \r\n\r\n⚡​ Criterios de desempate para ganar el premio a final de temporada:\r\n1. Usuario que haya ganado + jornadas en el último tramo (Jornadas 31 a 38).\r\n2. En caso de empate, usuario que haya quedado por delante de su rival en más ocasiones (las jornadas con empate a puntos se anulan).\r\n3. En caso de que continúe el empate: usuario que haya hecho más puntos en la última jornada (38).\r\n4. En caso de que aún continúe el empate: usuario que haya hecho más puntos en la primera jornada del último tramo (31).",
+          "type": "comunio",
+          "mode": "macro_league",
+          "external": "premier",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": true,
+            "known": true,
+            "mode": "by_market_value",
+            "multiplier": null,
+            "source": "admin",
+            "multiplier_source": "by_market_value"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 375000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "points": 25000.0,
+              "goals": 100000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 375000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_sofascore",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_1",
+            "custom_rules_text",
+            "captain_by_value"
+          ],
+          "market_urgency": 1.5
+        }
+      },
+      "operations": [],
+      "skipped": [],
+      "counts": {
+        "planned": 0,
+        "executed": 0,
+        "failed": 0,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-11-17T03:13:49.810319+00:00",
+  "updated_at": "2026-11-17T08:38:13.616604+00:00",
   "last_cycle": {
-    "at": "2026-11-17T03:13:49.810319+00:00",
+    "at": "2026-11-17T08:38:13.616604+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
       "balance": 0.0,
-      "usable": 4099731.0,
+      "usable": 1138231.0,
       "cash_in": 0.0,
-      "spent": 4076000.0,
-      "projected_cash": -4076000.0,
-      "cycle_cap": 2459839.0,
-      "single_cap": 1639892.0,
-      "clause_cap": 1229919.0,
+      "spent": 0.0,
+      "projected_cash": 0.0,
+      "cycle_cap": 682939.0,
+      "single_cap": 455292.0,
+      "clause_cap": 341469.0,
       "min_cash_floor": 0.0,
       "free_slots_left": 5
     },
     "context": {
       "transfer_wait_hours": 24.0,
       "transfer_locked": [
-        "2380539"
+        "2380539",
+        "65715"
       ],
       "stale_offers": [],
       "sale_remaining_after": 5,
@@ -5682,53 +5686,11 @@
         "market_urgency": 1.5
       }
     },
-    "operations": [
-      {
-        "kind": "bid",
-        "player_id": "65715",
-        "name": "B. Brobbey",
-        "position": "FW",
-        "amount": 4076000.0,
-        "status": "ok",
-        "error": null,
-        "unverified": null,
-        "why": "Puja 4.08M € (baja 180,000 € hoy, +5% (9,000 €)). La máquina puede llegar a 4.27M €.",
-        "request": {
-          "path": "/ajax/bid",
-          "data": {
-            "offeree_id": 0,
-            "id_market": 19816838709,
-            "id_player": "65715",
-            "action": "bid",
-            "bid": 4076000
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 0,
-            "id_player": 65715,
-            "id_market": 19816838709,
-            "action": "bid",
-            "bid": 4076000,
-            "price": 4067000,
-            "public": 1,
-            "barter": [],
-            "community_mode": "macro_league",
-            "balance": {
-              "current": -11042519,
-              "future": -15118519,
-              "maxDebt": 23731
-            }
-          }
-        },
-        "http_status": null
-      }
-    ],
+    "operations": [],
     "skipped": [],
     "counts": {
-      "planned": 1,
-      "executed": 1,
+      "planned": 0,
+      "executed": 0,
       "failed": 0,
       "skipped": 0
     }

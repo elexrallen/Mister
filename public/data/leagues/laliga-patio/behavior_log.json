@@ -587,7 +587,8 @@
                 "maxDebt": 26424624
               }
             }
-          }
+          },
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -627,7 +628,8 @@
           "buy_price": 7811200,
           "threshold": 8045536,
           "status": "recomendada",
-          "why": "Puja 7.81M € (sube 124,000 € hoy, +30% (37,200 €)). La máquina puede llegar a 8.16M €."
+          "why": "Puja 7.81M € (sube 124,000 € hoy, +30% (37,200 €)). La máquina puede llegar a 8.16M €.",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -646,21 +648,251 @@
           "why": "sin plaza"
         }
       ]
+    },
+    {
+      "at": "2026-11-17T08:30:19.103904+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "decline_offer",
+          "player_id": "6044",
+          "name": "E. Ünal",
+          "amount": 5471280,
+          "market_value": 5368000.0,
+          "buy_price": 5369100,
+          "threshold": 5530173,
+          "status": "bloqueada",
+          "why": "Oferta 5.47M € no supera 5.53M € (compra 5.37M € + 3%). Sigue listado.",
+          "error": "/ajax/resale tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_player": "6044",
+              "action": "decline"
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "70922",
+          "name": "I. Konaté 💥",
+          "amount": 11571040,
+          "market_value": 11187000.0,
+          "buy_price": 11144900,
+          "threshold": 11479247,
+          "status": "recomendada",
+          "why": "Oferta 11.57M € supera el +3% de la compra (11.14M €)."
+        },
+        {
+          "kind": "decline_offer",
+          "player_id": "65347",
+          "name": "R. Veiga",
+          "amount": 9436350,
+          "market_value": 9871000.0,
+          "buy_price": 9937200,
+          "threshold": 10235316,
+          "status": "bloqueada",
+          "why": "Oferta 9.44M € no supera 10.24M € (compra 9.94M € + 3%). Sigue listado.",
+          "error": "/ajax/resale tiene contrato sin confirmar; sondéalo con scripts/probe_offer_endpoints.py antes de habilitarlo",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_player": "65347",
+              "action": "decline"
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "3728",
+          "name": "M. Roca",
+          "amount": 8407000,
+          "market_value": 8380000.0,
+          "buy_price": 8407000,
+          "threshold": 8659210,
+          "status": "ejecutada",
+          "why": "Puja 8.41M € (sube 90,000 € hoy, +30% (27,000 €)). La máquina puede llegar a 8.8M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19820536564,
+              "id_player": "3728",
+              "action": "bid",
+              "bid": 8407000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 3728,
+              "id_market": 19820536564,
+              "action": "bid",
+              "bid": 8407000,
+              "price": 8380000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -25304926,
+                "future": -33711926,
+                "maxDebt": 25971574
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "15342",
+          "name": "A. Barrenetxea",
+          "amount": 7349150,
+          "market_value": 7340000.0,
+          "buy_price": 7349150,
+          "threshold": 7569624,
+          "status": "error",
+          "why": "Puja 7.35M € (baja 183,000 € hoy, +5% (9,150 €)). La máquina puede llegar a 7.71M €.",
+          "error": "/ajax/bid falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/bid — No puedes superar el límite de 25 jugadores en tu equipo",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19820536562,
+              "id_player": "15342",
+              "action": "bid",
+              "bid": 7349150
+            }
+          },
+          "response": {
+            "status": "error",
+            "popup": false,
+            "msg": "No puedes superar el límite de 25 jugadores en tu equipo"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "1713",
+          "name": "F. Lejeune",
+          "amount": 5983800,
+          "status": "descartada",
+          "why": "sin plaza"
+        },
+        {
+          "kind": "bid",
+          "player_id": "28780",
+          "name": "L. Cruz",
+          "amount": 5042950,
+          "status": "descartada",
+          "why": "sin plaza"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T08:39:59.911978+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "decline_offer",
+          "player_id": "6044",
+          "name": "E. Ünal",
+          "amount": 5471280,
+          "market_value": 5368000.0,
+          "buy_price": 5369100,
+          "threshold": 5530173,
+          "status": "recomendada",
+          "why": "Oferta 5.47M € no supera 5.53M € (compra 5.37M € + 3%). Sigue listado."
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "70922",
+          "name": "I. Konaté 💥",
+          "amount": 11571040,
+          "market_value": 11187000.0,
+          "buy_price": 11144900,
+          "threshold": 11479247,
+          "status": "recomendada",
+          "why": "Oferta 11.57M € supera el +3% de la compra (11.14M €)."
+        },
+        {
+          "kind": "decline_offer",
+          "player_id": "65347",
+          "name": "R. Veiga",
+          "amount": 9436350,
+          "market_value": 9871000.0,
+          "buy_price": 9937200,
+          "threshold": 10235316,
+          "status": "recomendada",
+          "why": "Oferta 9.44M € no supera 10.24M € (compra 9.94M € + 3%). Sigue listado."
+        },
+        {
+          "kind": "bid",
+          "player_id": "3728",
+          "name": "M. Roca",
+          "amount": 8407000,
+          "market_value": 8380000.0,
+          "buy_price": 8407000,
+          "threshold": 8659210,
+          "status": "recomendada",
+          "why": "Puja 8.41M € (sube 90,000 € hoy, +30% (27,000 €)). La máquina puede llegar a 8.8M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "15342",
+          "name": "A. Barrenetxea",
+          "amount": 7349150,
+          "market_value": 7340000.0,
+          "buy_price": 7349150,
+          "threshold": 7569624,
+          "status": "recomendada",
+          "why": "Puja 7.35M € (baja 183,000 € hoy, +5% (9,150 €)). La máquina puede llegar a 7.71M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "1713",
+          "name": "F. Lejeune",
+          "amount": 5983800,
+          "status": "descartada",
+          "why": "sin plaza"
+        },
+        {
+          "kind": "bid",
+          "player_id": "28780",
+          "name": "L. Cruz",
+          "amount": 5042950,
+          "status": "descartada",
+          "why": "sin plaza"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 22,
+      "bids": 30,
       "won": 12,
-      "lost": 0,
+      "lost": 2,
       "lists": 5,
-      "accepts": 0,
-      "profit": 0,
-      "short_offers": 0,
+      "accepts": 2,
+      "profit": 852280,
+      "short_offers": 4,
       "top_skips": [
         {
           "why": "sin plaza",
-          "count": 4
+          "count": 8
         },
         {
           "why": "sin caja",
@@ -669,17 +901,17 @@
       ]
     },
     "d14": {
-      "bids": 22,
+      "bids": 30,
       "won": 12,
-      "lost": 0,
+      "lost": 2,
       "lists": 5,
-      "accepts": 0,
-      "profit": 0,
-      "short_offers": 0,
+      "accepts": 2,
+      "profit": 852280,
+      "short_offers": 4,
       "top_skips": [
         {
           "why": "sin plaza",
-          "count": 4
+          "count": 8
         },
         {
           "why": "sin caja",
@@ -688,5 +920,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-17T03:15:49.405636+00:00"
+  "updated_at": "2026-11-17T08:39:59.911978+00:00"
 }

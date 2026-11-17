@@ -302,7 +302,8 @@
                 "maxDebt": 23731
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "list_for_sale",
@@ -467,6 +468,92 @@
           "name": "B. Brobbey",
           "amount": 4076000,
           "status": "descartada",
+          "why": "sin caja",
+          "result": "ganada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-17T08:34:02.479738+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 7
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "29363",
+          "name": "M. Rogers",
+          "amount": 19203000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4733613",
+          "name": "B. Barcola",
+          "amount": 14682400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "19389",
+          "name": "P. Neto",
+          "amount": 11684900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55979",
+          "name": "K. Mainoo",
+          "amount": 11795800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "58963",
+          "name": "D. Kamada",
+          "amount": 11042200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10432200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64540",
+          "name": "D. Ndoye",
+          "amount": 4742800,
+          "status": "descartada",
           "why": "sin caja"
         }
       ]
@@ -474,43 +561,43 @@
   ],
   "summary": {
     "d7": {
-      "bids": 36,
-      "won": 2,
+      "bids": 43,
+      "won": 4,
       "lost": 0,
-      "lists": 2,
+      "lists": 4,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 34
+          "count": 41
         },
         {
           "why": "espera compra→venta",
-          "count": 2
+          "count": 4
         }
       ]
     },
     "d14": {
-      "bids": 36,
-      "won": 2,
+      "bids": 43,
+      "won": 4,
       "lost": 0,
-      "lists": 2,
+      "lists": 4,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 34
+          "count": 41
         },
         {
           "why": "espera compra→venta",
-          "count": 2
+          "count": 4
         }
       ]
     }
   },
-  "updated_at": "2026-11-17T03:18:13.924338+00:00"
+  "updated_at": "2026-11-17T08:34:02.479738+00:00"
 }

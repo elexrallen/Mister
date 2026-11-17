@@ -28,15 +28,16 @@
       "opened_at": "2026-11-17T03:09:27.362608+00:00",
       "status": "owned",
       "listed": false
-    }
-  },
-  "watches": {
+    },
     "65715": {
       "player_id": "65715",
       "name": "B. Brobbey",
       "buy_price": 4076000,
-      "bid_at": "2026-11-17T03:09:27.362608+00:00"
+      "opened_at": "2026-11-17T08:34:02.479738+00:00",
+      "status": "owned",
+      "listed": false
     }
   },
+  "watches": {},
   "activated_at": "2026-11-16T15:34:06.138722+00:00"
 }
