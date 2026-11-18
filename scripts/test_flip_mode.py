@@ -471,6 +471,118 @@ def test_accept_frees_one_bid_slot() -> None:
     _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
 
 
+def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
+    """Sin cobro antes del pitido no se usa maxDebt. Con el cierre a tiempo, sí."""
+    book = _owned_book(["9"])
+    squad = [_player("9", name="R9", vm=8 * M, ask=8 * M)]
+    market = [_rising("21", "Soler")]
+    me = {"balance": 1 * M, "max_debt": 20 * M}
+    rules = _rules(sale_limit=10, max_squad=25)
+    blocked, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=market,
+        sales_state={},
+        me=me,
+        league_rules=rules,
+        hours_to_solvency_deadline=3,
+        cash_lag_hours=4,
+        cycle_hours=12,
+        now=NOW,
+    )
+    _assert(not any(m["kind"] == "bid" for m in blocked["moves"]), blocked["moves"])
+    reasons = " ".join(s.get("why") or "" for s in blocked["flip_skipped"])
+    _assert("negativo al inicio de la jornada" in reasons, blocked["flip_skipped"])
+
+    opened, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=market,
+        sales_state={},
+        me=me,
+        league_rules=rules,
+        hours_to_solvency_deadline=30,
+        cash_lag_hours=7,
+        cycle_hours=12,
+        now=NOW,
+    )
+    bids = [m for m in opened["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+
+
+def test_kickoff_uses_cash_already_in_hand() -> None:
+    plan, _book = build_flip_cycle(
+        book=fresh_book(),
+        enabled=True,
+        squad=[],
+        market=[_rising("21", "Soler")],
+        sales_state={},
+        me={"balance": 10 * M, "max_debt": 20 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        hours_to_solvency_deadline=3,
+        cash_lag_hours=4,
+        cycle_hours=8,
+        now=NOW,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+
+
+def test_kickoff_accepts_a_short_offer_to_cover_the_whistle() -> None:
+    book = _owned_book(["9"])
+    squad = [_player("9", name="R9", vm=6.5 * M, ask=6.5 * M, on_sale=True)]
+    offer = {
+        "player_id": "9",
+        "name": "R9",
+        "amount": 4_000_000,
+        "id_bid": "91",
+        "id_market": 91,
+        "id_uc": 0,
+    }
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[_rising("21", "Soler")],
+        sales_state={"pending_offers": [offer]},
+        me={"balance": -1 * M, "max_debt": 20 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        hours_to_solvency_deadline=3,
+        cash_lag_hours=4,
+        cycle_hours=8,
+        now=NOW,
+    )
+    kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
+    _assert(("9", "accept_offer") in kinds, kinds)
+    _assert(("9", "renew_offer") not in kinds, kinds)
+    _assert(not any(m["kind"] == "bid" for m in plan["moves"]), plan["moves"])
+    accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
+    _assert("pitido" in (accept.get("why") or ""), accept)
+
+
+def test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold() -> None:
+    common = dict(
+        book=fresh_book(),
+        enabled=True,
+        squad=[],
+        market=[_rising("21", "Soler")],
+        sales_state={},
+        me={"balance": 1 * M, "max_debt": 20 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        cash_lag_hours=3,
+        cycle_hours=8,
+        transfer_wait_hours=24,
+        now=NOW,
+    )
+    early, _book = build_flip_cycle(hours_to_solvency_deadline=10, **common)
+    _assert(not any(m["kind"] == "bid" for m in early["moves"]), early["moves"])
+    later, _book = build_flip_cycle(hours_to_solvency_deadline=80, **common)
+    bids = [m for m in later["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+
+
 def test_live_watch_occupies_a_slot_until_it_leaves_the_market() -> None:
     ids = [str(i) for i in range(1, 4)]
     book = _owned_book(ids)
@@ -723,6 +835,10 @@ def main() -> None:
     test_four_open_positions_allow_one_bid()
     test_accept_frees_one_bid_slot()
     test_live_watch_occupies_a_slot_until_it_leaves_the_market()
+    test_kickoff_blocks_a_bid_the_cycle_cannot_cover()
+    test_kickoff_uses_cash_already_in_hand()
+    test_kickoff_accepts_a_short_offer_to_cover_the_whistle()
+    test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold()
     test_full_sale_limit_blocks_new_bids()
     test_book_roundtrip()
     test_behavior_win_and_profit()

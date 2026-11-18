@@ -4490,21 +4490,32 @@ def _apply_flip_mode(
     enabled = flip_enabled(slug)
     book = load_book(slug)
     now = datetime.now(timezone.utc)
-    locked: set[str] = set()
+    wait_h = resolve_transfer_wait_hours(league_rules.get("transfer_wait"))
+    lock_map: dict[str, float] = {}
     try:
         from auto_executor import load_log, transfer_locked_ids
 
-        wait_h = resolve_transfer_wait_hours(league_rules.get("transfer_wait"))
-        locked = set(
-            transfer_locked_ids(
-                automation_log=load_log(slug),
-                transfer_wait_hours=wait_h,
-                now=now,
-            )
+        lock_map = transfer_locked_ids(
+            automation_log=load_log(slug),
+            transfer_wait_hours=wait_h,
+            now=now,
         )
     except Exception as exc:  # noqa: BLE001
         log.warning("[%s] no se pudo leer la espera compra→venta: %s", slug, exc)
-        wait_h = 0.0
+        lock_map = {}
+
+    cons = cycle_plan.get("constraints") if isinstance(cycle_plan, dict) else {}
+    clock = cycle_plan.get("cycle") if isinstance(cycle_plan, dict) else {}
+    cons = cons if isinstance(cons, dict) else {}
+    clock = clock if isinstance(clock, dict) else {}
+
+    def _hours(raw: Any) -> float | None:
+        try:
+            if raw is None or raw == "":
+                return None
+            return float(raw)
+        except (TypeError, ValueError):
+            return None
 
     flip_plan, book = build_flip_cycle(
         book=book,
@@ -4515,7 +4526,12 @@ def _apply_flip_mode(
         me=me,
         league_rules=league_rules,
         max_squad=max_squad,
-        locked_ids=locked,
+        locked_ids=set(lock_map),
+        lock_hours=lock_map,
+        hours_to_solvency_deadline=_hours(cons.get("hours_to_solvency_deadline")),
+        cash_lag_hours=_hours(clock.get("hours_to_end")),
+        cycle_hours=_hours(clock.get("cycle_hours")),
+        transfer_wait_hours=wait_h,
         now=now,
     )
     try:

@@ -11,13 +11,14 @@ momento de activarlo queda congelada.
 from __future__ import annotations
 
 import json
+import math
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 import config
-from competitive_actions import is_rival_market_listing, mister_bid_cap
+from competitive_actions import is_rival_market_listing, mister_bid_cap, sells_settle_before_deadline
 
 KIND_ACCEPT = "accept_offer"
 KIND_DECLINE = "decline_offer"
@@ -330,6 +331,29 @@ def _fmt_money(amount: float) -> str:
     return f"{n:,.0f} €"
 
 
+def _cash_arrival_hours(wait_remaining: float, lag: float | None, cycle: float | None) -> float | None:
+    """Horas hasta el cierre de ciclo en que cobra alguien que aún no puede listarse."""
+    if lag is None:
+        return None
+    wait = max(0.0, float(wait_remaining or 0))
+    lag_h = max(0.0, float(lag))
+    if wait <= 0:
+        return lag_h
+    step = float(cycle or 0)
+    if step <= 0:
+        return None
+    if lag_h + 1e-9 >= wait:
+        return lag_h
+    steps = math.ceil((wait - lag_h) / step - 1e-9)
+    return lag_h + steps * step
+
+
+def _sale_lands_before_kickoff(hours: float | None, lag: float | None) -> bool:
+    if hours is None or lag is None:
+        return False
+    return sells_settle_before_deadline(hours_to_deadline=hours, cash_lag_hours=lag)
+
+
 def build_flip_cycle(
     *,
     book: dict[str, Any] | None,
@@ -341,6 +365,11 @@ def build_flip_cycle(
     league_rules: dict[str, Any] | None,
     max_squad: int | None = None,
     locked_ids: set[str] | None = None,
+    lock_hours: dict[str, float] | None = None,
+    hours_to_solvency_deadline: float | None = None,
+    cash_lag_hours: float | None = None,
+    cycle_hours: float | None = None,
+    transfer_wait_hours: float | None = None,
     now: datetime | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     """Plan de reventa y libro ya actualizado. Con el modo apagado solo salen las ventas abiertas."""
@@ -515,6 +544,77 @@ def build_flip_cycle(
         )
         list_room -= 1
 
+    raw_balance = _f(me.get("balance"))
+    balance = 0.0 if raw_balance is None else raw_balance
+    max_debt = _f(me.get("max_debt"))
+    hours_deadline = _f(hours_to_solvency_deadline)
+    lag = _f(cash_lag_hours)
+    cycle_h = _f(cycle_hours)
+    wait_new = max(0.0, float(transfer_wait_hours or 0))
+    lock_left = {str(pid): float(hours) for pid, hours in (lock_hours or {}).items()}
+
+    listed_now = {
+        pid
+        for pid, pos in positions.items()
+        if isinstance(pos, dict)
+        and (
+            pos.get("status") == "listed"
+            or pos.get("listed")
+            or _listed(by_id.get(pid) or {})
+        )
+    }
+    list_ids = {str(m.get("player_id") or "") for m in moves if m.get("kind") == KIND_LIST}
+    timely: dict[str, float] = {}
+    for pid, pos in positions.items():
+        if not isinstance(pos, dict) or pos.get("status") == "sold":
+            continue
+        if pid in frozen or pid in accept_ids:
+            continue
+        player = by_id.get(pid)
+        if player is None:
+            continue
+        vm = _vm(player)
+        if vm <= 0:
+            continue
+        if pid in locked:
+            rem = lock_left.get(pid, wait_new)
+            arrival = _cash_arrival_hours(rem, lag, cycle_h)
+        elif pid in list_ids or pid in listed_now:
+            arrival = lag
+        else:
+            continue
+        if _sale_lands_before_kickoff(hours_deadline, arrival):
+            timely[pid] = vm
+
+    ko_cash = balance + cash_in + sum(timely.values())
+    if ko_cash < -1:
+        renews = [m for m in moves if m.get("kind") == KIND_RENEW]
+        renews.sort(key=lambda m: -_money(m.get("amount")))
+        for offer_move in renews:
+            if ko_cash >= -1:
+                break
+            pid = str(offer_move.get("player_id") or "")
+            amount = _money(offer_move.get("amount"))
+            if amount <= 0 or not pid:
+                continue
+            counted = timely.get(pid, 0.0)
+            if amount - counted <= 0:
+                continue
+            if pid in timely:
+                ko_cash -= timely.pop(pid)
+                moves[:] = [
+                    row
+                    for row in moves
+                    if not (row.get("kind") == KIND_LIST and str(row.get("player_id") or "") == pid)
+                ]
+            ko_cash += amount
+            cash_in += amount
+            accept_ids.add(pid)
+            offer_move["kind"] = KIND_ACCEPT
+            offer_move["why"] = (
+                f"Oferta {_fmt_money(amount)} se acepta para no llegar en negativo al pitido."
+            )
+
     max_open = int(config.FLIP_MAX_OPEN)
     market_ids = {_pid(row) for row in (market or []) if isinstance(row, dict) and _pid(row)}
     pending_sale = {
@@ -547,12 +647,12 @@ def build_flip_cycle(
             quotes.append((edge, row, quote))
         quotes.sort(key=lambda item: -item[0])
 
-    balance = _money(me.get("balance"))
-    max_debt = _f(me.get("max_debt"))
-    spendable = mister_bid_cap(balance + cash_in, max_debt)
+    debt_cap = mister_bid_cap(balance + cash_in, max_debt)
     free_slots = max(0, cap - len(by_id) + len(accept_ids))
+    room = ko_cash
     spent = 0.0
     taken = 0
+    ko_why = "dejaría el saldo en negativo al inicio de la jornada"
     if active and list_room <= 0:
         skipped.append(
             {
@@ -599,7 +699,27 @@ def build_flip_cycle(
                 }
             )
             continue
-        if spent + quote["bid"] > spendable + 1:
+        vm_back = 0.0
+        if wait_new <= 0:
+            if list_room > 0 and _sale_lands_before_kickoff(hours_deadline, lag):
+                vm_back = quote["vm"]
+        else:
+            arrival = _cash_arrival_hours(wait_new, lag, cycle_h)
+            if _sale_lands_before_kickoff(hours_deadline, arrival):
+                vm_back = quote["vm"]
+        if room - quote["bid"] + vm_back < -1:
+            skipped.append(
+                {
+                    "kind": KIND_BID,
+                    "player_id": pid,
+                    "name": row.get("name"),
+                    "amount": quote["bid"],
+                    "why": ko_why,
+                    "status": "descartada",
+                }
+            )
+            continue
+        if spent + quote["bid"] > debt_cap + 1:
             skipped.append(
                 {
                     "kind": KIND_BID,
@@ -646,6 +766,9 @@ def build_flip_cycle(
             "buy_price": quote["bid"],
             "bid_at": now_iso,
         }
+        if vm_back > 0 and wait_new <= 0:
+            list_room -= 1
+        room = room - quote["bid"] + vm_back
         spent += quote["bid"]
         taken += 1
 
@@ -679,7 +802,9 @@ def build_flip_cycle(
             "listed_count": len(listed_ids),
             "sale_remaining": sale_remaining,
             "balance": balance,
-            "spendable": round(spendable),
+            "max_debt": None if max_debt is None else round(max_debt),
+            "spendable": round(max(spent, min(debt_cap, max(0.0, ko_cash)))),
+            "hours_to_solvency_deadline": hours_deadline,
             "holds_count": 0,
         },
         "squad_value": {},
