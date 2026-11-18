@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-18T08:34:09.925268+00:00",
+  "generated_at": "2026-11-18T12:24:22.686972+00:00",
   "default_slug": "laliga-patio",
   "leagues": [
     {
@@ -122,9 +122,9 @@
       "id_competition": 10,
       "season_start": null,
       "default": false,
-      "generated_at": "2026-11-18T08:30:10.953418+00:00",
+      "generated_at": "2026-11-18T12:24:22.560025+00:00",
       "path": "leagues/serie-a-d1g1-0625/latest_data.json",
-      "balance": 3781990,
+      "balance": 709446,
       "rank": 11,
       "market_mode": "auction",
       "max_squad": 25,
@@ -170,7 +170,7 @@
       },
       "automated": false,
       "automation_dry_run": false,
-      "flip_mode": false
+      "flip_mode": true
     }
   ]
 }
