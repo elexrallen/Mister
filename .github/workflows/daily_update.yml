@@ -3,19 +3,21 @@
 # El commit histórico del snapshot pasa a ser best-effort y no bloquea el deploy.
 #
 # Disparos:
-#   - cron cada 2 horas (minuto 30 UTC)
+#   - cron cada 2 horas (minuto 30 UTC, horas explícitas)
 #   - workflow_dispatch (Actions UI)
 #   - repository_dispatch type=refresh-data (botón PWA vía Cloudflare Worker)
 #
-# El minuto :30 evita coincidir con la rotación de Mister, que cierra el
-# mercado en punto. Un solo cron UTC: la frecuencia no depende del DST.
+# Horas en lista, no `*/2`: con el paso GitHub dejó de crear runs schedule
+# (el mismo workflow sí disparaba crons de una hora concreta). El minuto :30
+# evita la rotación de Mister, que cierra el mercado en punto. UTC; en
+# invierno cae en horas impares de Madrid y en verano en las pares.
 
 name: Daily data update
 
 on:
   schedule:
-    # Cada 2 horas, minuto 30 UTC (00:30, 02:30, … 22:30).
-    - cron: "30 */2 * * *"
+    # Cada 2 horas: 00:30, 02:30, …, 22:30 UTC.
+    - cron: "30 0,2,4,6,8,10,12,14,16,18,20,22 * * *"
   repository_dispatch:
     types: [refresh-data]
   workflow_dispatch:
