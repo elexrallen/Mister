@@ -1751,11 +1751,139 @@
           "why": "Puja 5.04M € (sube 142,000 € hoy, +30% (42,600 €)). La máquina puede llegar a 5.24M €."
         }
       ]
+    },
+    {
+      "at": "2026-11-18T02:33:40.901479+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "amount": 11578200,
+          "market_value": 11562000.0,
+          "buy_price": 11578200,
+          "threshold": 11925546,
+          "status": "ejecutada",
+          "why": "Puja 11.58M € (sube 54,000 € hoy, +30% (16,200 €)). La máquina puede llegar a 12.14M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19824878687,
+              "id_player": "29223",
+              "action": "update",
+              "bid": 11578200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 29223,
+              "id_market": 19824878687,
+              "action": "update",
+              "bid": 11578200,
+              "price": 11562000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -22309686,
+                "future": -38923486,
+                "maxDebt": 20160264
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "25867",
+          "name": "A. Blanco",
+          "amount": 5035600,
+          "market_value": 4993000.0,
+          "buy_price": 5035600,
+          "threshold": 5186668,
+          "status": "ejecutada",
+          "why": "Puja 5.04M € (sube 142,000 € hoy, +30% (42,600 €)). La máquina puede llegar a 5.24M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19824878683,
+              "id_player": "25867",
+              "action": "update",
+              "bid": 5035600
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 25867,
+              "id_market": 19824878683,
+              "action": "update",
+              "bid": 5035600,
+              "price": 4993000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -22309686,
+                "future": -38923486,
+                "maxDebt": 20160264
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-18T02:43:04.369428+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "amount": 11578200,
+          "market_value": 11562000.0,
+          "buy_price": 11578200,
+          "threshold": 11925546,
+          "status": "recomendada",
+          "why": "Puja 11.58M € (sube 54,000 € hoy, +30% (16,200 €)). La máquina puede llegar a 12.14M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "25867",
+          "name": "A. Blanco",
+          "amount": 5035600,
+          "market_value": 4993000.0,
+          "buy_price": 5035600,
+          "threshold": 5186668,
+          "status": "recomendada",
+          "why": "Puja 5.04M € (sube 142,000 € hoy, +30% (42,600 €)). La máquina puede llegar a 5.24M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 46,
+      "bids": 50,
       "won": 28,
       "lost": 2,
       "lists": 7,
@@ -1774,7 +1902,7 @@
       ]
     },
     "d14": {
-      "bids": 46,
+      "bids": 50,
       "won": 28,
       "lost": 2,
       "lists": 7,
@@ -1793,5 +1921,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-17T21:28:36.042574+00:00"
+  "updated_at": "2026-11-18T02:43:04.369428+00:00"
 }

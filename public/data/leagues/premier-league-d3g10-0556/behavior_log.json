@@ -876,47 +876,84 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-18T02:37:14.369027+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "7083",
+          "name": "P. Groß",
+          "amount": 15240400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "18009",
+          "name": "J. Justin",
+          "amount": 11690800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 62,
+      "bids": 64,
       "won": 4,
       "lost": 4,
-      "lists": 13,
+      "lists": 14,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 60
+          "count": 62
         },
         {
           "why": "espera compra→venta",
-          "count": 12
+          "count": 13
         }
       ]
     },
     "d14": {
-      "bids": 62,
+      "bids": 64,
       "won": 4,
       "lost": 4,
-      "lists": 13,
+      "lists": 14,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 60
+          "count": 62
         },
         {
           "why": "espera compra→venta",
-          "count": 12
+          "count": 13
         }
       ]
     }
   },
-  "updated_at": "2026-11-17T21:30:48.039383+00:00"
+  "updated_at": "2026-11-18T02:37:14.369027+00:00"
 }
