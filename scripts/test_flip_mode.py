@@ -382,6 +382,117 @@ def test_disable_stops_bids_and_keeps_exit() -> None:
     _assert(book["active"] is False, book["active"])
 
 
+def _rising(pid: str, name: str) -> dict:
+    return _player(pid, name=name, vm=6 * M, ask=6 * M, prev=6 * M - 50_000)
+
+
+def _owned_book(ids: list[str]) -> dict:
+    book = fresh_book()
+    book["active"] = True
+    book["frozen_ids"] = []
+    book["positions"] = {
+        pid: {
+            "player_id": pid,
+            "name": f"R{pid}",
+            "buy_price": 5_000_000,
+            "status": "owned",
+            "listed": False,
+        }
+        for pid in ids
+    }
+    return book
+
+
+def test_five_open_positions_block_new_bids() -> None:
+    ids = [str(i) for i in range(1, 6)]
+    squad = [_player(pid, name=f"R{pid}", vm=5 * M, ask=5 * M) for pid in ids]
+    plan, _book = build_flip_cycle(
+        book=_owned_book(ids),
+        enabled=True,
+        squad=squad,
+        market=[_rising("21", "Soler")],
+        sales_state={},
+        me={"balance": 40 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        now=NOW,
+    )
+    _assert(not any(m["kind"] == "bid" for m in plan["moves"]), plan["moves"])
+    reasons = " ".join(s.get("why") or "" for s in plan["flip_skipped"])
+    _assert("cupo de reventa lleno (5)" in reasons, plan["flip_skipped"])
+    _assert(plan["flip"]["max_open"] == 5, plan["flip"])
+
+
+def test_four_open_positions_allow_one_bid() -> None:
+    ids = [str(i) for i in range(1, 5)]
+    squad = [_player(pid, name=f"R{pid}", vm=5 * M, ask=5 * M) for pid in ids]
+    plan, _book = build_flip_cycle(
+        book=_owned_book(ids),
+        enabled=True,
+        squad=squad,
+        market=[_rising("21", "Soler"), _rising("22", "Otro")],
+        sales_state={},
+        me={"balance": 40 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        now=NOW,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1, bids)
+    skipped = [s for s in plan["flip_skipped"] if s.get("kind") == "bid"]
+    _assert(any("cupo de reventa lleno (5)" in (s.get("why") or "") for s in skipped), skipped)
+
+
+def test_accept_frees_one_bid_slot() -> None:
+    ids = [str(i) for i in range(1, 6)]
+    book = _owned_book(ids)
+    squad = [_player(pid, name=f"R{pid}", vm=5 * M, ask=5 * M) for pid in ids]
+    squad[0]["market_value"] = 6.5 * M
+    squad[0]["price"] = 6.5 * M
+    offer = {
+        "player_id": "1",
+        "name": "R1",
+        "amount": 6_710_000,
+        "id_bid": "91",
+        "id_market": 91,
+        "id_uc": 0,
+    }
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[_rising("21", "Soler")],
+        sales_state={"pending_offers": [offer]},
+        me={"balance": 40 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        now=NOW,
+    )
+    kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
+    _assert(("1", "accept_offer") in kinds, kinds)
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+
+
+def test_live_watch_occupies_a_slot_until_it_leaves_the_market() -> None:
+    ids = [str(i) for i in range(1, 4)]
+    book = _owned_book(ids)
+    book["watches"] = {
+        "21": {"player_id": "21", "name": "Soler", "buy_price": 6_015_000},
+        "99": {"player_id": "99", "name": "Perdida", "buy_price": 6_015_000},
+    }
+    squad = [_player(pid, name=f"R{pid}", vm=5 * M, ask=5 * M) for pid in ids]
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[_rising("21", "Soler"), _rising("22", "Otro")],
+        sales_state={},
+        me={"balance": 40 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        now=NOW,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "22", bids)
+
+
 def test_full_sale_limit_blocks_new_bids() -> None:
     squad = [_player("1", name="L", vm=5 * M, ask=5 * M, on_sale=True)]
     market = [_player("21", name="Soler", vm=6 * M, ask=6 * M, prev=6 * M - 50_000)]
@@ -608,6 +719,10 @@ def main() -> None:
     test_fallen_market_accepts_below_buy_price()
     test_konate_accepts_and_the_other_two_renew()
     test_disable_stops_bids_and_keeps_exit()
+    test_five_open_positions_block_new_bids()
+    test_four_open_positions_allow_one_bid()
+    test_accept_frees_one_bid_slot()
+    test_live_watch_occupies_a_slot_until_it_leaves_the_market()
     test_full_sale_limit_blocks_new_bids()
     test_book_roundtrip()
     test_behavior_win_and_profit()

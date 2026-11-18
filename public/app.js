@@ -1999,8 +1999,11 @@
       flip.frozen_count != null
         ? `<span>Congelados ${Number(flip.frozen_count)}</span>`
         : "";
+    const maxOpen = Number(flip.max_open);
     const openNote =
-      Number(flip.open_count) > 0 ? `<span>En reventa ${Number(flip.open_count)}</span>` : "";
+      Number(flip.open_count) > 0
+        ? `<span>En reventa ${Number(flip.open_count)}${maxOpen > 0 ? `/${maxOpen}` : ""}</span>`
+        : "";
     heroRoot.innerHTML = `<article class="cycle-plan-copy">
       <div class="cycle-plan-head">
         <p class="command-label">${escapeHtml(clock || "Ciclo de mercado")}</p>

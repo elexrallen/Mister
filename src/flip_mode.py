@@ -515,14 +515,29 @@ def build_flip_cycle(
         )
         list_room -= 1
 
+    max_open = int(config.FLIP_MAX_OPEN)
+    market_ids = {_pid(row) for row in (market or []) if isinstance(row, dict) and _pid(row)}
+    pending_sale = {
+        pid
+        for pid, pos in positions.items()
+        if isinstance(pos, dict) and pos.get("status") != "sold" and pid not in accept_ids
+    }
+    live_watches = {
+        pid
+        for pid in (book.get("watches") or {})
+        if pid and pid not in by_id and pid not in pending_sale and pid in market_ids
+    }
+    bid_room = max(0, max_open - len(pending_sale) - len(live_watches))
+    cupo_why = f"cupo de reventa lleno ({max_open}): no se puja hasta vender uno"
+
     quotes: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
-    if active and list_room > 0:
+    if active and list_room > 0 and bid_room > 0:
         seen: set[str] = set()
         for row in market or []:
             if not isinstance(row, dict):
                 continue
             pid = _pid(row)
-            if not pid or pid in seen or pid in by_id or pid in frozen:
+            if not pid or pid in seen or pid in by_id or pid in frozen or pid in live_watches:
                 continue
             seen.add(pid)
             quote = quote_bid(row)
@@ -548,8 +563,30 @@ def build_flip_cycle(
                 "status": "descartada",
             }
         )
+    elif active and bid_room <= 0:
+        skipped.append(
+            {
+                "kind": KIND_BID,
+                "player_id": "",
+                "name": "",
+                "why": cupo_why,
+                "status": "descartada",
+            }
+        )
     for edge, row, quote in quotes:
         pid = _pid(row)
+        if taken >= bid_room:
+            skipped.append(
+                {
+                    "kind": KIND_BID,
+                    "player_id": pid,
+                    "name": row.get("name"),
+                    "amount": quote["bid"],
+                    "why": cupo_why,
+                    "status": "descartada",
+                }
+            )
+            continue
         if taken >= free_slots:
             skipped.append(
                 {
@@ -660,6 +697,7 @@ def build_flip_cycle(
             "enabled": active,
             "frozen_count": len(frozen),
             "open_count": open_n,
+            "max_open": max_open,
             "eligible": len(quotes),
         },
         "flip_skipped": skipped,
@@ -686,6 +724,7 @@ def merge_flip_exit(normal: dict[str, Any] | None, flip_plan: dict[str, Any], bo
         "enabled": False,
         "frozen_count": len(book.get("frozen_ids") or []),
         "open_count": len(open_ids),
+        "max_open": int(config.FLIP_MAX_OPEN),
         "eligible": 0,
     }
     return base
