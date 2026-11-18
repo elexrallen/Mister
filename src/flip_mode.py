@@ -464,16 +464,16 @@ def build_flip_cycle(
                 )
             )
             continue
-        threshold = vm * (1.0 + float(config.FLIP_MIN_PROFIT))
-        extra["threshold"] = round(threshold)
-        if amount > threshold:
+        threshold = round(vm * (1.0 + float(config.FLIP_MIN_PROFIT)))
+        extra["threshold"] = threshold
+        if amount >= threshold:
             moves.append(
                 _move(
                     player,
                     kind=KIND_ACCEPT,
                     amount=amount,
                     why=(
-                        f"Oferta {_fmt_money(amount)} supera el +3% del valor de mercado "
+                        f"Oferta {_fmt_money(amount)} llega al +3% del valor de mercado "
                         f"({_fmt_money(vm)})."
                     ),
                     extra=extra,
@@ -490,7 +490,7 @@ def build_flip_cycle(
                     kind=KIND_RENEW,
                     amount=amount,
                     why=(
-                        f"Oferta {_fmt_money(amount)} no supera {_fmt_money(threshold)} "
+                        f"Oferta {_fmt_money(amount)} no llega a {_fmt_money(threshold)} "
                         f"(valor de mercado {_fmt_money(vm)} + 3%). "
                         "Se renueva el listado."
                     ),
@@ -784,7 +784,7 @@ def build_flip_cycle(
             f"{taken} puja{'s' if taken != 1 else ''} por libres de más de 4M con margen para el +3%."
         )
     elif moves:
-        narrative = "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados para eso, solo por encima del +3% del valor de mercado."
+        narrative = "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados para eso, desde el +3% del valor de mercado."
     else:
         narrative = "Reventa apagada."
 

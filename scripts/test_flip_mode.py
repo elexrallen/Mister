@@ -236,6 +236,23 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     renew = next(m for m in plan["moves"] if m["kind"] == "renew_offer")
     _assert(renew.get("threshold") == round(6.5 * M * 1.03), renew)
 
+    # Justo el +3% del VM se acepta.
+    exact = round(6.5 * M * 1.03)
+    offers[1]["amount"] = exact
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={"pending_offers": offers},
+        me={"balance": 1 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
+    _assert(accept["player_id"] == "9" and accept["amount"] == exact, accept)
+    _assert(accept.get("threshold") == exact, accept)
+
     offers[1]["amount"] = 6_710_000
     plan, _book = build_flip_cycle(
         book=book,

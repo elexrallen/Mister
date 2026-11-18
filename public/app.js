@@ -1979,7 +1979,7 @@
     const clock = cycleClockLabel(data);
     if (hint) {
       hint.textContent = flipOn
-        ? "Reventa: la plantilla congelada no se toca. Solo se acepta una oferta si supera el valor de mercado actual en más de un 3%."
+        ? "Reventa: la plantilla congelada no se toca. Solo se acepta una oferta si llega al valor de mercado actual más un 3%."
         : clock
           ? `${clock}. Listas ahora; el siguiente ciclo aceptas (≈ VM) y el dinero llega al instante.`
           : "Solo movimientos de este ciclo. Listas ahora; el siguiente aceptas y cobra al instante.";
@@ -3800,7 +3800,7 @@
   async function requestFlipMode(enabled) {
     const message = enabled
       ? "Congela la plantilla actual de esta liga y solo busca reventas. ¿Activar?"
-      : "Deja de pujar. La plantilla congelada vuelve al plan normal. Los jugadores ya comprados para revender se siguen vendiendo si la oferta supera el +3% del valor de mercado.";
+      : "Deja de pujar. La plantilla congelada vuelve al plan normal. Los jugadores ya comprados para revender se siguen vendiendo si la oferta llega al +3% del valor de mercado.";
     if (!window.confirm(message)) return;
     const league = currentLeagueSlug || "";
     if (!league) {
