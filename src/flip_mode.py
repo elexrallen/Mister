@@ -392,7 +392,8 @@ def build_flip_cycle(
         pos = positions.get(pid)
         if not isinstance(pos, dict) or pos.get("status") == "sold":
             continue
-        player = by_id.get(pid) or offer
+        squad_player = by_id.get(pid)
+        player = squad_player or offer
         amount = _money(offer.get("amount") or offer.get("bid"))
         buy = _f(pos.get("buy_price"))
         if buy is None or buy <= 0:
@@ -406,10 +407,14 @@ def build_flip_cycle(
                 }
             )
             continue
-        threshold = buy * (1.0 + float(config.FLIP_MIN_PROFIT))
+        # El +3% se mide sobre el valor de mercado de este ciclo. Si la ficha
+        # no trae valor, vale el de la oferta.
+        vm = _vm(squad_player) if isinstance(squad_player, dict) else 0.0
+        if vm <= 0:
+            vm = _vm(offer)
         extra = {
             "buy_price": round(buy),
-            "threshold": round(threshold),
+            "market_value": round(vm) if vm > 0 else None,
             "from_machine": offer.get("from_machine", True),
             # El check y el botón circular identifican la oferta y el listado,
             # no al dueño. id_uc es quien puja (0 = máquina).
@@ -417,6 +422,21 @@ def build_flip_cycle(
             "id_market": offer.get("id_market"),
             "id_uc": offer.get("id_uc"),
         }
+        if vm <= 0:
+            if status != "pending":
+                continue
+            moves.append(
+                _move(
+                    player,
+                    kind=KIND_RENEW,
+                    amount=amount,
+                    why="Sin valor de mercado: no se acepta. Se renueva el listado.",
+                    extra=extra,
+                )
+            )
+            continue
+        threshold = vm * (1.0 + float(config.FLIP_MIN_PROFIT))
+        extra["threshold"] = round(threshold)
         if amount > threshold:
             moves.append(
                 _move(
@@ -424,8 +444,8 @@ def build_flip_cycle(
                     kind=KIND_ACCEPT,
                     amount=amount,
                     why=(
-                        f"Oferta {_fmt_money(amount)} supera el +3% de la compra "
-                        f"({_fmt_money(buy)})."
+                        f"Oferta {_fmt_money(amount)} supera el +3% del valor de mercado "
+                        f"({_fmt_money(vm)})."
                     ),
                     extra=extra,
                 )
@@ -442,7 +462,7 @@ def build_flip_cycle(
                     amount=amount,
                     why=(
                         f"Oferta {_fmt_money(amount)} no supera {_fmt_money(threshold)} "
-                        f"(compra {_fmt_money(buy)} + 3%). "
+                        f"(valor de mercado {_fmt_money(vm)} + 3%). "
                         "Se renueva el listado."
                     ),
                     extra=extra,
@@ -604,7 +624,7 @@ def build_flip_cycle(
             f"{taken} puja{'s' if taken != 1 else ''} por libres de más de 4M con margen para el +3%."
         )
     elif moves:
-        narrative = "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados para eso, solo por encima del +3%."
+        narrative = "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados para eso, solo por encima del +3% del valor de mercado."
     else:
         narrative = "Reventa apagada."
 

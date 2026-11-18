@@ -218,6 +218,7 @@ def test_offer_threshold_and_frozen_untouched() -> None:
     _assert(renew.get("id_uc") == 0, renew)
     _assert("renueva" in (renew.get("why") or "").lower(), renew)
 
+    # 6,65 M pasa el +3% de la compra (6,60 M) y se queda bajo el +3% del VM (6,70 M).
     offers[1]["amount"] = 6_650_000
     plan, _book = build_flip_cycle(
         book=book,
@@ -229,9 +230,68 @@ def test_offer_threshold_and_frozen_untouched() -> None:
         league_rules=_rules(),
         now=NOW,
     )
+    kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
+    _assert(("9", "renew_offer") in kinds, kinds)
+    _assert(("9", "accept_offer") not in kinds, kinds)
+    renew = next(m for m in plan["moves"] if m["kind"] == "renew_offer")
+    _assert(renew.get("threshold") == round(6.5 * M * 1.03), renew)
+
+    offers[1]["amount"] = 6_710_000
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={"pending_offers": offers},
+        me={"balance": 1 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
     accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
-    _assert(accept["player_id"] == "9" and accept["amount"] == 6_650_000, accept)
+    _assert(accept["player_id"] == "9" and accept["amount"] == 6_710_000, accept)
     _assert(accept.get("id_bid") in (847981312, "847981312"), accept)
+    _assert(accept.get("threshold") == round(6.5 * M * 1.03), accept)
+    _assert("valor de mercado" in (accept.get("why") or "").lower(), accept)
+
+
+def test_fallen_market_accepts_below_buy_price() -> None:
+    """Si el valor cae, el +3% se mide sobre el VM actual, no sobre la compra."""
+    book = fresh_book()
+    book["active"] = True
+    book["frozen_ids"] = []
+    book["positions"] = {
+        "9": {
+            "player_id": "9",
+            "name": "Caido",
+            "buy_price": 8_000_000,
+            "status": "listed",
+            "listed": True,
+        }
+    }
+    squad = [_player("9", name="Caido", vm=6.5 * M, ask=6.5 * M, on_sale=True)]
+    offer = {
+        "player_id": "9",
+        "name": "Caido",
+        "amount": 6_710_000,
+        "market_value": 8_000_000,
+        "id_bid": "91",
+        "id_market": 91,
+        "id_uc": 0,
+    }
+    plan, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={"pending_offers": [offer]},
+        me={"balance": 1 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
+    _assert(accept["player_id"] == "9" and accept["amount"] == 6_710_000, accept)
+    _assert(accept["amount"] < 8_000_000 * 1.03, accept)
+    _assert(accept.get("threshold") == round(6.5 * M * 1.03), accept)
 
 
 def test_konate_accepts_and_the_other_two_renew() -> None:
@@ -545,6 +605,7 @@ def main() -> None:
     test_cash_keeps_the_wider_margin()
     test_snapshot_is_not_retaken()
     test_offer_threshold_and_frozen_untouched()
+    test_fallen_market_accepts_below_buy_price()
     test_konate_accepts_and_the_other_two_renew()
     test_disable_stops_bids_and_keeps_exit()
     test_full_sale_limit_blocks_new_bids()

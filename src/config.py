@@ -356,7 +356,7 @@ AUTOMATION_DEFAULTS: dict = {
     # se registra como bloqueado. `sell_to_system` y `accept_offer` quedan
     # fuera de inicio: el primero regala un 20%; el segundo tiene endpoint
     # sin plantilla (`/ajax/offer`). La reventa (`flip_play`) es la excepción:
-    # acepta por encima del +3% y relista con /ajax/resale. `clause_bid` sí:
+    # acepta por encima del +3% del valor de mercado y relista con /ajax/resale. `clause_bid` sí:
     # el POST es id_player + id_uc.
     "allowed_actions": [
         "bid",

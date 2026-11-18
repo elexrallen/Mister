@@ -524,7 +524,7 @@ def plan_operations(
             amount = _money(move.get("amount") or move.get("bid") or move.get("price"))
 
             # La reventa vive aparte del fichaje automático: aceptar por encima
-            # del +3% y renovar el listado son el propio modo, aunque
+            # del +3% del valor de mercado y renovar el listado son el propio modo, aunque
             # `accept_offer` no esté en allowed_actions.
             flip_offer = bool(move.get("flip_play")) and kind in {
                 KIND_ACCEPT,
