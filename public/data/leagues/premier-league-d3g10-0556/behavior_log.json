@@ -1163,8 +1163,22 @@
           "market_value": 1106000.0,
           "buy_price": null,
           "threshold": null,
-          "status": "recomendada",
-          "why": "Listar a 1.11M € para que la máquina oferte en el siguiente ciclo."
+          "status": "error",
+          "why": "Listar a 1.11M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 21 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1106000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 21 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
         },
         {
           "kind": "bid",
