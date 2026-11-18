@@ -3,26 +3,19 @@
 # El commit histórico del snapshot pasa a ser best-effort y no bloquea el deploy.
 #
 # Disparos:
-#   - cron ~30 min después de cada ciclo Mister (5 / 13 / 21 hora España)
+#   - cron cada 2 horas (minuto 30 UTC)
 #   - workflow_dispatch (Actions UI)
 #   - repository_dispatch type=refresh-data (botón PWA vía Cloudflare Worker)
 #
-# GitHub Cron es UTC y no entiende DST. Se programan las 6 horas candidatas
-# (verano 03:30/11:30/19:30 UTC, invierno 04:30/12:30/20:30 UTC). El guard
-# Europe/Madrid omite la pareja de la otra franja DST. No usa una ventana
-# de 50 min: GitHub suele retrasar el cron horas y esa ventana lo mataba.
+# El minuto :30 evita coincidir con la rotación de Mister, que cierra el
+# mercado en punto. Un solo cron UTC: la frecuencia no depende del DST.
 
 name: Daily data update
 
 on:
   schedule:
-    # 05:30 / 13:30 / 21:30 Europe/Madrid (verano = UTC+2, invierno = UTC+1)
-    - cron: "30 3 * * *"
-    - cron: "30 4 * * *"
-    - cron: "30 11 * * *"
-    - cron: "30 12 * * *"
-    - cron: "30 19 * * *"
-    - cron: "30 20 * * *"
+    # Cada 2 horas, minuto 30 UTC (00:30, 02:30, … 22:30).
+    - cron: "30 */2 * * *"
   repository_dispatch:
     types: [refresh-data]
   workflow_dispatch:
@@ -56,37 +49,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Cycle window guard (Europe/Madrid)
-        id: guard
-        if: github.event_name == 'schedule'
-        env:
-          GITHUB_SCHEDULE: ${{ github.event.schedule }}
-        run: |
-          python3 - <<'PY'
-          import os
-          import sys
-          from pathlib import Path
-          sys.path.insert(0, str(Path("src").resolve()))
-          from market_cycle import should_run_cycle_refresh
-          result = should_run_cycle_refresh(
-              schedule=os.environ.get("GITHUB_SCHEDULE") or None
-          )
-          print(result)
-          run = "true" if result.get("run") else "false"
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
-              fh.write(f"run={run}\n")
-          if run != "true":
-              print(
-                  "Cron de la otra franja DST (verano vs invierno); se omite. "
-                  "El de 05:30/13:30/21:30 Madrid sí corre, aunque GitHub lo retrase."
-              )
-          else:
-              print("Cron de 05:30/13:30/21:30 Europe/Madrid: se regenera el dataset.")
-          PY
-
       - name: Resolve league
         id: league
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         run: |
           LEAGUE="all"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
@@ -102,18 +66,15 @@ jobs:
           echo "Regenerando liga: $LEAGUE"
 
       - name: Setup Python
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
 
       - name: Install dependencies
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         run: pip install -r requirements.txt
 
       - name: Apply flip-mode toggle
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         env:
           LEAGUE: ${{ steps.league.outputs.league }}
         run: |
@@ -152,7 +113,6 @@ jobs:
           PY
 
       - name: Run data engine
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         env:
           # Auth Mister (DevTools → POST /ajax/balance → Cookie + x-auth)
           MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
@@ -171,7 +131,6 @@ jobs:
       # del dataset, que es lo que se consulta aunque no se ejecute nada.
       - name: Automated cycle (per-league writes)
         id: automation
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         continue-on-error: true
         env:
           MISTER_TOKEN: ${{ secrets.MISTER_TOKEN }}
@@ -205,7 +164,6 @@ jobs:
           done
 
       - name: Verify live data (not mock fallback)
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         run: |
           python - <<'PY'
           import json, os, sys
@@ -232,12 +190,10 @@ jobs:
           MISTER_COOKIE: ${{ secrets.MISTER_COOKIE }}
 
       - name: Performance audit (xPts, once, mercado)
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         continue-on-error: true
         run: python src/performance_audit.py --markdown --fail-on-gates
 
       - name: Inject refresh-config (optional secret)
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         env:
           REFRESH_CONFIG_JSON: ${{ secrets.REFRESH_CONFIG_JSON }}
         run: |
@@ -247,22 +203,18 @@ jobs:
           fi
 
       - name: Configure Pages
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: public
 
       - name: Deploy to GitHub Pages
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Persist snapshot history (best effort)
-        if: ${{ github.event_name != 'schedule' || steps.guard.outputs.run == 'true' }}
         continue-on-error: true
         run: |
           git config user.name "github-actions[bot]"
