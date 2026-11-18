@@ -2087,11 +2087,33 @@
           "why": "sale_limit agotado: no se abren pujas nuevas"
         }
       ]
+    },
+    {
+      "at": "2026-11-18T15:44:53.749763+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 5,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "sale_limit agotado: no se abren pujas nuevas"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 52,
+      "bids": 53,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2104,17 +2126,17 @@
           "count": 9
         },
         {
-          "why": "sin caja",
+          "why": "sale_limit agotado: no se abren pujas nuevas",
           "count": 3
         },
         {
-          "why": "sale_limit agotado: no se abren pujas nuevas",
-          "count": 2
+          "why": "sin caja",
+          "count": 3
         }
       ]
     },
     "d14": {
-      "bids": 52,
+      "bids": 53,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2127,15 +2149,15 @@
           "count": 9
         },
         {
-          "why": "sin caja",
+          "why": "sale_limit agotado: no se abren pujas nuevas",
           "count": 3
         },
         {
-          "why": "sale_limit agotado: no se abren pujas nuevas",
-          "count": 2
+          "why": "sin caja",
+          "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-18T08:32:00.049648+00:00"
+  "updated_at": "2026-11-18T15:44:53.749763+00:00"
 }

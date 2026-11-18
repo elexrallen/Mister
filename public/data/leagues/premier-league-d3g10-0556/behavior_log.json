@@ -1019,21 +1019,193 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-18T15:48:47.315281+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": 3668140,
+          "market_value": 3743000,
+          "buy_price": 4076000,
+          "threshold": 3855290,
+          "status": "ejecutada",
+          "why": "Oferta 3.67M € no supera 3.86M € (valor de mercado 3.74M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19832530053
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 65715,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795060800
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": 11662690,
+          "market_value": 11323000,
+          "buy_price": 11158100,
+          "threshold": 11662690,
+          "status": "ejecutada",
+          "why": "Oferta 11.66M € no supera 11.66M € (valor de mercado 11.32M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19832530049
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 2380539,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795060800
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson 💥",
+          "amount": 1106000,
+          "market_value": 1106000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 1.11M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 22 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1106000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 22 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "17992",
+          "name": "A. Mac Allister",
+          "amount": 15511000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "428356",
+          "name": "R. Araújo",
+          "amount": 12894200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64177",
+          "name": "M. De Cuyper",
+          "amount": 10698200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-18T15:55:09.201835+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson 💥",
+          "amount": 1106000,
+          "market_value": 1106000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 1.11M € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "17992",
+          "name": "A. Mac Allister",
+          "amount": 15511000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "428356",
+          "name": "R. Araújo",
+          "amount": 12894200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64177",
+          "name": "M. De Cuyper",
+          "amount": 10698200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 66,
+      "bids": 72,
       "won": 4,
       "lost": 4,
-      "lists": 15,
+      "lists": 17,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 64
+          "count": 70
         },
         {
           "why": "espera compra→venta",
@@ -1042,17 +1214,17 @@
       ]
     },
     "d14": {
-      "bids": 66,
+      "bids": 72,
       "won": 4,
       "lost": 4,
-      "lists": 15,
+      "lists": 17,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 64
+          "count": 70
         },
         {
           "why": "espera compra→venta",
@@ -1061,5 +1233,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-18T08:34:09.694302+00:00"
+  "updated_at": "2026-11-18T15:55:09.201835+00:00"
 }
