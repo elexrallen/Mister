@@ -65,6 +65,22 @@
       "opened_at": "2026-11-17T21:18:48.597597+00:00",
       "status": "listed",
       "listed": true
+    },
+    "25867": {
+      "player_id": "25867",
+      "name": "A. Blanco",
+      "buy_price": 5035600,
+      "opened_at": "2026-11-18T08:22:30.467843+00:00",
+      "status": "listed",
+      "listed": true
+    },
+    "29223": {
+      "player_id": "29223",
+      "name": "M. Soriano 💥",
+      "buy_price": 11578200,
+      "opened_at": "2026-11-18T08:22:30.467843+00:00",
+      "status": "listed",
+      "listed": true
     }
   },
   "watches": {
@@ -85,18 +101,6 @@
       "name": "A. Barrenetxea",
       "buy_price": 7349150,
       "bid_at": "2026-11-17T08:39:59.911978+00:00"
-    },
-    "29223": {
-      "player_id": "29223",
-      "name": "M. Soriano",
-      "buy_price": 11578200,
-      "bid_at": "2026-11-18T02:43:04.369428+00:00"
-    },
-    "25867": {
-      "player_id": "25867",
-      "name": "A. Blanco",
-      "buy_price": 5035600,
-      "bid_at": "2026-11-18T02:43:04.369428+00:00"
     }
   },
   "activated_at": "2026-11-16T14:02:54.506417+00:00"

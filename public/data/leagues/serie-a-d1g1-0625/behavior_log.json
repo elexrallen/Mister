@@ -264,11 +264,46 @@
           "why": "Cláusula de Juan Jesus (1.5M €): cierra un hueco del once objetivo frente a R. Belghali."
         }
       ]
+    },
+    {
+      "at": "2026-11-18T08:30:10.930380+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "normal",
+      "flip": {
+        "enabled": false,
+        "frozen_count": 0,
+        "open_count": 0,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "59426",
+          "name": "S. Goglichidze",
+          "amount": 1507000.0,
+          "market_value": null,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Puja por S. Goglichidze (1.5M €, titular real; tendencia positiva; cubre un hueco de plantilla; revaloriza +9%; sigue al alza)."
+        },
+        {
+          "kind": "clause_bid",
+          "player_id": "8257",
+          "name": "Juan Jesus",
+          "amount": 1500000.0,
+          "market_value": null,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Cláusula de Juan Jesus (1.5M €): cierra un hueco del once objetivo frente a R. Belghali."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 0,
+      "bids": 1,
       "won": 0,
       "lost": 0,
       "lists": 0,
@@ -278,7 +313,7 @@
       "top_skips": []
     },
     "d14": {
-      "bids": 0,
+      "bids": 1,
       "won": 0,
       "lost": 0,
       "lists": 0,
@@ -288,5 +323,5 @@
       "top_skips": []
     }
   },
-  "updated_at": "2026-11-18T02:41:14.021158+00:00"
+  "updated_at": "2026-11-18T08:30:10.930380+00:00"
 }

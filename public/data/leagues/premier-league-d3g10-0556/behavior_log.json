@@ -913,21 +913,127 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-18T08:26:08.879491+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": 11007360,
+          "market_value": 11323000.0,
+          "buy_price": 11158100,
+          "threshold": 11492843,
+          "status": "ejecutada",
+          "why": "Oferta 11.01M € no supera 11.49M € (compra 11.16M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19828377739
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 2380539,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795032000
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "65715",
+          "name": "B. Brobbey",
+          "amount": 3743000,
+          "market_value": 3743000.0,
+          "buy_price": 4076000,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 3.74M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "65715",
+              "action": "sale",
+              "price": 3743000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 65715,
+              "id_market": 19832530053,
+              "action": "sale",
+              "price": 3743000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "428356",
+          "name": "R. Araújo",
+          "amount": 12894200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-18T08:34:09.694302+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "428356",
+          "name": "R. Araújo",
+          "amount": 12894200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 64,
+      "bids": 66,
       "won": 4,
       "lost": 4,
-      "lists": 14,
+      "lists": 15,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 62
+          "count": 64
         },
         {
           "why": "espera compra→venta",
@@ -936,17 +1042,17 @@
       ]
     },
     "d14": {
-      "bids": 64,
+      "bids": 66,
       "won": 4,
       "lost": 4,
-      "lists": 14,
+      "lists": 15,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 62
+          "count": 64
         },
         {
           "why": "espera compra→venta",
@@ -955,5 +1061,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-18T02:37:14.369027+00:00"
+  "updated_at": "2026-11-18T08:34:09.694302+00:00"
 }
