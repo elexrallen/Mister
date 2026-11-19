@@ -1618,7 +1618,8 @@
           "name": "B. Guimarães",
           "amount": 15915500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -1667,7 +1668,8 @@
           "name": "B. Guimarães",
           "amount": 15915500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -1763,7 +1765,8 @@
           "name": "B. Guimarães",
           "amount": 15915500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -1771,7 +1774,8 @@
           "name": "L. Dunk",
           "amount": 14195400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -1815,7 +1819,8 @@
           "buy_price": 14195400,
           "threshold": 14621262,
           "status": "recomendada",
-          "why": "Puja 14.2M € (sube 148,000 € hoy, +30% (44,400 €)). La máquina puede llegar a 14.86M €."
+          "why": "Puja 14.2M € (sube 148,000 € hoy, +30% (44,400 €)). La máquina puede llegar a 14.86M €.",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -1823,7 +1828,8 @@
           "name": "B. Guimarães",
           "amount": 15915500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -1875,7 +1881,8 @@
           "name": "B. Guimarães",
           "amount": 15915500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -1963,7 +1970,8 @@
                 "maxDebt": 4507591
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -2005,14 +2013,44 @@
         "eligible": 0
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-19T20:23:36.948085+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
       "bids": 103,
-      "won": 4,
-      "lost": 12,
-      "lists": 26,
+      "won": 10,
+      "lost": 14,
+      "lists": 27,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2023,15 +2061,19 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 13
+          "count": 14
+        },
+        {
+          "why": "sin precio de compra: no se acepta",
+          "count": 1
         }
       ]
     },
     "d14": {
       "bids": 103,
-      "won": 4,
-      "lost": 12,
-      "lists": 26,
+      "won": 10,
+      "lost": 14,
+      "lists": 27,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2042,10 +2084,14 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 13
+          "count": 14
+        },
+        {
+          "why": "sin precio de compra: no se acepta",
+          "count": 1
         }
       ]
     }
   },
-  "updated_at": "2026-11-19T19:15:39.971117+00:00"
+  "updated_at": "2026-11-19T20:23:36.948085+00:00"
 }

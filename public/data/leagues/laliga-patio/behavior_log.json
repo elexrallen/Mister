@@ -2774,11 +2774,33 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T20:20:10.026165+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 65,
+      "bids": 66,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2787,12 +2809,12 @@
       "short_offers": 8,
       "top_skips": [
         {
-          "why": "sin plaza",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
           "count": 9
         },
         {
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 8
+          "why": "sin plaza",
+          "count": 9
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -2805,7 +2827,7 @@
       ]
     },
     "d14": {
-      "bids": 65,
+      "bids": 66,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2814,12 +2836,12 @@
       "short_offers": 8,
       "top_skips": [
         {
-          "why": "sin plaza",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
           "count": 9
         },
         {
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 8
+          "why": "sin plaza",
+          "count": 9
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -2832,5 +2854,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T19:13:05.781962+00:00"
+  "updated_at": "2026-11-19T20:20:10.026165+00:00"
 }
