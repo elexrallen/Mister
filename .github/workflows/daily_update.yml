@@ -3,21 +3,34 @@
 # El commit histórico del snapshot pasa a ser best-effort y no bloquea el deploy.
 #
 # Disparos:
-#   - cron cada 2 horas (minuto 30 UTC, horas explícitas)
+#   - 12 crons sueltos, uno por hora par UTC (minuto 47). Una sola expresión
+#     con varias horas no crea la mayoría de los runs; los crons de una hora
+#     sí. El reloj que no se salta franjas es el cron del Worker
+#     (repository_dispatch), cada 2 horas en el minuto 15.
 #   - workflow_dispatch (Actions UI)
-#   - repository_dispatch type=refresh-data (botón PWA vía Cloudflare Worker)
+#   - repository_dispatch type=refresh-data (botón PWA y cron del Worker)
 #
-# Horas en lista, no `*/2`: con el paso GitHub dejó de crear runs schedule
-# (el mismo workflow sí disparaba crons de una hora concreta). El minuto :30
-# evita la rotación de Mister, que cierra el mercado en punto. UTC; en
-# invierno cae en horas impares de Madrid y en verano en las pares.
+# Minuto 47: lejos del cambio de hora, cuando Actions descarta colas, y
+# después de que Mister rote el mercado en punto.
 
 name: Daily data update
 
 on:
   schedule:
-    # Cada 2 horas: 00:30, 02:30, …, 22:30 UTC.
-    - cron: "30 0,2,4,6,8,10,12,14,16,18,20,22 * * *"
+    # Una entrada por hora. El planificador de Actions sí encola estos crons;
+    # con todas las horas en la misma línea se saltó casi todas las franjas.
+    - cron: "47 0 * * *"
+    - cron: "47 2 * * *"
+    - cron: "47 4 * * *"
+    - cron: "47 6 * * *"
+    - cron: "47 8 * * *"
+    - cron: "47 10 * * *"
+    - cron: "47 12 * * *"
+    - cron: "47 14 * * *"
+    - cron: "47 16 * * *"
+    - cron: "47 18 * * *"
+    - cron: "47 20 * * *"
+    - cron: "47 22 * * *"
   repository_dispatch:
     types: [refresh-data]
   workflow_dispatch:

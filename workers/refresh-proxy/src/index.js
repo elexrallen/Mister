@@ -7,6 +7,9 @@
  *   GITHUB_REPO   — opcional; default elexrallen/Mister (o var en wrangler.toml)
  *
  * Rate limit: 1 disparo / 2 min por IP.
+ *
+ * Cron (wrangler.toml): cada 2 horas, minuto 15 UTC, llama a scheduled()
+ * y encola el mismo refresh-data sin pasar por el botón de la PWA.
  */
 
 const RATE_WINDOW_MS = 2 * 60 * 1000;
@@ -47,7 +50,43 @@ function clientIp(request) {
   );
 }
 
+async function dispatchRefresh(env, league, flipMode) {
+  const repo = (env.GITHUB_REPO || "elexrallen/Mister").replace(/^\/+|\/+$/g, "");
+  return fetch(`https://api.github.com/repos/${repo}/dispatches`, {
+    method: "POST",
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${env.GITHUB_TOKEN}`,
+      "X-GitHub-Api-Version": "2022-11-28",
+      "Content-Type": "application/json",
+      "User-Agent": "mister-refresh-proxy",
+    },
+    body: JSON.stringify({
+      event_type: "refresh-data",
+      client_payload:
+        flipMode === null ? { league } : { league, flip_mode: flipMode },
+    }),
+  });
+}
+
 export default {
+  async scheduled(_event, env, ctx) {
+    if (!env.GITHUB_TOKEN) {
+      console.log("scheduled refresh skipped: no GITHUB_TOKEN");
+      return;
+    }
+    ctx.waitUntil(
+      dispatchRefresh(env, "all", null).then(async (gh) => {
+        if (!gh.ok) {
+          const text = await gh.text();
+          console.log(`scheduled dispatch failed ${gh.status} ${text.slice(0, 300)}`);
+          return;
+        }
+        console.log("scheduled refresh-data dispatched");
+      })
+    );
+  },
+
   async fetch(request, env) {
     const origin = request.headers.get("Origin") || "";
 
@@ -98,22 +137,7 @@ export default {
       league = "all";
     }
 
-    const repo = (env.GITHUB_REPO || "elexrallen/Mister").replace(/^\/+|\/+$/g, "");
-    const gh = await fetch(`https://api.github.com/repos/${repo}/dispatches`, {
-      method: "POST",
-      headers: {
-        Accept: "application/vnd.github+json",
-        Authorization: `Bearer ${env.GITHUB_TOKEN}`,
-        "X-GitHub-Api-Version": "2022-11-28",
-        "Content-Type": "application/json",
-        "User-Agent": "mister-refresh-proxy",
-      },
-      body: JSON.stringify({
-        event_type: "refresh-data",
-        client_payload:
-          flipMode === null ? { league } : { league, flip_mode: flipMode },
-      }),
-    });
+    const gh = await dispatchRefresh(env, league, flipMode);
 
     if (!gh.ok) {
       const text = await gh.text();
