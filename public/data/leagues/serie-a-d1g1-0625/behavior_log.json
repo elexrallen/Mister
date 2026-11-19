@@ -414,11 +414,49 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T03:58:50.806508+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "63775",
+          "name": "K. De Bruyne",
+          "amount": 18526900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "8542",
+          "name": "A. Bastoni",
+          "amount": 15049700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "59806",
+          "name": "M. Koné",
+          "amount": 13901800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 10,
+      "bids": 13,
       "won": 1,
       "lost": 0,
       "lists": 0,
@@ -428,12 +466,12 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 9
+          "count": 12
         }
       ]
     },
     "d14": {
-      "bids": 10,
+      "bids": 13,
       "won": 1,
       "lost": 0,
       "lists": 0,
@@ -443,10 +481,10 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 9
+          "count": 12
         }
       ]
     }
   },
-  "updated_at": "2026-11-18T22:26:11.944031+00:00"
+  "updated_at": "2026-11-19T03:58:50.806508+00:00"
 }

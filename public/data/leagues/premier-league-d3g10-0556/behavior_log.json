@@ -1409,21 +1409,100 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T03:54:08.021197+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 5
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1106000,
+          "market_value": 1106000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 1.11M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 10 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1106000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 10 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "53411",
+          "name": "D. Szoboszlai",
+          "amount": 17593900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "17992",
+          "name": "A. Mac Allister",
+          "amount": 15511000,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14733500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "58963",
+          "name": "D. Kamada",
+          "amount": 11079800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64177",
+          "name": "M. De Cuyper",
+          "amount": 10698200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 82,
+      "bids": 87,
       "won": 4,
       "lost": 4,
-      "lists": 19,
+      "lists": 20,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 80
+          "count": 85
         },
         {
           "why": "espera compra→venta",
@@ -1432,17 +1511,17 @@
       ]
     },
     "d14": {
-      "bids": 82,
+      "bids": 87,
       "won": 4,
       "lost": 4,
-      "lists": 19,
+      "lists": 20,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 80
+          "count": 85
         },
         {
           "why": "espera compra→venta",
@@ -1451,5 +1530,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-18T22:28:28.679250+00:00"
+  "updated_at": "2026-11-19T03:54:08.021197+00:00"
 }
