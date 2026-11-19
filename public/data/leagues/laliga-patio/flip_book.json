@@ -38,8 +38,9 @@
       "name": "R. Veiga",
       "buy_price": 9937200,
       "opened_at": "2026-11-17T03:05:35.208268+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-19T10:21:03.147839+00:00"
     },
     "6044": {
       "player_id": "6044",

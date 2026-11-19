@@ -539,7 +539,8 @@
           "name": "D. Kamada",
           "amount": 11042200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -617,7 +618,8 @@
           "name": "D. Kamada",
           "amount": 11042200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -687,7 +689,8 @@
           "name": "D. Kamada",
           "amount": 11042200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -765,7 +768,8 @@
           "name": "D. Kamada",
           "amount": 11042200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -1333,7 +1337,8 @@
           "name": "D. Kamada",
           "amount": 11079800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -1398,7 +1403,8 @@
           "name": "D. Kamada",
           "amount": 11079800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -1477,7 +1483,8 @@
           "name": "D. Kamada",
           "amount": 11079800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -1488,21 +1495,203 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T10:25:54.801123+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": 10983310,
+          "market_value": 11418000,
+          "buy_price": 11158100,
+          "threshold": 11760540,
+          "status": "ejecutada",
+          "why": "Oferta 10.98M € no llega a 11.76M € (valor de mercado 11.42M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19839835704
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 2380539,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795118400
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 3 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1147000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 3 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "1859",
+          "name": "D. Solanke",
+          "amount": 5260600,
+          "market_value": 5242000.0,
+          "buy_price": 5260600,
+          "threshold": 5418418,
+          "status": "ejecutada",
+          "why": "Puja 5.26M € (sube 62,000 € hoy, +30% (18,600 €)). La máquina puede llegar a 5.5M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19843747871,
+              "id_player": "1859",
+              "action": "bid",
+              "bid": 5260600
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 1859,
+              "id_market": 19843747871,
+              "action": "bid",
+              "bid": 5260600,
+              "price": 5242000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": -8530699,
+                "future": -13791299,
+                "maxDebt": 1254451
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "53411",
+          "name": "D. Szoboszlai",
+          "amount": 17618200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "36341",
+          "name": "B. Guimarães",
+          "amount": 15915500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14788000,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T10:35:44.283608+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "53411",
+          "name": "D. Szoboszlai",
+          "amount": 17618200,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "36341",
+          "name": "B. Guimarães",
+          "amount": 15915500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14788000,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 87,
+      "bids": 94,
       "won": 4,
-      "lost": 4,
-      "lists": 20,
+      "lost": 11,
+      "lists": 22,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 85
+          "count": 91
         },
         {
           "why": "espera compra→venta",
@@ -1511,17 +1700,17 @@
       ]
     },
     "d14": {
-      "bids": 87,
+      "bids": 94,
       "won": 4,
-      "lost": 4,
-      "lists": 20,
+      "lost": 11,
+      "lists": 22,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 85
+          "count": 91
         },
         {
           "why": "espera compra→venta",
@@ -1530,5 +1719,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T03:54:08.021197+00:00"
+  "updated_at": "2026-11-19T10:35:44.283608+00:00"
 }

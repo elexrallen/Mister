@@ -34,8 +34,9 @@
       "name": "B. Brobbey",
       "buy_price": 4076000,
       "opened_at": "2026-11-17T08:34:02.479738+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-19T10:25:54.801123+00:00"
     },
     "68405": {
       "player_id": "68405",
@@ -46,6 +47,13 @@
       "listed": false
     }
   },
-  "watches": {},
+  "watches": {
+    "1859": {
+      "player_id": "1859",
+      "name": "D. Solanke",
+      "buy_price": 5260600,
+      "bid_at": "2026-11-19T10:25:54.801123+00:00"
+    }
+  },
   "activated_at": "2026-11-16T15:34:06.138722+00:00"
 }
