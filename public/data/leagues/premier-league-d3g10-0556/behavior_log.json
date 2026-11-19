@@ -2043,6 +2043,84 @@
           "why": "espera compra→venta"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T21:08:57.116459+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1147000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 68405,
+              "id_market": 19851206917,
+              "action": "sale",
+              "price": 1147000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T21:17:01.797071+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
     }
   ],
   "summary": {
@@ -2050,7 +2128,7 @@
       "bids": 103,
       "won": 10,
       "lost": 14,
-      "lists": 27,
+      "lists": 30,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2061,7 +2139,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 14
+          "count": 16
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -2073,7 +2151,7 @@
       "bids": 103,
       "won": 10,
       "lost": 14,
-      "lists": 27,
+      "lists": 30,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2084,7 +2162,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 14
+          "count": 16
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -2093,5 +2171,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T20:23:36.948085+00:00"
+  "updated_at": "2026-11-19T21:17:01.797071+00:00"
 }
