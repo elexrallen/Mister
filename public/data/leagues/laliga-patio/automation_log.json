@@ -4134,31 +4134,158 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-11-19T18:29:37.815988+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": -23564546.0,
+        "usable": 2713454.0,
+        "cash_in": 0.0,
+        "spent": 0.0,
+        "projected_cash": -23564546.0,
+        "cycle_cap": 1628072.0,
+        "single_cap": 1085382.0,
+        "clause_cap": 814036.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 2
+      },
+      "context": {
+        "transfer_wait_hours": 0.0,
+        "transfer_locked": [],
+        "stale_offers": [],
+        "sale_remaining_after": 2,
+        "hours_to_jornada": null,
+        "pending_offers": 0,
+        "gameweek_live": false,
+        "league_rules": {
+          "provider": "mix",
+          "provider_label": "Mixto",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 2,
+          "market_stay": 1,
+          "transfer_wait": 0,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 0,
+            "goals": 200000,
+            "best_xi": 250000,
+            "positions": {
+              "1": 1200000,
+              "2": 1400000,
+              "3": 1600000,
+              "4": 1800000,
+              "9": 3000000,
+              "8": 2800000,
+              "7": 2600000,
+              "6": 2300000,
+              "5": 2000000,
+              "10": 3200000
+            }
+          },
+          "custom_rules": null,
+          "type": "comunio",
+          "mode": "private",
+          "external": "laliga",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": false,
+            "known": true,
+            "mode": "off",
+            "multiplier": 1.0,
+            "source": "admin",
+            "multiplier_source": "off"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 450000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "goals": 200000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 450000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_mixto",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_off"
+          ],
+          "market_urgency": 1.4
+        }
+      },
+      "operations": [],
+      "skipped": [],
+      "counts": {
+        "planned": 0,
+        "executed": 0,
+        "failed": 0,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-11-19T16:30:27.429860+00:00",
+  "updated_at": "2026-11-19T18:29:37.815988+00:00",
   "last_cycle": {
-    "at": "2026-11-19T16:30:27.429860+00:00",
+    "at": "2026-11-19T18:29:37.815988+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
     "budget": {
-      "balance": -28996196.0,
+      "balance": -23564546.0,
       "usable": 2713454.0,
-      "cash_in": 5431650.0,
+      "cash_in": 0.0,
       "spent": 0.0,
       "projected_cash": -23564546.0,
       "cycle_cap": 1628072.0,
       "single_cap": 1085382.0,
       "clause_cap": 814036.0,
       "min_cash_floor": 0.0,
-      "free_slots_left": 3
+      "free_slots_left": 2
     },
     "context": {
       "transfer_wait_hours": 0.0,
       "transfer_locked": [],
       "stale_offers": [],
-      "sale_remaining_after": 1,
+      "sale_remaining_after": 2,
       "hours_to_jornada": null,
       "pending_offers": 0,
       "gameweek_live": false,
@@ -4255,145 +4382,11 @@
         "market_urgency": 1.4
       }
     },
-    "operations": [
-      {
-        "kind": "accept_offer",
-        "player_id": "25867",
-        "name": "A. Blanco",
-        "position": "MF",
-        "amount": 5431650.0,
-        "status": "ok",
-        "error": null,
-        "unverified": true,
-        "why": "Oferta 5.43M € llega al +3% del valor de mercado (5.17M €).",
-        "request": {
-          "path": "/ajax/offer",
-          "data": {
-            "id_bid": "848722442",
-            "type": "accept",
-            "amount": 5431650
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 15399168,
-            "id_market": 19843935929,
-            "id_player": 25867,
-            "type": "accept",
-            "status": "accept",
-            "offers": {
-              "pending": 3,
-              "accept": 0,
-              "decline": 0
-            },
-            "balance": {
-              "current": -23564546,
-              "future": -23564546,
-              "maxDebt": 36295954
-            }
-          }
-        },
-        "http_status": null
-      },
-      {
-        "kind": "renew_offer",
-        "player_id": "3728",
-        "name": "M. Roca",
-        "position": "MF",
-        "amount": 8588030.0,
-        "status": "ok",
-        "error": null,
-        "unverified": true,
-        "why": "Oferta 8.59M € no llega a 8.76M € (valor de mercado 8.5M € + 3%). Se renueva el listado.",
-        "request": {
-          "path": "/ajax/resale",
-          "data": {
-            "id_market": 19843935930
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 15399168,
-            "id_player": 3728,
-            "offers": {
-              "pending": 2,
-              "accept": 0,
-              "decline": 0
-            },
-            "ends": 1795190400
-          }
-        },
-        "http_status": null
-      },
-      {
-        "kind": "renew_offer",
-        "player_id": "29223",
-        "name": "M. Soriano 💥",
-        "position": "MF",
-        "amount": 11227200.0,
-        "status": "ok",
-        "error": null,
-        "unverified": true,
-        "why": "Oferta 11.23M € no llega a 12.05M € (valor de mercado 11.7M € + 3%). Se renueva el listado.",
-        "request": {
-          "path": "/ajax/resale",
-          "data": {
-            "id_market": 19843935932
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 15399168,
-            "id_player": 29223,
-            "offers": {
-              "pending": 1,
-              "accept": 0,
-              "decline": 0
-            },
-            "ends": 1795190400
-          }
-        },
-        "http_status": null
-      },
-      {
-        "kind": "renew_offer",
-        "player_id": "1713",
-        "name": "F. Lejeune",
-        "position": "DF",
-        "amount": 5897600.0,
-        "status": "ok",
-        "error": null,
-        "unverified": true,
-        "why": "Oferta 5.9M € no llega a 6.26M € (valor de mercado 6.08M € + 3%). Se renueva el listado.",
-        "request": {
-          "path": "/ajax/resale",
-          "data": {
-            "id_market": 19843935933
-          }
-        },
-        "response": {
-          "status": "ok",
-          "data": {
-            "owner": 15399168,
-            "id_player": 1713,
-            "offers": {
-              "pending": 0,
-              "accept": 0,
-              "decline": 0
-            },
-            "ends": 1795190400
-          }
-        },
-        "http_status": null
-      }
-    ],
+    "operations": [],
     "skipped": [],
     "counts": {
-      "planned": 4,
-      "executed": 4,
+      "planned": 0,
+      "executed": 0,
       "failed": 0,
       "skipped": 0
     }

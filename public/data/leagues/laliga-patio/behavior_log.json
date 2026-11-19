@@ -2730,11 +2730,33 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T18:20:53.406476+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 63,
+      "bids": 64,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2747,12 +2769,12 @@
           "count": 9
         },
         {
-          "why": "sale_limit agotado: no se abren pujas nuevas",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
           "count": 7
         },
         {
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 6
+          "why": "sale_limit agotado: no se abren pujas nuevas",
+          "count": 7
         },
         {
           "why": "sin caja",
@@ -2761,7 +2783,7 @@
       ]
     },
     "d14": {
-      "bids": 63,
+      "bids": 64,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2774,12 +2796,12 @@
           "count": 9
         },
         {
-          "why": "sale_limit agotado: no se abren pujas nuevas",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
           "count": 7
         },
         {
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 6
+          "why": "sale_limit agotado: no se abren pujas nuevas",
+          "count": 7
         },
         {
           "why": "sin caja",
@@ -2788,5 +2810,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T16:32:35.565630+00:00"
+  "updated_at": "2026-11-19T18:20:53.406476+00:00"
 }
