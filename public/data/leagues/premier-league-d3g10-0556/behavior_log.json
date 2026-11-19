@@ -1878,14 +1878,115 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T16:25:03.675002+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1147000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 68405,
+              "id_market": 19847754342,
+              "action": "sale",
+              "price": 1147000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "36341",
+          "name": "B. Guimarães",
+          "amount": 15915500,
+          "market_value": 15905000.0,
+          "buy_price": 15915500,
+          "threshold": 16392965,
+          "status": "ejecutada",
+          "why": "Puja 15.92M € (sube 35,000 € hoy, +30% (10,500 €)). La máquina puede llegar a 16.7M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19843747869,
+              "id_player": "36341",
+              "action": "bid",
+              "bid": 15915500
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 36341,
+              "id_market": 19843747869,
+              "action": "bid",
+              "bid": 15915500,
+              "price": 15905000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": 9019091,
+                "future": -6896409,
+                "maxDebt": 4507591
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T16:34:50.067647+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
-      "bids": 102,
+      "bids": 103,
       "won": 4,
       "lost": 12,
-      "lists": 25,
+      "lists": 26,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -1901,10 +2002,10 @@
       ]
     },
     "d14": {
-      "bids": 102,
+      "bids": 103,
       "won": 4,
       "lost": 12,
-      "lists": 25,
+      "lists": 26,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -1920,5 +2021,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T14:23:20.280084+00:00"
+  "updated_at": "2026-11-19T16:34:50.067647+00:00"
 }

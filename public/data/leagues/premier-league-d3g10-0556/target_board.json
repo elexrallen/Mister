@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-11-19T14:23:20.245885+00:00",
+  "generated_at": "2026-11-19T16:34:50.033947+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
-  "formation": "4-4-2",
+  "formation": "3-5-2",
   "formation_shape": {
     "GK": 1,
-    "DF": 4,
-    "MF": 4,
+    "DF": 3,
+    "MF": 5,
     "FW": 2
   },
   "formation_trials": [
@@ -19,10 +19,10 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 46.44,
+      "xpts_starters": 44.89,
       "complete": false,
       "flex": 0,
-      "cost": 5025000.0
+      "cost": 4263000.0
     },
     {
       "formation": "4-4-2",
@@ -32,10 +32,10 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 49.38,
-      "complete": true,
+      "xpts_starters": 44.95,
+      "complete": false,
       "flex": 0,
-      "cost": 7579500.0
+      "cost": 4263000.0
     },
     {
       "formation": "4-5-1",
@@ -45,10 +45,10 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 45.66,
+      "xpts_starters": 41.16,
       "complete": false,
       "flex": 0,
-      "cost": 7579500.0
+      "cost": 4263000.0
     },
     {
       "formation": "3-5-2",
@@ -58,10 +58,10 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 48.45,
+      "xpts_starters": 47.22,
       "complete": true,
       "flex": 0,
-      "cost": 7698000.0
+      "cost": 3554500.0
     },
     {
       "formation": "3-4-3",
@@ -71,10 +71,10 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 45.51,
+      "xpts_starters": 44.28,
       "complete": false,
       "flex": 0,
-      "cost": 5143500.0
+      "cost": 1000000.0
     },
     {
       "formation": "3-3-4",
@@ -97,10 +97,10 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 47.51,
-      "complete": true,
+      "xpts_starters": 44.89,
+      "complete": false,
       "flex": 0,
-      "cost": 4965000.0
+      "cost": 4263000.0
     },
     {
       "formation": "5-4-1",
@@ -110,20 +110,20 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 43.79,
+      "xpts_starters": 41.17,
       "complete": false,
       "flex": 0,
-      "cost": 4965000.0
+      "cost": 4263000.0
     }
   ],
-  "balance": 3229841.0,
-  "squad_value": 48765000.0,
+  "balance": 9019091.0,
+  "squad_value": 45616000.0,
   "wealth": {
-    "balance": 3229841.0,
-    "squad_value": 48765000.0,
-    "total": 51994841.0,
+    "balance": 9019091.0,
+    "squad_value": 45616000.0,
+    "total": 54635091.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 51994841.0
+    "budget_cap": 54635091.0
   },
   "perfect_squad": [
     {
@@ -164,40 +164,6 @@
       "slot": "DF1",
       "position": "DF",
       "role": "starter",
-      "player_id": "7889",
-      "name": "Dara O'Shea",
-      "team": "Ipswich",
-      "team_id": "1262",
-      "ep_score": 40.7,
-      "xpts": 5.38,
-      "price": 5025000.0,
-      "status": "buy",
-      "delta_5d": 0.0615,
-      "value_note": "rising",
-      "value_ratio": 8.1,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 43.0,
-      "ff_mister_avg": 4.3,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "owner_name": "Pablo Amor",
-      "owner_id": "15540059",
-      "acquisition": "clause",
-      "clause": 5025000.0,
-      "clause_known": true,
-      "seller": "owned",
-      "reach": "clause",
-      "why": "5.4 xPts · 5,025,000 € · buy · starter",
-      "kind": "player",
-      "xpts_bar": null,
-      "p_appear": null
-    },
-    {
-      "slot": "DF2",
-      "position": "DF",
-      "role": "starter",
       "player_id": "70655",
       "name": "M. van Ewijk",
       "team": "Coventry",
@@ -229,7 +195,7 @@
       "p_appear": null
     },
     {
-      "slot": "DF3",
+      "slot": "DF2",
       "position": "DF",
       "role": "starter",
       "player_id": "27656",
@@ -263,7 +229,7 @@
       "p_appear": null
     },
     {
-      "slot": "DF4",
+      "slot": "DF3",
       "position": "DF",
       "role": "starter",
       "player_id": "688363",
@@ -368,6 +334,40 @@
       "slot": "MF3",
       "position": "MF",
       "role": "starter",
+      "player_id": "65700",
+      "name": "Florentino",
+      "team": "Ipswich",
+      "team_id": "1262",
+      "ep_score": 36.4,
+      "xpts": 3.22,
+      "price": 1000000.0,
+      "status": "buy",
+      "delta_5d": 0.0648,
+      "value_note": "rising",
+      "value_ratio": 36.4,
+      "lineup_prob": 71.0,
+      "ff_mister_points": 28.0,
+      "ff_mister_avg": 4.0,
+      "hist_ok": false,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "owner_name": "MARTÍNEZ",
+      "owner_id": "15540584",
+      "acquisition": "clause",
+      "clause": 1000000.0,
+      "clause_known": true,
+      "seller": "owned",
+      "reach": "clause",
+      "why": "3.2 xPts · 1,000,000 € · buy · starter",
+      "kind": "player",
+      "xpts_bar": null,
+      "p_appear": null
+    },
+    {
+      "slot": "MF4",
+      "position": "MF",
+      "role": "starter",
       "player_id": "64174",
       "name": "Noah Sadiki",
       "team": "Sunderland",
@@ -399,7 +399,7 @@
       "p_appear": null
     },
     {
-      "slot": "MF4",
+      "slot": "MF5",
       "position": "MF",
       "role": "starter",
       "player_id": "64403",
@@ -678,40 +678,6 @@
       "slot": "DF1",
       "position": "DF",
       "role": "starter",
-      "player_id": "7889",
-      "name": "Dara O'Shea",
-      "team": "Ipswich",
-      "team_id": "1262",
-      "ep_score": 40.7,
-      "xpts": 5.38,
-      "price": 5025000.0,
-      "status": "buy",
-      "delta_5d": 0.0615,
-      "value_note": "rising",
-      "value_ratio": 8.1,
-      "lineup_prob": 100.0,
-      "ff_mister_points": 43.0,
-      "ff_mister_avg": 4.3,
-      "hist_ok": false,
-      "on_daily_market": false,
-      "owned": false,
-      "gk_tandem": false,
-      "owner_name": "Pablo Amor",
-      "owner_id": "15540059",
-      "acquisition": "clause",
-      "clause": 5025000.0,
-      "clause_known": true,
-      "seller": "owned",
-      "reach": "clause",
-      "why": "5.4 xPts · 5,025,000 € · buy · starter",
-      "kind": "player",
-      "xpts_bar": null,
-      "p_appear": null
-    },
-    {
-      "slot": "DF2",
-      "position": "DF",
-      "role": "starter",
       "player_id": "70655",
       "name": "M. van Ewijk",
       "team": "Coventry",
@@ -743,7 +709,7 @@
       "p_appear": null
     },
     {
-      "slot": "DF3",
+      "slot": "DF2",
       "position": "DF",
       "role": "starter",
       "player_id": "27656",
@@ -777,7 +743,7 @@
       "p_appear": null
     },
     {
-      "slot": "DF4",
+      "slot": "DF3",
       "position": "DF",
       "role": "starter",
       "player_id": "688363",
@@ -882,6 +848,40 @@
       "slot": "MF3",
       "position": "MF",
       "role": "starter",
+      "player_id": "65700",
+      "name": "Florentino",
+      "team": "Ipswich",
+      "team_id": "1262",
+      "ep_score": 36.4,
+      "xpts": 3.22,
+      "price": 1000000.0,
+      "status": "buy",
+      "delta_5d": 0.0648,
+      "value_note": "rising",
+      "value_ratio": 36.4,
+      "lineup_prob": 71.0,
+      "ff_mister_points": 28.0,
+      "ff_mister_avg": 4.0,
+      "hist_ok": false,
+      "on_daily_market": false,
+      "owned": false,
+      "gk_tandem": false,
+      "owner_name": "MARTÍNEZ",
+      "owner_id": "15540584",
+      "acquisition": "clause",
+      "clause": 1000000.0,
+      "clause_known": true,
+      "seller": "owned",
+      "reach": "clause",
+      "why": "3.2 xPts · 1,000,000 € · buy · starter",
+      "kind": "player",
+      "xpts_bar": null,
+      "p_appear": null
+    },
+    {
+      "slot": "MF4",
+      "position": "MF",
+      "role": "starter",
       "player_id": "64174",
       "name": "Noah Sadiki",
       "team": "Sunderland",
@@ -913,7 +913,7 @@
       "p_appear": null
     },
     {
-      "slot": "MF4",
+      "slot": "MF5",
       "position": "MF",
       "role": "starter",
       "player_id": "64403",
@@ -1164,39 +1164,21 @@
       "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
     },
     {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "23331",
-      "name": "W. Fofana",
-      "position": "DF",
-      "amount": 3149000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
-    },
-    {
-      "kind": "list",
-      "cycle": 0,
-      "player_id": "2020",
-      "name": "R. Barkley",
-      "position": "MF",
-      "amount": 792000.0,
-      "why": "Lista: hace falta su VM para cubrir el fichaje; el siguiente ciclo aceptas y cobra."
-    },
-    {
       "kind": "clause",
       "cycle": 0,
-      "player_id": "64174",
-      "name": "Noah Sadiki",
+      "player_id": "65700",
+      "name": "Florentino",
       "position": "MF",
-      "amount": 2554500.0,
+      "amount": 1000000.0,
       "why": "Cláusula este ciclo · tapa hueco de titular."
     },
     {
       "kind": "clause",
       "cycle": 1,
-      "player_id": "7889",
-      "name": "Dara O'Shea",
-      "position": "DF",
-      "amount": 5025000.0,
+      "player_id": "64174",
+      "name": "Noah Sadiki",
+      "position": "MF",
+      "amount": 2554500.0,
       "why": "Cláusula en el ciclo 2 (1 por ciclo) · tapa hueco."
     }
   ],
@@ -1205,20 +1187,20 @@
     "cash_lag_hours": 8.0,
     "settle_before_ko": true,
     "sale_limit": 5,
-    "sale_remaining": 5,
-    "max_debt": 15421091.0,
-    "bid_cap": 15421091.0,
+    "sale_remaining": 4,
+    "max_debt": 4507591.0,
+    "bid_cap": 4507591.0,
     "max_squad": 25,
-    "n_free": 146,
+    "n_free": 143,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 46.11695774138889
+    "hours_to_jornada": 43.92544993916666
   },
   "finance": {
     "ok": true,
-    "cost": 7579500.0,
-    "proceeds": 5460000.0,
-    "peak": 4349659.0,
+    "cost": 3554500.0,
+    "proceeds": 2311000.0,
+    "peak": -5464591.0,
     "covers_with_sales": true,
     "reason": ""
   },
@@ -1259,7 +1241,7 @@
         "p_appear": null
       },
       {
-        "slot": "DF2",
+        "slot": "DF1",
         "position": "DF",
         "role": "starter",
         "player_id": "70655",
@@ -1293,7 +1275,7 @@
         "p_appear": null
       },
       {
-        "slot": "DF3",
+        "slot": "DF2",
         "position": "DF",
         "role": "starter",
         "player_id": "27656",
@@ -1327,7 +1309,7 @@
         "p_appear": null
       },
       {
-        "slot": "DF4",
+        "slot": "DF3",
         "position": "DF",
         "role": "starter",
         "player_id": "688363",
@@ -1429,7 +1411,7 @@
         "p_appear": null
       },
       {
-        "slot": "MF4",
+        "slot": "MF5",
         "position": "MF",
         "role": "starter",
         "player_id": "64403",
@@ -1669,41 +1651,41 @@
     ],
     "buy": [
       {
-        "slot": "DF1",
-        "position": "DF",
+        "slot": "MF3",
+        "position": "MF",
         "role": "starter",
-        "player_id": "7889",
-        "name": "Dara O'Shea",
+        "player_id": "65700",
+        "name": "Florentino",
         "team": "Ipswich",
         "team_id": "1262",
-        "ep_score": 40.7,
-        "xpts": 5.38,
-        "price": 5025000.0,
+        "ep_score": 36.4,
+        "xpts": 3.22,
+        "price": 1000000.0,
         "status": "buy",
-        "delta_5d": 0.0615,
+        "delta_5d": 0.0648,
         "value_note": "rising",
-        "value_ratio": 8.1,
-        "lineup_prob": 100.0,
-        "ff_mister_points": 43.0,
-        "ff_mister_avg": 4.3,
+        "value_ratio": 36.4,
+        "lineup_prob": 71.0,
+        "ff_mister_points": 28.0,
+        "ff_mister_avg": 4.0,
         "hist_ok": false,
         "on_daily_market": false,
         "owned": false,
         "gk_tandem": false,
-        "owner_name": "Pablo Amor",
-        "owner_id": "15540059",
+        "owner_name": "MARTÍNEZ",
+        "owner_id": "15540584",
         "acquisition": "clause",
-        "clause": 5025000.0,
+        "clause": 1000000.0,
         "clause_known": true,
         "seller": "owned",
         "reach": "clause",
-        "why": "5.4 xPts · 5,025,000 € · buy · starter",
+        "why": "3.2 xPts · 1,000,000 € · buy · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
       },
       {
-        "slot": "MF3",
+        "slot": "MF4",
         "position": "MF",
         "role": "starter",
         "player_id": "64174",
@@ -1805,42 +1787,25 @@
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
         "cash_lag_hours": 24.0
-      },
-      {
-        "player_id": "23331",
-        "name": "W. Fofana",
-        "position": "DF",
-        "ep_score": 9.2,
-        "xpts": 0.21,
-        "price": 3149000.0,
-        "delta_5d": 0.0792,
-        "value_note": "rising",
-        "why": "Fuera del 15 al KO · lista a ~3,149,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 3149000.0,
-        "expected_proceeds": 3149000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
       }
     ]
   },
   "totals": {
-    "ep_sum": 51.39,
-    "ep_sum_starters": 49.38,
-    "xpts_starters": 49.38,
-    "xpts_total": 51.39,
+    "ep_sum": 49.23,
+    "ep_sum_starters": 47.22,
+    "xpts_starters": 47.22,
+    "xpts_total": 49.23,
     "xpts_ceiling": 83.25,
-    "xpts_yours": 53.33,
-    "cost_sum": 50884500.0,
-    "net_buys": 7579500.0,
+    "xpts_yours": 53.2,
+    "cost_sum": 46859500.0,
+    "net_buys": 3554500.0,
     "slots_filled": 15,
     "slots_target": 15,
     "flex": 0,
-    "sell_to_fund": 5460000.0,
+    "sell_to_fund": 2311000.0,
     "funded": true,
-    "formation": "4-4-2",
-    "ideal_buy_cost": 7579500.0,
+    "formation": "3-5-2",
+    "ideal_buy_cost": 3554500.0,
     "daily_primary_count": 0
   },
   "totals_aspirational": {
@@ -1853,7 +1818,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 1110341.0,
+  "residual_after_reserve": 7775591.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1871,15 +1836,15 @@
     "incomplete": false,
     "keep": 13,
     "buy": 2,
-    "sell": 5,
+    "sell": 4,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 51.39,
-    "ep_sum_starters": 49.38,
+    "ep_sum": 49.23,
+    "ep_sum_starters": 47.22,
     "mode": "ko",
-    "formation": "4-4-2",
-    "xi_rule": "formación 4-4-2 · once por xPts · 15 al KO",
+    "formation": "3-5-2",
+    "xi_rule": "formación 3-5-2 · once por xPts · 15 al KO",
     "flex": 0,
     "cycles_left": 5
   },

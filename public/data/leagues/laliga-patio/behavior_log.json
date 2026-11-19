@@ -2555,16 +2555,191 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T16:21:01.348966+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 4,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "25867",
+          "name": "A. Blanco",
+          "amount": 5431650,
+          "market_value": 5173000,
+          "buy_price": 5035600,
+          "threshold": 5328190,
+          "status": "ejecutada",
+          "why": "Oferta 5.43M € llega al +3% del valor de mercado (5.17M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "848722442",
+              "type": "accept",
+              "amount": 5431650
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19843935929,
+              "id_player": 25867,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 3,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -23564546,
+                "future": -23564546,
+                "maxDebt": 36295954
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 396050
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "3728",
+          "name": "M. Roca",
+          "amount": 8588030,
+          "market_value": 8503000,
+          "buy_price": 8407000,
+          "threshold": 8758090,
+          "status": "ejecutada",
+          "why": "Oferta 8.59M € no llega a 8.76M € (valor de mercado 8.5M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19843935930
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 3728,
+              "offers": {
+                "pending": 2,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795190400
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "29223",
+          "name": "M. Soriano 💥",
+          "amount": 11227200,
+          "market_value": 11695000,
+          "buy_price": 11578200,
+          "threshold": 12045850,
+          "status": "ejecutada",
+          "why": "Oferta 11.23M € no llega a 12.05M € (valor de mercado 11.7M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19843935932
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29223,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795190400
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "1713",
+          "name": "F. Lejeune",
+          "amount": 5897600,
+          "market_value": 6080000,
+          "buy_price": 5983800,
+          "threshold": 6262400,
+          "status": "ejecutada",
+          "why": "Oferta 5.9M € no llega a 6.26M € (valor de mercado 6.08M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19843935933
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 1713,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795190400
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T16:32:35.565630+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 61,
+      "bids": 63,
       "won": 36,
       "lost": 2,
       "lists": 9,
-      "accepts": 5,
-      "profit": 1971860,
+      "accepts": 6,
+      "profit": 2367910,
       "short_offers": 8,
       "top_skips": [
         {
@@ -2577,7 +2752,7 @@
         },
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 4
+          "count": 6
         },
         {
           "why": "sin caja",
@@ -2586,12 +2761,12 @@
       ]
     },
     "d14": {
-      "bids": 61,
+      "bids": 63,
       "won": 36,
       "lost": 2,
       "lists": 9,
-      "accepts": 5,
-      "profit": 1971860,
+      "accepts": 6,
+      "profit": 2367910,
       "short_offers": 8,
       "top_skips": [
         {
@@ -2604,7 +2779,7 @@
         },
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 4
+          "count": 6
         },
         {
           "why": "sin caja",
@@ -2613,5 +2788,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T14:20:04.766475+00:00"
+  "updated_at": "2026-11-19T16:32:35.565630+00:00"
 }

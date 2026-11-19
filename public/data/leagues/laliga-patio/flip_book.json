@@ -72,8 +72,9 @@
       "name": "A. Blanco",
       "buy_price": 5035600,
       "opened_at": "2026-11-18T08:22:30.467843+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-19T16:32:35.565630+00:00"
     },
     "29223": {
       "player_id": "29223",
