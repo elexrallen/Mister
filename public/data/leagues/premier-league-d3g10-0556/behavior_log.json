@@ -1601,7 +1601,8 @@
                 "maxDebt": 1254451
               }
             }
-          }
+          },
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -1677,21 +1678,177 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T12:23:18.737576+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "2380539",
+          "name": "Z. Suzuki 💥",
+          "amount": 11760540,
+          "market_value": 11418000,
+          "buy_price": 11158100,
+          "threshold": 11760540,
+          "status": "ejecutada",
+          "why": "Oferta 11.76M € llega al +3% del valor de mercado (11.42M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "848722448",
+              "type": "accept",
+              "amount": 11760540
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_market": 19843935934,
+              "id_player": 2380539,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": 3229841,
+                "future": 3229841,
+                "maxDebt": 15421091
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 602440
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 2 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1147000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 2 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "36341",
+          "name": "B. Guimarães",
+          "amount": 15915500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "6350",
+          "name": "L. Dunk",
+          "amount": 14195400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55075",
+          "name": "M. van de Ven",
+          "amount": 11747500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-19T12:29:08.208965+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "6350",
+          "name": "L. Dunk",
+          "amount": 14195400,
+          "market_value": 14151000.0,
+          "buy_price": 14195400,
+          "threshold": 14621262,
+          "status": "recomendada",
+          "why": "Puja 14.2M € (sube 148,000 € hoy, +30% (44,400 €)). La máquina puede llegar a 14.86M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "36341",
+          "name": "B. Guimarães",
+          "amount": 15915500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55075",
+          "name": "M. van de Ven",
+          "amount": 11747500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 94,
+      "bids": 100,
       "won": 4,
-      "lost": 11,
-      "lists": 22,
-      "accepts": 0,
-      "profit": 0,
+      "lost": 12,
+      "lists": 24,
+      "accepts": 1,
+      "profit": 602440,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 91
+          "count": 96
         },
         {
           "why": "espera compra→venta",
@@ -1700,17 +1857,17 @@
       ]
     },
     "d14": {
-      "bids": 94,
+      "bids": 100,
       "won": 4,
-      "lost": 11,
-      "lists": 22,
-      "accepts": 0,
-      "profit": 0,
+      "lost": 12,
+      "lists": 24,
+      "accepts": 1,
+      "profit": 602440,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 91
+          "count": 96
         },
         {
           "why": "espera compra→venta",
@@ -1719,5 +1876,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T10:35:44.283608+00:00"
+  "updated_at": "2026-11-19T12:29:08.208965+00:00"
 }

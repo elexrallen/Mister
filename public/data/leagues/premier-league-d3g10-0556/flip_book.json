@@ -26,8 +26,9 @@
       "name": "Z. Suzuki 💥",
       "buy_price": 11158100,
       "opened_at": "2026-11-17T03:09:27.362608+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-19T12:29:08.208965+00:00"
     },
     "65715": {
       "player_id": "65715",
@@ -53,6 +54,12 @@
       "name": "D. Solanke",
       "buy_price": 5260600,
       "bid_at": "2026-11-19T10:25:54.801123+00:00"
+    },
+    "6350": {
+      "player_id": "6350",
+      "name": "L. Dunk",
+      "buy_price": 14195400,
+      "bid_at": "2026-11-19T12:29:08.208965+00:00"
     }
   },
   "activated_at": "2026-11-16T15:34:06.138722+00:00"

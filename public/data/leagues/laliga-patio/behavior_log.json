@@ -2511,11 +2511,33 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T12:19:57.280249+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 4,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 59,
+      "bids": 60,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2532,17 +2554,17 @@
           "count": 7
         },
         {
-          "why": "sin caja",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
           "count": 3
         },
         {
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 2
+          "why": "sin caja",
+          "count": 3
         }
       ]
     },
     "d14": {
-      "bids": 59,
+      "bids": 60,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2559,15 +2581,15 @@
           "count": 7
         },
         {
-          "why": "sin caja",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
           "count": 3
         },
         {
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 2
+          "why": "sin caja",
+          "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-19T10:33:08.504598+00:00"
+  "updated_at": "2026-11-19T12:19:57.280249+00:00"
 }

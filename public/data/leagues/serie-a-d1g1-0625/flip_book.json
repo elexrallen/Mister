@@ -17,7 +17,23 @@
     "57255",
     "10199"
   ],
-  "positions": {},
-  "watches": {},
+  "positions": {
+    "4927635": {
+      "player_id": "4927635",
+      "name": "J. Monteiro",
+      "buy_price": null,
+      "opened_at": "2026-11-19T12:27:07.766769+00:00",
+      "status": "owned",
+      "listed": false
+    }
+  },
+  "watches": {
+    "22777": {
+      "player_id": "22777",
+      "name": "J. Messias",
+      "buy_price": 11774700,
+      "bid_at": "2026-11-19T12:27:07.766769+00:00"
+    }
+  },
   "activated_at": "2026-11-18T12:24:22.523062+00:00"
 }
