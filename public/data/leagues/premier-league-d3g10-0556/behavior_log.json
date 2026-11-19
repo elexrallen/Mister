@@ -1834,21 +1834,65 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T14:23:20.280084+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1147000,
+          "market_value": 1147000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 1.15M € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "55075",
+          "name": "M. van de Ven",
+          "amount": 11747500,
+          "market_value": 11737000.0,
+          "buy_price": 11747500,
+          "threshold": 12099925,
+          "status": "recomendada",
+          "why": "Puja 11.75M € (sube 35,000 € hoy, +30% (10,500 €)). La máquina puede llegar a 12.32M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "36341",
+          "name": "B. Guimarães",
+          "amount": 15915500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 100,
+      "bids": 102,
       "won": 4,
       "lost": 12,
-      "lists": 24,
+      "lists": 25,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 96
+          "count": 97
         },
         {
           "why": "espera compra→venta",
@@ -1857,17 +1901,17 @@
       ]
     },
     "d14": {
-      "bids": 100,
+      "bids": 102,
       "won": 4,
       "lost": 12,
-      "lists": 24,
+      "lists": 25,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 96
+          "count": 97
         },
         {
           "why": "espera compra→venta",
@@ -1876,5 +1920,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-19T12:29:08.208965+00:00"
+  "updated_at": "2026-11-19T14:23:20.280084+00:00"
 }

@@ -610,39 +610,94 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-19T14:27:39.581285+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "4927635",
+          "name": "J. Monteiro",
+          "amount": 160000,
+          "market_value": 160000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 160,000 € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 22 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "4927635",
+              "action": "sale",
+              "price": 160000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 22 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "8934",
+          "name": "B. Cristante",
+          "amount": 15183900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "59092",
+          "name": "S. Coco",
+          "amount": 8009300,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 19,
+      "bids": 21,
       "won": 1,
       "lost": 0,
-      "lists": 2,
+      "lists": 3,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 17
+          "count": 19
         }
       ]
     },
     "d14": {
-      "bids": 19,
+      "bids": 21,
       "won": 1,
       "lost": 0,
-      "lists": 2,
+      "lists": 3,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 17
+          "count": 19
         }
       ]
     }
   },
-  "updated_at": "2026-11-19T12:31:52.232223+00:00"
+  "updated_at": "2026-11-19T14:27:39.581285+00:00"
 }
