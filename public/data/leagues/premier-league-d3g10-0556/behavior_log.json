@@ -2275,14 +2275,130 @@
           "why": "espera compra→venta"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T04:21:51.712964+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "4937790",
+          "name": "D. Affengruber",
+          "amount": 4649900,
+          "market_value": 4607000.0,
+          "buy_price": 4649900,
+          "threshold": 4789397,
+          "status": "ejecutada",
+          "why": "Puja 4.65M € (sube 143,000 € hoy, +30% (42,900 €)). La máquina puede llegar a 4.84M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19855176008,
+              "id_player": "4937790",
+              "action": "bid",
+              "bid": 4649900
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 4937790,
+              "id_market": 19855176008,
+              "action": "bid",
+              "bid": 4649900,
+              "price": 4607000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": -6896409,
+                "future": -11546309,
+                "maxDebt": 3931441
+              }
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 16667800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-20T04:28:46.626833+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 16667800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 103,
+      "bids": 106,
       "won": 10,
       "lost": 14,
-      "lists": 37,
+      "lists": 39,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2293,19 +2409,23 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 23
+          "count": 25
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 1
+          "count": 3
+        },
+        {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 2
         }
       ]
     },
     "d14": {
-      "bids": 103,
+      "bids": 106,
       "won": 10,
       "lost": 14,
-      "lists": 37,
+      "lists": 39,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2316,14 +2436,18 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 23
+          "count": 25
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 1
+          "count": 3
+        },
+        {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 2
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T03:53:06.275564+00:00"
+  "updated_at": "2026-11-20T04:28:46.626833+00:00"
 }

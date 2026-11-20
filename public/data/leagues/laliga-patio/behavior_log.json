@@ -2972,11 +2972,145 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T04:19:19.282680+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "3728",
+          "name": "M. Roca",
+          "amount": 8503000,
+          "market_value": 8548000,
+          "buy_price": 8407000,
+          "threshold": 8804440,
+          "status": "ejecutada",
+          "why": "Oferta 8.5M € no llega a 8.8M € (valor de mercado 8.55M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19847754328
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 3728,
+              "offers": {
+                "pending": 2,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795233600
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "29223",
+          "name": "M. Soriano 💥",
+          "amount": 11344150,
+          "market_value": 11768000,
+          "buy_price": 11578200,
+          "threshold": 12121040,
+          "status": "ejecutada",
+          "why": "Oferta 11.34M € no llega a 12.12M € (valor de mercado 11.77M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19847754332
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29223,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795233600
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "1713",
+          "name": "F. Lejeune",
+          "amount": 6019200,
+          "market_value": 6126000,
+          "buy_price": 5983800,
+          "threshold": 6309780,
+          "status": "ejecutada",
+          "why": "Oferta 6.02M € no llega a 6.31M € (valor de mercado 6.13M € + 3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19847754335
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 1713,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795233600
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-20T04:26:32.158995+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 74,
+      "bids": 76,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -2986,7 +3120,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 17
+          "count": 19
         },
         {
           "why": "sin plaza",
@@ -3003,7 +3137,7 @@
       ]
     },
     "d14": {
-      "bids": 74,
+      "bids": 76,
       "won": 36,
       "lost": 2,
       "lists": 9,
@@ -3013,7 +3147,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 17
+          "count": 19
         },
         {
           "why": "sin plaza",
@@ -3030,5 +3164,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-20T03:48:57.855260+00:00"
+  "updated_at": "2026-11-20T04:26:32.158995+00:00"
 }
