@@ -744,7 +744,8 @@
           "name": "P. Groß",
           "amount": 15240400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -832,7 +833,8 @@
           "name": "P. Groß",
           "amount": 15240400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -869,7 +871,8 @@
           "name": "P. Groß",
           "amount": 15240400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -906,7 +909,8 @@
           "name": "P. Groß",
           "amount": 15240400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2691,7 +2695,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2745,7 +2750,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2799,7 +2805,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2853,7 +2860,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2907,7 +2915,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2961,7 +2970,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3032,7 +3042,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3103,7 +3114,8 @@
           "name": "P. Groß",
           "amount": 15273000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3114,14 +3126,172 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T20:23:56.517830+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 5
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": 15953000,
+          "market_value": 15953000.0,
+          "buy_price": 15915500,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 15.95M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "36341",
+              "action": "sale",
+              "price": 15953000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 36341,
+              "id_market": 19862593713,
+              "action": "sale",
+              "price": 15953000,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48321",
+          "name": "E. Haaland",
+          "amount": 25998200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63709",
+          "name": "R. Cherki",
+          "amount": 20455500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16358200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14809400,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63860",
+          "name": "F. Wirtz",
+          "amount": 12031500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-20T20:29:59.860161+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 5
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48321",
+          "name": "E. Haaland",
+          "amount": 25998200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63709",
+          "name": "R. Cherki",
+          "amount": 20455500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16358200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14809400,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63860",
+          "name": "F. Wirtz",
+          "amount": 12031500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 144,
+      "bids": 154,
       "won": 10,
-      "lost": 15,
-      "lists": 55,
+      "lost": 27,
+      "lists": 56,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -3132,7 +3302,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 40
+          "count": 50
         },
         {
           "why": "espera compra→venta",
@@ -3140,15 +3310,15 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 4
+          "count": 6
         }
       ]
     },
     "d14": {
-      "bids": 144,
+      "bids": 154,
       "won": 10,
-      "lost": 15,
-      "lists": 55,
+      "lost": 27,
+      "lists": 56,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -3159,7 +3329,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 40
+          "count": 50
         },
         {
           "why": "espera compra→venta",
@@ -3167,10 +3337,10 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 4
+          "count": 6
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T18:57:54.253490+00:00"
+  "updated_at": "2026-11-20T20:29:59.860161+00:00"
 }
