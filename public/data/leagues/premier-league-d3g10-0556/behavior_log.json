@@ -2429,14 +2429,108 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T07:57:07.073110+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1188000,
+          "market_value": 1188000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 1.19M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1188000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 68405,
+              "id_market": 19855334608,
+              "action": "sale",
+              "price": 1188000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 16667800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-20T08:03:32.234422+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 16667800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 107,
+      "bids": 109,
       "won": 10,
       "lost": 14,
-      "lists": 40,
+      "lists": 43,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2447,23 +2541,23 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 26
+          "count": 28
+        },
+        {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 5
         },
         {
           "why": "sin precio de compra: no se acepta",
           "count": 4
-        },
-        {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 3
         }
       ]
     },
     "d14": {
-      "bids": 107,
+      "bids": 109,
       "won": 10,
       "lost": 14,
-      "lists": 40,
+      "lists": 43,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2474,18 +2568,18 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 26
+          "count": 28
+        },
+        {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 5
         },
         {
           "why": "sin precio de compra: no se acepta",
           "count": 4
-        },
-        {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T06:24:34.850991+00:00"
+  "updated_at": "2026-11-20T08:03:32.234422+00:00"
 }
