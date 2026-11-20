@@ -56,16 +56,18 @@
       "name": "F. Lejeune",
       "buy_price": 5983800,
       "opened_at": "2026-11-17T21:18:48.597597+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-20T16:26:09.086652+00:00"
     },
     "3728": {
       "player_id": "3728",
       "name": "M. Roca",
       "buy_price": 8407000,
       "opened_at": "2026-11-17T21:18:48.597597+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-20T16:26:09.086652+00:00"
     },
     "25867": {
       "player_id": "25867",
@@ -81,8 +83,9 @@
       "name": "M. Soriano 💥",
       "buy_price": 11578200,
       "opened_at": "2026-11-18T08:22:30.467843+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-20T16:26:09.086652+00:00"
     }
   },
   "watches": {
@@ -103,6 +106,12 @@
       "name": "A. Barrenetxea",
       "buy_price": 7349150,
       "bid_at": "2026-11-17T08:39:59.911978+00:00"
+    },
+    "29": {
+      "player_id": "29",
+      "name": "I. Williams",
+      "buy_price": 6861400,
+      "bid_at": "2026-11-20T16:19:07.728090+00:00"
     }
   },
   "activated_at": "2026-11-16T14:02:54.506417+00:00"
