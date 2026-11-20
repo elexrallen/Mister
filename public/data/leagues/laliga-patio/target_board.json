@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T16:26:09.025251+00:00",
+  "generated_at": "2026-11-20T18:20:01.119516+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1200,10 +1200,10 @@
     "max_debt": 49009874.0,
     "bid_cap": 49009874.0,
     "max_squad": 25,
-    "n_free": 212,
+    "n_free": 213,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 3.5649972830555554
+    "hours_to_jornada": 1.6718478258333334
   },
   "finance": {
     "ok": true,
@@ -1800,8 +1800,8 @@
         "player_id": "51135",
         "name": "P. Barrios",
         "position": "MF",
-        "ep_score": 42.0,
-        "xpts": 3.36,
+        "ep_score": 42.4,
+        "xpts": 3.58,
         "price": 12119000.0,
         "delta_5d": 0.0061,
         "value_note": "stable",

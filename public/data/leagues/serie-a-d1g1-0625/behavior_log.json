@@ -2001,14 +2001,61 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T18:27:01.186281+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "22777",
+          "name": "J. Messias",
+          "amount": 11809000,
+          "market_value": 11809000.0,
+          "buy_price": 11774700,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 11.81M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 2 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "22777",
+              "action": "sale",
+              "price": 11809000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 2 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "59866",
+          "name": "M. Hermoso",
+          "amount": 15188800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 54,
+      "bids": 55,
       "won": 2,
       "lost": 12,
-      "lists": 43,
+      "lists": 44,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -2023,15 +2070,15 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 6
+          "count": 7
         }
       ]
     },
     "d14": {
-      "bids": 54,
+      "bids": 55,
       "won": 2,
       "lost": 12,
-      "lists": 43,
+      "lists": 44,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -2046,10 +2093,10 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 6
+          "count": 7
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T16:24:11.741702+00:00"
+  "updated_at": "2026-11-20T18:27:01.186281+00:00"
 }
