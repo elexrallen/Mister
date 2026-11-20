@@ -1,6 +1,6 @@
 {
   "date": "2026-11-20",
-  "captured_at": "2026-11-20T08:03:32.370176+00:00",
+  "captured_at": "2026-11-20T08:24:36.205653+00:00",
   "cycle_hour_utc": 8,
   "league_slug": "premier-league-d3g10-0556",
   "jornada": 11,
@@ -5200,6 +5200,12 @@
         "name": "M. Tel"
       },
       {
+        "player_id": "2020",
+        "action": "sell",
+        "price": 744000.0,
+        "name": "R. Barkley"
+      },
+      {
         "player_id": "51998",
         "action": "wait",
         "price": 13056000.0,
@@ -5212,22 +5218,16 @@
         "name": "E. Smith Rowe"
       },
       {
-        "player_id": "22757",
-        "action": "scout",
-        "price": 3952000.0,
-        "name": "Semi Ajayi"
-      },
-      {
         "player_id": "23363",
         "action": "scout",
         "price": 3527000.0,
         "name": "Leif Davis"
       },
       {
-        "player_id": "2018",
+        "player_id": "22757",
         "action": "scout",
-        "price": 1585000.0,
-        "name": "Antonee Robinson"
+        "price": 3952000.0,
+        "name": "Semi Ajayi"
       },
       {
         "player_id": "58939",
@@ -5246,6 +5246,12 @@
         "action": "avoid",
         "price": null,
         "name": "R. James"
+      },
+      {
+        "player_id": "2018",
+        "action": "scout",
+        "price": 1585000.0,
+        "name": "Antonee Robinson"
       },
       {
         "player_id": "68405",
@@ -5272,6 +5278,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 123.3
+    "pipeline_seconds": 215.8
   }
 }
