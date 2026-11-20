@@ -1,6 +1,6 @@
 {
   "date": "2026-11-20",
-  "captured_at": "2026-11-20T10:20:12.445636+00:00",
+  "captured_at": "2026-11-20T10:35:15.022618+00:00",
   "cycle_hour_utc": 10,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -5407,10 +5407,10 @@
     ],
     "actions": [
       {
-        "player_id": "68497",
+        "player_id": "616",
         "action": "sell",
-        "price": 980000.0,
-        "name": "S. Boselli 💥"
+        "price": 16525000.0,
+        "name": "R. Hernández"
       },
       {
         "player_id": "51135",
@@ -5503,6 +5503,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 227.9
+    "pipeline_seconds": 256.3
   }
 }
