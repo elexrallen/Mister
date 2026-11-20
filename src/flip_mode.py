@@ -354,6 +354,17 @@ def _sale_lands_before_kickoff(hours: float | None, lag: float | None) -> bool:
     return sells_settle_before_deadline(hours_to_deadline=hours, cash_lag_hours=lag)
 
 
+def _bid_resolves_after_kickoff(hours: float | None, lag: float | None) -> bool:
+    """La puja a un libre se cobra al cierre del ciclo, no al enviarla.
+
+    Si ese cierre es posterior al pitido, el importe no sale antes y no puede
+    dejar el saldo de esta jornada en negativo.
+    """
+    if hours is None or lag is None:
+        return False
+    return float(lag) > float(hours)
+
+
 def build_flip_cycle(
     *,
     book: dict[str, Any] | None,
@@ -699,26 +710,29 @@ def build_flip_cycle(
                 }
             )
             continue
+        # El cierre posterior al pitido no descuenta la puja de esta jornada.
+        settles_later = _bid_resolves_after_kickoff(hours_deadline, lag)
         vm_back = 0.0
-        if wait_new <= 0:
-            if list_room > 0 and _sale_lands_before_kickoff(hours_deadline, lag):
-                vm_back = quote["vm"]
-        else:
-            arrival = _cash_arrival_hours(wait_new, lag, cycle_h)
-            if _sale_lands_before_kickoff(hours_deadline, arrival):
-                vm_back = quote["vm"]
-        if room - quote["bid"] + vm_back < -1:
-            skipped.append(
-                {
-                    "kind": KIND_BID,
-                    "player_id": pid,
-                    "name": row.get("name"),
-                    "amount": quote["bid"],
-                    "why": ko_why,
-                    "status": "descartada",
-                }
-            )
-            continue
+        if not settles_later:
+            if wait_new <= 0:
+                if list_room > 0 and _sale_lands_before_kickoff(hours_deadline, lag):
+                    vm_back = quote["vm"]
+            else:
+                arrival = _cash_arrival_hours(wait_new, lag, cycle_h)
+                if _sale_lands_before_kickoff(hours_deadline, arrival):
+                    vm_back = quote["vm"]
+            if room - quote["bid"] + vm_back < -1:
+                skipped.append(
+                    {
+                        "kind": KIND_BID,
+                        "player_id": pid,
+                        "name": row.get("name"),
+                        "amount": quote["bid"],
+                        "why": ko_why,
+                        "status": "descartada",
+                    }
+                )
+                continue
         if spent + quote["bid"] > debt_cap + 1:
             skipped.append(
                 {
@@ -748,6 +762,11 @@ def build_flip_cycle(
                 why=(
                     f"Puja {_fmt_money(quote['bid'])} ({premium_txt}). "
                     f"La máquina puede llegar a {_fmt_money(quote['vm'] * (1 + config.FLIP_MACHINE_PREMIUM))}."
+                    + (
+                        " Se cobra al cierre de este ciclo, después del pitido."
+                        if settles_later
+                        else ""
+                    )
                 ),
                 extra={
                     "bid": quote["bid"],
@@ -768,7 +787,8 @@ def build_flip_cycle(
         }
         if vm_back > 0 and wait_new <= 0:
             list_room -= 1
-        room = room - quote["bid"] + vm_back
+        if not settles_later:
+            room = room - quote["bid"] + vm_back
         spent += quote["bid"]
         taken += 1
 

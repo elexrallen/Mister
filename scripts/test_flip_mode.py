@@ -489,7 +489,10 @@ def test_accept_frees_one_bid_slot() -> None:
 
 
 def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
-    """Sin cobro antes del pitido no se usa maxDebt. Con el cierre a tiempo, sí."""
+    """Si la puja se cobra antes del pitido y la reventa no llega, no se usa maxDebt.
+
+    Si el cierre es posterior al pitido, la puja no toca el saldo de esta jornada.
+    """
     book = _owned_book(["9"])
     squad = [_player("9", name="R9", vm=8 * M, ask=8 * M)]
     market = [_rising("21", "Soler")]
@@ -503,14 +506,31 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
         sales_state={},
         me=me,
         league_rules=rules,
-        hours_to_solvency_deadline=3,
-        cash_lag_hours=4,
+        hours_to_solvency_deadline=8,
+        cash_lag_hours=7,
         cycle_hours=12,
         now=NOW,
     )
     _assert(not any(m["kind"] == "bid" for m in blocked["moves"]), blocked["moves"])
     reasons = " ".join(s.get("why") or "" for s in blocked["flip_skipped"])
     _assert("negativo al inicio de la jornada" in reasons, blocked["flip_skipped"])
+
+    later_close, _book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=market,
+        sales_state={},
+        me=me,
+        league_rules=rules,
+        hours_to_solvency_deadline=3,
+        cash_lag_hours=4,
+        cycle_hours=12,
+        now=NOW,
+    )
+    later_bids = [m for m in later_close["moves"] if m["kind"] == "bid"]
+    _assert(len(later_bids) == 1 and later_bids[0]["player_id"] == "21", later_bids)
+    _assert("después del pitido" in (later_bids[0].get("why") or ""), later_bids[0])
 
     opened, _book = build_flip_cycle(
         book=book,
@@ -574,7 +594,9 @@ def test_kickoff_accepts_a_short_offer_to_cover_the_whistle() -> None:
     kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
     _assert(("9", "accept_offer") in kinds, kinds)
     _assert(("9", "renew_offer") not in kinds, kinds)
-    _assert(not any(m["kind"] == "bid" for m in plan["moves"]), plan["moves"])
+    # El cierre (4h) es posterior al pitido (3h): la puja no toca este saldo.
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
     accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
     _assert("pitido" in (accept.get("why") or ""), accept)
 
