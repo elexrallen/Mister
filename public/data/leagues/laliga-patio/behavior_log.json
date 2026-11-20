@@ -3503,6 +3503,19 @@
         "eligible": 0
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-20T18:54:07.988821+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -3561,5 +3574,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-20T18:20:01.174468+00:00"
+  "updated_at": "2026-11-20T18:54:07.988821+00:00"
 }

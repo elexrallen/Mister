@@ -3043,14 +3043,85 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T18:57:54.253490+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": 15953000,
+          "market_value": 15953000.0,
+          "buy_price": 15915500,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 15.95M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 58 minutos para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "36341",
+              "action": "sale",
+              "price": 15953000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 58 minutos para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "48321",
+          "name": "E. Haaland",
+          "amount": 25998200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 16667800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "7083",
+          "name": "P. Groß",
+          "amount": 15273000,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14809400,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 140,
+      "bids": 144,
       "won": 10,
       "lost": 15,
-      "lists": 54,
+      "lists": 55,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -3060,12 +3131,12 @@
           "count": 97
         },
         {
-          "why": "espera compra→venta",
-          "count": 37
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 40
         },
         {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 36
+          "why": "espera compra→venta",
+          "count": 37
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3074,10 +3145,10 @@
       ]
     },
     "d14": {
-      "bids": 140,
+      "bids": 144,
       "won": 10,
       "lost": 15,
-      "lists": 54,
+      "lists": 55,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -3087,12 +3158,12 @@
           "count": 97
         },
         {
-          "why": "espera compra→venta",
-          "count": 37
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 40
         },
         {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 36
+          "why": "espera compra→venta",
+          "count": 37
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3101,5 +3172,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-20T18:23:31.742931+00:00"
+  "updated_at": "2026-11-20T18:57:54.253490+00:00"
 }
