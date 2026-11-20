@@ -2235,11 +2235,57 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T20:54:14.866897+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "4927635",
+          "name": "J. Monteiro",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64534",
+          "name": "J. Ramón",
+          "amount": 17156500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "61148",
+          "name": "M. Pellegrino",
+          "amount": 10758300,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "61144",
+          "name": "O. Provstgaard",
+          "amount": 6613300,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 62,
+      "bids": 65,
       "won": 2,
       "lost": 26,
       "lists": 46,
@@ -2252,21 +2298,21 @@
           "count": 46
         },
         {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 17
+        },
+        {
           "why": "espera compra→venta",
           "count": 16
         },
         {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 14
-        },
-        {
           "why": "sin precio de compra: no se acepta",
-          "count": 2
+          "count": 3
         }
       ]
     },
     "d14": {
-      "bids": 62,
+      "bids": 65,
       "won": 2,
       "lost": 26,
       "lists": 46,
@@ -2279,19 +2325,19 @@
           "count": 46
         },
         {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 17
+        },
+        {
           "why": "espera compra→venta",
           "count": 16
         },
         {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 14
-        },
-        {
           "why": "sin precio de compra: no se acepta",
-          "count": 2
+          "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T20:32:47.033142+00:00"
+  "updated_at": "2026-11-20T20:54:14.866897+00:00"
 }

@@ -1,6 +1,6 @@
 {
   "date": "2026-11-20",
-  "captured_at": "2026-11-20T20:30:00.100637+00:00",
+  "captured_at": "2026-11-20T20:51:44.880644+00:00",
   "cycle_hour_utc": 20,
   "league_slug": "premier-league-d3g10-0556",
   "jornada": 11,
@@ -5232,12 +5232,6 @@
         "name": "Semi Ajayi"
       },
       {
-        "player_id": "2018",
-        "action": "scout",
-        "price": 1585000.0,
-        "name": "Antonee Robinson"
-      },
-      {
         "player_id": "22669",
         "action": "avoid",
         "price": null,
@@ -5254,6 +5248,12 @@
         "action": "avoid",
         "price": null,
         "name": "Maxence Lacroix"
+      },
+      {
+        "player_id": "2018",
+        "action": "scout",
+        "price": 1585000.0,
+        "name": "Antonee Robinson"
       },
       {
         "player_id": "23024",
@@ -5286,6 +5286,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 140.0
+    "pipeline_seconds": 143.6
   }
 }
