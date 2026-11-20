@@ -2253,6 +2253,28 @@
           "why": "espera compra→venta"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T03:53:06.275564+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
     }
   ],
   "summary": {
@@ -2260,7 +2282,7 @@
       "bids": 103,
       "won": 10,
       "lost": 14,
-      "lists": 36,
+      "lists": 37,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2271,7 +2293,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 22
+          "count": 23
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -2283,7 +2305,7 @@
       "bids": 103,
       "won": 10,
       "lost": 14,
-      "lists": 36,
+      "lists": 37,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2294,7 +2316,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 22
+          "count": 23
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -2303,5 +2325,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-20T02:23:48.916176+00:00"
+  "updated_at": "2026-11-20T03:53:06.275564+00:00"
 }
