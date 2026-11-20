@@ -1395,47 +1395,110 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T06:28:27.804803+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "4927635",
+          "name": "J. Monteiro",
+          "amount": 160000,
+          "market_value": 160000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 160,000 € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 6 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "4927635",
+              "action": "sale",
+              "price": 160000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 6 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "22777",
+          "name": "J. Messias",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "59866",
+          "name": "M. Hermoso",
+          "amount": 15188800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "65402",
+          "name": "M. Troilo",
+          "amount": 5717300,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 38,
+      "bids": 40,
       "won": 2,
       "lost": 6,
-      "lists": 26,
+      "lists": 28,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 36
+          "count": 38
         },
         {
           "why": "espera compra→venta",
-          "count": 10
+          "count": 11
         }
       ]
     },
     "d14": {
-      "bids": 38,
+      "bids": 40,
       "won": 2,
       "lost": 6,
-      "lists": 26,
+      "lists": 28,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 36
+          "count": 38
         },
         {
           "why": "espera compra→venta",
-          "count": 10
+          "count": 11
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T04:24:37.386781+00:00"
+  "updated_at": "2026-11-20T06:28:27.804803+00:00"
 }
