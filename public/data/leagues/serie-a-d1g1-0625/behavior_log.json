@@ -1392,7 +1392,8 @@
           "name": "M. Troilo",
           "amount": 5717300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -1455,7 +1456,8 @@
           "name": "M. Troilo",
           "amount": 5717300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -1518,7 +1520,8 @@
           "name": "M. Troilo",
           "amount": 5717300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -1581,7 +1584,8 @@
           "name": "M. Troilo",
           "amount": 5717300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -1644,7 +1648,8 @@
           "name": "M. Troilo",
           "amount": 5717300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -1707,17 +1712,115 @@
           "name": "M. Troilo",
           "amount": 5717300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-20T12:26:49.936945+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "4927635",
+          "name": "J. Monteiro",
+          "amount": 160000,
+          "market_value": 160000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 160,000 € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "4927635",
+              "action": "sale",
+              "price": 160000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15610174,
+              "id_player": 4927635,
+              "id_market": 19858766062,
+              "action": "sale",
+              "price": 160000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "22777",
+          "name": "J. Messias",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "59866",
+          "name": "M. Hermoso",
+          "amount": 15188800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-20T12:31:46.098915+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "22777",
+          "name": "J. Messias",
+          "amount": 11809000,
+          "market_value": 11809000.0,
+          "buy_price": 11774700,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 11.81M € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "59866",
+          "name": "M. Hermoso",
+          "amount": 15188800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 48,
+      "bids": 50,
       "won": 2,
-      "lost": 6,
-      "lists": 36,
+      "lost": 12,
+      "lists": 39,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -1728,15 +1831,19 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 15
+          "count": 16
+        },
+        {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 2
         }
       ]
     },
     "d14": {
-      "bids": 48,
+      "bids": 50,
       "won": 2,
-      "lost": 6,
-      "lists": 36,
+      "lost": 12,
+      "lists": 39,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -1747,10 +1854,14 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 15
+          "count": 16
+        },
+        {
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 2
         }
       ]
     }
   },
-  "updated_at": "2026-11-20T10:44:16.381874+00:00"
+  "updated_at": "2026-11-20T12:31:46.098915+00:00"
 }

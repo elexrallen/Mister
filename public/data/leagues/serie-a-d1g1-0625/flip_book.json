@@ -23,8 +23,8 @@
       "name": "J. Monteiro",
       "buy_price": null,
       "opened_at": "2026-11-19T12:27:07.766769+00:00",
-      "status": "owned",
-      "listed": false
+      "status": "listed",
+      "listed": true
     },
     "22777": {
       "player_id": "22777",
