@@ -2553,14 +2553,44 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-20T10:23:57.720254+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 16667800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 110,
+      "bids": 111,
       "won": 10,
       "lost": 14,
-      "lists": 44,
+      "lists": 45,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2571,11 +2601,11 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 29
+          "count": 30
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 6
+          "count": 7
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -2584,10 +2614,10 @@
       ]
     },
     "d14": {
-      "bids": 110,
+      "bids": 111,
       "won": 10,
       "lost": 14,
-      "lists": 44,
+      "lists": 45,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 0,
@@ -2598,11 +2628,11 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 29
+          "count": 30
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 6
+          "count": 7
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -2611,5 +2641,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-20T08:24:36.041328+00:00"
+  "updated_at": "2026-11-20T10:23:57.720254+00:00"
 }
