@@ -1,6 +1,6 @@
 {
   "date": "2026-11-20",
-  "captured_at": "2026-11-20T22:24:23.850866+00:00",
+  "captured_at": "2026-11-20T22:58:42.168230+00:00",
   "cycle_hour_utc": 22,
   "league_slug": "premier-league-d3g10-0556",
   "jornada": 11,
@@ -5214,12 +5214,6 @@
         "name": "M. Tel"
       },
       {
-        "player_id": "19938",
-        "action": "sell",
-        "price": 1820000.0,
-        "name": "A. Gray"
-      },
-      {
         "player_id": "48321",
         "action": "wait",
         "price": 25994000.0,
@@ -5292,6 +5286,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 237.3
+    "pipeline_seconds": 248.2
   }
 }
