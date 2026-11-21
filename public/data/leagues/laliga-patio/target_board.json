@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-21T02:19:05.935038+00:00",
+  "generated_at": "2026-11-21T03:34:10.488296+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 48.82,
+      "xpts_starters": 48.24,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 52.64,
+      "xpts_starters": 52.06,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 52.85,
+      "xpts_starters": 52.27,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 53.14,
+      "xpts_starters": 52.56,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 49.69,
+      "xpts_starters": 49.11,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 45.73,
+      "xpts_starters": 45.15,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 49.75,
+      "xpts_starters": 49.17,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 50.33,
+      "xpts_starters": 49.75,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -440,13 +440,13 @@
       "name": "K. Mbappé",
       "team": "Real Madrid",
       "team_id": "15",
-      "ep_score": 78.5,
-      "xpts": 7.89,
+      "ep_score": 77.4,
+      "xpts": 7.31,
       "price": 25159000.0,
       "status": "keep",
       "delta_5d": 0.0,
       "value_note": "stable",
-      "value_ratio": 3.12,
+      "value_ratio": 3.08,
       "lineup_prob": 95.0,
       "ff_mister_points": 110.0,
       "ff_mister_avg": 9.17,
@@ -461,7 +461,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "7.9 xPts · 25,159,000 € · keep · starter",
+      "why": "7.3 xPts · 25,159,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -954,13 +954,13 @@
       "name": "K. Mbappé",
       "team": "Real Madrid",
       "team_id": "15",
-      "ep_score": 78.5,
-      "xpts": 7.89,
+      "ep_score": 77.4,
+      "xpts": 7.31,
       "price": 25159000.0,
       "status": "keep",
       "delta_5d": 0.0,
       "value_note": "stable",
-      "value_ratio": 3.12,
+      "value_ratio": 3.08,
       "lineup_prob": 95.0,
       "ff_mister_points": 110.0,
       "ff_mister_avg": 9.17,
@@ -975,7 +975,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "7.9 xPts · 25,159,000 € · keep · starter",
+      "why": "7.3 xPts · 25,159,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1200,10 +1200,10 @@
     "max_debt": 49009874.0,
     "bid_cap": 49009874.0,
     "max_squad": 25,
-    "n_free": 226,
+    "n_free": 251,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 10.687347530277778
+    "hours_to_jornada": 9.435946997222223
   },
   "finance": {
     "ok": true,
@@ -1529,13 +1529,13 @@
         "name": "K. Mbappé",
         "team": "Real Madrid",
         "team_id": "15",
-        "ep_score": 78.5,
-        "xpts": 7.89,
+        "ep_score": 77.4,
+        "xpts": 7.31,
         "price": 25159000.0,
         "status": "keep",
         "delta_5d": 0.0,
         "value_note": "stable",
-        "value_ratio": 3.12,
+        "value_ratio": 3.08,
         "lineup_prob": 95.0,
         "ff_mister_points": 110.0,
         "ff_mister_avg": 9.17,
@@ -1550,7 +1550,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "7.9 xPts · 25,159,000 € · keep · starter",
+        "why": "7.3 xPts · 25,159,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1816,12 +1816,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 56.6,
-    "ep_sum_starters": 53.14,
-    "xpts_starters": 53.14,
-    "xpts_total": 56.6,
-    "xpts_ceiling": 77.65,
-    "xpts_yours": 53.14,
+    "ep_sum": 56.02,
+    "ep_sum_starters": 52.56,
+    "xpts_starters": 52.56,
+    "xpts_total": 56.02,
+    "xpts_ceiling": 77.07,
+    "xpts_yours": 52.56,
     "cost_sum": 166982000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1865,8 +1865,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 56.6,
-    "ep_sum_starters": 53.14,
+    "ep_sum": 56.02,
+    "ep_sum_starters": 52.56,
     "mode": "ko",
     "formation": "3-5-2",
     "xi_rule": "formación 3-5-2 · once por xPts · 15 al KO",
