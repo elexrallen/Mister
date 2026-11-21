@@ -4005,11 +4005,49 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T10:24:49.273483+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "63709",
+          "name": "R. Cherki",
+          "amount": 20456700,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16390600,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63860",
+          "name": "F. Wirtz",
+          "amount": 12038000,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 206,
+      "bids": 209,
       "won": 10,
       "lost": 27,
       "lists": 57,
@@ -4019,7 +4057,7 @@
       "top_skips": [
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 102
+          "count": 105
         },
         {
           "why": "sin caja",
@@ -4036,7 +4074,7 @@
       ]
     },
     "d14": {
-      "bids": 206,
+      "bids": 209,
       "won": 10,
       "lost": 27,
       "lists": 57,
@@ -4046,7 +4084,7 @@
       "top_skips": [
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 102
+          "count": 105
         },
         {
           "why": "sin caja",
@@ -4063,5 +4101,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T08:24:03.616115+00:00"
+  "updated_at": "2026-11-21T10:24:49.273483+00:00"
 }
