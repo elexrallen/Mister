@@ -861,6 +861,150 @@ def test_apply_flip_toggle_accepts_quoted_json() -> None:
         _assert(apply_flip_toggle("laliga", "maybe", root=root) is False, "garbage")
 
 
+VM_WILLIAMS = 6_881_000
+
+
+def _listed_offer(
+    *,
+    amount: float,
+    balance: float,
+    hours: float | None,
+    cycle: float,
+    enabled: bool = True,
+    buy: float | None = 6_861_400,
+):
+    """Jugador de reventa ya listado. El valor cuenta para el pitido (lag 1 h)."""
+    book = fresh_book()
+    book["active"] = True
+    book["positions"] = {
+        "9": {
+            "player_id": "9",
+            "name": "Williams",
+            "buy_price": buy,
+            "status": "listed",
+            "listed": True,
+        }
+    }
+    squad = [_player("9", name="Williams", vm=VM_WILLIAMS, ask=VM_WILLIAMS, on_sale=True)]
+    offer = {
+        "player_id": "9",
+        "name": "Williams",
+        "amount": amount,
+        "market_value": VM_WILLIAMS,
+        "id_bid": "91",
+        "id_market": 91,
+        "id_uc": 0,
+    }
+    kwargs = dict(
+        book=book,
+        enabled=enabled,
+        squad=squad,
+        market=[],
+        sales_state={"pending_offers": [offer]},
+        me={"balance": balance},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        cash_lag_hours=1,
+        cycle_hours=cycle,
+        now=NOW,
+    )
+    if hours is not None:
+        kwargs["hours_to_solvency_deadline"] = hours
+    return build_flip_cycle(**kwargs)
+
+
+def _move_kinds(plan: dict) -> set[tuple[str, str]]:
+    return {(m["player_id"], m["kind"]) for m in plan["moves"]}
+
+
+def test_late_window_accepts_from_one_percent() -> None:
+    """Patio a 59 h (4 ciclos de 12 h) y en negativo: el +1,7% se acepta."""
+    offer = 7_000_000
+    plan, _book = _listed_offer(amount=offer, balance=-4_417_626, hours=59, cycle=12)
+    _assert(("9", "accept_offer") in _move_kinds(plan), plan["moves"])
+    _assert(("9", "renew_offer") not in _move_kinds(plan), plan["moves"])
+    accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
+    _assert(accept["threshold"] == round(VM_WILLIAMS * 1.01), accept)
+    _assert("+1%" in (accept.get("why") or ""), accept)
+
+
+def test_late_window_stays_at_three_percent_outside() -> None:
+    """60 h son 5 ciclos de 12 h: aunque el saldo sea negativo, sigue el +3%."""
+    plan, _book = _listed_offer(amount=7_000_000, balance=-4_417_626, hours=60, cycle=12)
+    _assert(("9", "renew_offer") in _move_kinds(plan), plan["moves"])
+    _assert(("9", "accept_offer") not in _move_kinds(plan), plan["moves"])
+    renew = next(m for m in plan["moves"] if m["kind"] == "renew_offer")
+    _assert(renew["threshold"] == round(VM_WILLIAMS * 1.03), renew)
+    _assert("+3%" in (renew.get("why") or ""), renew)
+
+
+def test_late_window_exact_one_percent_on_both_cycle_lengths() -> None:
+    exact = round(VM_WILLIAMS * 1.01)
+    for hours, cycle in ((48, 12), (32, 8)):
+        plan, _book = _listed_offer(amount=exact, balance=-1_000_000, hours=hours, cycle=cycle)
+        _assert(("9", "accept_offer") in _move_kinds(plan), (hours, cycle, plan["moves"]))
+        under, _book = _listed_offer(
+            amount=exact - 1, balance=-1_000_000, hours=hours, cycle=cycle
+        )
+        _assert(("9", "renew_offer") in _move_kinds(under), (hours, cycle, under["moves"]))
+        _assert(("9", "accept_offer") not in _move_kinds(under), under["moves"])
+
+
+def test_open_window_keeps_three_percent_unless_balance_is_negative() -> None:
+    """Serie A y Premier: 4,5 h y ciclo de 8 h son 0 ciclos."""
+    between = 7_000_000
+    positive, _book = _listed_offer(amount=between, balance=3_423_517, hours=4.5, cycle=8)
+    _assert(("9", "renew_offer") in _move_kinds(positive), positive["moves"])
+    zero, _book = _listed_offer(amount=between, balance=0, hours=4.5, cycle=8)
+    _assert(("9", "renew_offer") in _move_kinds(zero), zero["moves"])
+    negative, _book = _listed_offer(amount=between, balance=-1_000_000, hours=4.5, cycle=8)
+    _assert(("9", "accept_offer") in _move_kinds(negative), negative["moves"])
+    accept = next(m for m in negative["moves"] if m["kind"] == "accept_offer")
+    _assert("+1%" in (accept.get("why") or ""), accept)
+
+
+def test_missing_kickoff_clock_keeps_three_percent() -> None:
+    plan, _book = _listed_offer(amount=7_000_000, balance=-4_417_626, hours=None, cycle=12)
+    _assert(("9", "renew_offer") in _move_kinds(plan), plan["moves"])
+    renew = next(m for m in plan["moves"] if m["kind"] == "renew_offer")
+    _assert(renew["threshold"] == round(VM_WILLIAMS * 1.03), renew)
+
+
+def test_missing_buy_price_is_still_skipped_inside_the_window() -> None:
+    plan, _book = _listed_offer(
+        amount=7_000_000,
+        balance=-1_000_000,
+        hours=4.5,
+        cycle=8,
+        buy=None,
+    )
+    _assert(("9", "accept_offer") not in _move_kinds(plan), plan["moves"])
+    _assert(("9", "renew_offer") not in _move_kinds(plan), plan["moves"])
+    skipped = [row for row in plan["flip_skipped"] if row.get("player_id") == "9"]
+    _assert(len(skipped) == 1 and "precio de compra" in (skipped[0].get("why") or ""), skipped)
+
+
+def test_late_floor_also_applies_when_flip_is_off() -> None:
+    plan, _book = _listed_offer(
+        amount=7_000_000,
+        balance=-1_000_000,
+        hours=59,
+        cycle=12,
+        enabled=False,
+    )
+    _assert(("9", "accept_offer") in _move_kinds(plan), plan["moves"])
+    _assert("+1%" in (plan.get("narrative") or ""), plan.get("narrative"))
+
+    outside, _book = _listed_offer(
+        amount=7_000_000,
+        balance=-1_000_000,
+        hours=60,
+        cycle=12,
+        enabled=False,
+    )
+    _assert(("9", "renew_offer") in _move_kinds(outside), outside["moves"])
+    _assert("+3%" in (outside.get("narrative") or ""), outside.get("narrative"))
+
+
 def main() -> None:
     test_daily_change_is_euros()
     test_bid_premium_and_margin()
@@ -877,6 +1021,13 @@ def main() -> None:
     test_kickoff_blocks_a_bid_the_cycle_cannot_cover()
     test_kickoff_uses_cash_already_in_hand()
     test_kickoff_accepts_a_short_offer_to_cover_the_whistle()
+    test_late_window_accepts_from_one_percent()
+    test_late_window_stays_at_three_percent_outside()
+    test_late_window_exact_one_percent_on_both_cycle_lengths()
+    test_open_window_keeps_three_percent_unless_balance_is_negative()
+    test_missing_kickoff_clock_keeps_three_percent()
+    test_missing_buy_price_is_still_skipped_inside_the_window()
+    test_late_floor_also_applies_when_flip_is_off()
     test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold()
     test_full_sale_limit_blocks_new_bids()
     test_book_roundtrip()

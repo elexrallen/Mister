@@ -331,6 +331,39 @@ def _fmt_money(amount: float) -> str:
     return f"{n:,.0f} €"
 
 
+def _profit_label(rate: float) -> str:
+    points = float(rate) * 100.0
+    if abs(points - round(points)) < 1e-6:
+        return f"{int(round(points))}%"
+    txt = f"{points:.1f}".rstrip("0").rstrip(".")
+    return f"{txt}%"
+
+
+def _accept_min_profit(
+    *,
+    balance: float,
+    hours_to_deadline: float | None,
+    cycle_hours: float | None,
+) -> float:
+    """Suelo de la oferta sobre el valor de mercado: +3%, o +1% cerca del pitido.
+
+    El +1% solo entra con saldo negativo y 4 ciclos enteros o menos hasta el
+    pitido. Sin reloj se queda el +3%.
+    """
+    base = float(config.FLIP_MIN_PROFIT)
+    if balance >= 0 or hours_to_deadline is None:
+        return base
+    step = cycle_hours if cycle_hours is not None and cycle_hours > 0 else None
+    if step is None:
+        step = float(getattr(config, "MARKET_CYCLE_HOURS", 24) or 24)
+    if step <= 0:
+        return base
+    cycles_left = math.floor(float(hours_to_deadline) / step)
+    if cycles_left <= int(config.FLIP_LATE_CYCLES):
+        return float(config.FLIP_LATE_MIN_PROFIT)
+    return base
+
+
 def _cash_arrival_hours(wait_remaining: float, lag: float | None, cycle: float | None) -> float | None:
     """Horas hasta el cierre de ciclo en que cobra alguien que aún no puede listarse."""
     if lag is None:
@@ -402,6 +435,14 @@ def build_flip_cycle(
     positions = book.get("positions") or {}
     locked = {str(pid) for pid in (locked_ids or set())}
     active = bool(book.get("active"))
+    raw_balance = _f(me.get("balance"))
+    balance = 0.0 if raw_balance is None else raw_balance
+    min_profit = _accept_min_profit(
+        balance=balance,
+        hours_to_deadline=_f(hours_to_solvency_deadline),
+        cycle_hours=_f(cycle_hours),
+    )
+    profit_label = _profit_label(min_profit)
 
     moves: list[dict[str, Any]] = []
     skipped: list[dict[str, Any]] = []
@@ -447,7 +488,7 @@ def build_flip_cycle(
                 }
             )
             continue
-        # El +3% se mide sobre el valor de mercado de este ciclo. Si la ficha
+        # El suelo se mide sobre el valor de mercado de este ciclo. Si la ficha
         # no trae valor, vale el de la oferta.
         vm = _vm(squad_player) if isinstance(squad_player, dict) else 0.0
         if vm <= 0:
@@ -475,7 +516,7 @@ def build_flip_cycle(
                 )
             )
             continue
-        threshold = round(vm * (1.0 + float(config.FLIP_MIN_PROFIT)))
+        threshold = round(vm * (1.0 + min_profit))
         extra["threshold"] = threshold
         if amount >= threshold:
             moves.append(
@@ -484,7 +525,7 @@ def build_flip_cycle(
                     kind=KIND_ACCEPT,
                     amount=amount,
                     why=(
-                        f"Oferta {_fmt_money(amount)} llega al +3% del valor de mercado "
+                        f"Oferta {_fmt_money(amount)} llega al +{profit_label} del valor de mercado "
                         f"({_fmt_money(vm)})."
                     ),
                     extra=extra,
@@ -502,7 +543,7 @@ def build_flip_cycle(
                     amount=amount,
                     why=(
                         f"Oferta {_fmt_money(amount)} no llega a {_fmt_money(threshold)} "
-                        f"(valor de mercado {_fmt_money(vm)} + 3%). "
+                        f"(valor de mercado {_fmt_money(vm)} +{profit_label}). "
                         "Se renueva el listado."
                     ),
                     extra=extra,
@@ -555,8 +596,6 @@ def build_flip_cycle(
         )
         list_room -= 1
 
-    raw_balance = _f(me.get("balance"))
-    balance = 0.0 if raw_balance is None else raw_balance
     max_debt = _f(me.get("max_debt"))
     hours_deadline = _f(hours_to_solvency_deadline)
     lag = _f(cash_lag_hours)
@@ -598,7 +637,8 @@ def build_flip_cycle(
             timely[pid] = vm
 
     ko_cash = balance + cash_in + sum(timely.values())
-    if ko_cash < -1:
+    # Sin pitido no hay llegada que cubrir: el suelo corto solo baja dentro de la ventana.
+    if hours_deadline is not None and ko_cash < -1:
         renews = [m for m in moves if m.get("kind") == KIND_RENEW]
         renews.sort(key=lambda m: -_money(m.get("amount")))
         for offer_move in renews:
@@ -804,7 +844,10 @@ def build_flip_cycle(
             f"{taken} puja{'s' if taken != 1 else ''} por libres de más de 4M con margen para el +3%."
         )
     elif moves:
-        narrative = "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados para eso, desde el +3% del valor de mercado."
+        narrative = (
+            "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados "
+            f"para eso, desde el +{profit_label} del valor de mercado."
+        )
     else:
         narrative = "Reventa apagada."
 

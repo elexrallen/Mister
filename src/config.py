@@ -768,6 +768,9 @@ CPU_SPREAD_QUEUE_BASE = 8_200  # debajo de secondary(9k) / hedge(8.5k)
 FLIP_MIN_ASK = 4_000_000
 FLIP_MACHINE_PREMIUM = 0.05
 FLIP_MIN_PROFIT = 0.03
+# Con 4 ciclos o menos hasta el pitido y saldo negativo, la venta acepta desde aquí.
+FLIP_LATE_MIN_PROFIT = 0.01
+FLIP_LATE_CYCLES = 4
 FLIP_MAX_OPEN = 5  # jugadores comprados para revender; no se puja por encima
 FLIP_UP_SHARE = 0.30  # de la subida diaria en euros
 FLIP_DOWN_SHARE = 0.05  # de la bajada diaria en euros
