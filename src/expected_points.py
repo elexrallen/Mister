@@ -107,7 +107,9 @@ def probability_of_playing(player: dict[str, Any]) -> tuple[float, str]:
     avail = str(ext.get("availability") or ("injured" if player.get("injury") else "")).lower()
     if avail in ("injured", "suspended"):
         return P_PLAY_UNAVAILABLE, f"Baja ({avail})"
-    if player.get("gw_out") or ext.get("gw_out"):
+    # gw_out es blank Mister (sin partido). No aplicar si el propio Mister
+    # tiene al jugador en el once probable: la previa no puede "descartarlo".
+    if (player.get("gw_out") or ext.get("gw_out")) and player.get("gw_probable_xi") is not True:
         return P_PLAY_GW_OUT, "Descartado en la previa"
 
     ff_prob = _num(player.get("gw_lineup_prob")) or _num(ext.get("gw_lineup_prob"))

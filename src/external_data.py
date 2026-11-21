@@ -213,8 +213,12 @@ def _load_candidates_from_cache_or_seed(
     cache = _load_json(_cache_path_for(competition))
     if isinstance(cache, dict) and cache.get("players"):
         meta["cache_used"] = True
-        for k in ("futbolfantasy", "jornadaperfecta"):
-            meta[k] = "cache"
+        status = cache.get("status") if isinstance(cache.get("status"), dict) else {}
+        for k in ("futbolfantasy", "jornadaperfecta", "predicted11", "ff_matchday"):
+            if k in status:
+                meta[k] = status[k]
+            elif k in ("futbolfantasy", "jornadaperfecta"):
+                meta[k] = "cache"
         log.info(
             "Usando caché externa [%s] (%d jugadores)",
             competition,
@@ -404,7 +408,8 @@ def _apply_predicted11_overlay(
         rec["gw_role"] = role
         rec["gw_starter"] = pct_i >= 70
         rec["gw_doubt"] = 40 <= pct_i < 70
-        rec["gw_out"] = pct_i < 40
+        # Banquillo Pred11 ≠ descartado Mister (blank / sin partido).
+        rec["gw_out"] = False
         rec["lineup_prob_source"] = "predicted11"
         if pct_i >= 70:
             rec["is_recommendation"] = True
@@ -454,7 +459,7 @@ def _apply_predicted11_overlay(
                 "gw_role": "starter" if pct_i >= 70 else ("doubt" if pct_i >= 40 else "bench"),
                 "gw_starter": pct_i >= 70,
                 "gw_doubt": 40 <= pct_i < 70,
-                "gw_out": pct_i < 40,
+                "gw_out": False,
                 "lineup_prob_source": "predicted11",
             }
             by_key[key] = rec
@@ -606,7 +611,11 @@ def enrich_players_with_external(
             new_p["gw_role"] = ext.get("gw_role")
             new_p["gw_starter"] = ext.get("gw_starter")
             new_p["gw_doubt"] = ext.get("gw_doubt")
-            new_p["gw_out"] = ext.get("gw_out")
+            if lp_src:
+                new_p["lineup_prob_source"] = lp_src
+            # gw_out / gw_blank los pone Mister (equipo sin partido). La previa
+            # solo aporta %. Copiar gw_out=True de Pred11/FF convertía un
+            # banquillo (18%) en "Descartado" al 3% y pisaba onces probables.
         # Señales endógenas: Mister ya trae racha y delta diario, no hacen
         # falta fuentes externas para derivarlas.
         ext["points_streak"] = str(new_p.get("points_trend") or "unknown")

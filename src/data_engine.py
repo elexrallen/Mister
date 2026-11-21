@@ -3050,6 +3050,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         external_meta = {
             "futbolfantasy": "skip",
             "jornadaperfecta": "skip",
+            "predicted11": "skip",
             "ff_matchday": "skip",
             "matched": 0,
             "cache_used": False,
@@ -3208,11 +3209,12 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
 
     me = {**me_raw, "squad": squad}
     log.info(
-        "External match %s/%s (FF=%s JP=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
+        "External match %s/%s (FF=%s JP=%s Pred11=%s FotMob=%s filled=%s FFpts=%s tops=%s cache=%s)",
         external_meta.get("matched"),
         len(universe),
         external_meta.get("futbolfantasy"),
         external_meta.get("jornadaperfecta"),
+        external_meta.get("predicted11"),
         external_meta.get("fotmob"),
         external_meta.get("fotmob_filled"),
         external_meta.get("ff_points"),
@@ -4141,6 +4143,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             f"External matched={external_meta.get('matched')} "
             f"FF={external_meta.get('futbolfantasy')} "
             f"JP={external_meta.get('jornadaperfecta')} "
+            f"Pred11={external_meta.get('predicted11')} "
             f"FotMob={external_meta.get('fotmob')} "
             f"notas={external_meta.get('fotmob_filled', 0)}"
             + (" (caché FF/JP)" if external_meta.get("cache_used") else "")
@@ -4207,6 +4210,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
             "external": {
                 "futbolfantasy": external_meta.get("futbolfantasy", "fail"),
                 "jornadaperfecta": external_meta.get("jornadaperfecta", "skip"),
+                "predicted11": external_meta.get("predicted11", "skip"),
                 "ff_matchday": external_meta.get("ff_matchday", "fail"),
                 "fotmob": external_meta.get("fotmob", "skip"),
                 "matched": external_meta.get("matched", 0),

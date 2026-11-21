@@ -35,13 +35,17 @@ def _fat_player(pid: str, *, pos: str = "MF") -> dict:
         "external": {
             "availability": "available",
             "lineup_prob_ext": 80,
+            "lineup_prob_source": "predicted11",
+            "gw_lineup_prob": 80,
             "profile_url": "https://example.test/p",
             "ff_mister_avg": 4.1,
             "matched_name": "Jugador",
             "match_score": 99,
-            "gw_role": None,
+            "gw_role": "starter",
             "top_reason": None,
         },
+        "gw_lineup_prob": 80,
+        "lineup_prob_source": "predicted11",
         "fotmob_stats": {
             "rating_promedio": 6.8,
             "minutos_ultimos_5": 400,
@@ -62,6 +66,10 @@ def test_slim_player_drops_bulk() -> None:
     assert "xpts_why" not in slim
     ext = slim["external"]
     assert ext["availability"] == "available"
+    assert ext["lineup_prob_source"] == "predicted11"
+    assert ext["gw_lineup_prob"] == 80
+    assert slim["gw_lineup_prob"] == 80
+    assert slim["lineup_prob_source"] == "predicted11"
     assert "matched_name" not in ext
     assert slim["fotmob_stats"]["rating_promedio"] == 6.8
     assert slim["fotmob_stats"]["goles_ultimos_5"] == 1
