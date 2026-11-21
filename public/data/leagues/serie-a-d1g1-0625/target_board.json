@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-21T17:59:28.186286+00:00",
+  "generated_at": "2026-11-21T18:27:02.645922+00:00",
   "league_slug": "serie-a-d1g1-0625",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 63.77,
+      "xpts_starters": 63.78,
       "complete": true,
       "flex": 0,
       "cost": 1999997.0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 65.57,
+      "xpts_starters": 65.58,
       "complete": false,
       "flex": 0,
       "cost": 1999997.0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 65.56,
+      "xpts_starters": 65.57,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 61.42,
+      "xpts_starters": 61.43,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 60.12,
+      "xpts_starters": 60.13,
       "complete": false,
       "flex": 0,
       "cost": 1999997.0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 58.0,
+      "xpts_starters": 58.01,
       "complete": false,
       "flex": 0,
       "cost": 1000000.0
@@ -135,7 +135,7 @@
       "team": "Napoli",
       "team_id": "195",
       "ep_score": 10.4,
-      "xpts": 8.57,
+      "xpts": 8.58,
       "price": 4879000.0,
       "status": "keep",
       "delta_5d": 0.0241,
@@ -649,7 +649,7 @@
       "team": "Napoli",
       "team_id": "195",
       "ep_score": 10.4,
-      "xpts": 8.57,
+      "xpts": 8.58,
       "price": 4879000.0,
       "status": "keep",
       "delta_5d": 0.0241,
@@ -1176,7 +1176,7 @@
     "n_free": 194,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 1.764919158888889
+    "hours_to_jornada": 1.3056531502777777
   },
   "finance": {
     "ok": true,
@@ -1197,7 +1197,7 @@
         "team": "Napoli",
         "team_id": "195",
         "ep_score": 10.4,
-        "xpts": 8.57,
+        "xpts": 8.58,
         "price": 4879000.0,
         "status": "keep",
         "delta_5d": 0.0241,
@@ -1722,12 +1722,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 71.11,
-    "ep_sum_starters": 63.77,
-    "xpts_starters": 63.77,
-    "xpts_total": 71.11,
-    "xpts_ceiling": 90.56,
-    "xpts_yours": 82.7,
+    "ep_sum": 71.12,
+    "ep_sum_starters": 63.78,
+    "xpts_starters": 63.78,
+    "xpts_total": 71.12,
+    "xpts_ceiling": 90.55,
+    "xpts_yours": 82.73,
     "cost_sum": 47675997.0,
     "net_buys": 1999997.0,
     "slots_filled": 15,
@@ -1771,8 +1771,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 71.11,
-    "ep_sum_starters": 63.77,
+    "ep_sum": 71.12,
+    "ep_sum_starters": 63.78,
     "mode": "ko",
     "formation": "4-3-3",
     "xi_rule": "formación 4-3-3 · once por xPts · 15 al KO",
