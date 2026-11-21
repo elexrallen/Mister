@@ -31,8 +31,9 @@
       "name": "J. Messias",
       "buy_price": 11774700,
       "opened_at": "2026-11-19T20:27:14.585572+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-21T04:29:05.152567+00:00"
     }
   },
   "watches": {},

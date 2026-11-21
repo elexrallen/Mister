@@ -52,8 +52,9 @@
       "name": "B. Guimarães 💥",
       "buy_price": 15915500,
       "opened_at": "2026-11-19T20:23:36.948085+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-21T04:33:31.564512+00:00"
     }
   },
   "watches": {

@@ -3780,17 +3780,166 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T04:24:51.989693+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "36341",
+          "name": "B. Guimarães 💥",
+          "amount": 15314880,
+          "market_value": 15964000,
+          "buy_price": 15915500,
+          "threshold": 16442920,
+          "status": "ejecutada",
+          "why": "Oferta 15.31M € se acepta para no llegar en negativo al pitido.",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "849057195",
+              "type": "accept",
+              "amount": 15314880
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_market": 19862593713,
+              "id_player": 36341,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": 8418471,
+                "future": 8418471,
+                "maxDebt": 19969471
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": 1225000,
+          "market_value": 1225000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 1.23M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "68405",
+              "action": "sale",
+              "price": 1225000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 68405,
+              "id_market": 19858766058,
+              "action": "sale",
+              "price": 1225000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "63709",
+          "name": "R. Cherki",
+          "amount": 20456700,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16390600,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63860",
+          "name": "F. Wirtz",
+          "amount": 12038000,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-21T04:33:31.564512+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "63709",
+          "name": "R. Cherki",
+          "amount": 20456700,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16390600,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63860",
+          "name": "F. Wirtz",
+          "amount": 12038000,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 194,
+      "bids": 200,
       "won": 10,
       "lost": 27,
-      "lists": 56,
+      "lists": 57,
       "accepts": 1,
       "profit": 602440,
-      "short_offers": 0,
+      "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
@@ -3798,7 +3947,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 90
+          "count": 96
         },
         {
           "why": "espera compra→venta",
@@ -3811,13 +3960,13 @@
       ]
     },
     "d14": {
-      "bids": 194,
+      "bids": 200,
       "won": 10,
       "lost": 27,
-      "lists": 56,
+      "lists": 57,
       "accepts": 1,
       "profit": 602440,
-      "short_offers": 0,
+      "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
@@ -3825,7 +3974,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 90
+          "count": 96
         },
         {
           "why": "espera compra→venta",
@@ -3838,5 +3987,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T03:37:56.474942+00:00"
+  "updated_at": "2026-11-21T04:33:31.564512+00:00"
 }
