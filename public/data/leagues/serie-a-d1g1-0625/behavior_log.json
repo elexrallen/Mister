@@ -2676,7 +2676,8 @@
           "name": "A. Rrahmani",
           "amount": 12434100,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -2706,7 +2707,8 @@
           "name": "A. Rrahmani",
           "amount": 12434100,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -2736,7 +2738,8 @@
           "name": "A. Rrahmani",
           "amount": 12434100,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -2766,7 +2769,8 @@
           "name": "A. Rrahmani",
           "amount": 12434100,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -2796,7 +2800,8 @@
           "name": "A. Rrahmani",
           "amount": 12434100,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -2858,7 +2863,8 @@
                 "maxDebt": 2448417
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "accept_offer",
@@ -2874,7 +2880,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2915,7 +2922,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2945,7 +2953,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -2975,7 +2984,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3005,7 +3015,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3035,7 +3046,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3065,7 +3077,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3095,7 +3108,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3125,7 +3139,8 @@
           "name": "D. Moreira",
           "amount": 12588600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -3136,14 +3151,36 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T20:30:07.016754+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "18200",
+          "name": "A. Rrahmani",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
       "bids": 115,
-      "won": 2,
-      "lost": 46,
-      "lists": 48,
+      "won": 8,
+      "lost": 55,
+      "lists": 49,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3158,7 +3195,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 16
+          "count": 17
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3168,9 +3205,9 @@
     },
     "d14": {
       "bids": 115,
-      "won": 2,
-      "lost": 46,
-      "lists": 48,
+      "won": 8,
+      "lost": 55,
+      "lists": 49,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3185,7 +3222,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 16
+          "count": 17
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3194,5 +3231,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T20:02:03.286976+00:00"
+  "updated_at": "2026-11-21T20:30:07.016754+00:00"
 }

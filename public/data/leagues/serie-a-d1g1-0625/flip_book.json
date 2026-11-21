@@ -27,16 +27,17 @@
       "status": "sold",
       "listed": true,
       "sold_at": "2026-11-21T04:29:05.152567+00:00"
-    }
-  },
-  "watches": {
+    },
     "18200": {
       "player_id": "18200",
       "name": "A. Rrahmani",
       "buy_price": 12434100,
-      "bid_at": "2026-11-21T12:27:09.255820+00:00"
+      "opened_at": "2026-11-21T20:30:07.016754+00:00",
+      "status": "owned",
+      "listed": false
     }
   },
+  "watches": {},
   "activated_at": "2026-11-18T12:24:22.523062+00:00",
   "manual_ids": [
     "4927635"

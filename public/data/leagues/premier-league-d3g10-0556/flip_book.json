@@ -48,6 +48,14 @@
       "status": "sold",
       "listed": true,
       "sold_at": "2026-11-21T04:33:31.564512+00:00"
+    },
+    "428356": {
+      "player_id": "428356",
+      "name": "R. Araújo 💥",
+      "buy_price": 13187100,
+      "opened_at": "2026-11-21T20:24:55.950303+00:00",
+      "status": "owned",
+      "listed": false
     }
   },
   "watches": {
@@ -74,12 +82,6 @@
       "name": "D. Affengruber",
       "buy_price": 4649900,
       "bid_at": "2026-11-20T04:21:51.712964+00:00"
-    },
-    "428356": {
-      "player_id": "428356",
-      "name": "R. Araújo",
-      "buy_price": 13187100,
-      "bid_at": "2026-11-21T12:23:31.674997+00:00"
     }
   },
   "activated_at": "2026-11-16T15:34:06.138722+00:00",
