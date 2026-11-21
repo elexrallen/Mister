@@ -1008,6 +1008,46 @@ def test_flip_renew_posts_only_id_market() -> None:
     _assert(d.get("blocked", 0) == 0, d)
 
 
+def test_flip_unlist_runs_without_allowed_actions() -> None:
+    """Un fichaje a mano se retira del mercado aunque unlist no esté permitido."""
+    move = {
+        "kind": "unlist",
+        "player_id": "68405",
+        "name": "Alysson",
+        "flip_play": True,
+        "why": "Fichaje a mano: se retira del mercado. La reventa no lo vende.",
+    }
+    d = ax.plan_operations(
+        cycle_plan={
+            "flip": {"enabled": True},
+            "constraints": {
+                "balance": 0,
+                "spendable": 34 * M,
+                "free_slots_after_accepts": 0,
+                "sale_remaining": 2,
+            },
+            "moves": [move],
+        },
+        settings=_settings(
+            enabled=False,
+            kill_switch_off=True,
+            league_registered=False,
+            env_killed=False,
+            allowed_actions=["bid", "list_for_sale"],
+        ),
+        now=NOW,
+    )
+    _assert(_kinds(d) == ["unlist"], d.get("skipped"))
+    calls: list = []
+    client = MisterWriteClient(
+        dry_run=False, transport=lambda p, data: calls.append((p, data)) or {"status": "ok"}
+    )
+    ax.execute(d, client=client)
+    _assert(calls == [("/ajax/sale", {"id_player": "68405", "action": "remove"})], calls)
+    _assert(d["operations"][0]["status"] == "ok", d["operations"][0])
+    _assert(d.get("blocked", 0) == 0, d)
+
+
 def test_clause_pay_posts_id_player_and_id_uc() -> None:
     """views/ajax/clause-pay.twig: id_player, id_uc, id_giphy. El importe no viaja."""
     d = _run([_clause("55646", 2 * M, name="Christos Mandas", owner_id="888")])
@@ -1355,6 +1395,7 @@ TESTS = [
     test_flip_accept_runs_without_allowed_actions,
     test_flip_accept_marked_decline_is_an_error,
     test_flip_renew_posts_only_id_market,
+    test_flip_unlist_runs_without_allowed_actions,
     test_clause_pay_posts_id_player_and_id_uc,
     test_recent_signing_is_skipped_at_plan_when_hours_known,
     test_recent_signing_is_deferred_after_hydrate,

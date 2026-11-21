@@ -160,10 +160,127 @@ def test_snapshot_is_not_retaken() -> None:
         league_rules=_rules(),
         now=NOW + timedelta(hours=8),
     )
-    _assert(set(book["frozen_ids"]) == {"1", "2"}, book["frozen_ids"])
-    _assert("3" in book["positions"], book["positions"])
-    kinds = {m["kind"] for m in plan["moves"] if m["player_id"] in {"1", "2"}}
+    _assert(set(book["frozen_ids"]) == {"1", "2", "3"}, book["frozen_ids"])
+    _assert("3" not in book["positions"], book["positions"])
+    kinds = {m["kind"] for m in plan["moves"] if m["player_id"] in {"1", "2", "3"}}
     _assert(not kinds, kinds)
+
+
+def test_watched_arrival_is_listed() -> None:
+    """La puja de la reventa sí abre posición y sale a la venta."""
+    book = fresh_book()
+    book["active"] = True
+    book["frozen_ids"] = ["1"]
+    book["watches"] = {
+        "3": {"player_id": "3", "name": "Vigilado", "buy_price": 2_060_000, "bid_at": NOW.isoformat()}
+    }
+    squad = [
+        _player("1", name="A", vm=1 * M, ask=1 * M),
+        _player("3", name="Vigilado", vm=2 * M, ask=2 * M),
+    ]
+    plan, book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={},
+        me={"balance": 10 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    pos = book["positions"]["3"]
+    _assert(pos["buy_price"] == 2_060_000, pos)
+    _assert("3" not in book["watches"], book["watches"])
+    _assert("3" not in book["frozen_ids"], book["frozen_ids"])
+    listed = [m for m in plan["moves"] if m["player_id"] == "3"]
+    _assert(len(listed) == 1 and listed[0]["kind"] == "list_for_sale", listed)
+
+
+def test_manual_signing_already_listed_is_withdrawn() -> None:
+    """Sin precio de compra no es reventa: se congela y se retira del mercado."""
+    book = fresh_book()
+    book["active"] = True
+    book["frozen_ids"] = ["1"]
+    book["positions"] = {
+        "9": {
+            "player_id": "9",
+            "name": "Monteiro",
+            "buy_price": None,
+            "status": "listed",
+            "listed": True,
+        },
+        "8": {
+            "player_id": "8",
+            "name": "Ya vendido",
+            "buy_price": None,
+            "status": "sold",
+            "listed": True,
+        },
+    }
+    squad = [
+        _player("1", name="A", vm=1 * M, ask=1 * M),
+        _player("9", name="Monteiro", vm=160_000, ask=160_000, on_sale=True),
+    ]
+    plan, book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=[],
+        sales_state={
+            "pending_offers": [
+                {"player_id": "9", "name": "Monteiro", "amount": 500_000, "status": "pending"}
+            ]
+        },
+        me={"balance": 10 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    _assert("9" not in book["positions"], book["positions"])
+    _assert("9" in book["frozen_ids"], book["frozen_ids"])
+    _assert("9" in book["manual_ids"], book["manual_ids"])
+    _assert(book["positions"]["8"]["status"] == "sold", book["positions"])
+    kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
+    _assert(("9", "unlist") in kinds, kinds)
+    _assert(("9", "list_for_sale") not in kinds, kinds)
+    _assert(("9", "accept_offer") not in kinds, kinds)
+    withdrawn = next(m for m in plan["moves"] if m["player_id"] == "9")
+    _assert(withdrawn.get("flip_play") is True, withdrawn)
+    _assert(withdrawn.get("amount") is None, withdrawn)
+    _assert(plan["flip"]["open_count"] == 0, plan["flip"])
+
+    still_listed, book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=[
+            _player("1", name="A", vm=1 * M, ask=1 * M),
+            _player("9", name="Monteiro", vm=160_000, ask=160_000, on_sale=True),
+        ],
+        market=[],
+        sales_state={},
+        me={"balance": 10 * M},
+        league_rules=_rules(),
+        now=NOW + timedelta(hours=4),
+    )
+    _assert(
+        [(m["player_id"], m["kind"]) for m in still_listed["moves"]] == [("9", "unlist")],
+        still_listed["moves"],
+    )
+
+    quiet, book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=[
+            _player("1", name="A", vm=1 * M, ask=1 * M),
+            _player("9", name="Monteiro", vm=160_000, ask=160_000),
+        ],
+        market=[],
+        sales_state={},
+        me={"balance": 10 * M},
+        league_rules=_rules(),
+        now=NOW + timedelta(hours=8),
+    )
+    _assert(not any(m["player_id"] == "9" for m in quiet["moves"]), quiet["moves"])
+    _assert("9" in book["frozen_ids"] and "9" not in book["positions"], book)
 
 
 def test_offer_threshold_and_frozen_untouched() -> None:
@@ -969,8 +1086,9 @@ def test_missing_kickoff_clock_keeps_three_percent() -> None:
     _assert(renew["threshold"] == round(VM_WILLIAMS * 1.03), renew)
 
 
-def test_missing_buy_price_is_still_skipped_inside_the_window() -> None:
-    plan, _book = _listed_offer(
+def test_missing_buy_price_is_a_manual_signing_inside_the_window() -> None:
+    """Sin precio de compra no es reventa: ni el +1% del pitido la vende."""
+    plan, book = _listed_offer(
         amount=7_000_000,
         balance=-1_000_000,
         hours=4.5,
@@ -979,8 +1097,8 @@ def test_missing_buy_price_is_still_skipped_inside_the_window() -> None:
     )
     _assert(("9", "accept_offer") not in _move_kinds(plan), plan["moves"])
     _assert(("9", "renew_offer") not in _move_kinds(plan), plan["moves"])
-    skipped = [row for row in plan["flip_skipped"] if row.get("player_id") == "9"]
-    _assert(len(skipped) == 1 and "precio de compra" in (skipped[0].get("why") or ""), skipped)
+    _assert(("9", "unlist") in _move_kinds(plan), plan["moves"])
+    _assert("9" in book["frozen_ids"] and "9" not in book["positions"], book)
 
 
 def test_late_floor_also_applies_when_flip_is_off() -> None:
@@ -1010,6 +1128,8 @@ def main() -> None:
     test_bid_premium_and_margin()
     test_cash_keeps_the_wider_margin()
     test_snapshot_is_not_retaken()
+    test_watched_arrival_is_listed()
+    test_manual_signing_already_listed_is_withdrawn()
     test_offer_threshold_and_frozen_untouched()
     test_fallen_market_accepts_below_buy_price()
     test_konate_accepts_and_the_other_two_renew()
@@ -1026,7 +1146,7 @@ def main() -> None:
     test_late_window_exact_one_percent_on_both_cycle_lengths()
     test_open_window_keeps_three_percent_unless_balance_is_negative()
     test_missing_kickoff_clock_keeps_three_percent()
-    test_missing_buy_price_is_still_skipped_inside_the_window()
+    test_missing_buy_price_is_a_manual_signing_inside_the_window()
     test_late_floor_also_applies_when_flip_is_off()
     test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold()
     test_full_sale_limit_blocks_new_bids()

@@ -62,6 +62,7 @@ KIND_ACCEPT = "accept_offer"
 KIND_DECLINE = "decline_offer"
 KIND_RENEW = "renew_offer"
 KIND_LIST = "list_for_sale"
+KIND_UNLIST = "unlist"
 KIND_BID = "bid"
 KIND_CLAUSE = "clause_bid"
 KIND_HOLD = "hold_offer"
@@ -81,6 +82,7 @@ PHASES = [
     KIND_RENEW,
     KIND_DECLINE,
     KIND_WITHDRAW,
+    KIND_UNLIST,
     KIND_LIST,
     KIND_RESCIND,
     KIND_CLAUSE,
@@ -99,6 +101,7 @@ DISPATCH = {
     KIND_DECLINE: "decline_offer",
     KIND_RENEW: "renew_listing",
     KIND_LIST: "list_for_sale",
+    KIND_UNLIST: "unlist",
     KIND_RESCIND: "sell_to_system",
     KIND_CLAUSE: "pay_clause",
     KIND_BID: "place_bid",
@@ -530,6 +533,7 @@ def plan_operations(
                 KIND_ACCEPT,
                 KIND_RENEW,
                 KIND_DECLINE,
+                KIND_UNLIST,
             }
             if kind not in allowed_set and not flip_offer:
                 if kind == KIND_CLAUSE:
@@ -623,6 +627,12 @@ def plan_operations(
                     )
                 )
                 live_offers -= 1
+                continue
+
+            if kind == KIND_UNLIST:
+                operations.append(
+                    _op(move, kind, amount=0.0, params={"player_id": pid})
+                )
                 continue
 
             if kind == KIND_LIST:

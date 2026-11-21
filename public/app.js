@@ -2028,6 +2028,7 @@
     const groups = [
       { kinds: ["accept_offer"], label: "Vender", cls: "is-sell" },
       { kinds: ["list_for_sale"], label: "Poner en venta", cls: "is-sell" },
+      { kinds: ["unlist"], label: "Quitar de la venta", cls: "is-avoid" },
       { kinds: ["bid"], label: isFixedMarket(data) ? "Fichar" : "Pujar", cls: "is-buy" },
       { kinds: ["clause_bid"], label: "Cláusula", cls: "is-buy" },
       { kinds: ["renew_offer"], label: "Renovar", cls: "is-wait" },
@@ -2044,7 +2045,7 @@
             const dLabel = trendDeltaLabel(item);
             return `<button type="button" class="cycle-move-chip ${g.cls}" data-player-id="${escapeHtml(
               rec.player_id || rec.id || ""
-            )}" data-focus-tab="${item.kind === "list_for_sale" || item.kind === "accept_offer" || item.kind === "renew_offer" ? "squad" : "market"}">
+            )}" data-focus-tab="${item.kind === "list_for_sale" || item.kind === "unlist" || item.kind === "accept_offer" || item.kind === "renew_offer" ? "squad" : "market"}">
               ${playerMedia(rec, "is-row")}
               <span class="cycle-move-main">
                 <strong>${escapeHtml(item.name || "")}</strong>
@@ -3429,6 +3430,7 @@
     withdraw_offer: "Oferta retirada",
     clause_bid: "Cláusula",
     list_for_sale: "Puesto en venta",
+    unlist: "Retirado del mercado",
     accept_offer: "Oferta aceptada",
     renew_offer: "Venta renovada",
     decline_offer: "Oferta rechazada",
