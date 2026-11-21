@@ -4142,6 +4142,19 @@
           "why": "sin precio de compra: no se acepta"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T13:12:55.567469+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -4200,5 +4213,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T12:29:25.436682+00:00"
+  "updated_at": "2026-11-21T13:12:55.567469+00:00"
 }
