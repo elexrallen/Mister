@@ -2,293 +2,6 @@
   "league": "laliga-patio",
   "cycles": [
     {
-      "at": "2026-11-17T09:31:24.404078+00:00",
-      "dry_run": false,
-      "enabled": true,
-      "reason": null,
-      "budget": {
-        "balance": 0.0,
-        "usable": 25971574.0,
-        "cash_in": 11571040.0,
-        "spent": 14390800.0,
-        "projected_cash": -2819760.0,
-        "cycle_cap": 15582944.0,
-        "single_cap": 10388630.0,
-        "clause_cap": 7791472.0,
-        "min_cash_floor": 0.0,
-        "free_slots_left": 1
-      },
-      "context": {
-        "transfer_wait_hours": 0.0,
-        "transfer_locked": [],
-        "stale_offers": [],
-        "sale_remaining_after": 2,
-        "hours_to_jornada": null,
-        "pending_offers": 0,
-        "gameweek_live": false,
-        "league_rules": {
-          "provider": "mix",
-          "provider_label": "Mixto",
-          "max_squad": 25,
-          "market_mode": "auction",
-          "clauses": true,
-          "clause_rules": {
-            "enabled": true,
-            "block": false,
-            "signs": 1,
-            "gameweek": 1,
-            "daily_limit": 1,
-            "max_inbound": 2,
-            "shields": true
-          },
-          "clauses_block": false,
-          "clauses_signs": 1,
-          "clauses_gameweek": 1,
-          "clauses_daily": 1,
-          "max_inbound_clauses": 2,
-          "loans": true,
-          "loans_floor": 10,
-          "market_speed": 2,
-          "market_stay": 1,
-          "transfer_wait": 0,
-          "salaries": false,
-          "live_changes": true,
-          "show_balances": false,
-          "rewards": true,
-          "sale_limit": 5,
-          "prizes": {
-            "points": 0,
-            "goals": 200000,
-            "best_xi": 250000,
-            "positions": {
-              "1": 1200000,
-              "2": 1400000,
-              "3": 1600000,
-              "4": 1800000,
-              "9": 3000000,
-              "8": 2800000,
-              "7": 2600000,
-              "6": 2300000,
-              "5": 2000000,
-              "10": 3200000
-            }
-          },
-          "custom_rules": null,
-          "type": "comunio",
-          "mode": "private",
-          "external": "laliga",
-          "source": "fg_user+admin",
-          "is_admin": false,
-          "captain": {
-            "enabled": false,
-            "known": true,
-            "mode": "off",
-            "multiplier": 1.0,
-            "source": "admin",
-            "multiplier_source": "off"
-          },
-          "economy": {
-            "gw_cash_bonus": true,
-            "no_gw_cash_bonus": false,
-            "credit_prizes": false,
-            "expected_gw_cash": 450000.0,
-            "source": "prizes_euros",
-            "confidence": "medium",
-            "when": "after_gameweek",
-            "prizes": {
-              "goals": 200000.0,
-              "best_xi": 250000.0
-            },
-            "prize_cash_total": 450000.0,
-            "salaries": false,
-            "sale_limit": 5,
-            "max_debt": 4.0,
-            "usable_for_bids_today": false
-          },
-          "factors": [
-            "scoring_mixto",
-            "auction_urgency",
-            "clause_bids",
-            "loans_liquidity",
-            "max_squad_25",
-            "fast_market",
-            "gw_cash_bonus",
-            "sale_limit_5",
-            "transfer_wait_off"
-          ],
-          "market_urgency": 1.4
-        }
-      },
-      "operations": [
-        {
-          "kind": "accept_offer",
-          "player_id": "70922",
-          "name": "I. Konaté 💥",
-          "position": "DF",
-          "amount": 11571040.0,
-          "status": "ok",
-          "error": null,
-          "unverified": true,
-          "why": "Oferta 11.57M € supera el +3% de la compra (11.14M €).",
-          "request": {
-            "path": "/ajax/offer",
-            "data": {
-              "id_player": "70922",
-              "id_owner": "15399168",
-              "id_bid": "847981378",
-              "action": "accept"
-            }
-          },
-          "response": {
-            "status": "ok",
-            "data": {
-              "owner": 15399168,
-              "id_market": 19813428020,
-              "id_player": 70922,
-              "type": null,
-              "status": "decline",
-              "offers": {
-                "pending": 2,
-                "accept": 0,
-                "decline": 1
-              },
-              "balance": {
-                "current": -25304926,
-                "future": -33711926,
-                "maxDebt": 25971574
-              }
-            }
-          },
-          "http_status": null
-        },
-        {
-          "kind": "decline_offer",
-          "player_id": "6044",
-          "name": "E. Ünal",
-          "position": "FW",
-          "amount": 5471280.0,
-          "status": "error",
-          "error": "/ajax/resale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/resale — Jugador no encontrado",
-          "unverified": null,
-          "why": "Oferta 5.47M € no supera 5.53M € (compra 5.37M € + 3%). Se rechaza y se vuelve a listar.",
-          "request": {
-            "path": "/ajax/resale",
-            "data": {
-              "id_player": "6044",
-              "id_owner": "15399168",
-              "id_bid": "847981312",
-              "action": "decline"
-            }
-          },
-          "response": {
-            "status": "error",
-            "msg": "Jugador no encontrado"
-          },
-          "http_status": 400
-        },
-        {
-          "kind": "decline_offer",
-          "player_id": "65347",
-          "name": "R. Veiga",
-          "position": "DF",
-          "amount": 9436350.0,
-          "status": "error",
-          "error": "/ajax/resale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/resale — Jugador no encontrado",
-          "unverified": null,
-          "why": "Oferta 9.44M € no supera 10.24M € (compra 9.94M € + 3%). Se rechaza y se vuelve a listar.",
-          "request": {
-            "path": "/ajax/resale",
-            "data": {
-              "id_player": "65347",
-              "id_owner": "15399168",
-              "id_bid": "847981399",
-              "action": "decline"
-            }
-          },
-          "response": {
-            "status": "error",
-            "msg": "Jugador no encontrado"
-          },
-          "http_status": 400
-        },
-        {
-          "kind": "bid",
-          "player_id": "3728",
-          "name": "M. Roca",
-          "position": "MF",
-          "amount": 8407000.0,
-          "status": "ok",
-          "error": null,
-          "unverified": null,
-          "why": "Puja 8.41M € (sube 90,000 € hoy, +30% (27,000 €)). La máquina puede llegar a 8.8M €.",
-          "request": {
-            "path": "/ajax/bid",
-            "data": {
-              "offeree_id": 0,
-              "id_market": 19820536564,
-              "id_player": "3728",
-              "action": "update",
-              "bid": 8407000
-            }
-          },
-          "response": {
-            "status": "ok",
-            "data": {
-              "owner": 0,
-              "id_player": 3728,
-              "id_market": 19820536564,
-              "action": "update",
-              "bid": 8407000,
-              "price": 8380000,
-              "public": 1,
-              "barter": [],
-              "community_mode": "private",
-              "balance": {
-                "current": -25304926,
-                "future": -33711926,
-                "maxDebt": 25971574
-              }
-            }
-          },
-          "http_status": null
-        },
-        {
-          "kind": "bid",
-          "player_id": "1713",
-          "name": "F. Lejeune",
-          "position": "DF",
-          "amount": 5983800.0,
-          "status": "error",
-          "error": "/ajax/bid falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/bid — No puedes superar el límite de 25 jugadores en tu equipo",
-          "unverified": null,
-          "why": "Puja 5.98M € (sube 66,000 € hoy, +30% (19,800 €)). La máquina puede llegar a 6.26M €.",
-          "request": {
-            "path": "/ajax/bid",
-            "data": {
-              "offeree_id": 0,
-              "id_market": 19820536561,
-              "id_player": "1713",
-              "action": "bid",
-              "bid": 5983800
-            }
-          },
-          "response": {
-            "status": "error",
-            "popup": false,
-            "msg": "No puedes superar el límite de 25 jugadores en tu equipo"
-          },
-          "http_status": 400
-        }
-      ],
-      "skipped": [],
-      "counts": {
-        "planned": 5,
-        "executed": 2,
-        "failed": 3,
-        "skipped": 0
-      }
-    },
-    {
       "at": "2026-11-17T10:09:36.286561+00:00",
       "dry_run": false,
       "enabled": true,
@@ -7285,11 +6998,138 @@
         "failed": 0,
         "skipped": 0
       }
+    },
+    {
+      "at": "2026-11-21T01:58:45.500306+00:00",
+      "dry_run": false,
+      "enabled": true,
+      "reason": null,
+      "budget": {
+        "balance": 2443774.0,
+        "usable": 2443774.0,
+        "cash_in": 0.0,
+        "spent": 0.0,
+        "projected_cash": 2443774.0,
+        "cycle_cap": 1466264.0,
+        "single_cap": 977510.0,
+        "clause_cap": 733132.0,
+        "min_cash_floor": 0.0,
+        "free_slots_left": 5
+      },
+      "context": {
+        "transfer_wait_hours": 0.0,
+        "transfer_locked": [],
+        "stale_offers": [],
+        "sale_remaining_after": 5,
+        "hours_to_jornada": null,
+        "pending_offers": 0,
+        "gameweek_live": true,
+        "league_rules": {
+          "provider": "mix",
+          "provider_label": "Mixto",
+          "max_squad": 25,
+          "market_mode": "auction",
+          "clauses": true,
+          "clause_rules": {
+            "enabled": true,
+            "block": false,
+            "signs": 1,
+            "gameweek": 1,
+            "daily_limit": 1,
+            "max_inbound": 2,
+            "shields": true
+          },
+          "clauses_block": false,
+          "clauses_signs": 1,
+          "clauses_gameweek": 1,
+          "clauses_daily": 1,
+          "max_inbound_clauses": 2,
+          "loans": true,
+          "loans_floor": 10,
+          "market_speed": 2,
+          "market_stay": 1,
+          "transfer_wait": 0,
+          "salaries": false,
+          "live_changes": true,
+          "show_balances": false,
+          "rewards": true,
+          "sale_limit": 5,
+          "prizes": {
+            "points": 0,
+            "goals": 200000,
+            "best_xi": 250000,
+            "positions": {
+              "1": 1200000,
+              "2": 1400000,
+              "3": 1600000,
+              "4": 1800000,
+              "9": 3000000,
+              "8": 2800000,
+              "7": 2600000,
+              "6": 2300000,
+              "5": 2000000,
+              "10": 3200000
+            }
+          },
+          "custom_rules": null,
+          "type": "comunio",
+          "mode": "private",
+          "external": "laliga",
+          "source": "fg_user+admin",
+          "is_admin": false,
+          "captain": {
+            "enabled": false,
+            "known": true,
+            "mode": "off",
+            "multiplier": 1.0,
+            "source": "admin",
+            "multiplier_source": "off"
+          },
+          "economy": {
+            "gw_cash_bonus": true,
+            "no_gw_cash_bonus": false,
+            "credit_prizes": false,
+            "expected_gw_cash": 450000.0,
+            "source": "prizes_euros",
+            "confidence": "medium",
+            "when": "after_gameweek",
+            "prizes": {
+              "goals": 200000.0,
+              "best_xi": 250000.0
+            },
+            "prize_cash_total": 450000.0,
+            "salaries": false,
+            "sale_limit": 5,
+            "max_debt": 4.0,
+            "usable_for_bids_today": false
+          },
+          "factors": [
+            "scoring_mixto",
+            "auction_urgency",
+            "clause_bids",
+            "loans_liquidity",
+            "max_squad_25",
+            "fast_market",
+            "gw_cash_bonus",
+            "sale_limit_5",
+            "transfer_wait_off"
+          ],
+          "market_urgency": 1.4
+        }
+      },
+      "operations": [],
+      "skipped": [],
+      "counts": {
+        "planned": 0,
+        "executed": 0,
+        "failed": 0,
+        "skipped": 0
+      }
     }
   ],
-  "updated_at": "2026-11-21T00:29:58.733756+00:00",
+  "updated_at": "2026-11-21T01:58:45.500306+00:00",
   "last_cycle": {
-    "at": "2026-11-21T00:29:58.733756+00:00",
+    "at": "2026-11-21T01:58:45.500306+00:00",
     "dry_run": false,
     "enabled": true,
     "reason": null,
