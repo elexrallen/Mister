@@ -1086,8 +1086,9 @@ def test_missing_kickoff_clock_keeps_three_percent() -> None:
     _assert(renew["threshold"] == round(VM_WILLIAMS * 1.03), renew)
 
 
-def test_missing_buy_price_is_still_skipped_inside_the_window() -> None:
-    plan, _book = _listed_offer(
+def test_missing_buy_price_is_a_manual_signing_inside_the_window() -> None:
+    """Sin precio de compra no es reventa: ni el +1% del pitido la vende."""
+    plan, book = _listed_offer(
         amount=7_000_000,
         balance=-1_000_000,
         hours=4.5,
@@ -1096,8 +1097,8 @@ def test_missing_buy_price_is_still_skipped_inside_the_window() -> None:
     )
     _assert(("9", "accept_offer") not in _move_kinds(plan), plan["moves"])
     _assert(("9", "renew_offer") not in _move_kinds(plan), plan["moves"])
-    skipped = [row for row in plan["flip_skipped"] if row.get("player_id") == "9"]
-    _assert(len(skipped) == 1 and "precio de compra" in (skipped[0].get("why") or ""), skipped)
+    _assert(("9", "unlist") in _move_kinds(plan), plan["moves"])
+    _assert("9" in book["frozen_ids"] and "9" not in book["positions"], book)
 
 
 def test_late_floor_also_applies_when_flip_is_off() -> None:
@@ -1145,7 +1146,7 @@ def main() -> None:
     test_late_window_exact_one_percent_on_both_cycle_lengths()
     test_open_window_keeps_three_percent_unless_balance_is_negative()
     test_missing_kickoff_clock_keeps_three_percent()
-    test_missing_buy_price_is_still_skipped_inside_the_window()
+    test_missing_buy_price_is_a_manual_signing_inside_the_window()
     test_late_floor_also_applies_when_flip_is_off()
     test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold()
     test_full_sale_limit_blocks_new_bids()
