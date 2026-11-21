@@ -3719,7 +3719,8 @@
                 "maxDebt": 38430074
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -3735,7 +3736,8 @@
           "name": "R. Riquelme",
           "amount": 4702900,
           "status": "descartada",
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
+          "result": "perdida"
         }
       ]
     },
@@ -3914,21 +3916,129 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T16:28:33.266249+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "29",
+          "name": "I. Williams 💥",
+          "amount": 6536950,
+          "market_value": 6881000,
+          "buy_price": 6861400,
+          "threshold": 7087430,
+          "status": "ejecutada",
+          "why": "Oferta 6.54M € no llega a 7.09M € (valor de mercado 6.88M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19866638968
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795363200
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "27333",
+          "name": "E. García 💥",
+          "amount": 12289000,
+          "market_value": 12289000.0,
+          "buy_price": 12293800,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 12.29M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "27333",
+              "action": "sale",
+              "price": 12289000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 27333,
+              "id_market": 19870487063,
+              "action": "sale",
+              "price": 12289000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-21T16:37:32.830598+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 97,
-      "won": 37,
-      "lost": 2,
-      "lists": 10,
+      "bids": 99,
+      "won": 38,
+      "lost": 3,
+      "lists": 11,
       "accepts": 7,
       "profit": 2632630,
       "short_offers": 10,
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 38
+          "count": 40
         },
         {
           "why": "sin plaza",
@@ -3945,17 +4055,17 @@
       ]
     },
     "d14": {
-      "bids": 97,
-      "won": 37,
-      "lost": 2,
-      "lists": 10,
+      "bids": 99,
+      "won": 38,
+      "lost": 3,
+      "lists": 11,
       "accepts": 7,
       "profit": 2632630,
       "short_offers": 10,
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 38
+          "count": 40
         },
         {
           "why": "sin plaza",
@@ -3972,5 +4082,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T15:01:20.748872+00:00"
+  "updated_at": "2026-11-21T16:37:32.830598+00:00"
 }

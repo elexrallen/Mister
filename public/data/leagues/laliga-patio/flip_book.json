@@ -94,6 +94,14 @@
       "opened_at": "2026-11-21T04:20:41.893280+00:00",
       "status": "listed",
       "listed": true
+    },
+    "27333": {
+      "player_id": "27333",
+      "name": "E. García 💥",
+      "buy_price": 12293800,
+      "opened_at": "2026-11-21T16:28:33.266249+00:00",
+      "status": "listed",
+      "listed": true
     }
   },
   "watches": {
@@ -114,12 +122,6 @@
       "name": "A. Barrenetxea",
       "buy_price": 7349150,
       "bid_at": "2026-11-17T08:39:59.911978+00:00"
-    },
-    "27333": {
-      "player_id": "27333",
-      "name": "E. García",
-      "buy_price": 12293800,
-      "bid_at": "2026-11-21T04:20:41.893280+00:00"
     }
   },
   "activated_at": "2026-11-16T14:02:54.506417+00:00",
