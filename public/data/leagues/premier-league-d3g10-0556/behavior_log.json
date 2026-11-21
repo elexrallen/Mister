@@ -3656,11 +3656,73 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T02:21:41.753117+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 5
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48321",
+          "name": "E. Haaland",
+          "amount": 25998200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63709",
+          "name": "R. Cherki",
+          "amount": 20455500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16358200,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "15735",
+          "name": "Y. Tielemans",
+          "amount": 14809400,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "63860",
+          "name": "F. Wirtz",
+          "amount": 12031500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 184,
+      "bids": 189,
       "won": 10,
       "lost": 27,
       "lists": 56,
@@ -3674,7 +3736,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 80
+          "count": 85
         },
         {
           "why": "espera compra→venta",
@@ -3682,12 +3744,12 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 12
+          "count": 13
         }
       ]
     },
     "d14": {
-      "bids": 184,
+      "bids": 189,
       "won": 10,
       "lost": 27,
       "lists": 56,
@@ -3701,7 +3763,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 80
+          "count": 85
         },
         {
           "why": "espera compra→venta",
@@ -3709,10 +3771,10 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 12
+          "count": 13
         }
       ]
     }
   },
-  "updated_at": "2026-11-21T01:54:34.997746+00:00"
+  "updated_at": "2026-11-21T02:21:41.753117+00:00"
 }
