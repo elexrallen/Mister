@@ -416,6 +416,18 @@
           : null;
     const mins = Number((p.fotmob_stats || {}).minutos_ultimos_5);
     const hasMins = Number.isFinite(mins) && mins >= 0 && (p.fotmob_stats || {}).minutos_ultimos_5 != null;
+    const lpSrc = String(ext.lineup_prob_source || p.lineup_prob_source || "");
+    const lineupSrcLabel =
+      lpSrc === "predicted11"
+        ? "Predicted11"
+        : lpSrc === "futbolfantasy_matchday"
+          ? "Fútbol Fantasy (previa)"
+          : lpSrc
+            ? lpSrc
+            : "";
+    const lineupTitle = lineupSrcLabel
+      ? ` title="${escapeHtml(lineupSrcLabel)}"`
+      : "";
     let badge = `<span class="badge badge-baja">—</span>`;
     if (avail === "injured") {
       badge = `<span class="badge badge-baja-ext">Lesionado</span>`;
@@ -424,11 +436,11 @@
     } else if (avail === "doubt") {
       badge = `<span class="badge badge-duda">Duda</span>`;
     } else if (lineupExt != null && lineupExt >= 70) {
-      badge = `<span class="badge badge-titular">Titular ${Math.round(lineupExt)}%</span>`;
+      badge = `<span class="badge badge-titular"${lineupTitle}>Titular ${Math.round(lineupExt)}%</span>`;
     } else if (lineupExt != null && lineupExt < 40) {
-      badge = `<span class="badge badge-baja-ext">Titular ${Math.round(lineupExt)}%</span>`;
+      badge = `<span class="badge badge-baja-ext"${lineupTitle}>Titular ${Math.round(lineupExt)}%</span>`;
     } else if (lineupExt != null) {
-      badge = `<span class="badge badge-duda">Titular ${Math.round(lineupExt)}%</span>`;
+      badge = `<span class="badge badge-duda"${lineupTitle}>Titular ${Math.round(lineupExt)}%</span>`;
     } else if (avail === "available") {
       badge = `<span class="badge badge-mint">OK</span>`;
     }

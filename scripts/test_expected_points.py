@@ -10,7 +10,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from expected_points import expected_points, production_base  # noqa: E402
+from expected_points import (  # noqa: E402
+    expected_points,
+    probability_of_playing,
+    production_base,
+)
 
 
 def test_diouf_like_hist_does_not_dominate_short_sample() -> None:
@@ -73,6 +77,40 @@ def test_mixto_short_sample_still_trusts_history() -> None:
     assert "aún no manda" in why
 
 
+def test_probable_xi_not_descartado_by_pred11_bench() -> None:
+    """Pred11 al 18% no puede tumbar un once probable de Mister a 3%."""
+    player = {
+        "id": "1",
+        "position": "FW",
+        "gw_probable_xi": True,
+        "gw_out": True,
+        "gw_lineup_prob": 18,
+        "lineup_prob_source": "predicted11",
+        "external": {
+            "gw_out": True,
+            "gw_lineup_prob": 18,
+            "lineup_prob_source": "predicted11",
+        },
+    }
+    p_play, why = probability_of_playing(player)
+    assert p_play >= 0.55, (p_play, why)
+    assert "Descartado" not in why, why
+    assert "Mister" in why, why
+
+
+def test_blank_gw_out_still_unavailable() -> None:
+    player = {
+        "id": "2",
+        "gw_blank": True,
+        "gw_out": True,
+        "gw_lineup_prob": 100,
+        "external": {"lineup_prob_source": "predicted11", "gw_lineup_prob": 100},
+    }
+    p_play, why = probability_of_playing(player)
+    assert p_play <= 0.05, (p_play, why)
+    assert "blank" in why.lower() or "partido" in why.lower(), why
+
+
 def test_preseason_hist_only_unchanged() -> None:
     player = {
         "id": "1",
@@ -91,6 +129,8 @@ def main() -> None:
         test_keeper_hist_cannot_print_twenty_xpts,
         test_mixto_short_sample_still_trusts_history,
         test_preseason_hist_only_unchanged,
+        test_probable_xi_not_descartado_by_pred11_bench,
+        test_blank_gw_out_still_unavailable,
     ]
     failed = 0
     for fn in tests:

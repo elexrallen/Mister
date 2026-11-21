@@ -11,10 +11,15 @@ sys.path.insert(0, str(ROOT / "src"))
 
 from external_data import _apply_predicted11_overlay  # noqa: E402
 from scrapers import PRED11_SUPPORTED, SUPPORTED_EXTERNAL, fetch_all_external  # noqa: E402
+from bs4 import BeautifulSoup  # noqa: E402
+
 from scrapers.predicted11 import (  # noqa: E402
     PRED11_SLUG,
+    _news_links_for_jornada,
+    _parse_news_href,
     _pick_expert_urls,
     _records_from_counts,
+    _records_from_popularidad,
 )
 
 
@@ -134,6 +139,111 @@ def test_overlay_demotes_bench_when_team_covered() -> None:
     _assert(cunha["lineup_prob_source"] == "predicted11", cunha)
     _assert(murillo["gw_lineup_prob"] == 100, murillo)
     _assert(murillo["gw_starter"] is True, murillo)
+    _assert(cunha.get("gw_out") is not True, cunha)
+    _assert(murillo.get("gw_out") is not True, murillo)
+
+
+def test_news_href_parses_new_and_old_slugs() -> None:
+    slug = "premier-league"
+    new_url = (
+        "https://www.predicted11.com/es/premier-league/noticias/"
+        "alineaciones-probables-de-futbolfantasy-para-la-jornada-11-de-la-premier-league"
+    )
+    old_url = (
+        "https://www.predicted11.com/es/premier-league/noticias/"
+        "alineaciones-probables-de-javiig99-jornada-7-de-premier-league"
+    )
+    serie_url = (
+        "https://www.predicted11.com/es/serie-a/noticias/"
+        "alineaciones-probables-de-javiig99-para-la-jornada-12-de-la-serie-a"
+    )
+    _assert(_parse_news_href(new_url, slug) == ("futbolfantasy", 11), _parse_news_href(new_url, slug))
+    _assert(_parse_news_href(old_url, slug) == ("javiig99", 7), _parse_news_href(old_url, slug))
+    _assert(_parse_news_href(serie_url, "serie-a") == ("javiig99", 12))
+    _assert(_parse_news_href(new_url, "serie-a") is None)
+
+
+def test_news_links_keep_current_jornada_only() -> None:
+    """El regex viejo ignoraba J11 y reciclaba J7: titularidades de hace un mes."""
+    html = """
+    <a href="/es/premier-league/noticias/alineaciones-probables-de-futbolfantasy-para-la-jornada-11-de-la-premier-league">J11</a>
+    <a href="/es/premier-league/noticias/alineaciones-probables-de-javiig99-jornada-7-de-premier-league">J7</a>
+    """
+    soup = BeautifulSoup(html, "lxml")
+    news = _news_links_for_jornada(soup, "premier-league", 11)
+    _assert(len(news) == 1, news)
+    _assert("jornada-11" in news[0][1], news[0])
+    stale = _news_links_for_jornada(soup, "premier-league", 11)
+    _assert(all("jornada-7" not in url for _u, url in stale), stale)
+    # Sin jornada conocida, sí se puede usar la más alta parseable.
+    any_j = _news_links_for_jornada(soup, "premier-league", None)
+    _assert(len(any_j) == 1, any_j)
+    _assert("jornada-11" in any_j[0][1], any_j)
+
+
+def test_records_from_popularidad_pct() -> None:
+    payload = {
+        "success": True,
+        "jugadores": [
+            {"nombre": "David Raya", "porcentaje": 100},
+            {"nombre": "Viktor Gyökeres", "porcentaje": 3},
+            {"nombre_corto": "Saka", "porcentaje_decimal": 86},
+        ],
+    }
+    rows = _records_from_popularidad(payload, "Arsenal")
+    by_name = {r["name"]: r for r in rows}
+    _assert(by_name["David Raya"]["lineup_prob"] == 100)
+    _assert(by_name["David Raya"]["team"] == "Arsenal")
+    _assert(by_name["Viktor Gyökeres"]["lineup_prob"] == 3)
+    _assert(by_name["Viktor Gyökeres"]["is_recommendation"] is False)
+    _assert(by_name["Saka"]["lineup_prob"] == 86)
+    _assert(_records_from_popularidad({"success": False}, "Arsenal") == [])
+
+
+def test_fetch_prefers_popularidad_over_stale_news() -> None:
+    """Hub J11 + API popularidad; las noticias J7 no deben entrar."""
+    from scrapers import predicted11 as mod
+
+    hub_html = """
+    <html><body>
+      <h1>Alineaciones Jornada 11</h1>
+      <a href="/es/premier-league/equipo/arsenal" title="Arsenal" data-equipo-id="500"></a>
+      <a href="/es/premier-league/noticias/alineaciones-probables-de-javiig99-jornada-7-de-premier-league">J7</a>
+    </body></html>
+    """
+    team_html = """
+    <html><body>
+      <script>
+        window.currentTemporada = 145;
+        window.jornada = 11;
+      </script>
+    </body></html>
+    """
+    soup_hub = BeautifulSoup(hub_html, "lxml")
+    soup_team = BeautifulSoup(team_html, "lxml")
+    payload = {
+        "success": True,
+        "jugadores": [
+            {"nombre": "David Raya", "porcentaje": 100},
+            {"nombre": "Viktor Gyökeres", "porcentaje": 3},
+        ],
+    }
+
+    def fake_soup(url: str, timeout: int = 12):
+        if "/equipo/" in url:
+            return soup_team
+        return soup_hub
+
+    with (
+        patch.object(mod, "get_soup", side_effect=fake_soup),
+        patch.object(mod, "get_json", return_value=payload) as m_json,
+    ):
+        rows = mod.fetch_predicted11(competition="premier")
+    _assert(m_json.called)
+    by_name = {r["name"]: r for r in rows}
+    _assert(by_name["David Raya"]["lineup_prob"] == 100, rows)
+    _assert(by_name["Viktor Gyökeres"]["lineup_prob"] == 3, rows)
+    _assert(by_name["David Raya"]["team"] == "Arsenal")
 
 
 def test_fetch_all_external_wires_pred11() -> None:
@@ -173,6 +283,10 @@ def main() -> int:
     test_records_from_counts_pct()
     test_overlay_authority_premier()
     test_overlay_demotes_bench_when_team_covered()
+    test_news_href_parses_new_and_old_slugs()
+    test_news_links_keep_current_jornada_only()
+    test_records_from_popularidad_pct()
+    test_fetch_prefers_popularidad_over_stale_news()
     test_fetch_all_external_wires_pred11()
     print("OK predicted11")
     return 0
