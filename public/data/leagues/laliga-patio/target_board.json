@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-20T22:54:33.468355+00:00",
+  "generated_at": "2026-11-21T00:21:58.234010+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1161,7 +1161,7 @@
       "name": "R. Hernández",
       "position": "MF",
       "amount": 16525000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
     },
     {
       "kind": "list",
@@ -1170,7 +1170,7 @@
       "name": "P. Cubarsi 💥",
       "position": "DF",
       "amount": 15500000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
     },
     {
       "kind": "list",
@@ -1179,7 +1179,7 @@
       "name": "R. Brugué",
       "position": "MF",
       "amount": 8801000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
     },
     {
       "kind": "list",
@@ -1188,13 +1188,13 @@
       "name": "J. Koundé",
       "position": "DF",
       "amount": 4922000.0,
-      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
+      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
     }
   ],
   "constraints": {
     "cycles_left": 1,
     "cash_lag_hours": 12.0,
-    "settle_before_ko": true,
+    "settle_before_ko": false,
     "sale_limit": 5,
     "sale_remaining": 5,
     "max_debt": 49009874.0,
@@ -1203,7 +1203,7 @@
     "n_free": 226,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 14.096228742500001
+    "hours_to_jornada": 12.639381918333333
   },
   "finance": {
     "ok": true,
@@ -1843,7 +1843,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 49171774.0,
+  "residual_after_reserve": 2443774.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
