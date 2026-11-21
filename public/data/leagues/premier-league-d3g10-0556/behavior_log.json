@@ -4268,14 +4268,44 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T20:45:05.761565+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "428356",
+          "name": "R. Araújo 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "18009",
+          "name": "J. Justin",
+          "amount": 11939000,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 211,
+      "bids": 212,
       "won": 15,
       "lost": 42,
-      "lists": 58,
+      "lists": 59,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
@@ -4286,11 +4316,11 @@
         },
         {
           "why": "sin caja",
-          "count": 98
+          "count": 99
         },
         {
           "why": "espera compra→venta",
-          "count": 38
+          "count": 39
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -4299,10 +4329,10 @@
       ]
     },
     "d14": {
-      "bids": 211,
+      "bids": 212,
       "won": 15,
       "lost": 42,
-      "lists": 58,
+      "lists": 59,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
@@ -4313,11 +4343,11 @@
         },
         {
           "why": "sin caja",
-          "count": 98
+          "count": 99
         },
         {
           "why": "espera compra→venta",
-          "count": 38
+          "count": 39
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -4326,5 +4356,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T20:24:55.950303+00:00"
+  "updated_at": "2026-11-21T20:45:05.761565+00:00"
 }
