@@ -4168,6 +4168,19 @@
         "eligible": 0
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-21T15:05:28.070737+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -4226,5 +4239,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T14:23:51.087107+00:00"
+  "updated_at": "2026-11-21T15:05:28.070737+00:00"
 }
