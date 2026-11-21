@@ -3219,7 +3219,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3281,7 +3282,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3343,7 +3345,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3405,7 +3408,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3467,7 +3471,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3529,7 +3534,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3591,7 +3597,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3653,7 +3660,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3715,7 +3723,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3777,7 +3786,8 @@
           "name": "F. Wirtz",
           "amount": 12031500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3888,7 +3898,8 @@
           "name": "F. Wirtz",
           "amount": 12038000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3926,7 +3937,8 @@
           "name": "F. Wirtz",
           "amount": 12038000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -3964,7 +3976,8 @@
           "name": "F. Wirtz",
           "amount": 12038000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -4002,7 +4015,8 @@
           "name": "F. Wirtz",
           "amount": 12038000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -4040,16 +4054,101 @@
           "name": "F. Wirtz",
           "amount": 12038000,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-21T12:23:31.674997+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "428356",
+          "name": "R. Araújo",
+          "amount": 13187100,
+          "market_value": 13167000.0,
+          "buy_price": 13187100,
+          "threshold": 13582713,
+          "status": "ejecutada",
+          "why": "Puja 13.19M € (sube 67,000 € hoy, +30% (20,100 €)). La máquina puede llegar a 13.83M €. Se cobra al cierre de este ciclo, después del pitido.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19870074747,
+              "id_player": "428356",
+              "action": "bid",
+              "bid": 13187100
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 428356,
+              "id_market": 19870074747,
+              "action": "bid",
+              "bid": 13187100,
+              "price": 13167000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": 8418471,
+                "future": -4768629,
+                "maxDebt": 6782371
+              }
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-21T12:29:25.436682+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "68405",
+          "name": "Alysson",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
         }
       ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 209,
+      "bids": 210,
       "won": 10,
-      "lost": 27,
+      "lost": 42,
       "lists": 57,
       "accepts": 1,
       "profit": 602440,
@@ -4069,14 +4168,14 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 14
+          "count": 16
         }
       ]
     },
     "d14": {
-      "bids": 209,
+      "bids": 210,
       "won": 10,
-      "lost": 27,
+      "lost": 42,
       "lists": 57,
       "accepts": 1,
       "profit": 602440,
@@ -4096,10 +4195,10 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 14
+          "count": 16
         }
       ]
     }
   },
-  "updated_at": "2026-11-21T10:24:49.273483+00:00"
+  "updated_at": "2026-11-21T12:29:25.436682+00:00"
 }

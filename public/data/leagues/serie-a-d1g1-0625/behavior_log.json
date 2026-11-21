@@ -2807,25 +2807,144 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T12:27:09.255820+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "18200",
+          "name": "A. Rrahmani",
+          "amount": 12434100,
+          "market_value": 12429000.0,
+          "buy_price": 12434100,
+          "threshold": 12807123,
+          "status": "ejecutada",
+          "why": "Puja 12.43M € (sube 17,000 € hoy, +30% (5,100 €)). La máquina puede llegar a 13.05M €. Se cobra al cierre de este ciclo, después del pitido.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19866517238,
+              "id_player": "18200",
+              "action": "bid",
+              "bid": 12434100
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 18200,
+              "id_market": 19866517238,
+              "action": "bid",
+              "bid": 12434100,
+              "price": 12429000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": 3423517,
+                "future": -9010583,
+                "maxDebt": 2448417
+              }
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "4927635",
+          "name": "J. Monteiro",
+          "amount": null,
+          "status": "descartada",
+          "why": "sin precio de compra: no se acepta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2678920",
+          "name": "D. Moreira",
+          "amount": 12588600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48390",
+          "name": "C. Augusto",
+          "amount": 11309000,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-21T12:32:07.795869+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 15,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "4927635",
+          "name": "J. Monteiro",
+          "amount": 160000,
+          "market_value": 160000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 160,000 € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "2678920",
+          "name": "D. Moreira",
+          "amount": 12588600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48390",
+          "name": "C. Augusto",
+          "amount": 11309000,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 96,
+      "bids": 101,
       "won": 2,
       "lost": 46,
-      "lists": 47,
+      "lists": 48,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 48
+          "why": "sin caja",
+          "count": 50
         },
         {
-          "why": "sin caja",
-          "count": 46
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 48
         },
         {
           "why": "espera compra→venta",
@@ -2833,26 +2952,26 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 10
+          "count": 11
         }
       ]
     },
     "d14": {
-      "bids": 96,
+      "bids": 101,
       "won": 2,
       "lost": 46,
-      "lists": 47,
+      "lists": 48,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
-          "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 48
+          "why": "sin caja",
+          "count": 50
         },
         {
-          "why": "sin caja",
-          "count": 46
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "count": 48
         },
         {
           "why": "espera compra→venta",
@@ -2860,10 +2979,10 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 10
+          "count": 11
         }
       ]
     }
   },
-  "updated_at": "2026-11-21T10:28:35.857694+00:00"
+  "updated_at": "2026-11-21T12:32:07.795869+00:00"
 }

@@ -23,8 +23,8 @@
       "name": "J. Monteiro",
       "buy_price": null,
       "opened_at": "2026-11-19T12:27:07.766769+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "owned",
+      "listed": false
     },
     "22777": {
       "player_id": "22777",
@@ -36,6 +36,13 @@
       "sold_at": "2026-11-21T04:29:05.152567+00:00"
     }
   },
-  "watches": {},
+  "watches": {
+    "18200": {
+      "player_id": "18200",
+      "name": "A. Rrahmani",
+      "buy_price": 12434100,
+      "bid_at": "2026-11-21T12:27:09.255820+00:00"
+    }
+  },
   "activated_at": "2026-11-18T12:24:22.523062+00:00"
 }
