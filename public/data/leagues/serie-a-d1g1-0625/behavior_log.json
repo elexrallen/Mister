@@ -3239,6 +3239,28 @@
           "why": "espera compra→venta"
         }
       ]
+    },
+    {
+      "at": "2026-11-21T23:47:55.455804+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "18200",
+          "name": "A. Rrahmani",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
     }
   ],
   "summary": {
@@ -3246,7 +3268,7 @@
       "bids": 115,
       "won": 8,
       "lost": 55,
-      "lists": 52,
+      "lists": 53,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3261,7 +3283,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 20
+          "count": 21
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3273,7 +3295,7 @@
       "bids": 115,
       "won": 8,
       "lost": 55,
-      "lists": 52,
+      "lists": 53,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3288,7 +3310,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 20
+          "count": 21
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3297,5 +3319,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-21T22:24:22.623852+00:00"
+  "updated_at": "2026-11-21T23:47:55.455804+00:00"
 }
