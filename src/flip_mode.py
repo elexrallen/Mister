@@ -790,21 +790,28 @@ def build_flip_cycle(
     bid_room = max(0, max_open - len(pending_sale) - len(live_watches))
     cupo_why = f"cupo de reventa lleno ({max_open}): no se puja hasta vender uno"
 
+    # La vigilancia no prueba que Mister siga enseñando la puja. Si el libre
+    # sigue saliendo a cuenta, se vuelve a mandar; la plaza ya está contada.
+    renewals: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
     quotes: list[tuple[float, dict[str, Any], dict[str, Any]]] = []
-    if active and list_room > 0 and bid_room > 0:
+    if active:
         seen: set[str] = set()
         for row in market or []:
             if not isinstance(row, dict):
                 continue
             pid = _pid(row)
-            if not pid or pid in seen or pid in by_id or pid in frozen or pid in live_watches:
+            if not pid or pid in seen or pid in by_id or pid in frozen:
                 continue
             seen.add(pid)
+            renewing = pid in live_watches
+            if not renewing and (list_room <= 0 or bid_room <= 0):
+                continue
             quote = quote_bid(row)
             if not quote["eligible"]:
                 continue
             edge = quote["vm"] * (1.0 + float(config.FLIP_MACHINE_PREMIUM)) - quote["bid"]
-            quotes.append((edge, row, quote))
+            (renewals if renewing else quotes).append((edge, row, quote))
+        renewals.sort(key=lambda item: -item[0])
         quotes.sort(key=lambda item: -item[0])
 
     debt_cap = mister_bid_cap(balance + cash_in, max_debt)
@@ -833,9 +840,11 @@ def build_flip_cycle(
                 "status": "descartada",
             }
         )
-    for edge, row, quote in quotes:
+    for renewing, _edge, row, quote in (
+        [(True, *item) for item in renewals] + [(False, *item) for item in quotes]
+    ):
         pid = _pid(row)
-        if taken >= bid_room:
+        if not renewing and taken >= bid_room:
             skipped.append(
                 {
                     "kind": KIND_BID,
@@ -847,7 +856,7 @@ def build_flip_cycle(
                 }
             )
             continue
-        if taken >= free_slots:
+        if not renewing and taken >= free_slots:
             skipped.append(
                 {
                     "kind": KIND_BID,
@@ -939,7 +948,8 @@ def build_flip_cycle(
         if not settles_later:
             room = room - quote["bid"] + vm_back
         spent += quote["bid"]
-        taken += 1
+        if not renewing:
+            taken += 1
 
     open_n = sum(
         1
@@ -948,9 +958,10 @@ def build_flip_cycle(
     )
     headline = "Reventa" if active else "Salida de reventas"
     if active:
+        bid_n = sum(1 for row in moves if row.get("kind") == KIND_BID)
         narrative = (
             f"Plantilla congelada ({len(frozen)}). "
-            f"{taken} puja{'s' if taken != 1 else ''} por libres de más de 4M con margen para el +3%."
+            f"{bid_n} puja{'s' if bid_n != 1 else ''} por libres de más de 4M con margen para el +3%."
         )
     elif moves:
         narrative = (
