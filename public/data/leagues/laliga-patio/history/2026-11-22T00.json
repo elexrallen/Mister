@@ -1,6 +1,6 @@
 {
   "date": "2026-11-22",
-  "captured_at": "2026-11-22T00:20:35.072161+00:00",
+  "captured_at": "2026-11-22T00:44:47.492823+00:00",
   "cycle_hour_utc": 0,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -5929,22 +5929,22 @@
     ],
     "actions": [
       {
-        "player_id": "18186",
+        "player_id": "56926",
         "action": "sell",
-        "price": 4812000.0,
-        "name": "J. Koundé"
+        "price": 15446000.0,
+        "name": "P. Cubarsi 💥"
       },
       {
-        "player_id": "51135",
+        "player_id": "616",
         "action": "sell",
-        "price": 12152000.0,
-        "name": "P. Barrios"
+        "price": 16484000.0,
+        "name": "R. Hernández"
       },
       {
-        "player_id": "27907",
+        "player_id": "68497",
         "action": "sell",
-        "price": 8834000.0,
-        "name": "R. Brugué"
+        "price": 1020000.0,
+        "name": "S. Boselli 💥"
       },
       {
         "player_id": "14670",
@@ -6025,6 +6025,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 248.3
+    "pipeline_seconds": 142.4
   }
 }
