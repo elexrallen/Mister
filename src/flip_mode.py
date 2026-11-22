@@ -187,18 +187,25 @@ def _margin_ok(vm: float, bid: float) -> bool:
     return ceiling - need > 1.0
 
 
+def _free_daily_listing(player: dict[str, Any] | None) -> bool:
+    """Libre del mercado de hoy. Estar en el universo no basta."""
+    if not isinstance(player, dict):
+        return False
+    on_market = bool(player.get("on_daily_market") or str(player.get("seller") or "") == "market")
+    return on_market and not is_rival_market_listing(player)
+
+
 def quote_bid(player: dict[str, Any]) -> dict[str, Any]:
     ask = _ask(player)
     vm = _vm(player)
     change = daily_change_euros(player)
     premium = _premium(change)
     bid = vm + premium
-    on_market = bool(player.get("on_daily_market") or str(player.get("seller") or "") == "market")
+    on_market = _free_daily_listing(player)
     rival = is_rival_market_listing(player)
     rising_today = change is not None and change > 0
     eligible = bool(
         on_market
-        and not rival
         and rising_today
         and vm > float(config.FLIP_MIN_ASK)
         and bid > 0
@@ -744,16 +751,41 @@ def build_flip_cycle(
             )
 
     max_open = int(config.FLIP_MAX_OPEN)
-    market_ids = {_pid(row) for row in (market or []) if isinstance(row, dict) and _pid(row)}
+    by_market: dict[str, dict[str, Any]] = {}
+    for row in market or []:
+        if not isinstance(row, dict):
+            continue
+        pid = _pid(row)
+        if not pid:
+            continue
+        # El universo y los libres llegan juntos. Si hay dos fichas, manda la de hoy.
+        prev = by_market.get(pid)
+        if prev is None or (_free_daily_listing(row) and not _free_daily_listing(prev)):
+            by_market[pid] = row
     pending_sale = {
         pid
         for pid, pos in positions.items()
         if isinstance(pos, dict) and pos.get("status") != "sold" and pid not in accept_ids
     }
+    watches = book.get("watches")
+    if not isinstance(watches, dict):
+        watches = {}
+        book["watches"] = watches
+    for pid in list(watches):
+        key = str(pid or "")
+        # Estar en el universo no es estar en la subasta. La plaza se suelta.
+        if (
+            key
+            and key not in by_id
+            and key not in pending_sale
+            and _free_daily_listing(by_market.get(key))
+        ):
+            continue
+        watches.pop(pid, None)
     live_watches = {
-        pid
-        for pid in (book.get("watches") or {})
-        if pid and pid not in by_id and pid not in pending_sale and pid in market_ids
+        str(pid)
+        for pid in watches
+        if pid and str(pid) not in by_id and str(pid) not in pending_sale
     }
     bid_room = max(0, max_open - len(pending_sale) - len(live_watches))
     cupo_why = f"cupo de reventa lleno ({max_open}): no se puja hasta vender uno"

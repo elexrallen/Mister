@@ -744,14 +744,18 @@ def test_live_watch_occupies_a_slot_until_it_leaves_the_market() -> None:
     book = _owned_book(ids)
     book["watches"] = {
         "21": {"player_id": "21", "name": "Soler", "buy_price": 6_015_000},
+        "98": {"player_id": "98", "name": "Hernández", "buy_price": 6_500_000},
         "99": {"player_id": "99", "name": "Perdida", "buy_price": 6_015_000},
     }
+    gone = _player("98", name="Hernández", vm=6 * M, ask=6 * M, prev=6 * M - 50_000)
+    gone["on_daily_market"] = False
+    gone["seller"] = "club"
     squad = [_player(pid, name=f"R{pid}", vm=5 * M, ask=5 * M) for pid in ids]
-    plan, _book = build_flip_cycle(
+    plan, book = build_flip_cycle(
         book=book,
         enabled=True,
         squad=squad,
-        market=[_rising("21", "Soler"), _rising("22", "Otro")],
+        market=[_rising("21", "Soler"), _rising("22", "Otro"), gone],
         sales_state={},
         me={"balance": 40 * M},
         league_rules=_rules(sale_limit=10, max_squad=25),
@@ -759,6 +763,8 @@ def test_live_watch_occupies_a_slot_until_it_leaves_the_market() -> None:
     )
     bids = [m for m in plan["moves"] if m["kind"] == "bid"]
     _assert(len(bids) == 1 and bids[0]["player_id"] == "22", bids)
+    _assert("21" in book["watches"], book["watches"])
+    _assert("98" not in book["watches"] and "99" not in book["watches"], book["watches"])
 
 
 def test_full_sale_limit_blocks_new_bids() -> None:
