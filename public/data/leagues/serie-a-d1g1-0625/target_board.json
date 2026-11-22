@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T20:27:52.998593+00:00",
+  "generated_at": "2026-11-22T21:03:49.010557+00:00",
   "league_slug": "serie-a-d1g1-0625",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1194,7 +1194,7 @@
     "n_free": 197,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 23.291741536944443
+    "hours_to_jornada": 22.692577700277777
   },
   "finance": {
     "ok": true,

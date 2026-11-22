@@ -3827,11 +3827,33 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T21:03:49.092559+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "59804",
+          "name": "S. McTominay",
+          "amount": 14926100,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 131,
+      "bids": 132,
       "won": 8,
       "lost": 64,
       "lists": 68,
@@ -3841,7 +3863,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 80
+          "count": 81
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -3858,7 +3880,7 @@
       ]
     },
     "d14": {
-      "bids": 131,
+      "bids": 132,
       "won": 8,
       "lost": 64,
       "lists": 68,
@@ -3868,7 +3890,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 80
+          "count": 81
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -3885,5 +3907,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T20:27:53.107956+00:00"
+  "updated_at": "2026-11-22T21:03:49.092559+00:00"
 }

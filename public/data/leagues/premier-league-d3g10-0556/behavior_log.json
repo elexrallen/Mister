@@ -5321,21 +5321,59 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T20:59:29.103606+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "52272",
+          "name": "P. Porro 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22366800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2340",
+          "name": "J. Tarkowski",
+          "amount": 17479400,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 270,
+      "bids": 272,
       "won": 21,
       "lost": 60,
-      "lists": 79,
+      "lists": 80,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 155
+          "count": 157
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5343,7 +5381,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 53
+          "count": 54
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5352,17 +5390,17 @@
       ]
     },
     "d14": {
-      "bids": 270,
+      "bids": 272,
       "won": 21,
       "lost": 60,
-      "lists": 79,
+      "lists": 80,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 155
+          "count": 157
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5370,7 +5408,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 53
+          "count": 54
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5379,5 +5417,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T20:24:17.838866+00:00"
+  "updated_at": "2026-11-22T20:59:29.103606+00:00"
 }

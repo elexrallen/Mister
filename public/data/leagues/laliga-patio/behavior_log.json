@@ -5281,11 +5281,141 @@
           "why": "Puja 4.53M € (sube 94,000 € hoy, +30% (28,200 €)). La máquina puede llegar a 4.73M €."
         }
       ]
+    },
+    {
+      "at": "2026-11-22T20:55:14.134152+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "amount": 11826300,
+          "market_value": 11820000.0,
+          "buy_price": 11826300,
+          "threshold": 12181089,
+          "status": "ejecutada",
+          "why": "Puja 11.83M € (sube 21,000 € hoy, +30% (6,300 €)). La máquina puede llegar a 12.41M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19881755314,
+              "id_player": "29223",
+              "action": "update",
+              "bid": 11826300
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 29223,
+              "id_market": 19881755314,
+              "action": "update",
+              "bid": 11826300,
+              "price": 11820000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -12793876,
+                "future": -29149376,
+                "maxDebt": 28391874
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "4836165",
+          "name": "R. Revivo",
+          "amount": 4529200,
+          "market_value": 4501000.0,
+          "buy_price": 4529200,
+          "threshold": 4665076,
+          "status": "ejecutada",
+          "why": "Puja 4.53M € (sube 94,000 € hoy, +30% (28,200 €)). La máquina puede llegar a 4.73M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19881755308,
+              "id_player": "4836165",
+              "action": "update",
+              "bid": 4529200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 4836165,
+              "id_market": 19881755308,
+              "action": "update",
+              "bid": 4529200,
+              "price": 4501000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -12793876,
+                "future": -29149376,
+                "maxDebt": 28391874
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T21:05:46.492426+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "amount": 11826300,
+          "market_value": 11820000.0,
+          "buy_price": 11826300,
+          "threshold": 12181089,
+          "status": "recomendada",
+          "why": "Puja 11.83M € (sube 21,000 € hoy, +30% (6,300 €)). La máquina puede llegar a 12.41M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "4836165",
+          "name": "R. Revivo",
+          "amount": 4529200,
+          "market_value": 4501000.0,
+          "buy_price": 4529200,
+          "threshold": 4665076,
+          "status": "recomendada",
+          "why": "Puja 4.53M € (sube 94,000 € hoy, +30% (28,200 €)). La máquina puede llegar a 4.73M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 133,
+      "bids": 137,
       "won": 47,
       "lost": 3,
       "lists": 13,
@@ -5312,7 +5442,7 @@
       ]
     },
     "d14": {
-      "bids": 133,
+      "bids": 137,
       "won": 47,
       "lost": 3,
       "lists": 13,
@@ -5339,5 +5469,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T20:29:41.111474+00:00"
+  "updated_at": "2026-11-22T21:05:46.492426+00:00"
 }
