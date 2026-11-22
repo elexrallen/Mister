@@ -4778,7 +4778,8 @@
           "buy_price": 6412400,
           "threshold": 6604772,
           "status": "recomendada",
-          "why": "Puja 6.41M € (sube 108,000 € hoy, +30% (32,400 €)). La máquina puede llegar a 6.7M €."
+          "why": "Puja 6.41M € (sube 108,000 € hoy, +30% (32,400 €)). La máquina puede llegar a 6.7M €.",
+          "result": "ganada"
         },
         {
           "kind": "list_for_sale",
@@ -4954,7 +4955,8 @@
                 "maxDebt": 3632221
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -5019,7 +5021,8 @@
           "name": "P. Porro",
           "amount": 6412400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -5084,7 +5087,8 @@
           "name": "P. Porro",
           "amount": 6412400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -5163,7 +5167,8 @@
           "name": "P. Porro",
           "amount": 6412400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -5242,7 +5247,8 @@
           "name": "P. Porro",
           "amount": 6412400,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -5277,21 +5283,59 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T20:24:17.838866+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "52272",
+          "name": "P. Porro 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22366800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2340",
+          "name": "J. Tarkowski",
+          "amount": 17479400,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 268,
-      "won": 15,
+      "bids": 270,
+      "won": 21,
       "lost": 60,
-      "lists": 78,
+      "lists": 79,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 153
+          "count": 155
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5299,7 +5343,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 52
+          "count": 53
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5308,17 +5352,17 @@
       ]
     },
     "d14": {
-      "bids": 268,
-      "won": 15,
+      "bids": 270,
+      "won": 21,
       "lost": 60,
-      "lists": 78,
+      "lists": 79,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 153
+          "count": 155
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5326,7 +5370,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 52
+          "count": 53
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5335,5 +5379,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T16:47:57.637973+00:00"
+  "updated_at": "2026-11-22T20:24:17.838866+00:00"
 }
