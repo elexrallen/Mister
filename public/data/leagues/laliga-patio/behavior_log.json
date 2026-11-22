@@ -4288,21 +4288,168 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T04:20:03.474365+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "29",
+          "name": "I. Williams 💥",
+          "amount": 6674570,
+          "market_value": 6932000,
+          "buy_price": 6861400,
+          "threshold": 7139960,
+          "status": "ejecutada",
+          "why": "Oferta 6.67M € no llega a 7.14M € (valor de mercado 6.93M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19870487061
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795406400
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "27333",
+          "name": "E. García 💥",
+          "amount": 12903450,
+          "market_value": 12326000,
+          "buy_price": 12293800,
+          "threshold": 12695780,
+          "status": "ejecutada",
+          "why": "Oferta 12.9M € llega al +3% del valor de mercado (12.33M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "849220713",
+              "type": "accept",
+              "amount": 12903450
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19870487063,
+              "id_player": 27333,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -3807976,
+                "future": -3807976,
+                "maxDebt": 51414024
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 609650
+        },
+        {
+          "kind": "bid",
+          "player_id": "24",
+          "name": "U. López",
+          "amount": 7838700,
+          "market_value": 7806000.0,
+          "buy_price": 7838700,
+          "threshold": 8073861,
+          "status": "ejecutada",
+          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19877579268,
+              "id_player": "24",
+              "action": "bid",
+              "bid": 7838700
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 24,
+              "id_market": 19877579268,
+              "action": "bid",
+              "bid": 7838700,
+              "price": 7806000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -3807976,
+                "future": -11646676,
+                "maxDebt": 43575324
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T04:29:18.973985+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 111,
+      "bids": 113,
       "won": 38,
       "lost": 3,
       "lists": 11,
-      "accepts": 7,
-      "profit": 2632630,
+      "accepts": 8,
+      "profit": 3242280,
       "short_offers": 10,
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 52
+          "count": 53
         },
         {
           "why": "sin plaza",
@@ -4319,17 +4466,17 @@
       ]
     },
     "d14": {
-      "bids": 111,
+      "bids": 113,
       "won": 38,
       "lost": 3,
       "lists": 11,
-      "accepts": 7,
-      "profit": 2632630,
+      "accepts": 8,
+      "profit": 3242280,
       "short_offers": 10,
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 52
+          "count": 53
         },
         {
           "why": "sin plaza",
@@ -4346,5 +4493,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T02:44:48.370000+00:00"
+  "updated_at": "2026-11-22T04:29:18.973985+00:00"
 }
