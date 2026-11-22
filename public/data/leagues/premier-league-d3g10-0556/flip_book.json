@@ -58,32 +58,7 @@
       "listed": false
     }
   },
-  "watches": {
-    "1859": {
-      "player_id": "1859",
-      "name": "D. Solanke",
-      "buy_price": 5260600,
-      "bid_at": "2026-11-19T10:25:54.801123+00:00"
-    },
-    "6350": {
-      "player_id": "6350",
-      "name": "L. Dunk",
-      "buy_price": 14195400,
-      "bid_at": "2026-11-19T12:29:08.208965+00:00"
-    },
-    "55075": {
-      "player_id": "55075",
-      "name": "M. van de Ven",
-      "buy_price": 11747500,
-      "bid_at": "2026-11-19T14:23:20.280084+00:00"
-    },
-    "4937790": {
-      "player_id": "4937790",
-      "name": "D. Affengruber",
-      "buy_price": 4649900,
-      "bid_at": "2026-11-20T04:21:51.712964+00:00"
-    }
-  },
+  "watches": {},
   "activated_at": "2026-11-16T15:34:06.138722+00:00",
   "manual_ids": [
     "68405"

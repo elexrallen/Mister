@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T04:23:40.163476+00:00",
+  "generated_at": "2026-11-22T06:25:17.068669+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1165,7 +1165,7 @@
     }
   ],
   "constraints": {
-    "cycles_left": 1,
+    "cycles_left": 0,
     "cash_lag_hours": 8.0,
     "settle_before_ko": false,
     "sale_limit": 5,
@@ -1176,7 +1176,7 @@
     "n_free": 190,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 9.611618469444444
+    "hours_to_jornada": 7.585028278333334
   },
   "finance": {
     "ok": true,
@@ -1810,7 +1810,7 @@
     "formation": "4-4-2",
     "xi_rule": "formación 4-4-2 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 1
+    "cycles_left": 0
   },
   "summary_aspirational": {
     "mode": "aspirational",

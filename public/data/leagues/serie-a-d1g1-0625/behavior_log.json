@@ -3395,21 +3395,67 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T06:29:43.507958+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 3
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "18200",
+          "name": "A. Rrahmani",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "8934",
+          "name": "B. Cristante",
+          "amount": 15242800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "59804",
+          "name": "S. McTominay",
+          "amount": 14926100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "8893",
+          "name": "P. Dybala",
+          "amount": 14997300,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 118,
+      "bids": 121,
       "won": 8,
       "lost": 55,
-      "lists": 58,
+      "lists": 59,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 67
+          "count": 70
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -3417,7 +3463,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 26
+          "count": 27
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3426,17 +3472,17 @@
       ]
     },
     "d14": {
-      "bids": 118,
+      "bids": 121,
       "won": 8,
       "lost": 55,
-      "lists": 58,
+      "lists": 59,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 67
+          "count": 70
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -3444,7 +3490,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 26
+          "count": 27
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3453,5 +3499,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T04:27:29.938987+00:00"
+  "updated_at": "2026-11-22T06:29:43.507958+00:00"
 }
