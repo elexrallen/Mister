@@ -1,6 +1,6 @@
 {
   "date": "2026-11-22",
-  "captured_at": "2026-11-22T02:21:04.208053+00:00",
+  "captured_at": "2026-11-22T02:44:48.692757+00:00",
   "cycle_hour_utc": 2,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -6025,6 +6025,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 262.0
+    "pipeline_seconds": 229.8
   }
 }

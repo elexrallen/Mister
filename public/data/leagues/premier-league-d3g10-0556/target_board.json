@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T02:25:17.820230+00:00",
+  "generated_at": "2026-11-22T02:48:54.122099+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1176,7 +1176,7 @@
     "n_free": 189,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 11.584991248055555
+    "hours_to_jornada": 11.191443529444445
   },
   "finance": {
     "ok": true,
