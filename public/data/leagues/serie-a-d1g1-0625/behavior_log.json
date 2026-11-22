@@ -3606,6 +3606,45 @@
           "why": "espera compra→venta"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T13:01:06.343162+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "18200",
+          "name": "A. Rrahmani",
+          "amount": 12358000,
+          "market_value": 12358000.0,
+          "buy_price": 12434100,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 12.36M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 7 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "18200",
+              "action": "sale",
+              "price": 12358000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 7 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        }
+      ]
     }
   ],
   "summary": {
@@ -3613,7 +3652,7 @@
       "bids": 130,
       "won": 8,
       "lost": 60,
-      "lists": 63,
+      "lists": 64,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3640,7 +3679,7 @@
       "bids": 130,
       "won": 8,
       "lost": 60,
-      "lists": 63,
+      "lists": 64,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3664,5 +3703,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T12:26:34.569142+00:00"
+  "updated_at": "2026-11-22T13:01:06.343162+00:00"
 }

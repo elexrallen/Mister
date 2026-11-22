@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T12:23:03.699368+00:00",
+  "generated_at": "2026-11-22T12:58:36.125219+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 37.86,
+      "xpts_starters": 35.11,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 38.23,
+      "xpts_starters": 35.48,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 36.51,
+      "xpts_starters": 33.76,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 36.53,
+      "xpts_starters": 33.78,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 35.81,
+      "xpts_starters": 33.06,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 37.57,
+      "xpts_starters": 34.82,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -474,13 +474,13 @@
       "name": "C. Kostoulas",
       "team": "Brighton",
       "team_id": "178",
-      "ep_score": 39.0,
-      "xpts": 3.52,
+      "ep_score": 36.4,
+      "xpts": 0.77,
       "price": 7613000.0,
       "status": "keep",
       "delta_5d": -0.0017,
       "value_note": "stable",
-      "value_ratio": 5.12,
+      "value_ratio": 4.78,
       "lineup_prob": 80.0,
       "ff_mister_points": 70.0,
       "ff_mister_avg": 7.0,
@@ -495,7 +495,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "3.5 xPts · 7,613,000 € · keep · starter",
+      "why": "0.8 xPts · 7,613,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -988,13 +988,13 @@
       "name": "C. Kostoulas",
       "team": "Brighton",
       "team_id": "178",
-      "ep_score": 39.0,
-      "xpts": 3.52,
+      "ep_score": 36.4,
+      "xpts": 0.77,
       "price": 7613000.0,
       "status": "keep",
       "delta_5d": -0.0017,
       "value_note": "stable",
-      "value_ratio": 5.12,
+      "value_ratio": 4.78,
       "lineup_prob": 80.0,
       "ff_mister_points": 70.0,
       "ff_mister_avg": 7.0,
@@ -1009,7 +1009,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "3.5 xPts · 7,613,000 € · keep · starter",
+      "why": "0.8 xPts · 7,613,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1176,7 +1176,7 @@
     "n_free": 187,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 1.6216035919444445
+    "hours_to_jornada": 1.0292623791666666
   },
   "finance": {
     "ok": true,
@@ -1536,13 +1536,13 @@
         "name": "C. Kostoulas",
         "team": "Brighton",
         "team_id": "178",
-        "ep_score": 39.0,
-        "xpts": 3.52,
+        "ep_score": 36.4,
+        "xpts": 0.77,
         "price": 7613000.0,
         "status": "keep",
         "delta_5d": -0.0017,
         "value_note": "stable",
-        "value_ratio": 5.12,
+        "value_ratio": 4.78,
         "lineup_prob": 80.0,
         "ff_mister_points": 70.0,
         "ff_mister_avg": 7.0,
@@ -1557,7 +1557,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "3.5 xPts · 7,613,000 € · keep · starter",
+        "why": "0.8 xPts · 7,613,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1755,12 +1755,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 40.76,
-    "ep_sum_starters": 38.23,
-    "xpts_starters": 38.23,
-    "xpts_total": 40.76,
-    "xpts_ceiling": 90.54,
-    "xpts_yours": 45.75,
+    "ep_sum": 38.01,
+    "ep_sum_starters": 35.48,
+    "xpts_starters": 35.48,
+    "xpts_total": 38.01,
+    "xpts_ceiling": 91.83,
+    "xpts_yours": 43.0,
     "cost_sum": 57228000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1804,8 +1804,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 40.76,
-    "ep_sum_starters": 38.23,
+    "ep_sum": 38.01,
+    "ep_sum_starters": 35.48,
     "mode": "ko",
     "formation": "4-4-2",
     "xi_rule": "formación 4-4-2 · once por xPts · 15 al KO",

@@ -1,6 +1,6 @@
 {
   "date": "2026-11-22",
-  "captured_at": "2026-11-22T12:19:41.100702+00:00",
+  "captured_at": "2026-11-22T12:56:14.982136+00:00",
   "cycle_hour_utc": 12,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -5938,6 +5938,12 @@
     ],
     "actions": [
       {
+        "player_id": "68497",
+        "action": "sell",
+        "price": 1031000.0,
+        "name": "S. Boselli 💥"
+      },
+      {
         "player_id": "56926",
         "action": "sell",
         "price": 15405000.0,
@@ -5948,12 +5954,6 @@
         "action": "sell",
         "price": 16441000.0,
         "name": "R. Hernández"
-      },
-      {
-        "player_id": "4947927",
-        "action": "sell",
-        "price": 10044000.0,
-        "name": "Y. Fofana"
       },
       {
         "player_id": "27907",
@@ -6034,6 +6034,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 198.1
+    "pipeline_seconds": 140.5
   }
 }

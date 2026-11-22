@@ -4821,21 +4821,78 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T12:58:36.171219+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "428356",
+          "name": "R. Araújo 💥",
+          "amount": 13212000,
+          "market_value": 13212000.0,
+          "buy_price": 13187100,
+          "threshold": null,
+          "status": "recomendada",
+          "why": "Listar a 13.21M € para que la máquina oferte en el siguiente ciclo."
+        },
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22366800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "53411",
+          "name": "D. Szoboszlai",
+          "amount": 17661100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2340",
+          "name": "J. Tarkowski",
+          "amount": 17479400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "13054",
+          "name": "M. Gibbs-White",
+          "amount": 15129200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 239,
+      "bids": 243,
       "won": 15,
       "lost": 60,
-      "lists": 72,
+      "lists": 73,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 125
+          "count": 129
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4852,17 +4909,17 @@
       ]
     },
     "d14": {
-      "bids": 239,
+      "bids": 243,
       "won": 15,
       "lost": 60,
-      "lists": 72,
+      "lists": 73,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 125
+          "count": 129
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4879,5 +4936,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T12:23:03.745313+00:00"
+  "updated_at": "2026-11-22T12:58:36.171219+00:00"
 }
