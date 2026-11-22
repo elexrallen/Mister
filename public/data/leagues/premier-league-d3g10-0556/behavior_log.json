@@ -761,7 +761,8 @@
           "name": "J. Justin",
           "amount": 11690800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -842,7 +843,8 @@
           "name": "J. Justin",
           "amount": 11690800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -880,7 +882,8 @@
           "name": "J. Justin",
           "amount": 11690800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -918,7 +921,8 @@
           "name": "J. Justin",
           "amount": 11690800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4265,7 +4269,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4295,7 +4300,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4325,7 +4331,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4355,7 +4362,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4385,7 +4393,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4415,7 +4424,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4445,7 +4455,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4475,7 +4486,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4505,7 +4517,8 @@
           "name": "J. Justin",
           "amount": 11939000,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4551,7 +4564,8 @@
           "name": "J. Justin",
           "amount": 12052200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4597,7 +4611,8 @@
           "name": "J. Justin",
           "amount": 12052200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4643,7 +4658,8 @@
           "name": "J. Justin",
           "amount": 12052200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4689,7 +4705,8 @@
           "name": "J. Justin",
           "amount": 12052200,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4735,6 +4752,72 @@
           "name": "J. Justin",
           "amount": 12052200,
           "status": "descartada",
+          "why": "sin caja",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T12:23:03.745313+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 5
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "52272",
+          "name": "P. Porro",
+          "amount": 6412400,
+          "market_value": 6380000.0,
+          "buy_price": 6412400,
+          "threshold": 6604772,
+          "status": "recomendada",
+          "why": "Puja 6.41M € (sube 108,000 € hoy, +30% (32,400 €)). La máquina puede llegar a 6.7M €."
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "428356",
+          "name": "R. Araújo 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22366800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "53411",
+          "name": "D. Szoboszlai",
+          "amount": 17661100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2340",
+          "name": "J. Tarkowski",
+          "amount": 17479400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "13054",
+          "name": "M. Gibbs-White",
+          "amount": 15129200,
+          "status": "descartada",
           "why": "sin caja"
         }
       ]
@@ -4742,17 +4825,17 @@
   ],
   "summary": {
     "d7": {
-      "bids": 234,
+      "bids": 239,
       "won": 15,
-      "lost": 42,
-      "lists": 71,
+      "lost": 60,
+      "lists": 72,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 121
+          "count": 125
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4760,7 +4843,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 51
+          "count": 52
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -4769,17 +4852,17 @@
       ]
     },
     "d14": {
-      "bids": 234,
+      "bids": 239,
       "won": 15,
-      "lost": 42,
-      "lists": 71,
+      "lost": 60,
+      "lists": 72,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 121
+          "count": 125
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4787,7 +4870,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 51
+          "count": 52
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -4796,5 +4879,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T10:27:11.023452+00:00"
+  "updated_at": "2026-11-22T12:23:03.745313+00:00"
 }

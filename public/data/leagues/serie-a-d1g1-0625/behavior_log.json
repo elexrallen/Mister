@@ -3392,7 +3392,8 @@
           "name": "P. Dybala",
           "amount": 14997300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -3438,7 +3439,8 @@
           "name": "P. Dybala",
           "amount": 14997300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -3484,7 +3486,8 @@
           "name": "P. Dybala",
           "amount": 14997300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -3530,7 +3533,8 @@
           "name": "P. Dybala",
           "amount": 14997300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -3576,7 +3580,30 @@
           "name": "P. Dybala",
           "amount": 14997300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T12:26:34.569142+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "18200",
+          "name": "A. Rrahmani",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
         }
       ]
     }
@@ -3585,8 +3612,8 @@
     "d7": {
       "bids": 130,
       "won": 8,
-      "lost": 55,
-      "lists": 62,
+      "lost": 60,
+      "lists": 63,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3601,7 +3628,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 30
+          "count": 31
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3612,8 +3639,8 @@
     "d14": {
       "bids": 130,
       "won": 8,
-      "lost": 55,
-      "lists": 62,
+      "lost": 60,
+      "lists": 63,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -3628,7 +3655,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 30
+          "count": 31
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -3637,5 +3664,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T10:31:04.223770+00:00"
+  "updated_at": "2026-11-22T12:26:34.569142+00:00"
 }

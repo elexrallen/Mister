@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T10:27:10.944965+00:00",
+  "generated_at": "2026-11-22T12:23:03.699368+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -521,7 +521,7 @@
       "hist_ok": false,
       "on_daily_market": false,
       "owned": true,
-      "gk_tandem": false,
+      "gk_tandem": true,
       "owner_name": null,
       "owner_id": null,
       "acquisition": "keep",
@@ -1035,7 +1035,7 @@
       "hist_ok": false,
       "on_daily_market": false,
       "owned": true,
-      "gk_tandem": false,
+      "gk_tandem": true,
       "owner_name": null,
       "owner_id": null,
       "acquisition": "keep",
@@ -1173,10 +1173,10 @@
     "max_debt": 10044621.0,
     "bid_cap": 10044621.0,
     "max_squad": 25,
-    "n_free": 190,
+    "n_free": 187,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 3.5533497755555556
+    "hours_to_jornada": 1.6216035919444445
   },
   "finance": {
     "ok": true,
@@ -1583,7 +1583,7 @@
         "hist_ok": false,
         "on_daily_market": false,
         "owned": true,
-        "gk_tandem": false,
+        "gk_tandem": true,
         "owner_name": null,
         "owner_id": null,
         "acquisition": "keep",

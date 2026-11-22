@@ -58,7 +58,14 @@
       "listed": false
     }
   },
-  "watches": {},
+  "watches": {
+    "52272": {
+      "player_id": "52272",
+      "name": "P. Porro",
+      "buy_price": 6412400,
+      "bid_at": "2026-11-22T12:23:03.745313+00:00"
+    }
+  },
   "activated_at": "2026-11-16T15:34:06.138722+00:00",
   "manual_ids": [
     "68405"
