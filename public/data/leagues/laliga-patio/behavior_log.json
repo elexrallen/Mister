@@ -4643,11 +4643,141 @@
           "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €."
         }
       ]
+    },
+    {
+      "at": "2026-11-22T14:59:06.797235+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "25621",
+          "name": "A. Rațiu",
+          "amount": 8425800,
+          "market_value": 8403000.0,
+          "buy_price": 8425800,
+          "threshold": 8678574,
+          "status": "ejecutada",
+          "why": "Puja 8.43M € (sube 76,000 € hoy, +30% (22,800 €)). La máquina puede llegar a 8.82M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19877579249,
+              "id_player": "25621",
+              "action": "update",
+              "bid": 8425800
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 25621,
+              "id_market": 19877579249,
+              "action": "update",
+              "bid": 8425800,
+              "price": 8403000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -3807976,
+                "future": -20072476,
+                "maxDebt": 35149524
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "24",
+          "name": "U. López",
+          "amount": 7838700,
+          "market_value": 7806000.0,
+          "buy_price": 7838700,
+          "threshold": 8073861,
+          "status": "ejecutada",
+          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19877579268,
+              "id_player": "24",
+              "action": "update",
+              "bid": 7838700
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 24,
+              "id_market": 19877579268,
+              "action": "update",
+              "bid": 7838700,
+              "price": 7806000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -3807976,
+                "future": -20072476,
+                "maxDebt": 35149524
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T15:09:45.434049+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "25621",
+          "name": "A. Rațiu",
+          "amount": 8425800,
+          "market_value": 8403000.0,
+          "buy_price": 8425800,
+          "threshold": 8678574,
+          "status": "recomendada",
+          "why": "Puja 8.43M € (sube 76,000 € hoy, +30% (22,800 €)). La máquina puede llegar a 8.82M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "24",
+          "name": "U. López",
+          "amount": 7838700,
+          "market_value": 7806000.0,
+          "buy_price": 7838700,
+          "threshold": 8073861,
+          "status": "recomendada",
+          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 117,
+      "bids": 121,
       "won": 38,
       "lost": 3,
       "lists": 11,
@@ -4674,7 +4804,7 @@
       ]
     },
     "d14": {
-      "bids": 117,
+      "bids": 121,
       "won": 38,
       "lost": 3,
       "lists": 11,
@@ -4701,5 +4831,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T14:30:03.903691+00:00"
+  "updated_at": "2026-11-22T15:09:45.434049+00:00"
 }
