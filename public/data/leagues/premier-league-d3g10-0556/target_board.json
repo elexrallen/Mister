@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-22T16:24:42.868409+00:00",
+  "generated_at": "2026-11-22T16:47:57.558390+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 36.46,
+      "xpts_starters": 36.72,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 36.83,
+      "xpts_starters": 37.09,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 36.37,
+      "xpts_starters": 36.63,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 35.11,
+      "xpts_starters": 35.37,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -71,7 +71,7 @@
         "MF": 4,
         "FW": 3
       },
-      "xpts_starters": 35.13,
+      "xpts_starters": 35.39,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -84,7 +84,7 @@
         "MF": 3,
         "FW": 4
       },
-      "xpts_starters": 34.41,
+      "xpts_starters": 34.67,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 36.17,
+      "xpts_starters": 36.43,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 36.1,
+      "xpts_starters": 36.36,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -134,13 +134,13 @@
       "name": "Alisson",
       "team": "Liverpool",
       "team_id": "59",
-      "ep_score": 39.6,
-      "xpts": 4.11,
+      "ep_score": 39.7,
+      "xpts": 4.27,
       "price": 10200000.0,
       "status": "keep",
       "delta_5d": -0.0029,
       "value_note": "stable",
-      "value_ratio": 3.88,
+      "value_ratio": 3.89,
       "lineup_prob": 100.0,
       "ff_mister_points": 54.0,
       "ff_mister_avg": 5.4,
@@ -155,7 +155,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.1 xPts · 10,200,000 € · keep · starter",
+      "why": "4.3 xPts · 10,200,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -168,13 +168,13 @@
       "name": "R. Araújo 💥",
       "team": "Liverpool",
       "team_id": "59",
-      "ep_score": 40.0,
-      "xpts": 4.58,
+      "ep_score": 40.1,
+      "xpts": 4.68,
       "price": 13212000.0,
       "status": "keep",
       "delta_5d": 0.0034,
       "value_note": "stable",
-      "value_ratio": 3.03,
+      "value_ratio": 3.04,
       "lineup_prob": 100.0,
       "ff_mister_points": 37.0,
       "ff_mister_avg": 3.7,
@@ -189,7 +189,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.6 xPts · 13,212,000 € · keep · starter",
+      "why": "4.7 xPts · 13,212,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -648,13 +648,13 @@
       "name": "Alisson",
       "team": "Liverpool",
       "team_id": "59",
-      "ep_score": 39.6,
-      "xpts": 4.11,
+      "ep_score": 39.7,
+      "xpts": 4.27,
       "price": 10200000.0,
       "status": "keep",
       "delta_5d": -0.0029,
       "value_note": "stable",
-      "value_ratio": 3.88,
+      "value_ratio": 3.89,
       "lineup_prob": 100.0,
       "ff_mister_points": 54.0,
       "ff_mister_avg": 5.4,
@@ -669,7 +669,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.1 xPts · 10,200,000 € · keep · starter",
+      "why": "4.3 xPts · 10,200,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -682,13 +682,13 @@
       "name": "R. Araújo 💥",
       "team": "Liverpool",
       "team_id": "59",
-      "ep_score": 40.0,
-      "xpts": 4.58,
+      "ep_score": 40.1,
+      "xpts": 4.68,
       "price": 13212000.0,
       "status": "keep",
       "delta_5d": 0.0034,
       "value_note": "stable",
-      "value_ratio": 3.03,
+      "value_ratio": 3.04,
       "lineup_prob": 100.0,
       "ff_mister_points": 37.0,
       "ff_mister_avg": 3.7,
@@ -703,7 +703,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.6 xPts · 13,212,000 € · keep · starter",
+      "why": "4.7 xPts · 13,212,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1161,13 +1161,13 @@
       "name": "M. Tel",
       "position": "FW",
       "amount": 1057000.0,
-      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
+      "why": "Lista para equilibrar el 15; el siguiente ciclo aceptas y cobra."
     }
   ],
   "constraints": {
-    "cycles_left": 0,
+    "cycles_left": 3,
     "cash_lag_hours": 8.0,
-    "settle_before_ko": false,
+    "settle_before_ko": true,
     "sale_limit": 5,
     "sale_remaining": 5,
     "max_debt": 3632221.0,
@@ -1176,7 +1176,7 @@
     "n_free": 187,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 0.09449109000000001
+    "hours_to_jornada": 27.207131563333334
   },
   "finance": {
     "ok": true,
@@ -1196,13 +1196,13 @@
         "name": "Alisson",
         "team": "Liverpool",
         "team_id": "59",
-        "ep_score": 39.6,
-        "xpts": 4.11,
+        "ep_score": 39.7,
+        "xpts": 4.27,
         "price": 10200000.0,
         "status": "keep",
         "delta_5d": -0.0029,
         "value_note": "stable",
-        "value_ratio": 3.88,
+        "value_ratio": 3.89,
         "lineup_prob": 100.0,
         "ff_mister_points": 54.0,
         "ff_mister_avg": 5.4,
@@ -1217,7 +1217,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.1 xPts · 10,200,000 € · keep · starter",
+        "why": "4.3 xPts · 10,200,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1230,13 +1230,13 @@
         "name": "R. Araújo 💥",
         "team": "Liverpool",
         "team_id": "59",
-        "ep_score": 40.0,
-        "xpts": 4.58,
+        "ep_score": 40.1,
+        "xpts": 4.68,
         "price": 13212000.0,
         "status": "keep",
         "delta_5d": 0.0034,
         "value_note": "stable",
-        "value_ratio": 3.03,
+        "value_ratio": 3.04,
         "lineup_prob": 100.0,
         "ff_mister_points": 37.0,
         "ff_mister_avg": 3.7,
@@ -1251,7 +1251,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.6 xPts · 13,212,000 € · keep · starter",
+        "why": "4.7 xPts · 13,212,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1755,12 +1755,12 @@
     ]
   },
   "totals": {
-    "ep_sum": 39.36,
-    "ep_sum_starters": 36.83,
-    "xpts_starters": 36.83,
-    "xpts_total": 39.36,
+    "ep_sum": 39.62,
+    "ep_sum_starters": 37.09,
+    "xpts_starters": 37.09,
+    "xpts_total": 39.62,
     "xpts_ceiling": 93.34,
-    "xpts_yours": 44.35,
+    "xpts_yours": 44.61,
     "cost_sum": 57228000.0,
     "net_buys": 0.0,
     "slots_filled": 15,
@@ -1782,7 +1782,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 0.0,
+  "residual_after_reserve": 2025000.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
@@ -1804,13 +1804,13 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 39.36,
-    "ep_sum_starters": 36.83,
+    "ep_sum": 39.62,
+    "ep_sum_starters": 37.09,
     "mode": "ko",
     "formation": "4-4-2",
     "xi_rule": "formación 4-4-2 · once por xPts · 15 al KO",
     "flex": 0,
-    "cycles_left": 0
+    "cycles_left": 3
   },
   "summary_aspirational": {
     "mode": "aspirational",

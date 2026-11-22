@@ -5198,21 +5198,100 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-22T16:47:57.637973+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 4
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "428356",
+          "name": "R. Araújo 💥",
+          "amount": 13212000,
+          "market_value": 13212000.0,
+          "buy_price": 13187100,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 13.21M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 3 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "428356",
+              "action": "sale",
+              "price": 13212000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 3 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "52272",
+          "name": "P. Porro",
+          "amount": 6412400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "5489",
+          "name": "D. Rice",
+          "amount": 22366800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "53411",
+          "name": "D. Szoboszlai",
+          "amount": 17661100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "2340",
+          "name": "J. Tarkowski",
+          "amount": 17479400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "13054",
+          "name": "M. Gibbs-White",
+          "amount": 15129200,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 263,
+      "bids": 268,
       "won": 15,
       "lost": 60,
-      "lists": 77,
+      "lists": 78,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 148
+          "count": 153
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5229,17 +5308,17 @@
       ]
     },
     "d14": {
-      "bids": 263,
+      "bids": 268,
       "won": 15,
       "lost": 60,
-      "lists": 77,
+      "lists": 78,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 148
+          "count": 153
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5256,5 +5335,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T16:24:42.947076+00:00"
+  "updated_at": "2026-11-22T16:47:57.637973+00:00"
 }
