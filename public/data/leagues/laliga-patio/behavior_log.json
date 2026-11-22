@@ -4410,7 +4410,8 @@
                 "maxDebt": 43575324
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -4564,7 +4565,8 @@
                 "maxDebt": 35149524
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -4604,7 +4606,8 @@
                 "maxDebt": 35149524
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -4629,7 +4632,8 @@
           "buy_price": 8425800,
           "threshold": 8678574,
           "status": "recomendada",
-          "why": "Puja 8.43M € (sube 76,000 € hoy, +30% (22,800 €)). La máquina puede llegar a 8.82M €."
+          "why": "Puja 8.43M € (sube 76,000 € hoy, +30% (22,800 €)). La máquina puede llegar a 8.82M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -4640,7 +4644,8 @@
           "buy_price": 7838700,
           "threshold": 8073861,
           "status": "recomendada",
-          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €."
+          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -4694,7 +4699,8 @@
                 "maxDebt": 35149524
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -4734,7 +4740,8 @@
                 "maxDebt": 35149524
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -4759,7 +4766,8 @@
           "buy_price": 8425800,
           "threshold": 8678574,
           "status": "recomendada",
-          "why": "Puja 8.43M € (sube 76,000 € hoy, +30% (22,800 €)). La máquina puede llegar a 8.82M €."
+          "why": "Puja 8.43M € (sube 76,000 € hoy, +30% (22,800 €)). La máquina puede llegar a 8.82M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -4770,19 +4778,259 @@
           "buy_price": 7838700,
           "threshold": 8073861,
           "status": "recomendada",
-          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €."
+          "why": "Puja 7.84M € (sube 109,000 € hoy, +30% (32,700 €)). La máquina puede llegar a 8.2M €.",
+          "result": "ganada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T16:20:35.671458+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 2
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "29",
+          "name": "I. Williams 💥",
+          "amount": 7278600,
+          "market_value": 6932000,
+          "buy_price": 6861400,
+          "threshold": 7139960,
+          "status": "ejecutada",
+          "why": "Oferta 7.28M € llega al +3% del valor de mercado (6.93M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "849324667",
+              "type": "accept",
+              "amount": 7278600
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19878026805,
+              "id_player": 29,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -12793876,
+                "future": -12793876,
+                "maxDebt": 44747374
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 417200
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "25621",
+          "name": "A. Rațiu 💥",
+          "amount": 8403000,
+          "market_value": 8403000.0,
+          "buy_price": 8425800,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 8.4M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "25621",
+              "action": "sale",
+              "price": 8403000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 25621,
+              "id_market": 19881791212,
+              "action": "sale",
+              "price": 8403000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "24",
+          "name": "U. López 💥",
+          "amount": 7806000,
+          "market_value": 7806000.0,
+          "buy_price": 7838700,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 7.81M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "24",
+              "action": "sale",
+              "price": 7806000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 24,
+              "id_market": 19881791214,
+              "action": "sale",
+              "price": 7806000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "amount": 11826300,
+          "market_value": 11820000.0,
+          "buy_price": 11826300,
+          "threshold": 12181089,
+          "status": "ejecutada",
+          "why": "Puja 11.83M € (sube 21,000 € hoy, +30% (6,300 €)). La máquina puede llegar a 12.41M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19881755314,
+              "id_player": "29223",
+              "action": "bid",
+              "bid": 11826300
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 29223,
+              "id_market": 19881755314,
+              "action": "bid",
+              "bid": 11826300,
+              "price": 11820000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -12793876,
+                "future": -24620176,
+                "maxDebt": 32921074
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "4836165",
+          "name": "R. Revivo",
+          "amount": 4529200,
+          "market_value": 4501000.0,
+          "buy_price": 4529200,
+          "threshold": 4665076,
+          "status": "ejecutada",
+          "why": "Puja 4.53M € (sube 94,000 € hoy, +30% (28,200 €)). La máquina puede llegar a 4.73M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19881755308,
+              "id_player": "4836165",
+              "action": "bid",
+              "bid": 4529200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 4836165,
+              "id_market": 19881755308,
+              "action": "bid",
+              "bid": 4529200,
+              "price": 4501000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -12793876,
+                "future": -29149376,
+                "maxDebt": 28391874
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-22T16:31:15.876857+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29223",
+          "name": "M. Soriano",
+          "amount": 11826300,
+          "market_value": 11820000.0,
+          "buy_price": 11826300,
+          "threshold": 12181089,
+          "status": "recomendada",
+          "why": "Puja 11.83M € (sube 21,000 € hoy, +30% (6,300 €)). La máquina puede llegar a 12.41M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "4836165",
+          "name": "R. Revivo",
+          "amount": 4529200,
+          "market_value": 4501000.0,
+          "buy_price": 4529200,
+          "threshold": 4665076,
+          "status": "recomendada",
+          "why": "Puja 4.53M € (sube 94,000 € hoy, +30% (28,200 €)). La máquina puede llegar a 4.73M €."
         }
       ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 121,
-      "won": 38,
+      "bids": 125,
+      "won": 47,
       "lost": 3,
-      "lists": 11,
-      "accepts": 8,
-      "profit": 3242280,
+      "lists": 13,
+      "accepts": 9,
+      "profit": 3659480,
       "short_offers": 10,
       "top_skips": [
         {
@@ -4804,12 +5052,12 @@
       ]
     },
     "d14": {
-      "bids": 121,
-      "won": 38,
+      "bids": 125,
+      "won": 47,
       "lost": 3,
-      "lists": 11,
-      "accepts": 8,
-      "profit": 3242280,
+      "lists": 13,
+      "accepts": 9,
+      "profit": 3659480,
       "short_offers": 10,
       "top_skips": [
         {
@@ -4831,5 +5079,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-22T15:09:45.434049+00:00"
+  "updated_at": "2026-11-22T16:31:15.876857+00:00"
 }

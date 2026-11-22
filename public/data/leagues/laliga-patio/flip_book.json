@@ -92,8 +92,9 @@
       "name": "I. Williams 💥",
       "buy_price": 6861400,
       "opened_at": "2026-11-21T04:20:41.893280+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-22T16:31:15.876857+00:00"
     },
     "27333": {
       "player_id": "27333",
@@ -103,20 +104,36 @@
       "status": "sold",
       "listed": true,
       "sold_at": "2026-11-22T04:29:18.973985+00:00"
-    }
-  },
-  "watches": {
+    },
     "25621": {
       "player_id": "25621",
-      "name": "A. Rațiu",
+      "name": "A. Rațiu 💥",
       "buy_price": 8425800,
-      "bid_at": "2026-11-22T15:09:45.434049+00:00"
+      "opened_at": "2026-11-22T16:20:35.671458+00:00",
+      "status": "listed",
+      "listed": true
     },
     "24": {
       "player_id": "24",
-      "name": "U. López",
+      "name": "U. López 💥",
       "buy_price": 7838700,
-      "bid_at": "2026-11-22T15:09:45.434049+00:00"
+      "opened_at": "2026-11-22T16:20:35.671458+00:00",
+      "status": "listed",
+      "listed": true
+    }
+  },
+  "watches": {
+    "29223": {
+      "player_id": "29223",
+      "name": "M. Soriano",
+      "buy_price": 11826300,
+      "bid_at": "2026-11-22T16:31:15.876857+00:00"
+    },
+    "4836165": {
+      "player_id": "4836165",
+      "name": "R. Revivo",
+      "buy_price": 4529200,
+      "bid_at": "2026-11-22T16:31:15.876857+00:00"
     }
   },
   "activated_at": "2026-11-16T14:02:54.506417+00:00",
