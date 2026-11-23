@@ -3450,6 +3450,62 @@ body[data-view="today"] #today-opportunities-panel {
   color: #5eead4;
 }
 
+.flip-roster {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1rem;
+}
+
+.flip-roster h4 {
+  margin: 0 0 0.15rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #7dd3c7;
+}
+
+.flip-roster-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.45rem 0.55rem;
+  background: rgba(13, 21, 30, 0.85);
+  border: 1px solid rgba(94, 234, 212, 0.28);
+}
+
+.flip-roster-main {
+  min-width: 0;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.flip-roster-main strong,
+.flip-roster-main small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flip-roster-main small {
+  color: #94a3b8;
+}
+
+.flip-release {
+  border: 1px solid rgba(251, 146, 60, 0.55);
+  background: transparent;
+  color: #fdba74;
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.flip-release:focus-visible {
+  outline: 2px solid #fdba74;
+  outline-offset: 2px;
+}
+
 .behavior-summary {
   display: grid;
   gap: 0.75rem;

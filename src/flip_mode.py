@@ -7,7 +7,11 @@ del día, no la puja recomendada de subasta. Solo entra si la máquina al +5%
 del valor sigue dejando más de un 3% sobre ese precio. La plantilla del
 momento de activarlo queda congelada. Un alta posterior solo es reventa si
 la máquina ya la tenía vigilada: la cláusula y la puja hecha a mano se
-congelan igual y, si están en el mercado, se retiran.
+congelan igual y, si están en el mercado, se retiran. Cada compra abierta
+y cada puja vigilada se pueden sacar a mano: pasan a la plantilla congelada
+y el modo deja de venderlas. Apagar el modo borra el libro: las compras de
+esa tanda dejan de ser reventa y, al volver a activarlo, entran en la
+plantilla que se congela.
 """
 
 from __future__ import annotations
@@ -115,6 +119,8 @@ def apply_flip_toggle(league: str, raw: Any, *, root: Path | None = None) -> boo
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    if not flag:
+        save_book(slug, fresh_book(), root=root)
     return True
 
 
@@ -140,6 +146,67 @@ def save_book(slug: str, book: dict[str, Any], root: Path | None = None) -> None
     path = flip_book_path(slug, root)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(book, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _release_ids(raw: Any) -> list[str]:
+    """Ids que el disparo pide sacar de la reventa."""
+    if isinstance(raw, str):
+        parts = raw.split(",")
+    elif isinstance(raw, (list, tuple)):
+        parts = list(raw)
+    else:
+        return []
+    out: list[str] = []
+    seen: set[str] = set()
+    for item in parts:
+        pid = str(item if item is not None else "").strip()
+        if not pid or pid in seen or len(pid) > 32:
+            continue
+        if not pid.replace("_", "").replace("-", "").isalnum():
+            continue
+        seen.add(pid)
+        out.append(pid)
+        if len(out) >= 30:
+            break
+    return out
+
+
+def release_from_book(book: dict[str, Any] | None, ids: list[str]) -> dict[str, Any]:
+    """Quita esas compras y pujas del libro y las deja congeladas."""
+    book = deepcopy(book) if isinstance(book, dict) else fresh_book()
+    book.setdefault("frozen_ids", [])
+    book.setdefault("positions", {})
+    book.setdefault("watches", {})
+    book.setdefault("manual_ids", [])
+    positions = book.get("positions")
+    if not isinstance(positions, dict):
+        positions = {}
+        book["positions"] = positions
+    watches = book.get("watches")
+    if not isinstance(watches, dict):
+        watches = {}
+        book["watches"] = watches
+    frozen = {str(pid) for pid in book.get("frozen_ids") or []}
+    for pid in ids:
+        pos = positions.get(pid)
+        if isinstance(pos, dict) and pos.get("status") != "sold":
+            positions.pop(pid, None)
+        elif pid in positions and not isinstance(pos, dict):
+            positions.pop(pid, None)
+        watches.pop(pid, None)
+        _freeze(book, frozen, pid)
+        _mark_manual(book, pid)
+    return book
+
+
+def apply_flip_release(league: str, raw: Any, *, root: Path | None = None) -> bool:
+    """Saca del libro los ids del disparo. Si no hay ids válidos, no toca nada."""
+    slug = str(league or "").strip()
+    ids = _release_ids(raw)
+    if not slug or slug == "all" or not ids:
+        return False
+    save_book(slug, release_from_book(load_book(slug, root), ids), root=root)
+    return True
 
 
 def daily_change_euros(player: dict[str, Any]) -> float | None:
@@ -291,6 +358,8 @@ def _sync_book(
     book.setdefault("positions", {})
     book.setdefault("watches", {})
     book.setdefault("manual_ids", [])
+    if not enabled:
+        return fresh_book(), []
     by_id: dict[str, dict[str, Any]] = {}
     order: list[str] = []
     for player in squad:
@@ -470,6 +539,57 @@ def _bid_resolves_after_kickoff(hours: float | None, lag: float | None) -> bool:
     return float(lag) > float(hours)
 
 
+def _flip_roster(book: dict[str, Any], squad: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Compras abiertas y pujas vigiladas: lo que el modo todavía maneja."""
+    by_id = {_pid(player): player for player in squad if _pid(player)}
+    rows: list[dict[str, Any]] = []
+    for pid, pos in (book.get("positions") or {}).items():
+        if not isinstance(pos, dict) or pos.get("status") == "sold":
+            continue
+        key = str(pid)
+        player = by_id.get(key) or {}
+        listed = bool(pos.get("listed") or pos.get("status") == "listed" or _listed(player))
+        buy = _f(pos.get("buy_price"))
+        vm = _vm(player)
+        rows.append(
+            {
+                "player_id": key,
+                "name": pos.get("name") or player.get("name") or "",
+                "position": player.get("position"),
+                "team": player.get("team"),
+                "team_id": player.get("team_id"),
+                "photo_url": player.get("photo_url"),
+                "team_logo_url": player.get("team_logo_url"),
+                "buy_price": None if buy is None else round(buy),
+                "market_value": round(vm) if vm > 0 else None,
+                "status": "listed" if listed else "owned",
+            }
+        )
+    owned = {row["player_id"] for row in rows}
+    for pid, watch in (book.get("watches") or {}).items():
+        key = str(pid or "")
+        if not key or key in owned or key in by_id or not isinstance(watch, dict):
+            continue
+        buy = _f(watch.get("buy_price"))
+        rows.append(
+            {
+                "player_id": key,
+                "name": watch.get("name") or "",
+                "position": None,
+                "team": None,
+                "team_id": None,
+                "photo_url": None,
+                "team_logo_url": None,
+                "buy_price": None if buy is None else round(buy),
+                "market_value": None,
+                "status": "bid",
+            }
+        )
+    order = {"listed": 0, "owned": 1, "bid": 2}
+    rows.sort(key=lambda row: (order.get(str(row.get("status")), 9), str(row.get("name") or "")))
+    return rows
+
+
 def build_flip_cycle(
     *,
     book: dict[str, Any] | None,
@@ -488,7 +608,7 @@ def build_flip_cycle(
     transfer_wait_hours: float | None = None,
     now: datetime | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Plan de reventa y libro ya actualizado. Con el modo apagado solo salen las ventas abiertas."""
+    """Plan de reventa y libro ya actualizado. Con el modo apagado el libro queda vacío."""
     now_iso = _now_iso(now)
     squad = [p for p in (squad or []) if isinstance(p, dict)]
     book, manual_listed = _sync_book(book, enabled=enabled, squad=squad, now_iso=now_iso)
@@ -963,11 +1083,6 @@ def build_flip_cycle(
             f"Plantilla congelada ({len(frozen)}). "
             f"{bid_n} puja{'s' if bid_n != 1 else ''} por libres de más de 4M con margen para el +3%."
         )
-    elif moves:
-        narrative = (
-            "La reventa está apagada. Se siguen vendiendo los jugadores ya comprados "
-            f"para eso, desde el +{profit_label} del valor de mercado."
-        )
     else:
         narrative = "Reventa apagada."
 
@@ -1007,6 +1122,7 @@ def build_flip_cycle(
             "open_count": open_n,
             "max_open": max_open,
             "eligible": len(quotes),
+            "players": _flip_roster(book, squad),
         },
         "flip_skipped": skipped,
     }
@@ -1034,5 +1150,6 @@ def merge_flip_exit(normal: dict[str, Any] | None, flip_plan: dict[str, Any], bo
         "open_count": len(open_ids),
         "max_open": int(config.FLIP_MAX_OPEN),
         "eligible": 0,
+        "players": list((flip_plan.get("flip") or {}).get("players") or []),
     }
     return base

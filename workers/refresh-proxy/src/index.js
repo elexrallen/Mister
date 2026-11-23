@@ -50,8 +50,25 @@ function clientIp(request) {
   );
 }
 
-async function dispatchRefresh(env, league, flipMode) {
+function flipReleaseIds(raw) {
+  if (!Array.isArray(raw)) return null;
+  const ids = [];
+  const seen = new Set();
+  for (const item of raw) {
+    const id = String(item ?? "").trim();
+    if (!/^[A-Za-z0-9_-]{1,32}$/.test(id) || seen.has(id)) continue;
+    seen.add(id);
+    ids.push(id);
+    if (ids.length >= 30) break;
+  }
+  return ids.length ? ids : null;
+}
+
+async function dispatchRefresh(env, league, flipMode, flipRelease) {
   const repo = (env.GITHUB_REPO || "elexrallen/Mister").replace(/^\/+|\/+$/g, "");
+  const client_payload = { league };
+  if (flipMode !== null) client_payload.flip_mode = flipMode;
+  if (flipRelease) client_payload.flip_release = flipRelease;
   return fetch(`https://api.github.com/repos/${repo}/dispatches`, {
     method: "POST",
     headers: {
@@ -63,8 +80,7 @@ async function dispatchRefresh(env, league, flipMode) {
     },
     body: JSON.stringify({
       event_type: "refresh-data",
-      client_payload:
-        flipMode === null ? { league } : { league, flip_mode: flipMode },
+      client_payload,
     }),
   });
 }
@@ -76,7 +92,7 @@ export default {
       return;
     }
     ctx.waitUntil(
-      dispatchRefresh(env, "all", null).then(async (gh) => {
+      dispatchRefresh(env, "all", null, null).then(async (gh) => {
         if (!gh.ok) {
           const text = await gh.text();
           console.log(`scheduled dispatch failed ${gh.status} ${text.slice(0, 300)}`);
@@ -121,6 +137,7 @@ export default {
 
     let league = "all";
     let flipMode = null;
+    let flipRelease = null;
     try {
       const body = await request.json();
       if (body && typeof body.league === "string" && body.league.trim()) {
@@ -128,6 +145,9 @@ export default {
       }
       if (body && typeof body.flip_mode === "boolean") {
         flipMode = body.flip_mode;
+      }
+      if (body && Array.isArray(body.flip_release)) {
+        flipRelease = flipReleaseIds(body.flip_release);
       }
     } catch {
       // body vacío → all
@@ -137,7 +157,7 @@ export default {
       league = "all";
     }
 
-    const gh = await dispatchRefresh(env, league, flipMode);
+    const gh = await dispatchRefresh(env, league, flipMode, flipRelease);
 
     if (!gh.ok) {
       const text = await gh.text();
@@ -168,6 +188,7 @@ export default {
         dispatched: true,
         league,
         flip_mode: flipMode,
+        flip_release: flipRelease,
         accepted_at: new Date(now).toISOString(),
         recommended_poll_seconds: 15,
         expected_duration_minutes: 12,

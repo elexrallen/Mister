@@ -2035,6 +2035,7 @@
         }
         ${squadDelta ? `<span class="${Number(squadVm.delta_5d) >= 0 ? "delta-up" : "delta-down"}">VM ${escapeHtml(squadDelta)}</span>` : ""}
       </div>
+      ${flipRosterHtml(flipOn ? flip.players : [])}
     </article>`;
 
     const groups = [
@@ -2091,6 +2092,7 @@
     bindAssetFallbacks(heroRoot);
     bindAssetFallbacks(listRoot);
     bindFlipToggle(flipOn);
+    bindFlipRoster();
     listRoot.querySelectorAll(".cycle-move-chip").forEach((btn) => {
       btn.addEventListener("click", () => {
         const id = btn.getAttribute("data-player-id");
@@ -3803,6 +3805,67 @@
     return false;
   }
 
+  function flipRosterHtml(players) {
+    const rows = Array.isArray(players) ? players : [];
+    if (!rows.length) return "";
+    const statusLabel = {
+      owned: "En plantilla",
+      listed: "En venta",
+      bid: "Puja en curso",
+    };
+    const items = rows
+      .map((player) => {
+        const rec = tacticalRecord(player);
+        const id = rec.player_id || rec.id || "";
+        const status = statusLabel[player.status] || "En reventa";
+        const paid = player.buy_price != null ? formatMoney(player.buy_price) : "";
+        const detail = [status, paid].filter(Boolean).join(" · ");
+        return `<div class="flip-roster-row">
+          ${playerMedia(rec, "is-row")}
+          <span class="flip-roster-main">
+            <strong>${escapeHtml(player.name || rec.name || "Jugador")}</strong>
+            <small>${escapeHtml(detail)}</small>
+          </span>
+          <button type="button" class="flip-release" data-player-id="${escapeHtml(id)}" data-player-name="${escapeHtml(player.name || rec.name || "este jugador")}" data-player-status="${escapeHtml(player.status || "")}">Sacar</button>
+        </div>`;
+      })
+      .join("");
+    return `<section class="flip-roster">
+      <h4>Dentro de la reventa</h4>
+      ${items}
+    </section>`;
+  }
+
+  function bindFlipRoster() {
+    document.querySelectorAll(".flip-release").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        requestFlipRelease(
+          btn.getAttribute("data-player-id") || "",
+          btn.getAttribute("data-player-name") || "este jugador",
+          btn.getAttribute("data-player-status") || ""
+        );
+      });
+    });
+  }
+
+  async function requestFlipRelease(playerId, name, status) {
+    if (!playerId) return;
+    const message =
+      status === "bid"
+        ? `¿Sacar a ${name} de la reventa? Se deja de pujar por él y, si entra, queda en la plantilla congelada.`
+        : `¿Sacar a ${name} de la reventa? Deja de venderse por este modo y pasa a la plantilla congelada.`;
+    if (!window.confirm(message)) return;
+    const league = currentLeagueSlug || "";
+    if (!league) {
+      setRefreshUi("error", "Elige una liga antes de sacar a un jugador de la reventa.");
+      return;
+    }
+    await postRefresh(
+      { league, flip_release: [playerId] },
+      `Sacando a ${name} de la reventa…`
+    );
+  }
+
   function bindFlipToggle(enabled) {
     const btn = document.getElementById("flip-mode-toggle");
     if (!btn) return;
@@ -3814,7 +3877,7 @@
   async function requestFlipMode(enabled) {
     const message = enabled
       ? "Congela la plantilla actual de esta liga y solo busca reventas. ¿Activar?"
-      : "Deja de pujar. La plantilla congelada vuelve al plan normal. Los jugadores ya comprados para revender se siguen vendiendo si la oferta llega al +3% del valor de mercado.";
+      : "Desactiva la reventa y olvida las compras de esta tanda. La plantilla vuelve al plan normal. Si la vuelves a activar, se congela la plantilla de ese momento.";
     if (!window.confirm(message)) return;
     const league = currentLeagueSlug || "";
     if (!league) {
@@ -3874,6 +3937,14 @@
         setRefreshUi(
           "error",
           "El Worker desplegado no reenvía la reventa. Redesplega workers/refresh-proxy (npx wrangler deploy)."
+        );
+        return;
+      }
+      const askedRelease = body && Array.isArray(body.flip_release);
+      if (askedRelease && !(payload && Array.isArray(payload.flip_release))) {
+        setRefreshUi(
+          "error",
+          "El Worker desplegado no reenvía la salida de reventa. Redesplega workers/refresh-proxy (npx wrangler deploy)."
         );
         return;
       }

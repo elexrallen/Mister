@@ -482,10 +482,12 @@ def test_konate_accepts_and_the_other_two_renew() -> None:
     _assert(by_id["65347"]["kind"] == "renew_offer", by_id.get("65347"))
 
 
-def test_disable_stops_bids_and_keeps_exit() -> None:
+def test_disable_clears_the_book_and_refreeze_includes_old_signings() -> None:
+    """Apagar olvida la tanda. Al volver a activar, esos fichajes se congelan con la plantilla."""
     book = fresh_book()
     book["active"] = True
     book["frozen_ids"] = ["1"]
+    book["watches"] = {"21": {"player_id": "21", "name": "Soler", "buy_price": 6_015_000}}
     book["positions"] = {
         "9": {
             "player_id": "9",
@@ -510,10 +512,23 @@ def test_disable_stops_bids_and_keeps_exit() -> None:
         league_rules=_rules(),
         now=NOW,
     )
-    kinds = [m["kind"] for m in plan["moves"]]
-    _assert("bid" not in kinds, kinds)
-    _assert(any(m["kind"] == "list_for_sale" and m["player_id"] == "9" for m in plan["moves"]), plan["moves"])
-    _assert(book["active"] is False, book["active"])
+    _assert(plan["moves"] == [], plan["moves"])
+    _assert(book == fresh_book(), book)
+    _assert(plan["flip"]["open_count"] == 0, plan["flip"])
+
+    again, book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=market,
+        sales_state={},
+        me={"balance": 20 * M},
+        league_rules=_rules(),
+        now=NOW + timedelta(hours=1),
+    )
+    _assert(set(book["frozen_ids"]) == {"1", "9"}, book["frozen_ids"])
+    _assert("9" not in book["positions"], book["positions"])
+    _assert(not any(m["player_id"] == "9" for m in again["moves"]), again["moves"])
 
 
 def _rising(pid: str, name: str) -> dict:
@@ -981,8 +996,17 @@ def test_apply_flip_toggle_accepts_quoted_json() -> None:
         for raw in ("true", '"true"', "'true'", True, "1"):
             _assert(apply_flip_toggle("laliga", raw, root=root) is True, raw)
             _assert(flip_enabled("laliga", root) is True, raw)
+        stale = fresh_book()
+        stale["active"] = True
+        stale["frozen_ids"] = ["1"]
+        stale["positions"] = {
+            "9": {"player_id": "9", "name": "Flip", "buy_price": 6_404_000, "status": "owned"}
+        }
+        stale["watches"] = {"21": {"player_id": "21", "buy_price": 6_015_000}}
+        save_book("laliga", stale, root=root)
         _assert(apply_flip_toggle("laliga", '"false"', root=root) is True, "false quoted")
         _assert(flip_enabled("laliga", root) is False, "off")
+        _assert(load_book("laliga", root) == fresh_book(), load_book("laliga", root))
         _assert(apply_flip_toggle("all", "true", root=root) is False, "all")
         _assert(apply_flip_toggle("laliga", "maybe", root=root) is False, "garbage")
 
@@ -1110,26 +1134,95 @@ def test_missing_buy_price_is_a_manual_signing_inside_the_window() -> None:
     _assert("9" in book["frozen_ids"] and "9" not in book["positions"], book)
 
 
-def test_late_floor_also_applies_when_flip_is_off() -> None:
-    plan, _book = _listed_offer(
+def test_roster_and_manual_release() -> None:
+    """La tanda visible se puede sacar: queda congelada y deja de venderse o pujarse."""
+    from flip_mode import apply_flip_release, release_from_book
+
+    book = fresh_book()
+    book["active"] = True
+    book["frozen_ids"] = ["1"]
+    book["positions"] = {
+        "9": {
+            "player_id": "9",
+            "name": "Flip",
+            "buy_price": 6_404_000,
+            "status": "listed",
+            "listed": True,
+        },
+        "8": {
+            "player_id": "8",
+            "name": "Vendido",
+            "buy_price": 1_000_000,
+            "status": "sold",
+        },
+    }
+    book["watches"] = {"21": {"player_id": "21", "name": "Soler", "buy_price": 6_015_000}}
+    squad = [
+        _player("1", name="Titular", vm=9 * M, ask=9 * M),
+        _player("9", name="Flip", vm=6.5 * M, ask=6.5 * M, on_sale=True),
+    ]
+    market = [_player("21", name="Soler", vm=6 * M, ask=6 * M, prev=6 * M - 50_000)]
+    plan, book = build_flip_cycle(
+        book=book,
+        enabled=True,
+        squad=squad,
+        market=market,
+        sales_state={},
+        me={"balance": 20 * M},
+        league_rules=_rules(),
+        now=NOW,
+    )
+    roster = {row["player_id"]: row for row in plan["flip"]["players"]}
+    _assert(set(roster) == {"9", "21"}, roster)
+    _assert(roster["9"]["status"] == "listed" and roster["9"]["buy_price"] == 6_404_000, roster["9"])
+    _assert(roster["21"]["status"] == "bid", roster["21"])
+
+    released = release_from_book(book, ["9", "21"])
+    _assert("9" not in released["positions"] and "8" in released["positions"], released["positions"])
+    _assert("21" not in released["watches"], released["watches"])
+    _assert("9" in released["frozen_ids"] and "21" in released["frozen_ids"], released["frozen_ids"])
+    _assert("9" in released["manual_ids"], released["manual_ids"])
+
+    plan, book = build_flip_cycle(
+        book=released,
+        enabled=True,
+        squad=squad,
+        market=market,
+        sales_state={},
+        me={"balance": 20 * M},
+        league_rules=_rules(),
+        now=NOW + timedelta(hours=1),
+    )
+    kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
+    _assert(("9", "unlist") in kinds, plan["moves"])
+    _assert(("9", "list_for_sale") not in kinds and ("9", "accept_offer") not in kinds, kinds)
+    _assert(not any(m["kind"] == "bid" and m["player_id"] == "21" for m in plan["moves"]), plan["moves"])
+    left = {row["player_id"] for row in plan["flip"]["players"]}
+    _assert("9" not in left and "21" not in left, plan["flip"]["players"])
+
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        save_book("laliga", released, root=root)
+        _assert(apply_flip_release("laliga", ["no id"], root=root) is False, "id raro")
+        _assert(apply_flip_release("laliga", ["21"], root=root) is True, "release")
+        loaded = load_book("laliga", root)
+        _assert("21" in loaded["frozen_ids"] and "21" not in loaded["watches"], loaded)
+
+
+def test_late_floor_does_not_sell_after_flip_is_off() -> None:
+    """Apagada, la oferta del pitido ya no es una salida de reventa."""
+    plan, book = _listed_offer(
         amount=7_000_000,
         balance=-1_000_000,
         hours=59,
         cycle=12,
         enabled=False,
     )
-    _assert(("9", "accept_offer") in _move_kinds(plan), plan["moves"])
-    _assert("+1%" in (plan.get("narrative") or ""), plan.get("narrative"))
-
-    outside, _book = _listed_offer(
-        amount=7_000_000,
-        balance=-1_000_000,
-        hours=60,
-        cycle=12,
-        enabled=False,
-    )
-    _assert(("9", "renew_offer") in _move_kinds(outside), outside["moves"])
-    _assert("+3%" in (outside.get("narrative") or ""), outside.get("narrative"))
+    _assert(plan["moves"] == [], plan["moves"])
+    _assert(book == fresh_book(), book)
+    _assert("Reventa apagada." in (plan.get("narrative") or ""), plan.get("narrative"))
 
 
 def main() -> None:
@@ -1142,7 +1235,7 @@ def main() -> None:
     test_offer_threshold_and_frozen_untouched()
     test_fallen_market_accepts_below_buy_price()
     test_konate_accepts_and_the_other_two_renew()
-    test_disable_stops_bids_and_keeps_exit()
+    test_disable_clears_the_book_and_refreeze_includes_old_signings()
     test_five_open_positions_block_new_bids()
     test_four_open_positions_allow_one_bid()
     test_accept_frees_one_bid_slot()
@@ -1156,7 +1249,8 @@ def main() -> None:
     test_open_window_keeps_three_percent_unless_balance_is_negative()
     test_missing_kickoff_clock_keeps_three_percent()
     test_missing_buy_price_is_a_manual_signing_inside_the_window()
-    test_late_floor_also_applies_when_flip_is_off()
+    test_roster_and_manual_release()
+    test_late_floor_does_not_sell_after_flip_is_off()
     test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold()
     test_full_sale_limit_blocks_new_bids()
     test_book_roundtrip()

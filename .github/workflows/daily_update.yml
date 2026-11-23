@@ -49,8 +49,8 @@ permissions:
 concurrency:
   # Un toggle de reventa no comparte grupo con el cron: cancel-in-progress
   # del dataset no puede matar el job antes de commitear flip_mode.json.
-  group: ${{ github.event.client_payload.flip_mode != null && format('flip-{0}', github.event.client_payload.league || 'league') || 'daily-data-update' }}
-  cancel-in-progress: ${{ github.event.client_payload.flip_mode == null }}
+  group: ${{ (github.event.client_payload.flip_mode != null || github.event.client_payload.flip_release != null) && format('flip-{0}', github.event.client_payload.league || 'league') || 'daily-data-update' }}
+  cancel-in-progress: ${{ github.event.client_payload.flip_mode == null && github.event.client_payload.flip_release == null }}
 
 jobs:
   update-data:
@@ -99,7 +99,7 @@ jobs:
           import sys
           from pathlib import Path
           sys.path.insert(0, "src")
-          from flip_mode import apply_flip_toggle, flip_mode_path
+          from flip_mode import apply_flip_release, apply_flip_toggle, flip_mode_path
 
           league = os.environ.get("LEAGUE", "")
           event_path = os.environ.get("GITHUB_EVENT_PATH") or ""
@@ -114,17 +114,25 @@ jobs:
               if isinstance(raw_payload, dict):
                   payload = raw_payload
           print(f"league={league!r} client_payload={json.dumps(payload, ensure_ascii=False)}")
-          if "flip_mode" not in payload:
+          if "flip_mode" not in payload and "flip_release" not in payload:
               print("sin cambio de reventa")
               sys.exit(0)
           root = Path("public/data/leagues")
-          wrote = apply_flip_toggle(league, payload.get("flip_mode"), root=root)
-          print(f"ruta={flip_mode_path(league, root)}")
-          if wrote:
-              print("flip_mode escrito")
-          else:
-              print("::error::el payload trae flip_mode pero no se escribió (liga vacía, all o valor raro)")
-              sys.exit(1)
+          if "flip_mode" in payload:
+              wrote = apply_flip_toggle(league, payload.get("flip_mode"), root=root)
+              print(f"ruta={flip_mode_path(league, root)}")
+              if wrote:
+                  print("flip_mode escrito")
+              else:
+                  print("::error::el payload trae flip_mode pero no se escribió (liga vacía, all o valor raro)")
+                  sys.exit(1)
+          if "flip_release" in payload:
+              released = apply_flip_release(league, payload.get("flip_release"), root=root)
+              if released:
+                  print("flip_release escrito")
+              else:
+                  print("::error::el payload trae flip_release pero no se escribió (liga vacía, all o ids raros)")
+                  sys.exit(1)
           PY
 
       - name: Run data engine
