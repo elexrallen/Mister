@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T10:25:21.602764+00:00",
+  "generated_at": "2026-11-23T10:45:11.479552+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1153,28 +1153,38 @@
   ],
   "flex_slots": [],
   "watch_frees": [],
-  "path": [],
+  "path": [
+    {
+      "kind": "list",
+      "cycle": 0,
+      "player_id": "61133",
+      "name": "M. Tel",
+      "position": "FW",
+      "amount": 1004000.0,
+      "why": "Lista, pero el cobro no llega al KO: no financia este destino."
+    }
+  ],
   "constraints": {
     "cycles_left": 1,
     "cash_lag_hours": 8.0,
     "settle_before_ko": false,
     "sale_limit": 5,
-    "sale_remaining": 2,
+    "sale_remaining": 3,
     "max_debt": 5205721.0,
     "bid_cap": 5205721.0,
     "max_squad": 25,
     "n_free": 192,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 9.583549542222222
+    "hours_to_jornada": 9.2529721175
   },
   "finance": {
-    "ok": false,
+    "ok": true,
     "cost": 0,
     "proceeds": 2082000.0,
     "peak": 0.0,
-    "covers_with_sales": false,
-    "reason": "sale_limit"
+    "covers_with_sales": true,
+    "reason": ""
   },
   "moves": {
     "keep": [
@@ -1774,7 +1784,7 @@
     "slots_target": 15,
     "flex": 0,
     "sell_to_fund": 2082000.0,
-    "funded": false,
+    "funded": true,
     "formation": "5-3-2",
     "ideal_buy_cost": 0.0,
     "daily_primary_count": 0

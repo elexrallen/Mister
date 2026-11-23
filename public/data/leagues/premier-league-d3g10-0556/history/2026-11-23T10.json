@@ -1,6 +1,6 @@
 {
   "date": "2026-11-23",
-  "captured_at": "2026-11-23T10:25:21.900839+00:00",
+  "captured_at": "2026-11-23T10:45:11.784709+00:00",
   "cycle_hour_utc": 10,
   "league_slug": "premier-league-d3g10-0556",
   "jornada": 11,
@@ -5237,12 +5237,6 @@
     ],
     "actions": [
       {
-        "player_id": "2020",
-        "action": "sell",
-        "price": 622000.0,
-        "name": "R. Barkley"
-      },
-      {
         "player_id": "70652",
         "action": "wait",
         "price": 1712000.0,
@@ -5291,12 +5285,6 @@
         "name": "Hugo Ekitiké"
       },
       {
-        "player_id": "428356",
-        "action": "sell",
-        "price": 13322000.0,
-        "name": "R. Araújo 💥"
-      },
-      {
         "player_id": "61133",
         "action": "sell",
         "price": 1004000.0,
@@ -5311,10 +5299,10 @@
     ],
     "allocation": {
       "balance": -11181029.0,
-      "usable": 2140971.0,
+      "usable": -11181029.0,
       "planned_spend": 0,
       "max_op_cost": 0.0,
-      "top_share": 0.0,
+      "top_share": null,
       "ops": 0,
       "xi_gap_count": 3
     }
@@ -5327,6 +5315,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 262.9
+    "pipeline_seconds": 164.1
   }
 }
