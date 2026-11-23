@@ -596,7 +596,8 @@
           "name": "Pepelu",
           "amount": 6978600,
           "status": "descartada",
-          "why": "sin plaza"
+          "why": "sin plaza",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -637,7 +638,8 @@
           "name": "Pepelu",
           "amount": 6978600,
           "status": "descartada",
-          "why": "sin plaza"
+          "why": "sin plaza",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6410,7 +6412,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6418,7 +6421,8 @@
           "name": "A. Blanco",
           "amount": 5282900,
           "status": "descartada",
-          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
+          "result": "perdida"
         }
       ]
     },
@@ -6443,7 +6447,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6505,7 +6510,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6538,7 +6544,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6600,7 +6607,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6633,7 +6641,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6757,7 +6766,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6881,7 +6891,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -6976,7 +6987,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7100,7 +7112,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7224,7 +7237,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7348,7 +7362,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7443,7 +7458,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7567,7 +7583,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7662,7 +7679,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7786,7 +7804,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -7881,7 +7900,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -8005,7 +8025,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -8100,7 +8121,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -8224,7 +8246,8 @@
                 "maxDebt": 25496474
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -8319,7 +8342,8 @@
           "buy_price": 7278900,
           "threshold": 7497267,
           "status": "recomendada",
-          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -8330,16 +8354,327 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T16:19:13.964615+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 5,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8460000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11836000,
+            "status": "listed"
+          },
+          {
+            "player_id": "4836165",
+            "name": "R. Revivo 💥",
+            "position": "DF",
+            "team": "Elche",
+            "team_id": "23",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/4836165.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/23.png",
+            "buy_price": 4529200,
+            "market_value": 4622000,
+            "status": "listed"
+          },
+          {
+            "player_id": "24",
+            "name": "U. López 💥",
+            "position": "MF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/24.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 7838700,
+            "market_value": 7944000,
+            "status": "listed"
+          },
+          {
+            "player_id": "22601",
+            "name": "Pepelu",
+            "position": "MF",
+            "team": "Valencia",
+            "team_id": "19",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/22601.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/19.png",
+            "buy_price": 7278900,
+            "market_value": 7257000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "29223",
+          "name": "M. Soriano 💥",
+          "amount": 11954360,
+          "market_value": 11836000,
+          "buy_price": 11826300,
+          "threshold": 12191080,
+          "status": "ejecutada",
+          "why": "Oferta 11.95M € no llega a 12.19M € (valor de mercado 11.84M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19889416985
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29223,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795536000
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "24",
+          "name": "U. López 💥",
+          "amount": 8341200,
+          "market_value": 7944000,
+          "buy_price": 7838700,
+          "threshold": 8182320,
+          "status": "ejecutada",
+          "why": "Oferta 8.34M € llega al +3% del valor de mercado (7.94M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "849596462",
+              "type": "accept",
+              "amount": 8341200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19889416980,
+              "id_player": 24,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 3,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -28087076,
+                "future": -28087076,
+                "maxDebt": 33665924
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 502500
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "25621",
+          "name": "A. Rațiu 💥",
+          "amount": 8375400,
+          "market_value": 8460000,
+          "buy_price": 8425800,
+          "threshold": 8713800,
+          "status": "ejecutada",
+          "why": "Oferta 8.38M € no llega a 8.71M € (valor de mercado 8.46M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19889416982
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 25621,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795536000
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "4836165",
+          "name": "R. Revivo 💥",
+          "amount": 4853100,
+          "market_value": 4622000,
+          "buy_price": 4529200,
+          "threshold": 4760660,
+          "status": "ejecutada",
+          "why": "Oferta 4.85M € llega al +3% del valor de mercado (4.62M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "849596472",
+              "type": "accept",
+              "amount": 4853100
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19889416987,
+              "id_player": 4836165,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 2,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -23233976,
+                "future": -23233976,
+                "maxDebt": 37363524
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 323900
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 7257000,
+          "market_value": 7257000.0,
+          "buy_price": 7278900,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 7.26M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "22601",
+              "action": "sale",
+              "price": 7257000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 22601,
+              "id_market": 19893285966,
+              "action": "sale",
+              "price": 7257000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "sale_limit agotado: no se abren pujas nuevas"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T16:26:27.864009+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8460000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11836000,
+            "status": "listed"
+          },
+          {
+            "player_id": "22601",
+            "name": "Pepelu",
+            "position": "MF",
+            "team": "Valencia",
+            "team_id": "19",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/22601.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/19.png",
+            "buy_price": 7278900,
+            "market_value": 7257000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
-      "bids": 191,
-      "won": 78,
-      "lost": 3,
-      "lists": 10,
-      "accepts": 9,
-      "profit": 3659480,
+      "bids": 188,
+      "won": 98,
+      "lost": 4,
+      "lists": 11,
+      "accepts": 11,
+      "profit": 4485880,
       "short_offers": 10,
       "top_skips": [
         {
@@ -8352,21 +8687,17 @@
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
-          "count": 7
-        },
-        {
-          "why": "sin caja",
-          "count": 1
+          "count": 8
         }
       ]
     },
     "d14": {
-      "bids": 203,
-      "won": 87,
-      "lost": 3,
-      "lists": 15,
-      "accepts": 9,
-      "profit": 3659480,
+      "bids": 204,
+      "won": 110,
+      "lost": 4,
+      "lists": 16,
+      "accepts": 11,
+      "profit": 4485880,
       "short_offers": 10,
       "top_skips": [
         {
@@ -8379,7 +8710,7 @@
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
-          "count": 7
+          "count": 8
         },
         {
           "why": "sin caja",
@@ -8388,5 +8719,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T15:37:02.229753+00:00"
+  "updated_at": "2026-11-23T16:26:27.864009+00:00"
 }

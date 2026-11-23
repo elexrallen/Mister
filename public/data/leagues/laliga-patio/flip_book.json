@@ -117,26 +117,29 @@
       "name": "U. López 💥",
       "buy_price": 7838700,
       "opened_at": "2026-11-22T16:20:35.671458+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-23T16:26:27.864009+00:00"
     },
     "4836165": {
       "player_id": "4836165",
       "name": "R. Revivo 💥",
       "buy_price": 4529200,
       "opened_at": "2026-11-23T04:18:47.896929+00:00",
-      "status": "listed",
-      "listed": true
-    }
-  },
-  "watches": {
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-23T16:26:27.864009+00:00"
+    },
     "22601": {
       "player_id": "22601",
       "name": "Pepelu",
       "buy_price": 7278900,
-      "bid_at": "2026-11-23T15:37:02.229753+00:00"
+      "opened_at": "2026-11-23T16:19:13.964615+00:00",
+      "status": "listed",
+      "listed": true
     }
   },
+  "watches": {},
   "activated_at": "2026-11-16T14:02:54.506417+00:00",
   "manual_ids": []
 }

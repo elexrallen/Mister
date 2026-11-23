@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T15:37:02.180664+00:00",
+  "generated_at": "2026-11-23T16:26:27.790338+00:00",
   "league_slug": "laliga-patio",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 61.33,
+      "xpts_starters": 61.25,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -58,7 +58,7 @@
         "MF": 5,
         "FW": 2
       },
-      "xpts_starters": 62.57,
+      "xpts_starters": 62.49,
       "complete": true,
       "flex": 0,
       "cost": 0
@@ -117,13 +117,13 @@
     }
   ],
   "balance": 0.0,
-  "squad_value": 247699000.0,
+  "squad_value": 242390000.0,
   "wealth": {
     "balance": 0.0,
-    "squad_value": 247699000.0,
-    "total": 247699000.0,
+    "squad_value": 242390000.0,
+    "total": 242390000.0,
     "liquidity_floor": 0.0,
-    "budget_cap": 247699000.0
+    "budget_cap": 242390000.0
   },
   "perfect_squad": [
     {
@@ -1091,19 +1091,19 @@
     "cash_lag_hours": 12.0,
     "settle_before_ko": false,
     "sale_limit": 5,
-    "sale_remaining": 1,
-    "max_debt": 25496474.0,
-    "bid_cap": 25496474.0,
+    "sale_remaining": 2,
+    "max_debt": 37363524.0,
+    "bid_cap": 37363524.0,
     "max_squad": 25,
-    "n_free": 203,
+    "n_free": 190,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 4.383306788611111
+    "hours_to_jornada": 3.5597361038888886
   },
   "finance": {
     "ok": false,
     "cost": 0,
-    "proceeds": 86703000.0,
+    "proceeds": 81394000.0,
     "peak": 0.0,
     "covers_with_sales": false,
     "reason": "sale_limit"
@@ -1675,6 +1675,23 @@
         "cash_lag_hours": 24.0
       },
       {
+        "player_id": "22601",
+        "name": "Pepelu",
+        "position": "MF",
+        "ep_score": 42.1,
+        "xpts": 3.43,
+        "price": 7257000.0,
+        "delta_5d": 0.0102,
+        "value_note": "stable",
+        "why": "Fuera del 15 al KO · lista a ~7,257,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
+        "list_at": 7257000.0,
+        "expected_proceeds": 7257000.0,
+        "buyer_channel": "system",
+        "settlement": "market_cycle",
+        "cycle_hours": 24.0,
+        "cash_lag_hours": 24.0
+      },
+      {
         "player_id": "4947927",
         "name": "Y. Fofana",
         "position": "MF",
@@ -1686,23 +1703,6 @@
         "why": "Fuera del 15 al KO · lista a ~9,959,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
         "list_at": 9959000.0,
         "expected_proceeds": 9959000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
-      },
-      {
-        "player_id": "4836165",
-        "name": "R. Revivo 💥",
-        "position": "DF",
-        "ep_score": 42.5,
-        "xpts": 3.63,
-        "price": 4622000.0,
-        "delta_5d": 0.0269,
-        "value_note": "stable",
-        "why": "Fuera del 15 al KO · lista a ~4,622,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 4622000.0,
-        "expected_proceeds": 4622000.0,
         "buyer_channel": "system",
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
@@ -1741,23 +1741,6 @@
         "settlement": "market_cycle",
         "cycle_hours": 24.0,
         "cash_lag_hours": 24.0
-      },
-      {
-        "player_id": "24",
-        "name": "U. López 💥",
-        "position": "MF",
-        "ep_score": 43.9,
-        "xpts": 4.4,
-        "price": 7944000.0,
-        "delta_5d": 0.0177,
-        "value_note": "stable",
-        "why": "Fuera del 15 al KO · lista a ~7,944,000 € (VM); el siguiente ciclo aceptas y cobra al instante (~24h)",
-        "list_at": 7944000.0,
-        "expected_proceeds": 7944000.0,
-        "buyer_channel": "system",
-        "settlement": "market_cycle",
-        "cycle_hours": 24.0,
-        "cash_lag_hours": 24.0
       }
     ]
   },
@@ -1773,7 +1756,7 @@
     "slots_filled": 14,
     "slots_target": 15,
     "flex": 0,
-    "sell_to_fund": 86703000.0,
+    "sell_to_fund": 81394000.0,
     "funded": false,
     "formation": "3-4-3",
     "ideal_buy_cost": 0.0,
@@ -1807,7 +1790,7 @@
     "incomplete": false,
     "keep": 14,
     "buy": 0,
-    "sell": 10,
+    "sell": 9,
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
