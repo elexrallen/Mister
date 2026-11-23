@@ -5967,11 +5967,58 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T14:25:17.453262+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 4,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16417100,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "17992",
+          "name": "A. Mac Allister",
+          "amount": 15753800,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 9973700,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4870",
+          "name": "H. Barnes",
+          "amount": 7954600,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 297,
+      "bids": 301,
       "won": 21,
       "lost": 69,
       "lists": 91,
@@ -5985,7 +6032,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 111
+          "count": 115
         },
         {
           "why": "espera compra→venta",
@@ -5998,7 +6045,7 @@
       ]
     },
     "d14": {
-      "bids": 297,
+      "bids": 301,
       "won": 21,
       "lost": 69,
       "lists": 91,
@@ -6012,7 +6059,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 111
+          "count": 115
         },
         {
           "why": "espera compra→venta",
@@ -6025,5 +6072,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T12:22:53.989329+00:00"
+  "updated_at": "2026-11-23T14:25:17.453262+00:00"
 }

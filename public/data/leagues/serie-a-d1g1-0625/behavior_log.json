@@ -4496,11 +4496,34 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T14:29:45.827958+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 17,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "8934",
+          "name": "B. Cristante",
+          "amount": 15276600,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 149,
+      "bids": 150,
       "won": 8,
       "lost": 87,
       "lists": 69,
@@ -4514,7 +4537,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 52
+          "count": 53
         },
         {
           "why": "espera compra→venta",
@@ -4527,7 +4550,7 @@
       ]
     },
     "d14": {
-      "bids": 149,
+      "bids": 150,
       "won": 8,
       "lost": 87,
       "lists": 69,
@@ -4541,7 +4564,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 52
+          "count": 53
         },
         {
           "why": "espera compra→venta",
@@ -4554,5 +4577,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T12:26:28.209452+00:00"
+  "updated_at": "2026-11-23T14:29:45.827958+00:00"
 }
