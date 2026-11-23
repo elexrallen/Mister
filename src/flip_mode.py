@@ -936,10 +936,8 @@ def build_flip_cycle(
 
     debt_cap = mister_bid_cap(balance + cash_in, max_debt)
     free_slots = max(0, cap - len(by_id) + len(accept_ids))
-    room = ko_cash
     spent = 0.0
     taken = 0
-    ko_why = "dejaría el saldo en negativo al inicio de la jornada"
     if active and list_room <= 0:
         skipped.append(
             {
@@ -988,7 +986,7 @@ def build_flip_cycle(
                 }
             )
             continue
-        # El cierre posterior al pitido no descuenta la puja de esta jornada.
+        # Si la reventa se cobra antes del pitido, esa venta ocupa un hueco del límite.
         settles_later = _bid_resolves_after_kickoff(hours_deadline, lag)
         vm_back = 0.0
         if not settles_later:
@@ -999,18 +997,6 @@ def build_flip_cycle(
                 arrival = _cash_arrival_hours(wait_new, lag, cycle_h)
                 if _sale_lands_before_kickoff(hours_deadline, arrival):
                     vm_back = quote["vm"]
-            if room - quote["bid"] + vm_back < -1:
-                skipped.append(
-                    {
-                        "kind": KIND_BID,
-                        "player_id": pid,
-                        "name": row.get("name"),
-                        "amount": quote["bid"],
-                        "why": ko_why,
-                        "status": "descartada",
-                    }
-                )
-                continue
         if spent + quote["bid"] > debt_cap + 1:
             skipped.append(
                 {
@@ -1065,8 +1051,6 @@ def build_flip_cycle(
         }
         if vm_back > 0 and wait_new <= 0:
             list_room -= 1
-        if not settles_later:
-            room = room - quote["bid"] + vm_back
         spent += quote["bid"]
         if not renewing:
             taken += 1
