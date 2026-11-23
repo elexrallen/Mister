@@ -50,16 +50,17 @@
       "status": "sold",
       "listed": true,
       "sold_at": "2026-11-21T04:33:31.564512+00:00"
-    }
-  },
-  "watches": {
+    },
     "55105": {
       "player_id": "55105",
       "name": "A. Scott",
       "buy_price": 9973700,
-      "bid_at": "2026-11-23T16:21:50.785079+00:00"
+      "opened_at": "2026-11-23T20:43:06.469814+00:00",
+      "status": "owned",
+      "listed": false
     }
   },
+  "watches": {},
   "activated_at": "2026-11-16T15:34:06.138722+00:00",
   "manual_ids": [
     "68405",
