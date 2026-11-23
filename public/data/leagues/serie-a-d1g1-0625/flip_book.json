@@ -30,14 +30,21 @@
     },
     "18200": {
       "player_id": "18200",
-      "name": "A. Rrahmani",
+      "name": "A. Rrahmani 💥",
       "buy_price": 12434100,
       "opened_at": "2026-11-21T20:30:07.016754+00:00",
       "status": "listed",
       "listed": true
     }
   },
-  "watches": {},
+  "watches": {
+    "3790999": {
+      "player_id": "3790999",
+      "name": "E. Lulli",
+      "buy_price": 4490500,
+      "bid_at": "2026-11-23T04:26:19.185620+00:00"
+    }
+  },
   "activated_at": "2026-11-18T12:24:22.523062+00:00",
   "manual_ids": [
     "4927635"

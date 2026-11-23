@@ -5587,21 +5587,111 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T04:22:32.963098+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "428356",
+          "name": "R. Araújo 💥",
+          "amount": 12815640,
+          "market_value": 13322000,
+          "buy_price": 13187100,
+          "threshold": 13721660,
+          "status": "ejecutada",
+          "why": "Oferta 12.82M € no llega a 13.72M € (valor de mercado 13.32M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19885347071
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 428356,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795464000
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "52272",
+          "name": "P. Porro 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "11094",
+          "name": "E. Ampadu",
+          "amount": 10373500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T04:30:24.884283+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "52272",
+          "name": "P. Porro 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "11094",
+          "name": "E. Ampadu",
+          "amount": 10373500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 284,
+      "bids": 286,
       "won": 21,
       "lost": 60,
-      "lists": 86,
+      "lists": 88,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 169
+          "count": 171
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5609,7 +5699,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 60
+          "count": 62
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5618,17 +5708,17 @@
       ]
     },
     "d14": {
-      "bids": 284,
+      "bids": 286,
       "won": 21,
       "lost": 60,
-      "lists": 86,
+      "lists": 88,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 169
+          "count": 171
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5636,7 +5726,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 60
+          "count": 62
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5645,5 +5735,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T03:14:32.814052+00:00"
+  "updated_at": "2026-11-23T04:30:24.884283+00:00"
 }
