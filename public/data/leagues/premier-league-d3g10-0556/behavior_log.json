@@ -5737,21 +5737,77 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T09:45:18.580269+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1,
+        "players": [
+          {
+            "player_id": "428356",
+            "name": "R. Araújo 💥",
+            "position": "DF",
+            "team": "Liverpool",
+            "team_id": "59",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/428356.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/59.png",
+            "buy_price": 13187100,
+            "market_value": 13322000,
+            "status": "listed"
+          },
+          {
+            "player_id": "52272",
+            "name": "P. Porro 💥",
+            "position": "DF",
+            "team": "Tottenham",
+            "team_id": "67",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/52272.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/67.png",
+            "buy_price": 6412400,
+            "market_value": 6483000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "52272",
+          "name": "P. Porro 💥",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "11094",
+          "name": "E. Ampadu",
+          "amount": 10373500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 288,
+      "bids": 289,
       "won": 21,
       "lost": 60,
-      "lists": 90,
+      "lists": 91,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 173
+          "count": 174
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5759,7 +5815,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 64
+          "count": 65
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5768,17 +5824,17 @@
       ]
     },
     "d14": {
-      "bids": 288,
+      "bids": 289,
       "won": 21,
       "lost": 60,
-      "lists": 90,
+      "lists": 91,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 173
+          "count": 174
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5786,7 +5842,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 64
+          "count": 65
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5795,5 +5851,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T08:26:29.691445+00:00"
+  "updated_at": "2026-11-23T09:45:18.580269+00:00"
 }

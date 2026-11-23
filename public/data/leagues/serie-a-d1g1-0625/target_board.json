@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-23T08:30:13.951864+00:00",
+  "generated_at": "2026-11-23T09:50:12.964736+00:00",
   "league_slug": "serie-a-d1g1-0625",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1089,16 +1089,16 @@
   "constraints": {
     "cycles_left": 1,
     "cash_lag_hours": 8.0,
-    "settle_before_ko": true,
+    "settle_before_ko": false,
     "sale_limit": 5,
-    "sale_remaining": 4,
+    "sale_remaining": 2,
     "max_debt": 1011417.0,
     "bid_cap": 1011417.0,
     "max_squad": 25,
     "n_free": 201,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 11.252164245
+    "hours_to_jornada": 9.919532013333333
   },
   "finance": {
     "ok": true,
@@ -1653,7 +1653,7 @@
   },
   "daily_patches": [],
   "cash_reserved": 0.0,
-  "residual_after_reserve": 906000.0,
+  "residual_after_reserve": 0.0,
   "primary_targets": [],
   "aspirational_targets": [],
   "slots": [],
