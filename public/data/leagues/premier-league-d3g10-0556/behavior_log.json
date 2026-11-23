@@ -6213,11 +6213,71 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T18:50:30.576397+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9973700,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 9973700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16417100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "17992",
+          "name": "A. Mac Allister",
+          "amount": 15753800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4870",
+          "name": "H. Barnes",
+          "amount": 7954600,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 295,
+      "bids": 299,
       "won": 19,
       "lost": 69,
       "lists": 91,
@@ -6227,7 +6287,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 166
+          "count": 170
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6244,7 +6304,7 @@
       ]
     },
     "d14": {
-      "bids": 313,
+      "bids": 317,
       "won": 21,
       "lost": 69,
       "lists": 91,
@@ -6254,7 +6314,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 183
+          "count": 187
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6271,5 +6331,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T16:29:15.247502+00:00"
+  "updated_at": "2026-11-23T18:50:30.576397+00:00"
 }
