@@ -5888,11 +5888,34 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T11:21:42.823595+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "11094",
+          "name": "E. Ampadu",
+          "amount": 10373500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 292,
+      "bids": 293,
       "won": 21,
       "lost": 60,
       "lists": 91,
@@ -5906,7 +5929,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 106
+          "count": 107
         },
         {
           "why": "espera compra→venta",
@@ -5919,7 +5942,7 @@
       ]
     },
     "d14": {
-      "bids": 292,
+      "bids": 293,
       "won": 21,
       "lost": 60,
       "lists": 91,
@@ -5933,7 +5956,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 106
+          "count": 107
         },
         {
           "why": "espera compra→venta",
@@ -5946,5 +5969,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T10:45:11.542588+00:00"
+  "updated_at": "2026-11-23T11:21:42.823595+00:00"
 }

@@ -4427,11 +4427,47 @@
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T11:25:05.604863+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 17,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "3790999",
+            "name": "E. Lulli",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4490500,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "3790999",
+          "name": "E. Lulli",
+          "amount": 4490500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 147,
+      "bids": 148,
       "won": 8,
       "lost": 77,
       "lists": 69,
@@ -4445,7 +4481,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 50
+          "count": 51
         },
         {
           "why": "espera compra→venta",
@@ -4458,7 +4494,7 @@
       ]
     },
     "d14": {
-      "bids": 147,
+      "bids": 148,
       "won": 8,
       "lost": 77,
       "lists": 69,
@@ -4472,7 +4508,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 50
+          "count": 51
         },
         {
           "why": "espera compra→venta",
@@ -4485,5 +4521,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T11:11:08.026176+00:00"
+  "updated_at": "2026-11-23T11:25:05.604863+00:00"
 }
