@@ -1,6 +1,6 @@
 {
   "date": "2026-11-23",
-  "captured_at": "2026-11-23T00:06:56.231076+00:00",
+  "captured_at": "2026-11-23T00:31:40.454458+00:00",
   "cycle_hour_utc": 0,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -6019,10 +6019,10 @@
     ],
     "actions": [
       {
-        "player_id": "616",
+        "player_id": "18186",
         "action": "sell",
-        "price": 16441000.0,
-        "name": "R. Hernández"
+        "price": 4754000.0,
+        "name": "J. Koundé"
       },
       {
         "player_id": "431",
@@ -6031,10 +6031,10 @@
         "name": "J. Cancelo"
       },
       {
-        "player_id": "4947927",
+        "player_id": "27907",
         "action": "sell",
-        "price": 10044000.0,
-        "name": "Y. Fofana"
+        "price": 8891000.0,
+        "name": "R. Brugué"
       },
       {
         "player_id": "48657",
@@ -6115,6 +6115,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 104.1
+    "pipeline_seconds": 110.1
   }
 }
