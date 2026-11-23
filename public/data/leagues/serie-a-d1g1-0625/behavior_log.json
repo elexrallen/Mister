@@ -4100,11 +4100,33 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T06:28:54.694313+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "3790999",
+          "name": "E. Lulli",
+          "amount": 4490500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 140,
+      "bids": 141,
       "won": 8,
       "lost": 77,
       "lists": 68,
@@ -4114,7 +4136,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 88
+          "count": 89
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4131,7 +4153,7 @@
       ]
     },
     "d14": {
-      "bids": 140,
+      "bids": 141,
       "won": 8,
       "lost": 77,
       "lists": 68,
@@ -4141,7 +4163,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 88
+          "count": 89
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4158,5 +4180,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T04:32:50.080075+00:00"
+  "updated_at": "2026-11-23T06:28:54.694313+00:00"
 }
