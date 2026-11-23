@@ -4075,7 +4075,8 @@
                 "maxDebt": 1011417
               }
             }
-          }
+          },
+          "result": "perdida"
         }
       ]
     },
@@ -4097,7 +4098,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4119,7 +4121,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4141,7 +4144,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4189,7 +4193,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4271,7 +4276,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4319,7 +4325,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4388,7 +4395,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -4424,7 +4432,8 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
-          "why": "dejaría el saldo en negativo al inicio de la jornada"
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
         }
       ]
     },
@@ -4460,6 +4469,30 @@
           "name": "E. Lulli",
           "amount": 4490500,
           "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T12:26:28.209452+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 17,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "8934",
+          "name": "B. Cristante",
+          "amount": 15276600,
+          "status": "descartada",
           "why": "dejaría el saldo en negativo al inicio de la jornada"
         }
       ]
@@ -4467,9 +4500,9 @@
   ],
   "summary": {
     "d7": {
-      "bids": 148,
+      "bids": 149,
       "won": 8,
-      "lost": 77,
+      "lost": 87,
       "lists": 69,
       "accepts": 0,
       "profit": 0,
@@ -4481,7 +4514,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 51
+          "count": 52
         },
         {
           "why": "espera compra→venta",
@@ -4494,9 +4527,9 @@
       ]
     },
     "d14": {
-      "bids": 148,
+      "bids": 149,
       "won": 8,
-      "lost": 77,
+      "lost": 87,
       "lists": 69,
       "accepts": 0,
       "profit": 0,
@@ -4508,7 +4541,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 51
+          "count": 52
         },
         {
           "why": "espera compra→venta",
@@ -4521,5 +4554,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T11:25:05.604863+00:00"
+  "updated_at": "2026-11-23T12:26:28.209452+00:00"
 }
