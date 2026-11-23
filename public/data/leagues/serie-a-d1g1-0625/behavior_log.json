@@ -4322,11 +4322,116 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T11:04:52.591426+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 17,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "3790999",
+            "name": "E. Lulli",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4490500,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "unlist",
+          "player_id": "18200",
+          "name": "A. Rrahmani 💥",
+          "amount": null,
+          "market_value": 12385000.0,
+          "buy_price": null,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Fichaje a mano: se retira del mercado. La reventa no lo vende.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "18200",
+              "action": "remove"
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15610174,
+              "id_player": 18200,
+              "id_market": 19889471676,
+              "action": "remove",
+              "price": 12385000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "3790999",
+          "name": "E. Lulli",
+          "amount": 4490500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T11:11:08.026176+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 17,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "3790999",
+            "name": "E. Lulli",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4490500,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "3790999",
+          "name": "E. Lulli",
+          "amount": 4490500,
+          "status": "descartada",
+          "why": "dejaría el saldo en negativo al inicio de la jornada"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 145,
+      "bids": 147,
       "won": 8,
       "lost": 77,
       "lists": 69,
@@ -4340,7 +4445,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 48
+          "count": 50
         },
         {
           "why": "espera compra→venta",
@@ -4353,7 +4458,7 @@
       ]
     },
     "d14": {
-      "bids": 145,
+      "bids": 147,
       "won": 8,
       "lost": 77,
       "lists": 69,
@@ -4367,7 +4472,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 48
+          "count": 50
         },
         {
           "why": "espera compra→venta",
@@ -4380,5 +4485,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T10:34:06.954736+00:00"
+  "updated_at": "2026-11-23T11:11:08.026176+00:00"
 }
