@@ -6549,11 +6549,106 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T08:22:45.991398+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 4,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 7278900,
+          "market_value": 7257000.0,
+          "buy_price": 7278900,
+          "threshold": 7497267,
+          "status": "ejecutada",
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19888930744,
+              "id_player": "22601",
+              "action": "update",
+              "bid": 7278900
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 22601,
+              "id_market": 19888930744,
+              "action": "update",
+              "bid": 7278900,
+              "price": 7257000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -29149376,
+                "future": -36428276,
+                "maxDebt": 25496474
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T08:31:58.297908+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 4,
+        "max_open": 5,
+        "eligible": 0
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 7278900,
+          "market_value": 7257000.0,
+          "buy_price": 7278900,
+          "threshold": 7497267,
+          "status": "recomendada",
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 169,
+      "bids": 173,
       "won": 87,
       "lost": 3,
       "lists": 15,
@@ -6563,7 +6658,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 57
+          "count": 59
         },
         {
           "why": "sin plaza",
@@ -6580,7 +6675,7 @@
       ]
     },
     "d14": {
-      "bids": 169,
+      "bids": 173,
       "won": 87,
       "lost": 3,
       "lists": 15,
@@ -6590,7 +6685,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 57
+          "count": 59
         },
         {
           "why": "sin plaza",
@@ -6607,5 +6702,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T06:30:38.632519+00:00"
+  "updated_at": "2026-11-23T08:31:58.297908+00:00"
 }
