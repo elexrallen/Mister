@@ -6851,6 +6851,130 @@
           "market_value": 7257000.0,
           "buy_price": 7278900,
           "threshold": 7497267,
+          "status": "ejecutada",
+          "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19888930744,
+              "id_player": "22601",
+              "action": "update",
+              "bid": 7278900
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 22601,
+              "id_market": 19888930744,
+              "action": "update",
+              "bid": 7278900,
+              "price": 7257000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -29149376,
+                "future": -36428276,
+                "maxDebt": 25496474
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T10:06:04.664002+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 4,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8460000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11836000,
+            "status": "listed"
+          },
+          {
+            "player_id": "4836165",
+            "name": "R. Revivo 💥",
+            "position": "DF",
+            "team": "Elche",
+            "team_id": "23",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/4836165.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/23.png",
+            "buy_price": 4529200,
+            "market_value": 4622000,
+            "status": "listed"
+          },
+          {
+            "player_id": "24",
+            "name": "U. López 💥",
+            "position": "MF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/24.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 7838700,
+            "market_value": 7944000,
+            "status": "listed"
+          },
+          {
+            "player_id": "22601",
+            "name": "Pepelu",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 7278900,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 7278900,
+          "market_value": 7257000.0,
+          "buy_price": 7278900,
+          "threshold": 7497267,
           "status": "recomendada",
           "why": "Puja 7.28M € (sube 73,000 € hoy, +30% (21,900 €)). La máquina puede llegar a 7.62M €."
         },
@@ -6867,7 +6991,7 @@
   ],
   "summary": {
     "d7": {
-      "bids": 177,
+      "bids": 179,
       "won": 87,
       "lost": 3,
       "lists": 15,
@@ -6877,7 +7001,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 61
+          "count": 62
         },
         {
           "why": "sin plaza",
@@ -6894,7 +7018,7 @@
       ]
     },
     "d14": {
-      "bids": 177,
+      "bids": 179,
       "won": 87,
       "lost": 3,
       "lists": 15,
@@ -6904,7 +7028,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 61
+          "count": 62
         },
         {
           "why": "sin plaza",
@@ -6921,5 +7045,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T09:52:13.878384+00:00"
+  "updated_at": "2026-11-23T10:06:04.664002+00:00"
 }
