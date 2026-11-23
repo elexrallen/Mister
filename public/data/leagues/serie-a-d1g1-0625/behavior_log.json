@@ -4192,21 +4192,151 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T10:29:42.379846+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "18200",
+            "name": "A. Rrahmani 💥",
+            "position": "DF",
+            "team": "Napoli",
+            "team_id": "195",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/18200.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/195.png",
+            "buy_price": 12434100,
+            "market_value": 12385000,
+            "status": "owned"
+          },
+          {
+            "player_id": "3790999",
+            "name": "E. Lulli",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4490500,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "18200",
+          "name": "A. Rrahmani 💥",
+          "amount": 12385000,
+          "market_value": 12385000.0,
+          "buy_price": 12434100,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 12.38M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "18200",
+              "action": "sale",
+              "price": 12385000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15610174,
+              "id_player": 18200,
+              "id_market": 19889471676,
+              "action": "sale",
+              "price": 12385000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "3790999",
+          "name": "E. Lulli",
+          "amount": 4490500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-23T10:34:06.954736+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 16,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "18200",
+            "name": "A. Rrahmani 💥",
+            "position": "DF",
+            "team": "Napoli",
+            "team_id": "195",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/18200.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/195.png",
+            "buy_price": 12434100,
+            "market_value": 12385000,
+            "status": "listed"
+          },
+          {
+            "player_id": "3790999",
+            "name": "E. Lulli",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4490500,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "3790999",
+          "name": "E. Lulli",
+          "amount": 4490500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 143,
+      "bids": 145,
       "won": 8,
       "lost": 77,
-      "lists": 68,
+      "lists": 69,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 91
+          "count": 93
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4223,17 +4353,17 @@
       ]
     },
     "d14": {
-      "bids": 143,
+      "bids": 145,
       "won": 8,
       "lost": 77,
-      "lists": 68,
+      "lists": 69,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 91
+          "count": 93
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4250,5 +4380,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T09:50:13.048990+00:00"
+  "updated_at": "2026-11-23T10:34:06.954736+00:00"
 }

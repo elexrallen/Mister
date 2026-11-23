@@ -5829,11 +5829,47 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-23T10:25:21.669946+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 20,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1,
+        "players": [
+          {
+            "player_id": "428356",
+            "name": "R. Araújo 💥",
+            "position": "DF",
+            "team": "Liverpool",
+            "team_id": "59",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/428356.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/59.png",
+            "buy_price": 13187100,
+            "market_value": 13322000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "11094",
+          "name": "E. Ampadu",
+          "amount": 10373500,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 290,
+      "bids": 291,
       "won": 21,
       "lost": 60,
       "lists": 91,
@@ -5843,7 +5879,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 175
+          "count": 176
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5860,7 +5896,7 @@
       ]
     },
     "d14": {
-      "bids": 290,
+      "bids": 291,
       "won": 21,
       "lost": 60,
       "lists": 91,
@@ -5870,7 +5906,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 175
+          "count": 176
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5887,5 +5923,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T10:03:26.627742+00:00"
+  "updated_at": "2026-11-23T10:25:21.669946+00:00"
 }

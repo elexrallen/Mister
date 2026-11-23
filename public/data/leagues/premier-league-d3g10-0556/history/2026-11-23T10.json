@@ -1,6 +1,6 @@
 {
   "date": "2026-11-23",
-  "captured_at": "2026-11-23T10:03:26.887367+00:00",
+  "captured_at": "2026-11-23T10:25:21.900839+00:00",
   "cycle_hour_utc": 10,
   "league_slug": "premier-league-d3g10-0556",
   "jornada": 11,
@@ -5237,6 +5237,12 @@
     ],
     "actions": [
       {
+        "player_id": "2020",
+        "action": "sell",
+        "price": 622000.0,
+        "name": "R. Barkley"
+      },
+      {
         "player_id": "70652",
         "action": "wait",
         "price": 1712000.0,
@@ -5261,6 +5267,12 @@
         "name": "Regan Slater"
       },
       {
+        "player_id": "3849385",
+        "action": "scout",
+        "price": 2195000.0,
+        "name": "Leon Goretzka"
+      },
+      {
         "player_id": "15346",
         "action": "avoid",
         "price": null,
@@ -5277,12 +5289,6 @@
         "action": "avoid",
         "price": null,
         "name": "Hugo Ekitiké"
-      },
-      {
-        "player_id": "2155166",
-        "action": "scout",
-        "price": 1052000.0,
-        "name": "Abdoul Ouattara"
       },
       {
         "player_id": "428356",
@@ -5321,6 +5327,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 215.9
+    "pipeline_seconds": 262.9
   }
 }

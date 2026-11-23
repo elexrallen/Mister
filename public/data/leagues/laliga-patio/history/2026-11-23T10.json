@@ -1,6 +1,6 @@
 {
   "date": "2026-11-23",
-  "captured_at": "2026-11-23T10:06:04.953322+00:00",
+  "captured_at": "2026-11-23T10:31:40.507721+00:00",
   "cycle_hour_utc": 10,
   "league_slug": "laliga-patio",
   "jornada": 13,
@@ -5914,16 +5914,10 @@
     ],
     "actions": [
       {
-        "player_id": "29223",
+        "player_id": "68497",
         "action": "sell",
-        "price": 11836000.0,
-        "name": "M. Soriano 💥"
-      },
-      {
-        "player_id": "4947927",
-        "action": "sell",
-        "price": 9959000.0,
-        "name": "Y. Fofana"
+        "price": 1041000.0,
+        "name": "S. Boselli 💥"
       },
       {
         "player_id": "48657",
@@ -5938,10 +5932,10 @@
         "name": "Thibaut Courtois"
       },
       {
-        "player_id": "29166",
+        "player_id": "31",
         "action": "scout",
-        "price": 11959000.0,
-        "name": "Joan Garcia"
+        "price": 10831000.0,
+        "name": "Jan Oblak"
       },
       {
         "player_id": "71139",
@@ -5986,6 +5980,12 @@
         "name": "A. Rațiu 💥"
       },
       {
+        "player_id": "29223",
+        "action": "sell",
+        "price": 11836000.0,
+        "name": "M. Soriano 💥"
+      },
+      {
         "player_id": "4836165",
         "action": "sell",
         "price": 4622000.0,
@@ -6010,6 +6010,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "ok",
-    "pipeline_seconds": 153.8
+    "pipeline_seconds": 112.5
   }
 }
