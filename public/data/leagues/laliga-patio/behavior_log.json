@@ -8818,6 +8818,57 @@
         ]
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-24T02:20:53.371575+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8460000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11836000,
+            "status": "listed"
+          },
+          {
+            "player_id": "22601",
+            "name": "Pepelu",
+            "position": "MF",
+            "team": "Valencia",
+            "team_id": "19",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/22601.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/19.png",
+            "buy_price": 7278900,
+            "market_value": 7257000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -8872,5 +8923,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T22:20:28.694117+00:00"
+  "updated_at": "2026-11-24T02:20:53.371575+00:00"
 }

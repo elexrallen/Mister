@@ -4666,11 +4666,50 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-24T02:29:57.338638+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 17,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "63775",
+          "name": "K. De Bruyne",
+          "amount": 18522400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "8934",
+          "name": "B. Cristante",
+          "amount": 15276600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64502",
+          "name": "Wesley",
+          "amount": 12791700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 159,
+      "bids": 162,
       "won": 8,
       "lost": 87,
       "lists": 69,
@@ -4680,7 +4719,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 101
+          "count": 104
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4697,7 +4736,7 @@
       ]
     },
     "d14": {
-      "bids": 159,
+      "bids": 162,
       "won": 8,
       "lost": 87,
       "lists": 69,
@@ -4707,7 +4746,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 101
+          "count": 104
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4724,5 +4763,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-23T22:28:33.403004+00:00"
+  "updated_at": "2026-11-24T02:29:57.338638+00:00"
 }
