@@ -6725,21 +6725,98 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-24T16:24:50.313076+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 3,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10041000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10041000,
+          "market_value": 10041000.0,
+          "buy_price": 9973700,
+          "threshold": null,
+          "status": "error",
+          "why": "Listar a 10.04M € para que la máquina oferte en el siguiente ciclo.",
+          "error": "/ajax/sale falló: 400 Client Error: Bad Request for url: https://mister.mundodeportivo.com/ajax/sale — Debes esperar 4 horas para poder poner en venta este jugador",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "55105",
+              "action": "sale",
+              "price": 10041000
+            }
+          },
+          "response": {
+            "status": "error",
+            "msg": "Debes esperar 4 horas para poder poner en venta este jugador"
+          },
+          "http_status": 400
+        },
+        {
+          "kind": "bid",
+          "player_id": "24852",
+          "name": "E. Anderson",
+          "amount": 20121900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "29363",
+          "name": "M. Rogers",
+          "amount": 19539300,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4830",
+          "name": "D. Calvert-Lewin",
+          "amount": 10639700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 280,
+      "bids": 283,
       "won": 23,
       "lost": 85,
-      "lists": 88,
+      "lists": 89,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 152
+          "count": 155
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6756,17 +6833,17 @@
       ]
     },
     "d14": {
-      "bids": 338,
+      "bids": 341,
       "won": 27,
       "lost": 95,
-      "lists": 98,
+      "lists": 99,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 208
+          "count": 211
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6783,5 +6860,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T14:24:40.648677+00:00"
+  "updated_at": "2026-11-24T16:24:50.313076+00:00"
 }

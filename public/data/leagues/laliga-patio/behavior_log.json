@@ -9178,11 +9178,226 @@
         ]
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-24T16:20:57.309081+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 1,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8535000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11850000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9972000,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "29223",
+          "name": "M. Soriano 💥",
+          "amount": 12087000,
+          "market_value": 11850000,
+          "buy_price": 11826300,
+          "threshold": 12205500,
+          "status": "ejecutada",
+          "why": "Oferta 12.09M € no llega a 12.21M € (valor de mercado 11.85M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19900843050
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29223,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795622400
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "25621",
+          "name": "A. Rațiu 💥",
+          "amount": 8108250,
+          "market_value": 8535000,
+          "buy_price": 8425800,
+          "threshold": 8791050,
+          "status": "ejecutada",
+          "why": "Oferta 8.11M € no llega a 8.79M € (valor de mercado 8.54M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19900843053
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 25621,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795622400
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "56628",
+          "name": "L. Agoumé",
+          "amount": 9972000,
+          "market_value": 9945000.0,
+          "buy_price": 9972000,
+          "threshold": 10271160,
+          "status": "ejecutada",
+          "why": "Puja 9.97M € (sube 90,000 € hoy, +30% (27,000 €)). La máquina puede llegar a 10.44M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19904585023,
+              "id_player": "56628",
+              "action": "bid",
+              "bid": 9972000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 56628,
+              "id_market": 19904585023,
+              "action": "bid",
+              "bid": 9972000,
+              "price": 9945000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -12414126,
+                "future": -22386126,
+                "maxDebt": 36674124
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-24T16:30:38.426348+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8535000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11850000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9972000,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "56628",
+          "name": "L. Agoumé",
+          "amount": 9972000,
+          "market_value": 9945000.0,
+          "buy_price": 9972000,
+          "threshold": 10271160,
+          "status": "recomendada",
+          "why": "Puja 9.97M € (sube 90,000 € hoy, +30% (27,000 €)). La máquina puede llegar a 10.44M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 162,
+      "bids": 164,
       "won": 80,
       "lost": 2,
       "lists": 11,
@@ -9201,7 +9416,7 @@
       ]
     },
     "d14": {
-      "bids": 204,
+      "bids": 206,
       "won": 110,
       "lost": 4,
       "lists": 16,
@@ -9228,5 +9443,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T14:20:20.080433+00:00"
+  "updated_at": "2026-11-24T16:30:38.426348+00:00"
 }
