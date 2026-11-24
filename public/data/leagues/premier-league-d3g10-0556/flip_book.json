@@ -56,8 +56,8 @@
       "name": "A. Scott",
       "buy_price": 9973700,
       "opened_at": "2026-11-23T20:43:06.469814+00:00",
-      "status": "owned",
-      "listed": false
+      "status": "listed",
+      "listed": true
     }
   },
   "watches": {},

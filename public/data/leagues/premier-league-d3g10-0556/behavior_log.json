@@ -6940,21 +6940,143 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-24T20:23:51.803225+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10041000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10041000,
+          "market_value": 10041000.0,
+          "buy_price": 9973700,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 10.04M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "55105",
+              "action": "sale",
+              "price": 10041000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_player": 55105,
+              "id_market": 19908162916,
+              "action": "sale",
+              "price": 10041000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "24852",
+          "name": "E. Anderson",
+          "amount": 20121900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4830",
+          "name": "D. Calvert-Lewin",
+          "amount": 10639700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-24T20:31:50.214398+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10041000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "24852",
+          "name": "E. Anderson",
+          "amount": 20121900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4830",
+          "name": "D. Calvert-Lewin",
+          "amount": 10639700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 287,
+      "bids": 291,
       "won": 23,
       "lost": 85,
-      "lists": 91,
+      "lists": 92,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 159
+          "count": 163
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6971,17 +7093,17 @@
       ]
     },
     "d14": {
-      "bids": 345,
+      "bids": 349,
       "won": 27,
       "lost": 95,
-      "lists": 101,
+      "lists": 102,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 215
+          "count": 219
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6998,5 +7120,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T19:51:44.641842+00:00"
+  "updated_at": "2026-11-24T20:31:50.214398+00:00"
 }
