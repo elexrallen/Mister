@@ -8869,16 +8869,208 @@
         ]
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-24T04:20:16.703032+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8535000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11850000,
+            "status": "listed"
+          },
+          {
+            "player_id": "22601",
+            "name": "Pepelu",
+            "position": "MF",
+            "team": "Valencia",
+            "team_id": "19",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/22601.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/19.png",
+            "buy_price": 7278900,
+            "market_value": 7332000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "29223",
+          "name": "M. Soriano 💥",
+          "amount": 11244200,
+          "market_value": 11850000,
+          "buy_price": 11826300,
+          "threshold": 12205500,
+          "status": "ejecutada",
+          "why": "Oferta 11.24M € no llega a 12.21M € (valor de mercado 11.85M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19893285963
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29223,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795579200
+            }
+          }
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "22601",
+          "name": "Pepelu",
+          "amount": 7619850,
+          "market_value": 7332000,
+          "buy_price": 7278900,
+          "threshold": 7551960,
+          "status": "ejecutada",
+          "why": "Oferta 7.62M € llega al +3% del valor de mercado (7.33M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "849736005",
+              "type": "accept",
+              "amount": 7619850
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19893285966,
+              "id_player": 22601,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 2,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -15614126,
+                "future": -15614126,
+                "maxDebt": 43446124
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 340950
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "25621",
+          "name": "A. Rațiu 💥",
+          "amount": 8121600,
+          "market_value": 8535000,
+          "buy_price": 8425800,
+          "threshold": 8791050,
+          "status": "ejecutada",
+          "why": "Oferta 8.12M € no llega a 8.79M € (valor de mercado 8.54M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19893285964
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 25621,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795579200
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-24T04:29:18.214475+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8535000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11850000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
-      "bids": 188,
-      "won": 98,
-      "lost": 4,
+      "bids": 182,
+      "won": 96,
+      "lost": 2,
       "lists": 11,
-      "accepts": 11,
-      "profit": 4485880,
+      "accepts": 12,
+      "profit": 4826830,
       "short_offers": 10,
       "top_skips": [
         {
@@ -8886,12 +9078,12 @@
           "count": 74
         },
         {
-          "why": "sin plaza",
-          "count": 9
-        },
-        {
           "why": "sale_limit agotado: no se abren pujas nuevas",
           "count": 8
+        },
+        {
+          "why": "sin plaza",
+          "count": 5
         }
       ]
     },
@@ -8900,8 +9092,8 @@
       "won": 110,
       "lost": 4,
       "lists": 16,
-      "accepts": 11,
-      "profit": 4485880,
+      "accepts": 12,
+      "profit": 4826830,
       "short_offers": 10,
       "top_skips": [
         {
@@ -8923,5 +9115,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T02:20:53.371575+00:00"
+  "updated_at": "2026-11-24T04:29:18.214475+00:00"
 }

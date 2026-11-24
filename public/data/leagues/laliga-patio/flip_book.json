@@ -135,8 +135,9 @@
       "name": "Pepelu",
       "buy_price": 7278900,
       "opened_at": "2026-11-23T16:19:13.964615+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-24T04:29:18.214475+00:00"
     }
   },
   "watches": {},
