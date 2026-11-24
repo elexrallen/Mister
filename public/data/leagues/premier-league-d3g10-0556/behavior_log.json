@@ -7150,11 +7150,55 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-24T22:55:47.486057+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10041000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "24852",
+          "name": "E. Anderson",
+          "amount": 20121900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "4830",
+          "name": "D. Calvert-Lewin",
+          "amount": 10639700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 291,
+      "bids": 293,
       "won": 23,
       "lost": 81,
       "lists": 89,
@@ -7164,7 +7208,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 163
+          "count": 165
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7181,7 +7225,7 @@
       ]
     },
     "d14": {
-      "bids": 353,
+      "bids": 355,
       "won": 27,
       "lost": 95,
       "lists": 102,
@@ -7191,7 +7235,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 223
+          "count": 225
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7208,5 +7252,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T22:23:17.140240+00:00"
+  "updated_at": "2026-11-24T22:55:47.486057+00:00"
 }

@@ -4969,11 +4969,42 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-24T23:00:19.510542+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 2,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14088",
+          "name": "Bremer",
+          "amount": 16223600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71108",
+          "name": "Kaiki",
+          "amount": 8062700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 175,
+      "bids": 177,
       "won": 14,
       "lost": 91,
       "lists": 69,
@@ -4983,7 +5014,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 117
+          "count": 119
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5000,7 +5031,7 @@
       ]
     },
     "d14": {
-      "bids": 175,
+      "bids": 177,
       "won": 14,
       "lost": 91,
       "lists": 69,
@@ -5010,7 +5041,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 117
+          "count": 119
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5027,5 +5058,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T22:26:52.303160+00:00"
+  "updated_at": "2026-11-24T23:00:19.510542+00:00"
 }
