@@ -6555,21 +6555,73 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-24T05:08:20.679991+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10041000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "23017",
+          "name": "G. Magalhães",
+          "amount": 17325100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49043",
+          "name": "M. Senesi",
+          "amount": 8514700,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 295,
+      "bids": 297,
       "won": 23,
       "lost": 89,
-      "lists": 93,
+      "lists": 94,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 167
+          "count": 169
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6577,7 +6629,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 67
+          "count": 68
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -6586,17 +6638,17 @@
       ]
     },
     "d14": {
-      "bids": 331,
+      "bids": 333,
       "won": 27,
       "lost": 89,
-      "lists": 95,
+      "lists": 96,
       "accepts": 1,
       "profit": 602440,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 201
+          "count": 203
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6604,7 +6656,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 69
+          "count": 70
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -6613,5 +6665,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T04:23:56.858543+00:00"
+  "updated_at": "2026-11-24T05:08:20.679991+00:00"
 }
