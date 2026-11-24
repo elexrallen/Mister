@@ -4624,7 +4624,8 @@
           "name": "Wesley",
           "amount": 12791700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -4663,7 +4664,8 @@
           "name": "Wesley",
           "amount": 12791700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -4702,7 +4704,8 @@
           "name": "Wesley",
           "amount": 12791700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -4725,7 +4728,8 @@
           "name": "Wesley",
           "amount": 12844700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -4748,7 +4752,8 @@
           "name": "Wesley",
           "amount": 12844700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "ganada"
         }
       ]
     },
@@ -4771,6 +4776,30 @@
           "name": "Wesley",
           "amount": 12844700,
           "status": "descartada",
+          "why": "sin caja",
+          "result": "ganada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-24T14:28:33.551238+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "8306",
+          "name": "R. Mandragora",
+          "amount": 6464100,
+          "status": "descartada",
           "why": "sin caja"
         }
       ]
@@ -4778,8 +4807,8 @@
   ],
   "summary": {
     "d7": {
-      "bids": 165,
-      "won": 8,
+      "bids": 166,
+      "won": 14,
       "lost": 87,
       "lists": 69,
       "accepts": 0,
@@ -4788,7 +4817,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 107
+          "count": 108
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4805,8 +4834,8 @@
       ]
     },
     "d14": {
-      "bids": 165,
-      "won": 8,
+      "bids": 166,
+      "won": 14,
       "lost": 87,
       "lists": 69,
       "accepts": 0,
@@ -4815,7 +4844,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 107
+          "count": 108
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -4832,5 +4861,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T08:28:00.478037+00:00"
+  "updated_at": "2026-11-24T14:28:33.551238+00:00"
 }
