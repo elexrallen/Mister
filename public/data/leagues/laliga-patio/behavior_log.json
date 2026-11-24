@@ -9100,6 +9100,45 @@
         ]
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-24T08:20:34.685415+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu 💥",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8535000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11850000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -9154,5 +9193,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-24T05:04:24.582996+00:00"
+  "updated_at": "2026-11-24T08:20:34.685415+00:00"
 }
