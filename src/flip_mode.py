@@ -4,7 +4,10 @@ Reventa por liga.
 Con el modo encendido el ciclo solo compra libres de más de 4M que revalorizan
 en positivo. La puja es el valor de mercado de Mister más el 30% de la subida
 del día, no la puja recomendada de subasta. Solo entra si la máquina al +5%
-del valor sigue dejando más de un 3% sobre ese precio. La plantilla del
+del valor sigue dejando más de un 3% sobre ese precio, y si la máquina
+tiene al menos 3 ofertas antes del primer partido. El ciclo en que se
+cumple la espera sirve para listar; la primera oferta es el siguiente, y
+la que cae en el pitido no cuenta. La plantilla del
 momento de activarlo queda congelada. Un alta posterior solo es reventa si
 la máquina ya la tenía vigilada: la cláusula y la puja hecha a mano se
 congelan igual y, si están en el mercado, se retiran. Cada compra abierta
@@ -20,6 +23,7 @@ import json
 import math
 from copy import deepcopy
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 
@@ -528,6 +532,89 @@ def _sale_lands_before_kickoff(hours: float | None, lag: float | None) -> bool:
     return sells_settle_before_deadline(hours_to_deadline=hours, cash_lag_hours=lag)
 
 
+def hours_to_spain_kickoff(raw: Any, now: datetime) -> float | None:
+    """Horas hasta el pitido. El dato sin zona es hora de España, no UTC.
+
+    Leer «21:00» como UTC lo deja a las 22:00 en España. En Premier ese
+    desfase aparta el pitido del inicio de ciclo de las 21:00.
+    """
+    if raw is None:
+        return None
+    text = str(raw).strip().replace("Z", "+00:00")
+    if not text:
+        return None
+    try:
+        kick = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if kick.tzinfo is None:
+        kick = kick.replace(tzinfo=ZoneInfo("Europe/Madrid"))
+    base = now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
+    return (kick - base).total_seconds() / 3600.0
+
+
+def _listing_close(hours_to_own: float, listing_in: float, step: float) -> float:
+    """Cierre del ciclo en el que ya se puede listar.
+
+    Los cierres caen en hours_to_own + n ciclos. Si la espera termina justo en
+    un cierre, ese es el de listar. Si termina a mitad, se lista en el cierre
+    de ese mismo ciclo.
+    """
+    if listing_in <= hours_to_own + 1e-9:
+        return hours_to_own
+    steps = (listing_in - hours_to_own) / step
+    nearest = round(steps)
+    if abs(steps - nearest) <= 1e-6:
+        return hours_to_own + nearest * step
+    return hours_to_own + math.ceil(steps - 1e-9) * step
+
+
+def _cycles_left_when_sellable(
+    *,
+    hours_to_kickoff: float | None,
+    hours_to_own: float | None,
+    cycle_hours: float | None,
+    transfer_wait_hours: float,
+) -> int | None:
+    """Ofertas de la máquina estrictamente anteriores al pitido.
+
+    El ciclo en el que se cumple la espera (0 h en La Liga, 24 h si el
+    reglamento vale 1) sirve para listar. La primera oferta es el cierre del
+    ciclo siguiente. Una oferta que cae justo en el pitido no cuenta, y
+    tampoco el ciclo que empieza a esa hora. None si falta el reloj.
+    """
+    if hours_to_kickoff is None or hours_to_own is None:
+        return None
+    step = float(cycle_hours or 0)
+    if step <= 0:
+        return None
+    own = max(0.0, float(hours_to_own))
+    wait = max(0.0, float(transfer_wait_hours or 0))
+    listing_close = _listing_close(own, own + wait, step)
+    offer = listing_close + step
+    kick = float(hours_to_kickoff)
+    count = 0
+    while offer < kick - 1e-6:
+        count += 1
+        offer += step
+        if count > 10000:
+            break
+    return count
+
+
+def _sell_window_skip(cycles_left: int | None) -> str | None:
+    """Motivo para no pujar, o None si el margen de ciclos está asegurado."""
+    need = int(config.FLIP_MIN_CYCLES_BEFORE_KICKOFF)
+    if cycles_left is None:
+        return f"sin reloj para asegurar {need} ofertas antes del primer partido"
+    if cycles_left < need:
+        return (
+            f"la máquina tiene {cycles_left} ofertas antes del primer partido; "
+            f"hacen falta {need}"
+        )
+    return None
+
+
 def _bid_resolves_after_kickoff(hours: float | None, lag: float | None) -> bool:
     """La puja a un libre se cobra al cierre del ciclo, no al enviarla.
 
@@ -938,6 +1025,15 @@ def build_flip_cycle(
     free_slots = max(0, cap - len(by_id) + len(accept_ids))
     spent = 0.0
     taken = 0
+    # Mismo reloj para todas las pujas del ciclo: se es dueño al cierre y la
+    # espera corre desde entonces. Si no se puede asegurar el margen, no se puja.
+    sell_cycles = _cycles_left_when_sellable(
+        hours_to_kickoff=hours_deadline,
+        hours_to_own=lag,
+        cycle_hours=cycle_h,
+        transfer_wait_hours=wait_new,
+    )
+    sell_window_why = _sell_window_skip(sell_cycles)
     if active and list_room <= 0:
         skipped.append(
             {
@@ -982,6 +1078,18 @@ def build_flip_cycle(
                     "name": row.get("name"),
                     "amount": quote["bid"],
                     "why": "sin plaza",
+                    "status": "descartada",
+                }
+            )
+            continue
+        if sell_window_why:
+            skipped.append(
+                {
+                    "kind": KIND_BID,
+                    "player_id": pid,
+                    "name": row.get("name"),
+                    "amount": quote["bid"],
+                    "why": sell_window_why,
                     "status": "descartada",
                 }
             )

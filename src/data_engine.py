@@ -4001,6 +4001,7 @@ def build_payload(league_cfg: dict[str, Any] | None = None) -> dict[str, Any]:
         me=me if isinstance(me, dict) else {},
         league_rules=league_rules if isinstance(league_rules, dict) else {},
         max_squad=config.league_max_squad(league_cfg),
+        kickoff_iso=str(solvency_for_cycle.get("deadline_iso") or "") or None,
     )
     attach_mister_assets(cycle_plan.get("moves") or [], player_index=asset_index)
     squad_vm = squad_value_summary(squad)
@@ -4477,6 +4478,7 @@ def _apply_flip_mode(
     me: dict[str, Any],
     league_rules: dict[str, Any],
     max_squad: int,
+    kickoff_iso: str | None = None,
 ) -> dict[str, Any]:
     """Sustituye el ciclo si la liga tiene la reventa encendida y anota el diario."""
     from datetime import datetime, timezone
@@ -4486,6 +4488,7 @@ def _apply_flip_mode(
     from flip_mode import (
         build_flip_cycle,
         flip_enabled,
+        hours_to_spain_kickoff,
         load_book,
         merge_flip_exit,
         save_book,
@@ -4521,6 +4524,10 @@ def _apply_flip_mode(
         except (TypeError, ValueError):
             return None
 
+    kickoff_hours = hours_to_spain_kickoff(kickoff_iso, now) if kickoff_iso else None
+    if kickoff_hours is None:
+        kickoff_hours = _hours(cons.get("hours_to_solvency_deadline"))
+
     flip_plan, book = build_flip_cycle(
         book=book,
         enabled=enabled,
@@ -4532,7 +4539,7 @@ def _apply_flip_mode(
         max_squad=max_squad,
         locked_ids=set(lock_map),
         lock_hours=lock_map,
-        hours_to_solvency_deadline=_hours(cons.get("hours_to_solvency_deadline")),
+        hours_to_solvency_deadline=kickoff_hours,
         cash_lag_hours=_hours(clock.get("hours_to_end")),
         cycle_hours=_hours(clock.get("cycle_hours")),
         transfer_wait_hours=wait_h,
