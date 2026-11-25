@@ -7398,21 +7398,137 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-25T12:22:41.155464+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10049000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10551450,
+          "market_value": 10049000,
+          "buy_price": 9973700,
+          "threshold": 10350470,
+          "status": "ejecutada",
+          "why": "Oferta 10.55M € llega al +3% del valor de mercado (10.05M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "850138333",
+              "type": "accept",
+              "amount": 10551450
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15539496,
+              "id_market": 19912221941,
+              "id_player": 55105,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": 878291,
+                "future": 878291,
+                "maxDebt": 14821791
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 577750
+        },
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10602600,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-25T12:31:15.127868+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": [
+          {
+            "player_id": "23036",
+            "name": "K. Havertz",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 10602600,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10602600,
+          "market_value": 10596000.0,
+          "buy_price": 10602600,
+          "threshold": 10920678,
+          "status": "recomendada",
+          "why": "Puja 10.6M € (sube 22,000 € hoy, +30% (6,600 €)). La máquina puede llegar a 11.13M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
       "bids": 299,
-      "won": 23,
+      "won": 21,
       "lost": 79,
-      "lists": 88,
-      "accepts": 1,
-      "profit": 602440,
+      "lists": 87,
+      "accepts": 2,
+      "profit": 1180190,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 171
+          "count": 170
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7429,17 +7545,17 @@
       ]
     },
     "d14": {
-      "bids": 363,
+      "bids": 365,
       "won": 27,
       "lost": 95,
       "lists": 102,
-      "accepts": 1,
-      "profit": 602440,
+      "accepts": 2,
+      "profit": 1180190,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 233
+          "count": 234
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7456,5 +7572,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T06:25:35.299139+00:00"
+  "updated_at": "2026-11-25T12:31:15.127868+00:00"
 }

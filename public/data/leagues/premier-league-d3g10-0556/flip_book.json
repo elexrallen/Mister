@@ -56,11 +56,19 @@
       "name": "A. Scott",
       "buy_price": 9973700,
       "opened_at": "2026-11-23T20:43:06.469814+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-25T12:31:15.127868+00:00"
     }
   },
-  "watches": {},
+  "watches": {
+    "23036": {
+      "player_id": "23036",
+      "name": "K. Havertz",
+      "buy_price": 10602600,
+      "bid_at": "2026-11-25T12:31:15.127868+00:00"
+    }
+  },
   "activated_at": "2026-11-16T15:34:06.138722+00:00",
   "manual_ids": [
     "68405",

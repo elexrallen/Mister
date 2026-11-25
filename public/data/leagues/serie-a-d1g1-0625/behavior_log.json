@@ -5128,7 +5128,8 @@
           "name": "C. Mandas",
           "amount": 13068800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5136,7 +5137,8 @@
           "name": "O. Solet",
           "amount": 7222600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5144,7 +5146,8 @@
           "name": "F. Kessié",
           "amount": 5406900,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -5175,7 +5178,8 @@
           "name": "C. Mandas",
           "amount": 13068800,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5183,7 +5187,8 @@
           "name": "O. Solet",
           "amount": 7222600,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5191,16 +5196,31 @@
           "name": "F. Kessié",
           "amount": 5406900,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
+    },
+    {
+      "at": "2026-11-25T12:26:07.304762+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": []
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
-      "bids": 191,
-      "won": 14,
-      "lost": 98,
+      "bids": 187,
+      "won": 13,
+      "lost": 103,
       "lists": 69,
       "accepts": 0,
       "profit": 0,
@@ -5208,7 +5228,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 133
+          "count": 130
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5227,7 +5247,7 @@
     "d14": {
       "bids": 191,
       "won": 14,
-      "lost": 98,
+      "lost": 104,
       "lists": 69,
       "accepts": 0,
       "profit": 0,
@@ -5252,5 +5272,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T06:30:06.239218+00:00"
+  "updated_at": "2026-11-25T12:26:07.304762+00:00"
 }
