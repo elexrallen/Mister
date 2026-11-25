@@ -21,6 +21,7 @@ import json
 import math
 from copy import deepcopy
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from typing import Any
 
@@ -529,6 +530,27 @@ def _sale_lands_before_kickoff(hours: float | None, lag: float | None) -> bool:
     return sells_settle_before_deadline(hours_to_deadline=hours, cash_lag_hours=lag)
 
 
+def hours_to_spain_kickoff(raw: Any, now: datetime) -> float | None:
+    """Horas hasta el pitido. El dato sin zona es hora de España, no UTC.
+
+    Leer «21:00» como UTC lo deja a las 22:00 en España. En Premier ese
+    desfase aparta el pitido del inicio de ciclo de las 21:00.
+    """
+    if raw is None:
+        return None
+    text = str(raw).strip().replace("Z", "+00:00")
+    if not text:
+        return None
+    try:
+        kick = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if kick.tzinfo is None:
+        kick = kick.replace(tzinfo=ZoneInfo("Europe/Madrid"))
+    base = now if now.tzinfo is not None else now.replace(tzinfo=timezone.utc)
+    return (kick - base).total_seconds() / 3600.0
+
+
 def _cycles_left_when_sellable(
     *,
     hours_to_kickoff: float | None,
@@ -542,6 +564,9 @@ def _cycles_left_when_sellable(
     compra→venta. Esa espera se cuenta desde la entrada, así el margen no da por
     bueno un hueco que Mister puede no conceder. None si falta el reloj: sin él
     el margen no se puede asegurar.
+
+    Si el pitido cae justo en el inicio de un ciclo, ese ciclo no entra: el
+    entero de la división se queda con los que terminan antes de ese instante.
     """
     if hours_to_kickoff is None or hours_to_own is None:
         return None

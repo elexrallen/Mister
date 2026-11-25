@@ -15,6 +15,7 @@ from flip_mode import (  # noqa: E402
     build_flip_cycle,
     daily_change_euros,
     fresh_book,
+    hours_to_spain_kickoff,
     quote_bid,
     load_book,
     save_book,
@@ -632,6 +633,42 @@ def test_bid_needs_four_cycles_before_the_first_whistle() -> None:
     _assert("21" in book["watches"], book["watches"])
     why = " ".join(s.get("why") or "" for s in plan["flip_skipped"])
     _assert("quedan" in why and "primer partido" in why, why)
+
+
+def test_cycle_starting_at_the_whistle_does_not_count() -> None:
+    """Si el pitido coincide con el inicio de un ciclo, ese ciclo no suma hasta 4."""
+    plan, _book = build_flip_cycle(
+        book=fresh_book(),
+        enabled=True,
+        squad=[],
+        market=[_rising("21", "Soler")],
+        sales_state={},
+        me={"balance": 20 * M, "max_debt": 40 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        hours_to_solvency_deadline=28,
+        cash_lag_hours=4,
+        cycle_hours=8,
+        now=NOW,
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(not bids, bids)
+    why = " ".join(s.get("why") or "" for s in plan["flip_skipped"])
+    _assert("quedan 3 ciclos" in why and "hacen falta 4" in why, why)
+
+
+def test_naive_kickoff_is_spain_time() -> None:
+    """«21:00» sin zona es las 21:00 en España. Con zona, se respeta la zona."""
+    now = datetime(2026, 11, 25, 16, 24, 12, tzinfo=timezone.utc)
+    madrid = hours_to_spain_kickoff("2026-11-27T21:00:00", now)
+    expected = (
+        datetime(2026, 11, 27, 20, 0, tzinfo=timezone.utc) - now
+    ).total_seconds() / 3600.0
+    _assert(madrid is not None and abs(madrid - expected) < 1e-6, madrid)
+    utc = hours_to_spain_kickoff("2026-11-27T21:00:00+00:00", now)
+    utc_expected = (
+        datetime(2026, 11, 27, 21, 0, tzinfo=timezone.utc) - now
+    ).total_seconds() / 3600.0
+    _assert(utc is not None and abs(utc - utc_expected) < 1e-6, utc)
 
 
 def test_five_open_positions_block_new_bids() -> None:
@@ -1356,6 +1393,8 @@ def main() -> None:
     test_konate_accepts_and_the_other_two_renew()
     test_disable_clears_the_book_and_refreeze_includes_old_signings()
     test_bid_needs_four_cycles_before_the_first_whistle()
+    test_cycle_starting_at_the_whistle_does_not_count()
+    test_naive_kickoff_is_spain_time()
     test_five_open_positions_block_new_bids()
     test_four_open_positions_allow_one_bid()
     test_accept_frees_one_bid_slot()
