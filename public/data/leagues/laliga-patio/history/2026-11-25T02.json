@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "captured_at": "2026-11-25T02:26:54.622657+00:00",
+  "captured_at": "2026-11-25T02:53:43.558828+00:00",
   "cycle_hour_utc": 2,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5716,22 +5716,22 @@
         "name": "S. Boselli 💥"
       },
       {
-        "player_id": "18186",
+        "player_id": "431",
         "action": "sell",
-        "price": 4895000.0,
-        "name": "J. Koundé"
+        "price": 8895000.0,
+        "name": "J. Cancelo"
       },
       {
-        "player_id": "4947927",
+        "player_id": "51135",
         "action": "sell",
-        "price": 9818000.0,
-        "name": "Y. Fofana"
+        "price": 12338000.0,
+        "name": "P. Barrios"
       },
       {
-        "player_id": "1385821",
+        "player_id": "52375",
         "action": "scout",
-        "price": 12655000.0,
-        "name": "Cristian Romero"
+        "price": 25080000.0,
+        "name": "Lamine Yamal"
       },
       {
         "player_id": "55009",
@@ -5740,10 +5740,10 @@
         "name": "F. López"
       },
       {
-        "player_id": "14670",
+        "player_id": "1385821",
         "action": "scout",
-        "price": 11937000.0,
-        "name": "Thibaut Courtois"
+        "price": 12655000.0,
+        "name": "Cristian Romero"
       },
       {
         "player_id": "55088",
@@ -5806,6 +5806,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 120.0
+    "pipeline_seconds": 264.6
   }
 }
