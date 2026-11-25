@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "captured_at": "2026-11-25T03:04:16.255358+00:00",
+  "captured_at": "2026-11-25T03:58:49.385520+00:00",
   "cycle_hour_utc": 3,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5710,22 +5710,22 @@
     ],
     "actions": [
       {
-        "player_id": "431",
+        "player_id": "68497",
         "action": "sell",
-        "price": 8895000.0,
-        "name": "J. Cancelo"
+        "price": 1018000.0,
+        "name": "S. Boselli"
+      },
+      {
+        "player_id": "616",
+        "action": "sell",
+        "price": 16377000.0,
+        "name": "R. Hernández"
       },
       {
         "player_id": "70255",
         "action": "sell",
         "price": 1012000.0,
         "name": "I. Luque 💥"
-      },
-      {
-        "player_id": "4947927",
-        "action": "sell",
-        "price": 9818000.0,
-        "name": "Y. Fofana"
       },
       {
         "player_id": "1385821",
@@ -5779,7 +5779,7 @@
         "player_id": "25621",
         "action": "sell",
         "price": 8535000.0,
-        "name": "A. Rațiu 💥"
+        "name": "A. Rațiu"
       },
       {
         "player_id": "29223",
@@ -5806,6 +5806,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 115.0
+    "pipeline_seconds": 98.5
   }
 }

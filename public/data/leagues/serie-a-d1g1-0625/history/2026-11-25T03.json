@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "captured_at": "2026-11-25T03:02:17.118149+00:00",
+  "captured_at": "2026-11-25T03:57:07.177467+00:00",
   "cycle_hour_utc": 3,
   "league_slug": "serie-a-d1g1-0625",
   "jornada": 13,
@@ -4878,6 +4878,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 264.1
+    "pipeline_seconds": 225.9
   }
 }
