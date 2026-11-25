@@ -5,7 +5,7 @@ Con el modo encendido el ciclo solo compra libres de más de 4M que revalorizan
 en positivo. La puja es el valor de mercado de Mister más el 30% de la subida
 del día, no la puja recomendada de subasta. Solo entra si la máquina al +5%
 del valor sigue dejando más de un 3% sobre ese precio, y si al poder venderlo
-quedan al menos 3 ciclos enteros antes del primer partido. La plantilla del
+quedan al menos 4 ciclos enteros antes del primer partido. La plantilla del
 momento de activarlo queda congelada. Un alta posterior solo es reventa si
 la máquina ya la tenía vigilada: la cláusula y la puja hecha a mano se
 congelan igual y, si están en el mercado, se retiran. Cada compra abierta
@@ -556,7 +556,7 @@ def _cycles_left_when_sellable(
 
 
 def _sell_window_skip(cycles_left: int | None) -> str | None:
-    """Motivo para no pujar, o None si el margen de 3 ciclos está asegurado."""
+    """Motivo para no pujar, o None si el margen de ciclos está asegurado."""
     need = int(config.FLIP_MIN_CYCLES_BEFORE_KICKOFF)
     if cycles_left is None:
         return f"sin reloj para asegurar {need} ciclos de venta antes del primer partido"

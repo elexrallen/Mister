@@ -565,8 +565,8 @@ def _owned_book(ids: list[str]) -> dict:
     return book
 
 
-def test_bid_needs_three_cycles_before_the_first_whistle() -> None:
-    """Solo se puja si, al poder vender, quedan 3 ciclos enteros antes del pitido."""
+def test_bid_needs_four_cycles_before_the_first_whistle() -> None:
+    """Solo se puja si, al poder vender, quedan 4 ciclos enteros antes del pitido."""
     common = dict(
         book=fresh_book(),
         enabled=True,
@@ -584,31 +584,31 @@ def test_bid_needs_three_cycles_before_the_first_whistle() -> None:
         why = " ".join(s.get("why") or "" for s in plan["flip_skipped"])
         return bids, why, book
 
-    # Cierre a las 4 h, ciclos de 8 h: 4 + 3×8 = 28 h justas son 3 ciclos.
-    exact, why, _book = _bids(hours_to_solvency_deadline=28, cash_lag_hours=4, cycle_hours=8)
+    # Cierre a las 4 h, ciclos de 8 h: 4 + 4×8 = 36 h justas son 4 ciclos.
+    exact, why, _book = _bids(hours_to_solvency_deadline=36, cash_lag_hours=4, cycle_hours=8)
     _assert(len(exact) == 1 and exact[0]["player_id"] == "21", exact)
     _assert("primer partido" not in why, why)
 
-    short, why, _book = _bids(hours_to_solvency_deadline=27.9, cash_lag_hours=4, cycle_hours=8)
+    short, why, _book = _bids(hours_to_solvency_deadline=35.9, cash_lag_hours=4, cycle_hours=8)
     _assert(not short, short)
-    _assert("quedan 2 ciclos" in why and "hacen falta 3" in why, why)
+    _assert("quedan 3 ciclos" in why and "hacen falta 4" in why, why)
 
     # La espera se suma al cierre: se puede vender a las 4+24 h.
     waited, why, _book = _bids(
-        hours_to_solvency_deadline=52,
+        hours_to_solvency_deadline=60,
         cash_lag_hours=4,
         cycle_hours=8,
         transfer_wait_hours=24,
     )
     _assert(len(waited) == 1, waited)
     waited_short, why, _book = _bids(
-        hours_to_solvency_deadline=51.9,
+        hours_to_solvency_deadline=59.9,
         cash_lag_hours=4,
         cycle_hours=8,
         transfer_wait_hours=24,
     )
     _assert(not waited_short, waited_short)
-    _assert("quedan 2 ciclos" in why, why)
+    _assert("quedan 3 ciclos" in why, why)
 
     for missing in (
         {"cash_lag_hours": 4, "cycle_hours": 8},
@@ -707,7 +707,7 @@ def test_accept_frees_one_bid_slot() -> None:
 def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
     """El saldo negativo al pitido no frena la puja. La frena el techo de deuda.
 
-    El reloj deja 3 ciclos al poder vender, así el descarte que queda es la deuda.
+    El reloj deja margen de sobra al poder vender, así el descarte que queda es la deuda.
     """
     book = _owned_book(["9"])
     squad = [_player("9", name="R9", vm=8 * M, ask=8 * M)]
@@ -746,7 +746,7 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
     tight_reasons = " ".join(s.get("why") or "" for s in tight["flip_skipped"])
     _assert("sin caja" in tight_reasons, tight["flip_skipped"])
 
-    # Cierre posterior al pitido: no da tiempo a vender con 3 ciclos de margen.
+    # Cierre posterior al pitido: no da tiempo a vender con 4 ciclos de margen.
     later_close, _book = build_flip_cycle(
         book=book,
         enabled=True,
@@ -773,7 +773,7 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
         sales_state={},
         me=me,
         league_rules=rules,
-        hours_to_solvency_deadline=7 + 3 * 12,
+        hours_to_solvency_deadline=7 + 4 * 12,
         cash_lag_hours=7,
         cycle_hours=12,
         now=NOW,
@@ -783,7 +783,7 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
 
 
 def test_kickoff_uses_cash_already_in_hand() -> None:
-    """Con caja y 3 ciclos al poder vender, la puja sale. Más cerca, no."""
+    """Con caja y margen al poder vender, la puja sale. Más cerca, no."""
     plan, _book = build_flip_cycle(
         book=fresh_book(),
         enabled=True,
@@ -848,7 +848,7 @@ def test_kickoff_accepts_a_short_offer_to_cover_the_whistle() -> None:
 
 
 def test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold() -> None:
-    """La espera de 24 h no aporta caja y, si se come el margen de 3 ciclos, no se puja."""
+    """La espera de 24 h no aporta caja y, si se come el margen de 4 ciclos, no se puja."""
     common = dict(
         book=fresh_book(),
         enabled=True,
@@ -1355,7 +1355,7 @@ def main() -> None:
     test_fallen_market_accepts_below_buy_price()
     test_konate_accepts_and_the_other_two_renew()
     test_disable_clears_the_book_and_refreeze_includes_old_signings()
-    test_bid_needs_three_cycles_before_the_first_whistle()
+    test_bid_needs_four_cycles_before_the_first_whistle()
     test_five_open_positions_block_new_bids()
     test_four_open_positions_allow_one_bid()
     test_accept_frees_one_bid_slot()
