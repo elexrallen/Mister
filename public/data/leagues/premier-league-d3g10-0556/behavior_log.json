@@ -7326,11 +7326,47 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-25T05:10:31.119239+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 1,
+        "players": [
+          {
+            "player_id": "55105",
+            "name": "A. Scott",
+            "position": "MF",
+            "team": "Bournemouth",
+            "team_id": "52",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/55105.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/52.png",
+            "buy_price": 9973700,
+            "market_value": 10049000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10602600,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 297,
+      "bids": 298,
       "won": 23,
       "lost": 79,
       "lists": 88,
@@ -7340,7 +7376,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 169
+          "count": 170
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7357,7 +7393,7 @@
       ]
     },
     "d14": {
-      "bids": 361,
+      "bids": 362,
       "won": 27,
       "lost": 95,
       "lists": 102,
@@ -7367,7 +7403,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 231
+          "count": 232
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7384,5 +7420,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T03:53:20.897533+00:00"
+  "updated_at": "2026-11-25T05:10:31.119239+00:00"
 }

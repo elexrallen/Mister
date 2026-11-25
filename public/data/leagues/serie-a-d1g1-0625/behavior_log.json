@@ -4904,7 +4904,8 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4935,7 +4936,8 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4966,7 +4968,8 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -4997,7 +5000,8 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -5028,7 +5032,8 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -5059,7 +5064,8 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         }
       ]
     },
@@ -5090,6 +5096,54 @@
           "name": "Kaiki",
           "amount": 8062700,
           "status": "descartada",
+          "why": "sin caja",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-25T05:14:31.779008+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 4,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14088",
+          "name": "Bremer",
+          "amount": 16299500,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55646",
+          "name": "C. Mandas",
+          "amount": 13068800,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "60838",
+          "name": "O. Solet",
+          "amount": 7222600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "8229",
+          "name": "F. Kessié",
+          "amount": 5406900,
+          "status": "descartada",
           "why": "sin caja"
         }
       ]
@@ -5097,9 +5151,9 @@
   ],
   "summary": {
     "d7": {
-      "bids": 183,
+      "bids": 187,
       "won": 14,
-      "lost": 91,
+      "lost": 98,
       "lists": 69,
       "accepts": 0,
       "profit": 0,
@@ -5107,7 +5161,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 125
+          "count": 129
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5124,9 +5178,9 @@
       ]
     },
     "d14": {
-      "bids": 183,
+      "bids": 187,
       "won": 14,
-      "lost": 91,
+      "lost": 98,
       "lists": 69,
       "accepts": 0,
       "profit": 0,
@@ -5134,7 +5188,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 125
+          "count": 129
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5151,5 +5205,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T03:57:06.912239+00:00"
+  "updated_at": "2026-11-25T05:14:31.779008+00:00"
 }
