@@ -1,6 +1,6 @@
 {
   "date": "2026-11-25",
-  "captured_at": "2026-11-25T18:29:47.621700+00:00",
+  "captured_at": "2026-11-25T18:55:33.708743+00:00",
   "cycle_hour_utc": 18,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5740,16 +5740,16 @@
         "name": "S. Boselli"
       },
       {
-        "player_id": "1385821",
-        "action": "scout",
-        "price": 12612000.0,
-        "name": "Cristian Romero"
-      },
-      {
         "player_id": "55009",
         "action": "scout",
         "price": 19945000.0,
         "name": "F. López"
+      },
+      {
+        "player_id": "1385821",
+        "action": "scout",
+        "price": 12612000.0,
+        "name": "Cristian Romero"
       },
       {
         "player_id": "14670",
@@ -5824,6 +5824,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 98.6
+    "pipeline_seconds": 262.3
   }
 }
