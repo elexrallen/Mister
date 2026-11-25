@@ -5412,11 +5412,34 @@
         ]
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-25T22:13:23.710515+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14088",
+          "name": "Bremer",
+          "amount": 16299500,
+          "status": "descartada",
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 184,
+      "bids": 185,
       "won": 13,
       "lost": 102,
       "lists": 70,
@@ -5439,11 +5462,15 @@
         {
           "why": "sin precio de compra: no se acepta",
           "count": 11
+        },
+        {
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "count": 1
         }
       ]
     },
     "d14": {
-      "bids": 191,
+      "bids": 192,
       "won": 14,
       "lost": 104,
       "lists": 70,
@@ -5466,9 +5493,13 @@
         {
           "why": "sin precio de compra: no se acepta",
           "count": 11
+        },
+        {
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "count": 1
         }
       ]
     }
   },
-  "updated_at": "2026-11-25T19:03:57.736087+00:00"
+  "updated_at": "2026-11-25T22:13:23.710515+00:00"
 }

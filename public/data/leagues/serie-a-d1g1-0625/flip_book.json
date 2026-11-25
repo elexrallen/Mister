@@ -26,8 +26,9 @@
       "name": "Wesley 💥",
       "buy_price": 12844700,
       "opened_at": "2026-11-25T16:04:00+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-25T22:13:23.710515+00:00"
     },
     "22777": {
       "player_id": "22777",
