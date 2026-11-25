@@ -5228,6 +5228,20 @@
         "players": []
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-25T15:16:03.502071+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 19,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": []
+      },
+      "decisions": []
     }
   ],
   "summary": {
@@ -5286,5 +5300,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T14:28:38.772374+00:00"
+  "updated_at": "2026-11-25T15:16:03.502071+00:00"
 }

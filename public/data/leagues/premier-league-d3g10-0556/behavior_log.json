@@ -7618,11 +7618,47 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-25T15:11:34.143535+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "23036",
+            "name": "K. Havertz",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 10602600,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "23036",
+          "name": "K. Havertz",
+          "amount": 10602600,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 301,
+      "bids": 302,
       "won": 21,
       "lost": 79,
       "lists": 87,
@@ -7632,7 +7668,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 171
+          "count": 172
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7649,7 +7685,7 @@
       ]
     },
     "d14": {
-      "bids": 367,
+      "bids": 368,
       "won": 27,
       "lost": 95,
       "lists": 102,
@@ -7659,7 +7695,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 235
+          "count": 236
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -7676,5 +7712,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T14:32:48.153699+00:00"
+  "updated_at": "2026-11-25T15:11:34.143535+00:00"
 }
