@@ -10987,11 +10987,190 @@
           "why": "Puja 7.24M € (sube 112,000 € hoy, +30% (33,600 €)). La máquina puede llegar a 7.57M €."
         }
       ]
+    },
+    {
+      "at": "2026-11-25T06:20:41.788311+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8613000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé 💥",
+            "position": "MF",
+            "team": "Sevilla",
+            "team_id": "17",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56628.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png",
+            "buy_price": 9972000,
+            "market_value": 10099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11880000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29",
+            "name": "I. Williams",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 7239600,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29",
+          "name": "I. Williams",
+          "amount": 7239600,
+          "market_value": 7206000.0,
+          "buy_price": 7239600,
+          "threshold": 7456788,
+          "status": "ejecutada",
+          "why": "Puja 7.24M € (sube 112,000 € hoy, +30% (33,600 €)). La máquina puede llegar a 7.57M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19911734330,
+              "id_player": "29",
+              "action": "update",
+              "bid": 7239600
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 29,
+              "id_market": 19911734330,
+              "action": "update",
+              "bid": 7239600,
+              "price": 7206000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -22386126,
+                "future": -29625726,
+                "maxDebt": 32338524
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-25T06:32:02.236784+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "25621",
+            "name": "A. Rațiu",
+            "position": "DF",
+            "team": "Rayo",
+            "team_id": "14",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/25621.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/14.png",
+            "buy_price": 8425800,
+            "market_value": 8613000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé 💥",
+            "position": "MF",
+            "team": "Sevilla",
+            "team_id": "17",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56628.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png",
+            "buy_price": 9972000,
+            "market_value": 10099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11880000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29",
+            "name": "I. Williams",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 7239600,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29",
+          "name": "I. Williams",
+          "amount": 7239600,
+          "market_value": 7206000.0,
+          "buy_price": 7239600,
+          "threshold": 7456788,
+          "status": "recomendada",
+          "why": "Puja 7.24M € (sube 112,000 € hoy, +30% (33,600 €)). La máquina puede llegar a 7.57M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 176,
+      "bids": 178,
       "won": 92,
       "lost": 2,
       "lists": 9,
@@ -11010,7 +11189,7 @@
       ]
     },
     "d14": {
-      "bids": 226,
+      "bids": 228,
       "won": 130,
       "lost": 4,
       "lists": 16,
@@ -11037,5 +11216,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T05:16:18.418347+00:00"
+  "updated_at": "2026-11-25T06:32:02.236784+00:00"
 }
