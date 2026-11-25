@@ -771,6 +771,9 @@ FLIP_MIN_PROFIT = 0.03
 # Con 4 ciclos o menos hasta el pitido y saldo negativo, la venta acepta desde aquí.
 FLIP_LATE_MIN_PROFIT = 0.01
 FLIP_LATE_CYCLES = 4
+# No se puja si, al poder vender (cierre de este ciclo + espera compra→venta),
+# quedan menos de 3 ciclos enteros antes del primer partido. Sin ese reloj, tampoco.
+FLIP_MIN_CYCLES_BEFORE_KICKOFF = 3
 FLIP_MAX_OPEN = 5  # jugadores comprados para revender; no se puja por encima
 FLIP_UP_SHARE = 0.30  # de la subida diaria en euros
 FLIP_DOWN_SHARE = 0.05  # de la bajada diaria en euros

@@ -67,6 +67,17 @@ def _rules(**over) -> dict:
     return rules
 
 
+def _open_window(**over) -> dict:
+    """80 h al pitido, cierre en 4 h y ciclos de 8 h: al poder vender quedan 9."""
+    clock = {
+        "hours_to_solvency_deadline": 80,
+        "cash_lag_hours": 4,
+        "cycle_hours": 8,
+    }
+    clock.update(over)
+    return clock
+
+
 def test_daily_change_is_euros() -> None:
     up = _player("1", name="Soler", vm=6 * M, ask=6 * M, prev=6 * M - 50_000)
     down = _player("2", name="Baja", vm=6.5 * M, ask=6.4 * M, prev=6.5 * M + 80_000)
@@ -103,6 +114,7 @@ def test_bid_premium_and_margin() -> None:
         me={"balance": 30 * M},
         league_rules=_rules(max_squad=25),
         now=NOW,
+        **_open_window(),
     )
     bids = {m["player_id"]: m for m in plan["moves"] if m["kind"] == "bid"}
     _assert("21" in bids, bids.keys())
@@ -132,6 +144,7 @@ def test_cash_keeps_the_wider_margin() -> None:
         me={"balance": 12 * M},
         league_rules=_rules(max_squad=20),
         now=NOW,
+        **_open_window(),
     )
     bids = [m for m in plan["moves"] if m["kind"] == "bid"]
     _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
@@ -552,6 +565,75 @@ def _owned_book(ids: list[str]) -> dict:
     return book
 
 
+def test_bid_needs_three_cycles_before_the_first_whistle() -> None:
+    """Solo se puja si, al poder vender, quedan 3 ciclos enteros antes del pitido."""
+    common = dict(
+        book=fresh_book(),
+        enabled=True,
+        squad=[],
+        market=[_rising("21", "Soler")],
+        sales_state={},
+        me={"balance": 20 * M, "max_debt": 40 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        now=NOW,
+    )
+
+    def _bids(**clock):
+        plan, book = build_flip_cycle(**common, **clock)
+        bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+        why = " ".join(s.get("why") or "" for s in plan["flip_skipped"])
+        return bids, why, book
+
+    # Cierre a las 4 h, ciclos de 8 h: 4 + 3×8 = 28 h justas son 3 ciclos.
+    exact, why, _book = _bids(hours_to_solvency_deadline=28, cash_lag_hours=4, cycle_hours=8)
+    _assert(len(exact) == 1 and exact[0]["player_id"] == "21", exact)
+    _assert("primer partido" not in why, why)
+
+    short, why, _book = _bids(hours_to_solvency_deadline=27.9, cash_lag_hours=4, cycle_hours=8)
+    _assert(not short, short)
+    _assert("quedan 2 ciclos" in why and "hacen falta 3" in why, why)
+
+    # La espera se suma al cierre: se puede vender a las 4+24 h.
+    waited, why, _book = _bids(
+        hours_to_solvency_deadline=52,
+        cash_lag_hours=4,
+        cycle_hours=8,
+        transfer_wait_hours=24,
+    )
+    _assert(len(waited) == 1, waited)
+    waited_short, why, _book = _bids(
+        hours_to_solvency_deadline=51.9,
+        cash_lag_hours=4,
+        cycle_hours=8,
+        transfer_wait_hours=24,
+    )
+    _assert(not waited_short, waited_short)
+    _assert("quedan 2 ciclos" in why, why)
+
+    for missing in (
+        {"cash_lag_hours": 4, "cycle_hours": 8},
+        {"hours_to_solvency_deadline": 80, "cycle_hours": 8},
+        {"hours_to_solvency_deadline": 80, "cash_lag_hours": 4},
+    ):
+        blocked, why, _book = _bids(**missing)
+        _assert(not blocked, (missing, blocked))
+        _assert("sin reloj" in why, (missing, why))
+
+    # Una vigilancia viva tampoco se reenvía si el margen no está asegurado.
+    watched = fresh_book()
+    watched["watches"] = {"21": {"player_id": "21", "name": "Soler", "buy_price": 6_015_000}}
+    plan, book = build_flip_cycle(
+        **{**common, "book": watched},
+        hours_to_solvency_deadline=20,
+        cash_lag_hours=4,
+        cycle_hours=8,
+    )
+    _assert(not any(m["kind"] == "bid" for m in plan["moves"]), plan["moves"])
+    _assert("21" in book["watches"], book["watches"])
+    why = " ".join(s.get("why") or "" for s in plan["flip_skipped"])
+    _assert("quedan" in why and "primer partido" in why, why)
+
+
 def test_five_open_positions_block_new_bids() -> None:
     ids = [str(i) for i in range(1, 6)]
     squad = [_player(pid, name=f"R{pid}", vm=5 * M, ask=5 * M) for pid in ids]
@@ -583,6 +665,7 @@ def test_four_open_positions_allow_one_bid() -> None:
         me={"balance": 40 * M},
         league_rules=_rules(sale_limit=10, max_squad=25),
         now=NOW,
+        **_open_window(),
     )
     bids = [m for m in plan["moves"] if m["kind"] == "bid"]
     _assert(len(bids) == 1, bids)
@@ -613,6 +696,7 @@ def test_accept_frees_one_bid_slot() -> None:
         me={"balance": 40 * M},
         league_rules=_rules(sale_limit=10, max_squad=25),
         now=NOW,
+        **_open_window(),
     )
     kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
     _assert(("1", "accept_offer") in kinds, kinds)
@@ -623,13 +707,14 @@ def test_accept_frees_one_bid_slot() -> None:
 def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
     """El saldo negativo al pitido no frena la puja. La frena el techo de deuda.
 
-    Si el cierre es posterior al pitido, la puja no toca el saldo de esta jornada.
+    El reloj deja 3 ciclos al poder vender, así el descarte que queda es la deuda.
     """
     book = _owned_book(["9"])
     squad = [_player("9", name="R9", vm=8 * M, ask=8 * M)]
     market = [_rising("21", "Soler")]
     me = {"balance": 1 * M, "max_debt": 20 * M}
     rules = _rules(sale_limit=10, max_squad=25)
+    clock = _open_window()
     allowed, _book = build_flip_cycle(
         book=book,
         enabled=True,
@@ -638,10 +723,8 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
         sales_state={},
         me=me,
         league_rules=rules,
-        hours_to_solvency_deadline=8,
-        cash_lag_hours=7,
-        cycle_hours=12,
         now=NOW,
+        **clock,
     )
     bids = [m for m in allowed["moves"] if m["kind"] == "bid"]
     _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
@@ -656,15 +739,14 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
         sales_state={},
         me={"balance": 1 * M, "max_debt": 2 * M},
         league_rules=rules,
-        hours_to_solvency_deadline=8,
-        cash_lag_hours=7,
-        cycle_hours=12,
         now=NOW,
+        **clock,
     )
     _assert(not any(m["kind"] == "bid" for m in tight["moves"]), tight["moves"])
     tight_reasons = " ".join(s.get("why") or "" for s in tight["flip_skipped"])
     _assert("sin caja" in tight_reasons, tight["flip_skipped"])
 
+    # Cierre posterior al pitido: no da tiempo a vender con 3 ciclos de margen.
     later_close, _book = build_flip_cycle(
         book=book,
         enabled=True,
@@ -679,8 +761,9 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
         now=NOW,
     )
     later_bids = [m for m in later_close["moves"] if m["kind"] == "bid"]
-    _assert(len(later_bids) == 1 and later_bids[0]["player_id"] == "21", later_bids)
-    _assert("después del pitido" in (later_bids[0].get("why") or ""), later_bids[0])
+    _assert(not later_bids, later_bids)
+    later_why = " ".join(s.get("why") or "" for s in later_close["flip_skipped"])
+    _assert("primer partido" in later_why, later_close["flip_skipped"])
 
     opened, _book = build_flip_cycle(
         book=book,
@@ -690,7 +773,7 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
         sales_state={},
         me=me,
         league_rules=rules,
-        hours_to_solvency_deadline=30,
+        hours_to_solvency_deadline=7 + 3 * 12,
         cash_lag_hours=7,
         cycle_hours=12,
         now=NOW,
@@ -700,7 +783,21 @@ def test_kickoff_blocks_a_bid_the_cycle_cannot_cover() -> None:
 
 
 def test_kickoff_uses_cash_already_in_hand() -> None:
+    """Con caja y 3 ciclos al poder vender, la puja sale. Más cerca, no."""
     plan, _book = build_flip_cycle(
+        book=fresh_book(),
+        enabled=True,
+        squad=[],
+        market=[_rising("21", "Soler")],
+        sales_state={},
+        me={"balance": 10 * M, "max_debt": 20 * M},
+        league_rules=_rules(sale_limit=10, max_squad=25),
+        now=NOW,
+        **_open_window(),
+    )
+    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
+    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+    tight, _book = build_flip_cycle(
         book=fresh_book(),
         enabled=True,
         squad=[],
@@ -713,8 +810,7 @@ def test_kickoff_uses_cash_already_in_hand() -> None:
         cycle_hours=8,
         now=NOW,
     )
-    bids = [m for m in plan["moves"] if m["kind"] == "bid"]
-    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+    _assert(not any(m["kind"] == "bid" for m in tight["moves"]), tight["moves"])
 
 
 def test_kickoff_accepts_a_short_offer_to_cover_the_whistle() -> None:
@@ -744,15 +840,15 @@ def test_kickoff_accepts_a_short_offer_to_cover_the_whistle() -> None:
     kinds = {(m["player_id"], m["kind"]) for m in plan["moves"]}
     _assert(("9", "accept_offer") in kinds, kinds)
     _assert(("9", "renew_offer") not in kinds, kinds)
-    # El cierre (4h) es posterior al pitido (3h): la puja no toca este saldo.
+    # El pitido está a 3 h y el cierre a 4 h: no hay margen para vender.
     bids = [m for m in plan["moves"] if m["kind"] == "bid"]
-    _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
+    _assert(not bids, bids)
     accept = next(m for m in plan["moves"] if m["kind"] == "accept_offer")
     _assert("pitido" in (accept.get("why") or ""), accept)
 
 
 def test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold() -> None:
-    """La espera de 24 h no aporta caja, pero tampoco frena una puja dentro de la deuda."""
+    """La espera de 24 h no aporta caja y, si se come el margen de 3 ciclos, no se puja."""
     common = dict(
         book=fresh_book(),
         enabled=True,
@@ -768,7 +864,9 @@ def test_wait_24h_does_not_fund_a_bid_before_it_can_be_sold() -> None:
     )
     early, _book = build_flip_cycle(hours_to_solvency_deadline=10, **common)
     early_bids = [m for m in early["moves"] if m["kind"] == "bid"]
-    _assert(len(early_bids) == 1 and early_bids[0]["player_id"] == "21", early_bids)
+    _assert(not early_bids, early_bids)
+    early_why = " ".join(s.get("why") or "" for s in early["flip_skipped"])
+    _assert("primer partido" in early_why, early["flip_skipped"])
     later, _book = build_flip_cycle(hours_to_solvency_deadline=80, **common)
     bids = [m for m in later["moves"] if m["kind"] == "bid"]
     _assert(len(bids) == 1 and bids[0]["player_id"] == "21", bids)
@@ -797,6 +895,7 @@ def test_live_watch_occupies_a_slot_until_it_leaves_the_market() -> None:
         me={"balance": 40 * M},
         league_rules=_rules(sale_limit=10, max_squad=25),
         now=NOW,
+        **_open_window(),
     )
     bids = {m["player_id"] for m in plan["moves"] if m["kind"] == "bid"}
     # Soler ya estaba vigilado: se vuelve a pujar. La plaza libre es para Otro.
@@ -1256,6 +1355,7 @@ def main() -> None:
     test_fallen_market_accepts_below_buy_price()
     test_konate_accepts_and_the_other_two_renew()
     test_disable_clears_the_book_and_refreeze_includes_old_signings()
+    test_bid_needs_three_cycles_before_the_first_whistle()
     test_five_open_positions_block_new_bids()
     test_four_open_positions_allow_one_bid()
     test_accept_frees_one_bid_slot()

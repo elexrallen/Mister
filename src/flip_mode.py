@@ -4,7 +4,8 @@ Reventa por liga.
 Con el modo encendido el ciclo solo compra libres de más de 4M que revalorizan
 en positivo. La puja es el valor de mercado de Mister más el 30% de la subida
 del día, no la puja recomendada de subasta. Solo entra si la máquina al +5%
-del valor sigue dejando más de un 3% sobre ese precio. La plantilla del
+del valor sigue dejando más de un 3% sobre ese precio, y si al poder venderlo
+quedan al menos 3 ciclos enteros antes del primer partido. La plantilla del
 momento de activarlo queda congelada. Un alta posterior solo es reventa si
 la máquina ya la tenía vigilada: la cláusula y la puja hecha a mano se
 congelan igual y, si están en el mercado, se retiran. Cada compra abierta
@@ -528,6 +529,45 @@ def _sale_lands_before_kickoff(hours: float | None, lag: float | None) -> bool:
     return sells_settle_before_deadline(hours_to_deadline=hours, cash_lag_hours=lag)
 
 
+def _cycles_left_when_sellable(
+    *,
+    hours_to_kickoff: float | None,
+    hours_to_own: float | None,
+    cycle_hours: float | None,
+    transfer_wait_hours: float,
+) -> int | None:
+    """Ciclos enteros que quedan al pitido en el momento en que ya se puede vender.
+
+    Poder vender es tenerlo (el cierre de este ciclo) y haber cumplido la espera
+    compra→venta. Esa espera se cuenta desde la entrada, así el margen no da por
+    bueno un hueco que Mister puede no conceder. None si falta el reloj: sin él
+    el margen no se puede asegurar.
+    """
+    if hours_to_kickoff is None or hours_to_own is None:
+        return None
+    step = float(cycle_hours or 0)
+    if step <= 0:
+        return None
+    sellable_in = max(0.0, float(hours_to_own)) + max(0.0, float(transfer_wait_hours or 0))
+    remaining = float(hours_to_kickoff) - sellable_in
+    if remaining < 0:
+        return 0
+    return math.floor((remaining + 1e-6) / step)
+
+
+def _sell_window_skip(cycles_left: int | None) -> str | None:
+    """Motivo para no pujar, o None si el margen de 3 ciclos está asegurado."""
+    need = int(config.FLIP_MIN_CYCLES_BEFORE_KICKOFF)
+    if cycles_left is None:
+        return f"sin reloj para asegurar {need} ciclos de venta antes del primer partido"
+    if cycles_left < need:
+        return (
+            f"al poder venderlo quedan {cycles_left} ciclos antes del primer partido; "
+            f"hacen falta {need}"
+        )
+    return None
+
+
 def _bid_resolves_after_kickoff(hours: float | None, lag: float | None) -> bool:
     """La puja a un libre se cobra al cierre del ciclo, no al enviarla.
 
@@ -938,6 +978,15 @@ def build_flip_cycle(
     free_slots = max(0, cap - len(by_id) + len(accept_ids))
     spent = 0.0
     taken = 0
+    # Mismo reloj para todas las pujas del ciclo: se es dueño al cierre y la
+    # espera corre desde entonces. Si no se puede asegurar el margen, no se puja.
+    sell_cycles = _cycles_left_when_sellable(
+        hours_to_kickoff=hours_deadline,
+        hours_to_own=lag,
+        cycle_hours=cycle_h,
+        transfer_wait_hours=wait_new,
+    )
+    sell_window_why = _sell_window_skip(sell_cycles)
     if active and list_room <= 0:
         skipped.append(
             {
@@ -982,6 +1031,18 @@ def build_flip_cycle(
                     "name": row.get("name"),
                     "amount": quote["bid"],
                     "why": "sin plaza",
+                    "status": "descartada",
+                }
+            )
+            continue
+        if sell_window_why:
+            skipped.append(
+                {
+                    "kind": KIND_BID,
+                    "player_id": pid,
+                    "name": row.get("name"),
+                    "amount": quote["bid"],
+                    "why": sell_window_why,
                     "status": "descartada",
                 }
             )
