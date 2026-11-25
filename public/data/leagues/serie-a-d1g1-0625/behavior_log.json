@@ -5242,21 +5242,110 @@
         "players": []
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-25T16:28:19.556873+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "64502",
+            "name": "Wesley 💥",
+            "position": "DF",
+            "team": "Roma",
+            "team_id": "196",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/64502.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/196.png",
+            "buy_price": 12844700,
+            "market_value": 12889000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "64502",
+          "name": "Wesley 💥",
+          "amount": 12889000,
+          "market_value": 12889000.0,
+          "buy_price": 12844700,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 12.89M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "64502",
+              "action": "sale",
+              "price": 12889000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15610174,
+              "id_player": 64502,
+              "id_market": 19916088378,
+              "action": "sale",
+              "price": 12889000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-25T16:33:13.960174+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "64502",
+            "name": "Wesley 💥",
+            "position": "DF",
+            "team": "Roma",
+            "team_id": "196",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/64502.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/196.png",
+            "buy_price": 12844700,
+            "market_value": 12889000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
-      "bids": 187,
+      "bids": 184,
       "won": 13,
-      "lost": 103,
-      "lists": 69,
+      "lost": 102,
+      "lists": 70,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 130
+          "count": 127
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5276,7 +5365,7 @@
       "bids": 191,
       "won": 14,
       "lost": 104,
-      "lists": 69,
+      "lists": 70,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -5300,5 +5389,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T15:16:03.502071+00:00"
+  "updated_at": "2026-11-25T16:33:13.960174+00:00"
 }
