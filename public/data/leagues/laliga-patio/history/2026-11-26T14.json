@@ -1,6 +1,6 @@
 {
   "date": "2026-11-26",
-  "captured_at": "2026-11-26T14:20:19.086854+00:00",
+  "captured_at": "2026-11-26T14:36:32.327551+00:00",
   "cycle_hour_utc": 14,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5722,10 +5722,10 @@
         "name": "J. Koundé"
       },
       {
-        "player_id": "70255",
+        "player_id": "431",
         "action": "sell",
-        "price": 1101000.0,
-        "name": "I. Luque 💥"
+        "price": 9149000.0,
+        "name": "J. Cancelo"
       },
       {
         "player_id": "48657",
@@ -5812,6 +5812,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 234.1
+    "pipeline_seconds": 257.6
   }
 }
