@@ -13202,11 +13202,281 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T00:20:39.402929+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "29",
+            "name": "I. Williams 💥",
+            "position": "FW",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 7239600,
+            "market_value": 7206000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé 💥",
+            "position": "MF",
+            "team": "Sevilla",
+            "team_id": "17",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56628.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png",
+            "buy_price": 9972000,
+            "market_value": 10099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11880000,
+            "status": "listed"
+          },
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 8993000,
+            "market_value": null,
+            "status": "bid"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9614700,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14811",
+          "name": "U. Simón",
+          "amount": 9614700,
+          "market_value": 9612000.0,
+          "buy_price": 9614700,
+          "threshold": 9903141,
+          "status": "ejecutada",
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19916054578,
+              "id_player": "14811",
+              "action": "update",
+              "bid": 9614700
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 14811,
+              "id_market": 19916054578,
+              "action": "update",
+              "bid": 9614700,
+              "price": 9612000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -20668206,
+                "future": -39275906,
+                "maxDebt": 22336594
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "33053",
+          "name": "A. de la Fuente",
+          "amount": 8993000,
+          "market_value": 8963000.0,
+          "buy_price": 8993000,
+          "threshold": 9262790,
+          "status": "ejecutada",
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19916054586,
+              "id_player": "33053",
+              "action": "update",
+              "bid": 8993000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 33053,
+              "id_market": 19916054586,
+              "action": "update",
+              "bid": 8993000,
+              "price": 8963000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -20668206,
+                "future": -39275906,
+                "maxDebt": 22336594
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-26T00:31:28.172927+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "29",
+            "name": "I. Williams 💥",
+            "position": "FW",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 7239600,
+            "market_value": 7206000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé 💥",
+            "position": "MF",
+            "team": "Sevilla",
+            "team_id": "17",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56628.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png",
+            "buy_price": 9972000,
+            "market_value": 10099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11880000,
+            "status": "listed"
+          },
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 8993000,
+            "market_value": null,
+            "status": "bid"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9614700,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14811",
+          "name": "U. Simón",
+          "amount": 9614700,
+          "market_value": 9612000.0,
+          "buy_price": 9614700,
+          "threshold": 9903141,
+          "status": "recomendada",
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "33053",
+          "name": "A. de la Fuente",
+          "amount": 8993000,
+          "market_value": 8963000.0,
+          "buy_price": 8993000,
+          "threshold": 9262790,
+          "status": "recomendada",
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 208,
+      "bids": 213,
       "won": 102,
       "lost": 2,
       "lists": 8,
@@ -13216,16 +13486,16 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 83
+          "count": 85
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
-          "count": 3
+          "count": 2
         }
       ]
     },
     "d14": {
-      "bids": 263,
+      "bids": 269,
       "won": 140,
       "lost": 4,
       "lists": 17,
@@ -13235,7 +13505,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 83
+          "count": 85
         },
         {
           "why": "sin plaza",
@@ -13252,5 +13522,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-25T22:15:22.256109+00:00"
+  "updated_at": "2026-11-26T00:31:28.172927+00:00"
 }
