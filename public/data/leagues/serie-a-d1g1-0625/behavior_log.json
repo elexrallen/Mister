@@ -5950,11 +5950,34 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T18:28:15.481896+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "64534",
+          "name": "J. Ramón",
+          "amount": 17439600,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 204,
+      "bids": 205,
       "won": 12,
       "lost": 106,
       "lists": 66,
@@ -5976,7 +5999,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 30
+          "count": 31
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5985,7 +6008,7 @@
       ]
     },
     "d14": {
-      "bids": 227,
+      "bids": 228,
       "won": 14,
       "lost": 114,
       "lists": 70,
@@ -6007,7 +6030,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 30
+          "count": 31
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -6016,5 +6039,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T17:32:18.208665+00:00"
+  "updated_at": "2026-11-26T18:28:15.481896+00:00"
 }
