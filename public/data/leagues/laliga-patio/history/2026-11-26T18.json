@@ -1,6 +1,6 @@
 {
   "date": "2026-11-26",
-  "captured_at": "2026-11-26T18:20:21.331902+00:00",
+  "captured_at": "2026-11-26T18:44:16.726015+00:00",
   "cycle_hour_utc": 18,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5721,16 +5721,16 @@
         "name": "J. Koundé"
       },
       {
+        "player_id": "431",
+        "action": "sell",
+        "price": 9149000.0,
+        "name": "J. Cancelo"
+      },
+      {
         "player_id": "25630",
         "action": "sell",
         "price": 6037000.0,
         "name": "V. Chust 💥"
-      },
-      {
-        "player_id": "51135",
-        "action": "sell",
-        "price": 12558000.0,
-        "name": "P. Barrios"
       },
       {
         "player_id": "48657",
@@ -5811,6 +5811,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 244.5
+    "pipeline_seconds": 255.8
   }
 }
