@@ -11973,7 +11973,8 @@
                 "maxDebt": 31329594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12013,7 +12014,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -12100,7 +12102,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12111,7 +12114,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12235,7 +12239,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12275,7 +12280,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12370,7 +12376,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12381,7 +12388,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12505,7 +12513,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12545,7 +12554,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12640,7 +12650,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12651,7 +12662,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12775,7 +12787,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12815,7 +12828,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12910,7 +12924,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -12921,7 +12936,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13045,7 +13061,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13085,7 +13102,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13180,7 +13198,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13191,7 +13210,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13315,7 +13335,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13355,7 +13376,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13450,7 +13472,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13461,7 +13484,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13585,7 +13609,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13625,7 +13650,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13720,7 +13746,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13731,7 +13758,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13855,7 +13883,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13895,7 +13924,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -13990,7 +14020,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14001,7 +14032,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14125,7 +14157,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14165,7 +14198,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14260,7 +14294,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14271,7 +14306,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14395,7 +14431,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14435,7 +14472,8 @@
                 "maxDebt": 22336594
               }
             }
-          }
+          },
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14530,7 +14568,8 @@
           "buy_price": 9614700,
           "threshold": 9903141,
           "status": "recomendada",
-          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €."
+          "why": "Puja 9.61M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.09M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14541,7 +14580,8 @@
           "buy_price": 8993000,
           "threshold": 9262790,
           "status": "recomendada",
-          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €."
+          "why": "Puja 8.99M € (sube 100,000 € hoy, +30% (30,000 €)). La máquina puede llegar a 9.41M €.",
+          "result": "ganada"
         },
         {
           "kind": "bid",
@@ -14552,16 +14592,331 @@
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T04:28:47.343306+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 5,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "29",
+            "name": "I. Williams 💥",
+            "position": "FW",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 7239600,
+            "market_value": 7316000,
+            "status": "listed"
+          },
+          {
+            "player_id": "56628",
+            "name": "L. Agoumé 💥",
+            "position": "MF",
+            "team": "Sevilla",
+            "team_id": "17",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/56628.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/17.png",
+            "buy_price": 9972000,
+            "market_value": 10140000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11906000,
+            "status": "listed"
+          },
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": "DF",
+            "team": "Levante",
+            "team_id": "12",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/33053.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png",
+            "buy_price": 8993000,
+            "market_value": 9099000,
+            "status": "owned"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9677000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "accept_offer",
+          "player_id": "29",
+          "name": "I. Williams 💥",
+          "amount": 7566300,
+          "market_value": 7316000,
+          "buy_price": 7239600,
+          "threshold": 7389160,
+          "status": "ejecutada",
+          "why": "Oferta 7.57M € llega al +1% del valor de mercado (7.32M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "850275525",
+              "type": "accept",
+              "amount": 7566300
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19916088374,
+              "id_player": 29,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 2,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -31709606,
+                "future": -31709606,
+                "maxDebt": 33140144
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 326700
+        },
+        {
+          "kind": "accept_offer",
+          "player_id": "56628",
+          "name": "L. Agoumé 💥",
+          "amount": 10603950,
+          "market_value": 10140000,
+          "buy_price": 9972000,
+          "threshold": 10241400,
+          "status": "ejecutada",
+          "why": "Oferta 10.6M € llega al +1% del valor de mercado (10.14M €).",
+          "request": {
+            "path": "/ajax/offer",
+            "data": {
+              "id_bid": "850275521",
+              "type": "accept",
+              "amount": 10603950
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_market": 19916088371,
+              "id_player": 56628,
+              "type": "accept",
+              "status": "accept",
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "balance": {
+                "current": -21105656,
+                "future": -21105656,
+                "maxDebt": 41209094
+              }
+            }
+          },
+          "result": "aceptada",
+          "profit": 631950
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "29223",
+          "name": "M. Soriano 💥",
+          "amount": 11286000,
+          "market_value": 11906000,
+          "buy_price": 11826300,
+          "threshold": 12025060,
+          "status": "ejecutada",
+          "why": "Oferta 11.29M € no llega a 12.03M € (valor de mercado 11.91M € +1%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19916088373
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 29223,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795752000
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "14811",
+          "name": "U. Simón",
+          "amount": 9677000,
+          "market_value": 9677000.0,
+          "buy_price": 9614700,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 9.68M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "14811",
+              "action": "sale",
+              "price": 9677000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 14811,
+              "id_market": 19923642500,
+              "action": "sale",
+              "price": 9677000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "list_for_sale",
+          "player_id": "33053",
+          "name": "A. de la Fuente",
+          "amount": 9099000,
+          "market_value": 9099000.0,
+          "buy_price": 8993000,
+          "threshold": null,
+          "status": "ejecutada",
+          "why": "Listar a 9.1M € para que la máquina oferte en el siguiente ciclo.",
+          "request": {
+            "path": "/ajax/sale",
+            "data": {
+              "id_player": "33053",
+              "action": "sale",
+              "price": 9099000
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 33053,
+              "id_market": 19923642502,
+              "action": "sale",
+              "price": 9099000,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "",
+          "name": "",
+          "amount": null,
+          "status": "descartada",
+          "why": "sale_limit agotado: no se abren pujas nuevas"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-26T04:38:20.389871+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": "DF",
+            "team": "Levante",
+            "team_id": "12",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/33053.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png",
+            "buy_price": 8993000,
+            "market_value": 9099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11906000,
+            "status": "listed"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9677000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
       "bids": 237,
-      "won": 102,
+      "won": 142,
       "lost": 2,
-      "lists": 8,
-      "accepts": 8,
-      "profit": 3386690,
+      "lists": 10,
+      "accepts": 10,
+      "profit": 4345340,
       "short_offers": 2,
       "top_skips": [
         {
@@ -14575,12 +14930,12 @@
       ]
     },
     "d14": {
-      "bids": 293,
-      "won": 140,
+      "bids": 294,
+      "won": 180,
       "lost": 4,
-      "lists": 17,
-      "accepts": 13,
-      "profit": 5358550,
+      "lists": 19,
+      "accepts": 15,
+      "profit": 6317200,
       "short_offers": 10,
       "top_skips": [
         {
@@ -14588,12 +14943,12 @@
           "count": 93
         },
         {
-          "why": "sin plaza",
+          "why": "sale_limit agotado: no se abren pujas nuevas",
           "count": 9
         },
         {
-          "why": "sale_limit agotado: no se abren pujas nuevas",
-          "count": 8
+          "why": "sin plaza",
+          "count": 9
         },
         {
           "why": "sin caja",
@@ -14602,5 +14957,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T03:25:15.308274+00:00"
+  "updated_at": "2026-11-26T04:38:20.389871+00:00"
 }

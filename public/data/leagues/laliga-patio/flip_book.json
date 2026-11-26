@@ -91,8 +91,9 @@
       "name": "I. Williams 💥",
       "buy_price": 7239600,
       "opened_at": "2026-11-25T16:20:17.570618+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-26T04:38:20.389871+00:00"
     },
     "27333": {
       "player_id": "27333",
@@ -144,24 +145,28 @@
       "name": "L. Agoumé 💥",
       "buy_price": 9972000,
       "opened_at": "2026-11-25T05:06:43.277901+00:00",
-      "status": "listed",
-      "listed": true
-    }
-  },
-  "watches": {
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-26T04:38:20.389871+00:00"
+    },
     "14811": {
       "player_id": "14811",
       "name": "U. Simón",
       "buy_price": 9614700,
-      "bid_at": "2026-11-26T03:25:15.308274+00:00"
+      "opened_at": "2026-11-26T04:28:47.343306+00:00",
+      "status": "listed",
+      "listed": true
     },
     "33053": {
       "player_id": "33053",
       "name": "A. de la Fuente",
       "buy_price": 8993000,
-      "bid_at": "2026-11-26T03:25:15.308274+00:00"
+      "opened_at": "2026-11-26T04:28:47.343306+00:00",
+      "status": "listed",
+      "listed": true
     }
   },
+  "watches": {},
   "activated_at": "2026-11-16T14:02:54.506417+00:00",
   "manual_ids": []
 }
