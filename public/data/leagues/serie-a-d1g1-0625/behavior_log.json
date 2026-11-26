@@ -5570,7 +5570,8 @@
           "name": "M. Soulé",
           "amount": 20067900,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5602,7 +5603,8 @@
           "name": "C. Adams",
           "amount": 5004300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -5625,7 +5627,8 @@
           "name": "M. Soulé",
           "amount": 20067900,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5657,7 +5660,8 @@
           "name": "C. Adams",
           "amount": 5004300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -5680,7 +5684,8 @@
           "name": "M. Soulé",
           "amount": 20067900,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5712,7 +5717,8 @@
           "name": "C. Adams",
           "amount": 5004300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -5735,7 +5741,8 @@
           "name": "M. Soulé",
           "amount": 20067900,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5767,7 +5774,8 @@
           "name": "C. Adams",
           "amount": 5004300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -5790,7 +5798,8 @@
           "name": "M. Soulé",
           "amount": 20067900,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -5822,6 +5831,30 @@
           "name": "C. Adams",
           "amount": 5004300,
           "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-26T12:27:53.812989+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "64534",
+          "name": "J. Ramón",
+          "amount": 17439600,
+          "status": "descartada",
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
@@ -5829,17 +5862,17 @@
   ],
   "summary": {
     "d7": {
-      "bids": 208,
-      "won": 13,
-      "lost": 100,
-      "lists": 70,
+      "bids": 206,
+      "won": 12,
+      "lost": 109,
+      "lists": 69,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 120
+          "count": 118
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -5851,7 +5884,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 25
+          "count": 26
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5860,9 +5893,9 @@
       ]
     },
     "d14": {
-      "bids": 222,
+      "bids": 223,
       "won": 14,
-      "lost": 104,
+      "lost": 114,
       "lists": 70,
       "accepts": 0,
       "profit": 0,
@@ -5882,7 +5915,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 25
+          "count": 26
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -5891,5 +5924,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T11:43:35.438053+00:00"
+  "updated_at": "2026-11-26T12:27:53.812989+00:00"
 }

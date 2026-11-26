@@ -6714,7 +6714,8 @@
           "name": "M. Rogers",
           "amount": 19539300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -6791,7 +6792,8 @@
           "name": "M. Rogers",
           "amount": 19539300,
           "status": "descartada",
-          "why": "sin caja"
+          "why": "sin caja",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -7962,7 +7964,8 @@
           "name": "Y. Ayari",
           "amount": 9076400,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -7978,7 +7981,8 @@
           "name": "A. Khusanov",
           "amount": 5215700,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -8001,7 +8005,8 @@
           "name": "Y. Ayari",
           "amount": 9076400,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -8017,7 +8022,8 @@
           "name": "A. Khusanov",
           "amount": 5215700,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -8040,7 +8046,8 @@
           "name": "Y. Ayari",
           "amount": 9076400,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -8056,7 +8063,8 @@
           "name": "A. Khusanov",
           "amount": 5215700,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -8079,7 +8087,8 @@
           "name": "Y. Ayari",
           "amount": 9076400,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -8095,7 +8104,8 @@
           "name": "A. Khusanov",
           "amount": 5215700,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -8118,7 +8128,8 @@
           "name": "Y. Ayari",
           "amount": 9076400,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -8134,6 +8145,46 @@
           "name": "A. Khusanov",
           "amount": 5215700,
           "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-26T12:24:00.496347+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29366",
+          "name": "C. Palmer",
+          "amount": 19669700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27647",
+          "name": "V. Janelt",
+          "amount": 10244400,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48470",
+          "name": "B. Kamara",
+          "amount": 9007100,
+          "status": "descartada",
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
@@ -8142,16 +8193,16 @@
   "summary": {
     "d7": {
       "bids": 299,
-      "won": 17,
-      "lost": 76,
-      "lists": 80,
-      "accepts": 2,
-      "profit": 1180190,
+      "won": 16,
+      "lost": 87,
+      "lists": 79,
+      "accepts": 1,
+      "profit": 577750,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 146
+          "count": 143
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -8162,19 +8213,19 @@
           "count": 59
         },
         {
-          "why": "sin precio de compra: no se acepta",
-          "count": 16
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "count": 18
         },
         {
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 15
+          "why": "sin precio de compra: no se acepta",
+          "count": 16
         }
       ]
     },
     "d14": {
-      "bids": 393,
+      "bids": 396,
       "won": 27,
-      "lost": 101,
+      "lost": 113,
       "lists": 102,
       "accepts": 2,
       "profit": 1180190,
@@ -8193,15 +8244,15 @@
           "count": 72
         },
         {
-          "why": "sin precio de compra: no se acepta",
-          "count": 16
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "count": 18
         },
         {
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 15
+          "why": "sin precio de compra: no se acepta",
+          "count": 16
         }
       ]
     }
   },
-  "updated_at": "2026-11-26T11:38:28.568015+00:00"
+  "updated_at": "2026-11-26T12:24:00.496347+00:00"
 }
