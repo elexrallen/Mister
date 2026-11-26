@@ -83,8 +83,9 @@
       "name": "M. Soriano 💥",
       "buy_price": 11826300,
       "opened_at": "2026-11-23T04:18:47.896929+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-26T16:28:43.271018+00:00"
     },
     "29": {
       "player_id": "29",
