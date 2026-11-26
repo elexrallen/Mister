@@ -8098,11 +8098,50 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T11:38:28.568015+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "52160",
+          "name": "Y. Ayari",
+          "amount": 9076400,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48470",
+          "name": "B. Kamara",
+          "amount": 9007100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "60980",
+          "name": "A. Khusanov",
+          "amount": 5215700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 296,
+      "bids": 299,
       "won": 17,
       "lost": 76,
       "lists": 80,
@@ -8128,12 +8167,12 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 12
+          "count": 15
         }
       ]
     },
     "d14": {
-      "bids": 390,
+      "bids": 393,
       "won": 27,
       "lost": 101,
       "lists": 102,
@@ -8159,10 +8198,10 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 12
+          "count": 15
         }
       ]
     }
   },
-  "updated_at": "2026-11-26T10:35:40.527980+00:00"
+  "updated_at": "2026-11-26T11:38:28.568015+00:00"
 }
