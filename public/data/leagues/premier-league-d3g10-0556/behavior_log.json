@@ -7981,11 +7981,50 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T06:24:05.336371+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "52160",
+          "name": "Y. Ayari",
+          "amount": 9076400,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48470",
+          "name": "B. Kamara",
+          "amount": 9007100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "60980",
+          "name": "A. Khusanov",
+          "amount": 5215700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 294,
+      "bids": 297,
       "won": 19,
       "lost": 77,
       "lists": 82,
@@ -8010,13 +8049,13 @@
           "count": 16
         },
         {
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
           "count": 6
         }
       ]
     },
     "d14": {
-      "bids": 381,
+      "bids": 384,
       "won": 27,
       "lost": 101,
       "lists": 102,
@@ -8041,11 +8080,11 @@
           "count": 16
         },
         {
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
           "count": 6
         }
       ]
     }
   },
-  "updated_at": "2026-11-26T04:32:32.740632+00:00"
+  "updated_at": "2026-11-26T06:24:05.336371+00:00"
 }
