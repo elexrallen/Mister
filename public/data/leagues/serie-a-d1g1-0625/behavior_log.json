@@ -6019,6 +6019,29 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T20:27:56.588377+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14422",
+          "name": "F. Dimarco",
+          "amount": 17860100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
@@ -6026,14 +6049,14 @@
       "bids": 203,
       "won": 12,
       "lost": 104,
-      "lists": 64,
+      "lists": 62,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 108
+          "count": 107
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6041,11 +6064,11 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 33
+          "count": 34
         },
         {
           "why": "espera compra→venta",
-          "count": 31
+          "count": 30
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -6054,7 +6077,7 @@
       ]
     },
     "d14": {
-      "bids": 230,
+      "bids": 231,
       "won": 14,
       "lost": 114,
       "lists": 70,
@@ -6072,7 +6095,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 33
+          "count": 34
         },
         {
           "why": "espera compra→venta",
@@ -6085,5 +6108,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T20:01:28.227851+00:00"
+  "updated_at": "2026-11-26T20:27:56.588377+00:00"
 }
