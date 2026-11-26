@@ -7844,11 +7844,34 @@
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T00:52:00.338770+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "65186",
+          "name": "N. Mukiele",
+          "amount": 7287100,
+          "status": "descartada",
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 292,
+      "bids": 293,
       "won": 19,
       "lost": 73,
       "lists": 83,
@@ -7873,13 +7896,13 @@
           "count": 16
         },
         {
-          "why": "la máquina tiene 2 ofertas antes del primer partido; hacen falta 3",
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
           "count": 3
         }
       ]
     },
     "d14": {
-      "bids": 374,
+      "bids": 375,
       "won": 27,
       "lost": 95,
       "lists": 102,
@@ -7904,11 +7927,11 @@
           "count": 16
         },
         {
-          "why": "la máquina tiene 2 ofertas antes del primer partido; hacen falta 3",
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
           "count": 3
         }
       ]
     }
   },
-  "updated_at": "2026-11-26T00:25:14.141176+00:00"
+  "updated_at": "2026-11-26T00:52:00.338770+00:00"
 }
