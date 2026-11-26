@@ -8422,11 +8422,50 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T19:57:31.393072+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29366",
+          "name": "C. Palmer",
+          "amount": 19669700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27647",
+          "name": "V. Janelt",
+          "amount": 10244400,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48470",
+          "name": "B. Kamara",
+          "amount": 9007100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 311,
+      "bids": 314,
       "won": 13,
       "lost": 86,
       "lists": 76,
@@ -8448,7 +8487,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 36
+          "count": 39
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8457,7 +8496,7 @@
       ]
     },
     "d14": {
-      "bids": 414,
+      "bids": 417,
       "won": 27,
       "lost": 113,
       "lists": 102,
@@ -8479,7 +8518,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 36
+          "count": 39
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8488,5 +8527,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T18:48:10.729679+00:00"
+  "updated_at": "2026-11-26T19:57:31.393072+00:00"
 }
