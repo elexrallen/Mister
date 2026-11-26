@@ -15162,11 +15162,62 @@
         ]
       },
       "decisions": []
+    },
+    {
+      "at": "2026-11-26T14:20:18.751564+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 3,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": "DF",
+            "team": "Levante",
+            "team_id": "12",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/33053.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png",
+            "buy_price": 8993000,
+            "market_value": 9099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "29223",
+            "name": "M. Soriano 💥",
+            "position": "MF",
+            "team": "Deportivo",
+            "team_id": "6",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/29223.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/6.png",
+            "buy_price": 11826300,
+            "market_value": 11906000,
+            "status": "listed"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9677000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": []
     }
   ],
   "summary": {
     "d7": {
-      "bids": 234,
+      "bids": 233,
       "won": 142,
       "lost": 2,
       "lists": 10,
@@ -15176,7 +15227,7 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 90
+          "count": 89
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -15212,5 +15263,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T12:20:26.619121+00:00"
+  "updated_at": "2026-11-26T14:20:18.751564+00:00"
 }

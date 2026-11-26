@@ -8188,21 +8188,60 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T14:23:43.229785+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 3,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29366",
+          "name": "C. Palmer",
+          "amount": 19669700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27647",
+          "name": "V. Janelt",
+          "amount": 10244400,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48470",
+          "name": "B. Kamara",
+          "amount": 9007100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 299,
-      "won": 16,
-      "lost": 87,
-      "lists": 79,
+      "bids": 297,
+      "won": 14,
+      "lost": 86,
+      "lists": 77,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 143
+          "count": 140
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -8214,7 +8253,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 18
+          "count": 21
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8223,7 +8262,7 @@
       ]
     },
     "d14": {
-      "bids": 396,
+      "bids": 399,
       "won": 27,
       "lost": 113,
       "lists": 102,
@@ -8245,7 +8284,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 18
+          "count": 21
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8254,5 +8293,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T12:24:00.496347+00:00"
+  "updated_at": "2026-11-26T14:23:43.229785+00:00"
 }
