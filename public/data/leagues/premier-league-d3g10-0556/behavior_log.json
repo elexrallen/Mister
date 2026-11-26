@@ -8536,11 +8536,42 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T22:24:39.799298+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 2,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "29366",
+          "name": "C. Palmer",
+          "amount": 19669700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "27647",
+          "name": "V. Janelt",
+          "amount": 10244400,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 318,
+      "bids": 320,
       "won": 13,
       "lost": 99,
       "lists": 72,
@@ -8562,7 +8593,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 43
+          "count": 45
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8571,7 +8602,7 @@
       ]
     },
     "d14": {
-      "bids": 421,
+      "bids": 423,
       "won": 27,
       "lost": 126,
       "lists": 102,
@@ -8593,7 +8624,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 43
+          "count": 45
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8602,5 +8633,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T22:05:28.045866+00:00"
+  "updated_at": "2026-11-26T22:24:39.799298+00:00"
 }

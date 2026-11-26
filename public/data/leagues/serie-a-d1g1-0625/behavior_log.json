@@ -6065,11 +6065,34 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-26T22:29:05.199311+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14422",
+          "name": "F. Dimarco",
+          "amount": 17860100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 203,
+      "bids": 204,
       "won": 12,
       "lost": 104,
       "lists": 60,
@@ -6087,7 +6110,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 35
+          "count": 36
         },
         {
           "why": "espera compra→venta",
@@ -6100,7 +6123,7 @@
       ]
     },
     "d14": {
-      "bids": 232,
+      "bids": 233,
       "won": 14,
       "lost": 114,
       "lists": 70,
@@ -6118,7 +6141,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 35
+          "count": 36
         },
         {
           "why": "espera compra→venta",
@@ -6131,5 +6154,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T22:09:23.251612+00:00"
+  "updated_at": "2026-11-26T22:29:05.199311+00:00"
 }
