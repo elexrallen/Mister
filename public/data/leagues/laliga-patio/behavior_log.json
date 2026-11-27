@@ -16103,11 +16103,67 @@
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T03:20:29.181077+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": "DF",
+            "team": "Levante",
+            "team_id": "12",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/33053.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png",
+            "buy_price": 8993000,
+            "market_value": 9099000,
+            "status": "listed"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9677000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "10967",
+          "name": "G. Guedes",
+          "amount": 8669200,
+          "status": "descartada",
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "56925",
+          "name": "J. Aramburu",
+          "amount": 5077300,
+          "status": "descartada",
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 247,
+      "bids": 249,
       "won": 142,
       "lost": 2,
       "lists": 10,
@@ -16121,7 +16177,7 @@
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
-          "count": 26
+          "count": 28
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -16130,7 +16186,7 @@
       ]
     },
     "d14": {
-      "bids": 320,
+      "bids": 322,
       "won": 180,
       "lost": 4,
       "lists": 19,
@@ -16144,7 +16200,7 @@
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
-          "count": 26
+          "count": 28
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -16161,5 +16217,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T02:19:59.391512+00:00"
+  "updated_at": "2026-11-27T03:20:29.181077+00:00"
 }
