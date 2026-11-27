@@ -6111,6 +6111,29 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T00:27:42.958082+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "14422",
+          "name": "F. Dimarco",
+          "amount": 17860100,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
@@ -6118,14 +6141,14 @@
       "bids": 204,
       "won": 12,
       "lost": 104,
-      "lists": 58,
+      "lists": 56,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 105
+          "count": 104
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6133,11 +6156,11 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 37
+          "count": 38
         },
         {
           "why": "espera compra→venta",
-          "count": 28
+          "count": 27
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -6146,7 +6169,7 @@
       ]
     },
     "d14": {
-      "bids": 234,
+      "bids": 235,
       "won": 14,
       "lost": 114,
       "lists": 70,
@@ -6164,7 +6187,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 37
+          "count": 38
         },
         {
           "why": "espera compra→venta",
@@ -6177,5 +6200,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-26T23:26:26.447178+00:00"
+  "updated_at": "2026-11-27T00:27:42.958082+00:00"
 }
