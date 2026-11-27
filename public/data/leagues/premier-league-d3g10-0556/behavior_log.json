@@ -9087,14 +9087,61 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T18:21:33.941472+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 4,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "20495",
+          "name": "B. Fernandes",
+          "amount": 22887700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71072",
+          "name": "J. Jacquet",
+          "amount": 15229700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10285700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "22757",
+          "name": "S. Ajayi",
+          "amount": 4869300,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
       "bids": 320,
       "won": 13,
-      "lost": 108,
-      "lists": 49,
+      "lost": 107,
+      "lists": 48,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 1,
@@ -9105,11 +9152,11 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 87
+          "count": 83
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 78
+          "count": 82
         },
         {
           "why": "espera compra→venta",
@@ -9122,7 +9169,7 @@
       ]
     },
     "d14": {
-      "bids": 456,
+      "bids": 460,
       "won": 27,
       "lost": 142,
       "lists": 102,
@@ -9140,7 +9187,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 78
+          "count": 82
         },
         {
           "why": "espera compra→venta",
@@ -9153,5 +9200,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T17:06:08.289935+00:00"
+  "updated_at": "2026-11-27T18:21:33.941472+00:00"
 }
