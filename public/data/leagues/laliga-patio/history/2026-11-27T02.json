@@ -1,6 +1,6 @@
 {
   "date": "2026-11-27",
-  "captured_at": "2026-11-27T02:01:45.596486+00:00",
+  "captured_at": "2026-11-27T02:19:59.749686+00:00",
   "cycle_hour_utc": 2,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5715,10 +5715,10 @@
     ],
     "actions": [
       {
-        "player_id": "68497",
+        "player_id": "18186",
         "action": "sell",
-        "price": 935000.0,
-        "name": "S. Boselli"
+        "price": 5095000.0,
+        "name": "J. Koundé"
       },
       {
         "player_id": "431",
@@ -5811,6 +5811,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 252.0
+    "pipeline_seconds": 215.6
   }
 }
