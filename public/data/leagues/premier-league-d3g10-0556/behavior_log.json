@@ -8876,6 +8876,29 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T11:34:29.578774+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "20495",
+          "name": "B. Fernandes",
+          "amount": 22887700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
@@ -8883,7 +8906,7 @@
       "bids": 328,
       "won": 13,
       "lost": 114,
-      "lists": 57,
+      "lists": 56,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 1,
@@ -8894,15 +8917,15 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 112
+          "count": 111
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 61
+          "count": 62
         },
         {
           "why": "espera compra→venta",
-          "count": 42
+          "count": 41
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8911,7 +8934,7 @@
       ]
     },
     "d14": {
-      "bids": 439,
+      "bids": 440,
       "won": 27,
       "lost": 142,
       "lists": 102,
@@ -8933,7 +8956,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 61
+          "count": 62
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8942,5 +8965,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T10:24:12.915997+00:00"
+  "updated_at": "2026-11-27T11:34:29.578774+00:00"
 }
