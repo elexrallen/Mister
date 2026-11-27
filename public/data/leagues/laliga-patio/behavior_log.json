@@ -16999,11 +16999,55 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T18:32:45.032542+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "12900",
+          "name": "V. Júnior",
+          "amount": 16703800,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64382",
+          "name": "G. Suazo",
+          "amount": 9795200,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 264,
+      "bids": 266,
       "won": 141,
       "lost": 16,
       "lists": 10,
@@ -17017,7 +17061,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 28
+          "count": 30
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
@@ -17030,7 +17074,7 @@
       ]
     },
     "d14": {
-      "bids": 350,
+      "bids": 352,
       "won": 180,
       "lost": 18,
       "lists": 19,
@@ -17044,7 +17088,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 28
+          "count": 30
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
@@ -17061,5 +17105,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T18:18:43.389704+00:00"
+  "updated_at": "2026-11-27T18:32:45.032542+00:00"
 }

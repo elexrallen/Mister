@@ -6767,21 +6767,68 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T18:40:58.853070+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 4,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "64534",
+          "name": "J. Ramón",
+          "amount": 17494700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "36028",
+          "name": "L. Østigård",
+          "amount": 14175900,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "70699",
+          "name": "L. Palmisani",
+          "amount": 10117900,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55006",
+          "name": "H. Kamara",
+          "amount": 8745600,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 232,
+      "bids": 235,
       "won": 12,
-      "lost": 86,
-      "lists": 27,
+      "lost": 85,
+      "lists": 26,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 89
+          "count": 93
         },
         {
           "why": "sin caja",
@@ -6789,7 +6836,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 48
+          "count": 47
         },
         {
           "why": "espera compra→venta",
@@ -6802,7 +6849,7 @@
       ]
     },
     "d14": {
-      "bids": 286,
+      "bids": 290,
       "won": 14,
       "lost": 114,
       "lists": 70,
@@ -6816,7 +6863,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 89
+          "count": 93
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -6833,5 +6880,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T18:24:44.908767+00:00"
+  "updated_at": "2026-11-27T18:40:58.853070+00:00"
 }
