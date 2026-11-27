@@ -8943,7 +8943,8 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -8990,7 +8991,8 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -9037,7 +9039,8 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -9084,7 +9087,8 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -9131,7 +9135,8 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -9178,7 +9183,8 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         }
       ]
     },
@@ -9225,24 +9231,225 @@
           "name": "S. Ajayi",
           "amount": 4869300,
           "status": "descartada",
-          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-27T20:23:33.238122+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 7,
+        "players": [
+          {
+            "player_id": "1779",
+            "name": "E. Martínez",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 10285700,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10285700,
+          "market_value": 10283000.0,
+          "buy_price": 10285700,
+          "threshold": 10594271,
+          "status": "ejecutada",
+          "why": "Puja 10.29M € (sube 9,000 € hoy, +30% (2,700 €)). La máquina puede llegar a 10.8M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19938459768,
+              "id_player": "1779",
+              "action": "bid",
+              "bid": 10285700
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 1779,
+              "id_market": 19938459768,
+              "action": "bid",
+              "bid": 10285700,
+              "price": 10283000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": 878291,
+                "future": -9407409,
+                "maxDebt": 4835091
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16516100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 15439600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71072",
+          "name": "J. Jacquet",
+          "amount": 15229700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10088600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71576",
+          "name": "X. Schlager",
+          "amount": 9687400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71631",
+          "name": "A. Silva",
+          "amount": 6962800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-27T20:31:17.169467+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 6,
+        "players": [
+          {
+            "player_id": "1779",
+            "name": "E. Martínez",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 10285700,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10285700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16516100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 15439600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71072",
+          "name": "J. Jacquet",
+          "amount": 15229700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10088600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71576",
+          "name": "X. Schlager",
+          "amount": 9687400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71631",
+          "name": "A. Silva",
+          "amount": 6962800,
+          "status": "descartada",
+          "why": "sin caja"
         }
       ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 324,
+      "bids": 328,
       "won": 13,
-      "lost": 106,
-      "lists": 47,
+      "lost": 111,
+      "lists": 46,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 140
+          "count": 153
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
@@ -9250,7 +9457,7 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 79
+          "count": 69
         },
         {
           "why": "espera compra→venta",
@@ -9258,14 +9465,14 @@
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 12
+          "count": 10
         }
       ]
     },
     "d14": {
-      "bids": 468,
+      "bids": 482,
       "won": 27,
-      "lost": 142,
+      "lost": 149,
       "lists": 102,
       "accepts": 2,
       "profit": 1180190,
@@ -9273,7 +9480,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 237
+          "count": 250
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -9294,5 +9501,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T19:46:12.866391+00:00"
+  "updated_at": "2026-11-27T20:31:17.169467+00:00"
 }

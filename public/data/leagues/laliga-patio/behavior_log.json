@@ -17087,11 +17087,217 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T20:19:59.673015+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          },
+          {
+            "player_id": "64382",
+            "name": "G. Suazo",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9795200,
+            "market_value": null,
+            "status": "bid"
+          },
+          {
+            "player_id": "12900",
+            "name": "V. Júnior",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 16703800,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "12900",
+          "name": "V. Júnior",
+          "amount": 16703800,
+          "market_value": 16690000.0,
+          "buy_price": 16703800,
+          "threshold": 17204914,
+          "status": "ejecutada",
+          "why": "Puja 16.7M € (sube 46,000 € hoy, +30% (13,800 €)). La máquina puede llegar a 17.52M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19938837601,
+              "id_player": "12900",
+              "action": "bid",
+              "bid": 16703800
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 12900,
+              "id_market": 19938837601,
+              "action": "bid",
+              "bid": 16703800,
+              "price": 16690000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": 733114,
+                "future": -15970686,
+                "maxDebt": 41405314
+              }
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "64382",
+          "name": "G. Suazo",
+          "amount": 9795200,
+          "market_value": 9749000.0,
+          "buy_price": 9795200,
+          "threshold": 10089056,
+          "status": "ejecutada",
+          "why": "Puja 9.8M € (sube 154,000 € hoy, +30% (46,200 €)). La máquina puede llegar a 10.24M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19938837598,
+              "id_player": "64382",
+              "action": "bid",
+              "bid": 9795200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 64382,
+              "id_market": 19938837598,
+              "action": "bid",
+              "bid": 9795200,
+              "price": 9749000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": 733114,
+                "future": -25765886,
+                "maxDebt": 31610114
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-27T20:28:58.703262+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          },
+          {
+            "player_id": "64382",
+            "name": "G. Suazo",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9795200,
+            "market_value": null,
+            "status": "bid"
+          },
+          {
+            "player_id": "12900",
+            "name": "V. Júnior",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 16703800,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "12900",
+          "name": "V. Júnior",
+          "amount": 16703800,
+          "market_value": 16690000.0,
+          "buy_price": 16703800,
+          "threshold": 17204914,
+          "status": "recomendada",
+          "why": "Puja 16.7M € (sube 46,000 € hoy, +30% (13,800 €)). La máquina puede llegar a 17.52M €."
+        },
+        {
+          "kind": "bid",
+          "player_id": "64382",
+          "name": "G. Suazo",
+          "amount": 9795200,
+          "market_value": 9749000.0,
+          "buy_price": 9795200,
+          "threshold": 10089056,
+          "status": "recomendada",
+          "why": "Puja 9.8M € (sube 154,000 € hoy, +30% (46,200 €)). La máquina puede llegar a 10.24M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 268,
+      "bids": 272,
       "won": 141,
       "lost": 16,
       "lists": 10,
@@ -17118,7 +17324,7 @@
       ]
     },
     "d14": {
-      "bids": 354,
+      "bids": 358,
       "won": 180,
       "lost": 18,
       "lists": 19,
@@ -17149,5 +17355,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T19:42:54.952414+00:00"
+  "updated_at": "2026-11-27T20:28:58.703262+00:00"
 }
