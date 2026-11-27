@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-27T12:29:20.214641+00:00",
+  "generated_at": "2026-11-27T14:34:37.906700+00:00",
   "league_slug": "serie-a-d1g1-0625",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -19,7 +19,7 @@
         "MF": 3,
         "FW": 3
       },
-      "xpts_starters": 46.83,
+      "xpts_starters": 46.72,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -32,7 +32,7 @@
         "MF": 4,
         "FW": 2
       },
-      "xpts_starters": 47.7,
+      "xpts_starters": 47.59,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -45,7 +45,7 @@
         "MF": 5,
         "FW": 1
       },
-      "xpts_starters": 46.38,
+      "xpts_starters": 46.27,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -97,7 +97,7 @@
         "MF": 3,
         "FW": 2
       },
-      "xpts_starters": 46.8,
+      "xpts_starters": 46.69,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -110,7 +110,7 @@
         "MF": 4,
         "FW": 1
       },
-      "xpts_starters": 46.49,
+      "xpts_starters": 46.38,
       "complete": false,
       "flex": 0,
       "cost": 0
@@ -270,14 +270,14 @@
       "name": "M. Oliver Kempf",
       "team": "Como",
       "team_id": "1263",
-      "ep_score": 27.7,
-      "xpts": 4.85,
+      "ep_score": 26.7,
+      "xpts": 4.74,
       "price": 6525000.0,
       "status": "keep",
       "delta_5d": 0.0229,
       "value_note": "stable",
-      "value_ratio": 4.25,
-      "lineup_prob": 44.0,
+      "value_ratio": 4.09,
+      "lineup_prob": 41.0,
       "ff_mister_points": 73.0,
       "ff_mister_avg": 8.11,
       "hist_ok": false,
@@ -291,7 +291,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.8 xPts · 6,525,000 € · keep · starter",
+      "why": "4.7 xPts · 6,525,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -750,14 +750,14 @@
       "name": "M. Oliver Kempf",
       "team": "Como",
       "team_id": "1263",
-      "ep_score": 27.7,
-      "xpts": 4.85,
+      "ep_score": 26.7,
+      "xpts": 4.74,
       "price": 6525000.0,
       "status": "keep",
       "delta_5d": 0.0229,
       "value_note": "stable",
-      "value_ratio": 4.25,
-      "lineup_prob": 44.0,
+      "value_ratio": 4.09,
+      "lineup_prob": 41.0,
       "ff_mister_points": 73.0,
       "ff_mister_avg": 8.11,
       "hist_ok": false,
@@ -771,7 +771,7 @@
       "clause_known": false,
       "seller": null,
       "reach": "keep",
-      "why": "4.8 xPts · 6,525,000 € · keep · starter",
+      "why": "4.7 xPts · 6,525,000 € · keep · starter",
       "kind": "player",
       "xpts_bar": null,
       "p_appear": null
@@ -1098,7 +1098,7 @@
     "n_free": 195,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 7.267146446111111
+    "hours_to_jornada": 5.178764132777777
   },
   "finance": {
     "ok": true,
@@ -1254,14 +1254,14 @@
         "name": "M. Oliver Kempf",
         "team": "Como",
         "team_id": "1263",
-        "ep_score": 27.7,
-        "xpts": 4.85,
+        "ep_score": 26.7,
+        "xpts": 4.74,
         "price": 6525000.0,
         "status": "keep",
         "delta_5d": 0.0229,
         "value_note": "stable",
-        "value_ratio": 4.25,
-        "lineup_prob": 44.0,
+        "value_ratio": 4.09,
+        "lineup_prob": 41.0,
         "ff_mister_points": 73.0,
         "ff_mister_avg": 8.11,
         "hist_ok": false,
@@ -1275,7 +1275,7 @@
         "clause_known": false,
         "seller": null,
         "reach": "keep",
-        "why": "4.8 xPts · 6,525,000 € · keep · starter",
+        "why": "4.7 xPts · 6,525,000 € · keep · starter",
         "kind": "player",
         "xpts_bar": null,
         "p_appear": null
@@ -1591,12 +1591,12 @@
     "sell": []
   },
   "totals": {
-    "ep_sum": 48.14,
-    "ep_sum_starters": 47.7,
-    "xpts_starters": 47.7,
-    "xpts_total": 48.14,
+    "ep_sum": 48.03,
+    "ep_sum_starters": 47.59,
+    "xpts_starters": 47.59,
+    "xpts_total": 48.03,
     "xpts_ceiling": 92.31,
-    "xpts_yours": 59.1,
+    "xpts_yours": 58.99,
     "cost_sum": 49844000.0,
     "net_buys": 0.0,
     "slots_filled": 14,
@@ -1640,8 +1640,8 @@
     "patches": 0,
     "on_daily": 0,
     "cash_reserved": 0.0,
-    "ep_sum": 48.14,
-    "ep_sum_starters": 47.7,
+    "ep_sum": 48.03,
+    "ep_sum_starters": 47.59,
     "mode": "ko",
     "formation": "4-4-2",
     "xi_rule": "formación 4-4-2 · once por xPts · 15 al KO",
