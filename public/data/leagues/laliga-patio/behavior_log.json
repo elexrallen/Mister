@@ -15420,7 +15420,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15476,7 +15477,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15532,7 +15534,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15588,7 +15591,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15644,7 +15648,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15700,7 +15705,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15756,7 +15762,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15812,7 +15819,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15868,7 +15876,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15924,7 +15933,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -15980,7 +15990,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -16036,7 +16047,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -16092,7 +16104,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -16148,7 +16161,8 @@
           "name": "G. Guedes",
           "amount": 8669200,
           "status": "descartada",
-          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "result": "perdida"
         },
         {
           "kind": "bid",
@@ -16159,13 +16173,185 @@
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T04:20:33.187988+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": "DF",
+            "team": "Levante",
+            "team_id": "12",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/33053.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png",
+            "buy_price": 8993000,
+            "market_value": 9233000,
+            "status": "listed"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "33053",
+          "name": "A. de la Fuente",
+          "amount": 8644050,
+          "market_value": 9233000,
+          "buy_price": 8993000,
+          "threshold": 9325330,
+          "status": "ejecutada",
+          "why": "Oferta 8.64M € no llega a 9.33M € (valor de mercado 9.23M € +1%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19927408221
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 33053,
+              "offers": {
+                "pending": 1,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795838400
+            }
+          }
+        },
+        {
+          "kind": "renew_offer",
+          "player_id": "14811",
+          "name": "U. Simón",
+          "amount": 9193150,
+          "market_value": 9742000,
+          "buy_price": 9614700,
+          "threshold": 9839420,
+          "status": "ejecutada",
+          "why": "Oferta 9.19M € no llega a 9.84M € (valor de mercado 9.74M € +1%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19927408222
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 14811,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795838400
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "28779",
+          "name": "I. Romero",
+          "amount": 10042000,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "12915",
+          "name": "C. Hernández",
+          "amount": 6594700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-27T04:30:38.877054+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 2,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": "DF",
+            "team": "Levante",
+            "team_id": "12",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/33053.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/12.png",
+            "buy_price": 8993000,
+            "market_value": 9233000,
+            "status": "listed"
+          },
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "28779",
+          "name": "I. Romero",
+          "amount": 10042000,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "12915",
+          "name": "C. Hernández",
+          "amount": 6594700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 249,
+      "bids": 250,
       "won": 142,
-      "lost": 2,
+      "lost": 16,
       "lists": 10,
       "accepts": 9,
       "profit": 3949290,
@@ -16173,11 +16359,15 @@
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 77
+          "count": 74
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
           "count": 28
+        },
+        {
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "count": 4
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -16186,9 +16376,9 @@
       ]
     },
     "d14": {
-      "bids": 322,
+      "bids": 326,
       "won": 180,
-      "lost": 4,
+      "lost": 18,
       "lists": 19,
       "accepts": 15,
       "profit": 6317200,
@@ -16211,11 +16401,11 @@
           "count": 9
         },
         {
-          "why": "sin caja",
-          "count": 3
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
+          "count": 4
         }
       ]
     }
   },
-  "updated_at": "2026-11-27T03:20:29.181077+00:00"
+  "updated_at": "2026-11-27T04:30:38.877054+00:00"
 }
