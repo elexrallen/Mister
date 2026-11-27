@@ -8784,6 +8784,29 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T06:25:15.571580+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 1,
+        "players": []
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "20495",
+          "name": "B. Fernandes",
+          "amount": 22887700,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
@@ -8791,7 +8814,7 @@
       "bids": 329,
       "won": 13,
       "lost": 114,
-      "lists": 63,
+      "lists": 62,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 1,
@@ -8802,24 +8825,24 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 117
+          "count": 116
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 57
+          "count": 58
         },
         {
           "why": "espera compra→venta",
-          "count": 47
+          "count": 46
         },
         {
           "why": "sin precio de compra: no se acepta",
-          "count": 13
+          "count": 12
         }
       ]
     },
     "d14": {
-      "bids": 435,
+      "bids": 436,
       "won": 27,
       "lost": 142,
       "lists": 102,
@@ -8841,7 +8864,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 57
+          "count": 58
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8850,5 +8873,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T04:38:54.794870+00:00"
+  "updated_at": "2026-11-27T06:25:15.571580+00:00"
 }
