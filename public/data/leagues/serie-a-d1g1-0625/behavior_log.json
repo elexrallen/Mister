@@ -7223,13 +7223,120 @@
           "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
         }
       ]
+    },
+    {
+      "at": "2026-11-27T22:27:43.227483+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "10104",
+            "name": "M. de Roon",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4829300,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "10104",
+          "name": "M. de Roon",
+          "amount": 4829300,
+          "market_value": 4826000.0,
+          "buy_price": 4829300,
+          "threshold": 4974179,
+          "status": "ejecutada",
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19942182395,
+              "id_player": "10104",
+              "action": "update",
+              "bid": 4829300
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 10104,
+              "id_market": 19942182395,
+              "action": "update",
+              "bid": 4829300,
+              "price": 4826000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "macro_league",
+              "balance": {
+                "current": 2767697,
+                "future": -2061603,
+                "maxDebt": 10399397
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-27T22:31:48.091509+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "10104",
+            "name": "M. de Roon",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 4829300,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "10104",
+          "name": "M. de Roon",
+          "amount": 4829300,
+          "market_value": 4826000.0,
+          "buy_price": 4829300,
+          "threshold": 4974179,
+          "status": "recomendada",
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 237,
+      "bids": 233,
       "won": 12,
-      "lost": 121,
+      "lost": 117,
       "lists": 24,
       "accepts": 0,
       "profit": 0,
@@ -7245,20 +7352,20 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 37
+          "count": 31
         },
         {
           "why": "espera compra→venta",
           "count": 15
         },
         {
-          "why": "sin precio de compra: no se acepta",
-          "count": 8
+          "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
+          "count": 6
         }
       ]
     },
     "d14": {
-      "bids": 302,
+      "bids": 304,
       "won": 14,
       "lost": 157,
       "lists": 70,
@@ -7289,5 +7396,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T21:57:22.484035+00:00"
+  "updated_at": "2026-11-27T22:31:48.091509+00:00"
 }
