@@ -163,8 +163,9 @@
       "name": "A. de la Fuente",
       "buy_price": 8993000,
       "opened_at": "2026-11-26T04:28:47.343306+00:00",
-      "status": "listed",
-      "listed": true
+      "status": "sold",
+      "listed": true,
+      "sold_at": "2026-11-27T16:20:43.352781+00:00"
     }
   },
   "watches": {},

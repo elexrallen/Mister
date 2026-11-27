@@ -16793,21 +16793,139 @@
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
         }
       ]
+    },
+    {
+      "at": "2026-11-27T16:20:43.352781+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "renew_offer",
+          "player_id": "14811",
+          "name": "U. Simón",
+          "amount": 9352320,
+          "market_value": 9742000,
+          "buy_price": 9614700,
+          "threshold": 10034260,
+          "status": "ejecutada",
+          "why": "Oferta 9.35M € no llega a 10.03M € (valor de mercado 9.74M € +3%). Se renueva el listado.",
+          "request": {
+            "path": "/ajax/resale",
+            "data": {
+              "id_market": 19935015956
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 15399168,
+              "id_player": 14811,
+              "offers": {
+                "pending": 0,
+                "accept": 0,
+                "decline": 0
+              },
+              "ends": 1795881600
+            }
+          }
+        },
+        {
+          "kind": "bid",
+          "player_id": "12900",
+          "name": "V. Júnior",
+          "amount": 16703800,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64382",
+          "name": "G. Suazo",
+          "amount": 9795200,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-27T16:30:53.585931+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "14811",
+            "name": "U. Simón",
+            "position": "GK",
+            "team": "Athletic",
+            "team_id": "1",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/14811.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/1.png",
+            "buy_price": 9614700,
+            "market_value": 9742000,
+            "status": "listed"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "12900",
+          "name": "V. Júnior",
+          "amount": 16703800,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64382",
+          "name": "G. Suazo",
+          "amount": 9795200,
+          "status": "descartada",
+          "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 258,
-      "won": 142,
+      "bids": 260,
+      "won": 141,
       "lost": 16,
       "lists": 10,
-      "accepts": 9,
-      "profit": 3949290,
-      "short_offers": 3,
+      "accepts": 8,
+      "profit": 3684570,
+      "short_offers": 1,
       "top_skips": [
         {
           "why": "cupo de reventa lleno (5): no se puja hasta vender uno",
-          "count": 66
+          "count": 65
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
@@ -16815,7 +16933,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 20
+          "count": 24
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -16824,7 +16942,7 @@
       ]
     },
     "d14": {
-      "bids": 342,
+      "bids": 346,
       "won": 180,
       "lost": 18,
       "lists": 19,
@@ -16842,7 +16960,7 @@
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
-          "count": 20
+          "count": 24
         },
         {
           "why": "sale_limit agotado: no se abren pujas nuevas",
@@ -16855,5 +16973,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-27T14:29:19.494623+00:00"
+  "updated_at": "2026-11-27T16:30:53.585931+00:00"
 }
