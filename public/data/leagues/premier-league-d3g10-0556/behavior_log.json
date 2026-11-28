@@ -9855,11 +9855,95 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-28T03:06:52.220999+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 6,
+        "players": [
+          {
+            "player_id": "1779",
+            "name": "E. Martínez",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 10285700,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": 10285700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "64094",
+          "name": "L. Vušković",
+          "amount": 16516100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 15439600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71072",
+          "name": "J. Jacquet",
+          "amount": 15229700,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10088600,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71576",
+          "name": "X. Schlager",
+          "amount": 9687400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71631",
+          "name": "A. Silva",
+          "amount": 6962800,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 328,
+      "bids": 335,
       "won": 13,
       "lost": 104,
       "lists": 46,
@@ -9869,7 +9953,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 188
+          "count": 195
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
@@ -9890,7 +9974,7 @@
       ]
     },
     "d14": {
-      "bids": 517,
+      "bids": 524,
       "won": 27,
       "lost": 149,
       "lists": 102,
@@ -9900,7 +9984,7 @@
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 285
+          "count": 292
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -9921,5 +10005,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-28T02:23:04.531038+00:00"
+  "updated_at": "2026-11-28T03:06:52.220999+00:00"
 }
