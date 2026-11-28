@@ -10409,21 +10409,73 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-28T14:21:51.108021+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 2,
+        "players": [
+          {
+            "player_id": "1779",
+            "name": "E. Martínez",
+            "position": "GK",
+            "team": "Chelsea",
+            "team_id": "54",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/1779.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/54.png",
+            "buy_price": 10285700,
+            "market_value": 10280000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "25568",
+          "name": "M. Ødegaard",
+          "amount": 18442900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 17348100,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 338,
+      "bids": 340,
       "won": 27,
       "lost": 106,
-      "lists": 52,
+      "lists": 53,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 219
+          "count": 221
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
@@ -10431,7 +10483,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 42
+          "count": 43
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -10444,17 +10496,17 @@
       ]
     },
     "d14": {
-      "bids": 548,
+      "bids": 550,
       "won": 45,
       "lost": 157,
-      "lists": 109,
+      "lists": 110,
       "accepts": 2,
       "profit": 1180190,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 316
+          "count": 318
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -10466,7 +10518,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 79
+          "count": 80
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -10475,5 +10527,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-28T13:50:12.876627+00:00"
+  "updated_at": "2026-11-28T14:21:51.108021+00:00"
 }
