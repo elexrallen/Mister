@@ -38,16 +38,17 @@
       "status": "sold",
       "listed": true,
       "sold_at": "2026-11-21T04:29:05.152567+00:00"
-    }
-  },
-  "watches": {
+    },
     "10104": {
       "player_id": "10104",
       "name": "M. de Roon",
       "buy_price": 4829300,
-      "bid_at": "2026-11-28T03:15:33.251506+00:00"
+      "opened_at": "2026-11-28T04:24:59.594361+00:00",
+      "status": "owned",
+      "listed": false
     }
   },
+  "watches": {},
   "activated_at": "2026-11-18T12:24:22.523062+00:00",
   "manual_ids": [
     "4927635",

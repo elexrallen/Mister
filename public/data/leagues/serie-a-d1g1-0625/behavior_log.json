@@ -7074,7 +7074,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7113,7 +7114,8 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -7181,7 +7183,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7220,7 +7223,8 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -7288,7 +7292,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7327,7 +7332,8 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -7395,7 +7401,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7434,7 +7441,8 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -7502,7 +7510,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7570,7 +7579,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7609,7 +7619,8 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -7677,7 +7688,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7716,7 +7728,8 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
         }
       ]
     },
@@ -7784,7 +7797,8 @@
                 "maxDebt": 10399397
               }
             }
-          }
+          },
+          "result": "ganada"
         }
       ]
     },
@@ -7823,17 +7837,54 @@
           "buy_price": 4829300,
           "threshold": 4974179,
           "status": "recomendada",
-          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €."
+          "why": "Puja 4.83M € (sube 11,000 € hoy, +30% (3,300 €)). La máquina puede llegar a 5.07M €.",
+          "result": "ganada"
+        }
+      ]
+    },
+    {
+      "at": "2026-11-28T04:24:59.594361+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "10104",
+            "name": "M. de Roon",
+            "position": "MF",
+            "team": "Roma",
+            "team_id": "196",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/10104.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/196.png",
+            "buy_price": 4829300,
+            "market_value": 4878000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "10104",
+          "name": "M. de Roon",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
         }
       ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 230,
-      "won": 12,
-      "lost": 109,
-      "lists": 24,
+      "bids": 227,
+      "won": 27,
+      "lost": 107,
+      "lists": 25,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -7848,11 +7899,11 @@
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 19
+          "count": 16
         },
         {
           "why": "espera compra→venta",
-          "count": 15
+          "count": 16
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
@@ -7862,9 +7913,9 @@
     },
     "d14": {
       "bids": 313,
-      "won": 14,
+      "won": 29,
       "lost": 157,
-      "lists": 70,
+      "lists": 71,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -7883,7 +7934,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 31
+          "count": 32
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -7892,5 +7943,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-28T03:15:33.251506+00:00"
+  "updated_at": "2026-11-28T04:24:59.594361+00:00"
 }
