@@ -1,6 +1,6 @@
 {
   "date": "2026-11-28",
-  "captured_at": "2026-11-28T10:32:00.814267+00:00",
+  "captured_at": "2026-11-28T10:58:28.764171+00:00",
   "cycle_hour_utc": 10,
   "league_slug": "laliga-patio",
   "jornada": 14,
@@ -5838,12 +5838,6 @@
     ],
     "actions": [
       {
-        "player_id": "27907",
-        "action": "accept_offer",
-        "price": 8861760.0,
-        "name": "Roger Brugué"
-      },
-      {
         "player_id": "616",
         "action": "sell",
         "price": 16379000.0,
@@ -5914,6 +5908,12 @@
         "action": "avoid",
         "price": null,
         "name": "Ademola Lookman"
+      },
+      {
+        "player_id": "27907",
+        "action": "sell",
+        "price": 9223000.0,
+        "name": "R. Brugué"
       }
     ],
     "allocation": {
@@ -5934,6 +5934,6 @@
     "rate_limited": null,
     "ff": "ok",
     "fotmob": "partial",
-    "pipeline_seconds": 106.6
+    "pipeline_seconds": 260.7
   }
 }

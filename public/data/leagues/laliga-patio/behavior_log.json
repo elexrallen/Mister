@@ -19031,11 +19031,118 @@
           "why": "Puja 9.37M € (sube 104,000 € hoy, +30% (31,200 €)). La máquina puede llegar a 9.8M €."
         }
       ]
+    },
+    {
+      "at": "2026-11-28T10:58:28.474919+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 22,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9368200,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "33053",
+          "name": "A. de la Fuente",
+          "amount": 9368200,
+          "market_value": 9337000.0,
+          "buy_price": 9368200,
+          "threshold": 9649246,
+          "status": "ejecutada",
+          "why": "Puja 9.37M € (sube 104,000 € hoy, +30% (31,200 €)). La máquina puede llegar a 9.8M €.",
+          "request": {
+            "path": "/ajax/bid",
+            "data": {
+              "offeree_id": 0,
+              "id_market": 19945947718,
+              "id_player": "33053",
+              "action": "update",
+              "bid": 9368200
+            }
+          },
+          "response": {
+            "status": "ok",
+            "data": {
+              "owner": 0,
+              "id_player": 33053,
+              "id_market": 19945947718,
+              "action": "update",
+              "bid": 9368200,
+              "price": 9337000,
+              "public": 1,
+              "barter": [],
+              "community_mode": "private",
+              "balance": {
+                "current": -10141385,
+                "future": -19509585,
+                "maxDebt": 39738915
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "at": "2026-11-28T11:10:12.259838+00:00",
+      "league": "laliga-patio",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 22,
+        "open_count": 0,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "33053",
+            "name": "A. de la Fuente",
+            "position": null,
+            "team": null,
+            "team_id": null,
+            "photo_url": null,
+            "team_logo_url": null,
+            "buy_price": 9368200,
+            "market_value": null,
+            "status": "bid"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "bid",
+          "player_id": "33053",
+          "name": "A. de la Fuente",
+          "amount": 9368200,
+          "market_value": 9337000.0,
+          "buy_price": 9368200,
+          "threshold": 9649246,
+          "status": "recomendada",
+          "why": "Puja 9.37M € (sube 104,000 € hoy, +30% (31,200 €)). La máquina puede llegar a 9.8M €."
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 295,
+      "bids": 297,
       "won": 156,
       "lost": 37,
       "lists": 9,
@@ -19062,7 +19169,7 @@
       ]
     },
     "d14": {
-      "bids": 388,
+      "bids": 390,
       "won": 196,
       "lost": 42,
       "lists": 19,
@@ -19093,5 +19200,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-28T10:32:00.555958+00:00"
+  "updated_at": "2026-11-28T11:10:12.259838+00:00"
 }
