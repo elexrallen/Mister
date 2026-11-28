@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-28T11:02:53.941627+00:00",
+  "generated_at": "2026-11-28T12:25:10.361292+00:00",
   "league_slug": "premier-league-d3g10-0556",
   "market_mode": "auction",
   "mode_default": "ko",
@@ -1163,10 +1163,10 @@
     "max_debt": 7444341.0,
     "bid_cap": 7444341.0,
     "max_squad": 25,
-    "n_free": 179,
+    "n_free": 187,
     "s_on_board": 0,
     "p_appear": 0.0,
-    "hours_to_jornada": 3.958047583888889
+    "hours_to_jornada": 2.5866262733333336
   },
   "finance": {
     "ok": true,
