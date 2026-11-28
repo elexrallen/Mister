@@ -10169,21 +10169,89 @@
           "why": "sin caja"
         }
       ]
+    },
+    {
+      "at": "2026-11-28T10:25:07.542089+00:00",
+      "league": "premier-league-d3g10-0556",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 21,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 4,
+        "players": [
+          {
+            "player_id": "1779",
+            "name": "E. Martínez",
+            "position": "GK",
+            "team": "Chelsea",
+            "team_id": "54",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/1779.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/54.png",
+            "buy_price": 10285700,
+            "market_value": 10280000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "1779",
+          "name": "E. Martínez",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        },
+        {
+          "kind": "bid",
+          "player_id": "49277",
+          "name": "A. Isak",
+          "amount": 17348100,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "48972",
+          "name": "M. Tavernier",
+          "amount": 15454400,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "55105",
+          "name": "A. Scott",
+          "amount": 10098900,
+          "status": "descartada",
+          "why": "sin caja"
+        },
+        {
+          "kind": "bid",
+          "player_id": "71576",
+          "name": "X. Schlager",
+          "amount": 9746100,
+          "status": "descartada",
+          "why": "sin caja"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 330,
+      "bids": 331,
       "won": 28,
-      "lost": 107,
-      "lists": 48,
+      "lost": 106,
+      "lists": 49,
       "accepts": 1,
       "profit": 577750,
       "short_offers": 0,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 207
+          "count": 211
         },
         {
           "why": "la máquina tiene 0 ofertas antes del primer partido; hacen falta 3",
@@ -10191,11 +10259,11 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 38
+          "count": 39
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
-          "count": 17
+          "count": 14
         },
         {
           "why": "la máquina tiene 1 ofertas antes del primer partido; hacen falta 3",
@@ -10204,17 +10272,17 @@
       ]
     },
     "d14": {
-      "bids": 536,
+      "bids": 540,
       "won": 45,
       "lost": 157,
-      "lists": 105,
+      "lists": 106,
       "accepts": 2,
       "profit": 1180190,
       "short_offers": 1,
       "top_skips": [
         {
           "why": "sin caja",
-          "count": 304
+          "count": 308
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -10226,7 +10294,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 75
+          "count": 76
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -10235,5 +10303,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-28T08:36:52.670133+00:00"
+  "updated_at": "2026-11-28T10:25:07.542089+00:00"
 }
