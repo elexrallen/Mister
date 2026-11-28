@@ -8057,13 +8057,49 @@
           "why": "espera compra→venta"
         }
       ]
+    },
+    {
+      "at": "2026-11-28T13:54:32.862769+00:00",
+      "league": "serie-a-d1g1-0625",
+      "mode": "reventa",
+      "flip": {
+        "enabled": true,
+        "frozen_count": 18,
+        "open_count": 1,
+        "max_open": 5,
+        "eligible": 0,
+        "players": [
+          {
+            "player_id": "10104",
+            "name": "M. de Roon",
+            "position": "MF",
+            "team": "Roma",
+            "team_id": "196",
+            "photo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/players/10104.png",
+            "team_logo_url": "https://cdn-mister.mundodeportivo.com/file/cdn-common/teams/196.png",
+            "buy_price": 4829300,
+            "market_value": 4878000,
+            "status": "owned"
+          }
+        ]
+      },
+      "decisions": [
+        {
+          "kind": "list_for_sale",
+          "player_id": "10104",
+          "name": "M. de Roon",
+          "amount": null,
+          "status": "descartada",
+          "why": "espera compra→venta"
+        }
+      ]
     }
   ],
   "summary": {
     "d7": {
-      "bids": 214,
+      "bids": 210,
       "won": 21,
-      "lost": 106,
+      "lost": 104,
       "lists": 29,
       "accepts": 0,
       "profit": 0,
@@ -8075,11 +8111,11 @@
         },
         {
           "why": "sin caja",
-          "count": 92
+          "count": 88
         },
         {
           "why": "espera compra→venta",
-          "count": 21
+          "count": 22
         },
         {
           "why": "dejaría el saldo en negativo al inicio de la jornada",
@@ -8095,7 +8131,7 @@
       "bids": 313,
       "won": 29,
       "lost": 157,
-      "lists": 76,
+      "lists": 77,
       "accepts": 0,
       "profit": 0,
       "short_offers": 0,
@@ -8114,7 +8150,7 @@
         },
         {
           "why": "espera compra→venta",
-          "count": 37
+          "count": 38
         },
         {
           "why": "sin precio de compra: no se acepta",
@@ -8123,5 +8159,5 @@
       ]
     }
   },
-  "updated_at": "2026-11-28T12:29:36.807776+00:00"
+  "updated_at": "2026-11-28T13:54:32.862769+00:00"
 }
